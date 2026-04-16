@@ -37,3 +37,38 @@ CREATE POLICY "Service role can manage projects"
 
 -- Index on code for fast lookups
 CREATE INDEX IF NOT EXISTS idx_projects_code ON public.projects(code);
+
+-- ============================================
+-- Table demandes (formulaire "Creer mon site")
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.demandes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  activite TEXT NOT NULL,
+  besoin TEXT,
+  has_site BOOLEAN DEFAULT false,
+  details TEXT,
+  style TEXT,
+  exemples TEXT,
+  nom TEXT NOT NULL,
+  email TEXT NOT NULL,
+  telephone TEXT,
+  budget TEXT,
+  statut TEXT DEFAULT 'nouveau' CHECK (statut IN ('nouveau', 'contacte', 'en_cours', 'termine')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.demandes ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can insert (public form)
+CREATE POLICY "Anyone can insert demandes"
+  ON public.demandes FOR INSERT
+  WITH CHECK (true);
+
+-- Only service role can read/update (admin via API)
+CREATE POLICY "Service role can manage demandes"
+  ON public.demandes FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_demandes_created ON public.demandes(created_at DESC);
