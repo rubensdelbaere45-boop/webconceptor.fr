@@ -111,15 +111,15 @@ const stats = [
   { value: "24/7", label: "Support inclus" },
 ];
 
-const includes = [
-  "Design sur-mesure",
-  "Responsive mobile",
-  "SEO optimise",
+const included = [
+  "Design sur-mesure unique",
+  "Site responsive mobile",
+  "Contenu redige pour vous",
+  "SEO optimise (Google)",
   "Conformite RGPD",
-  "Hebergement inclus",
-  "Nom de domaine",
-  "Certificat SSL",
-  "Maintenance 1 an",
+  "Nom de domaine 1 an",
+  "Certificat SSL securise",
+  "Retours illimites",
 ];
 
 export default function Home() {
@@ -161,7 +161,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8 text-[13px] text-[#737373]">
             <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors duration-200">Realisations</a>
             <a href="#methode" className="hover:text-[#0a0a0a] transition-colors duration-200">Methode</a>
-            <a href="#inclus" className="hover:text-[#0a0a0a] transition-colors duration-200">Inclus</a>
+            <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors duration-200">Tarif</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -356,35 +356,115 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── INCLUS ─── */}
-      <section id="inclus" className="py-28 sm:py-36 px-6">
+      {/* ─── TARIF ─── */}
+      <section id="tarif" className="py-28 sm:py-36 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-20 reveal">
+          <div className="text-center mb-16 reveal">
             <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-4">
-              Tout inclus
+              Tarif
             </p>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-[-0.03em] text-[#0a0a0a]">
-              Un prix. Zero surprise.
+              Un prix clair. Zero surprise.
             </h2>
             <p className="text-lg text-[#737373] mt-5 max-w-lg mx-auto">
-              Chaque site inclut tout ce dont un professionnel a besoin pour reussir en ligne.
+              Tout est inclus dans un tarif unique. Pas de frais caches, pas d&apos;abonnement obligatoire.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 stagger-children">
-            {includes.map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 bg-[#fafafa] border border-[#f5f5f5] rounded-xl px-5 py-4 hover:border-[#e5e5e5] transition-colors duration-200"
-              >
-                <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto reveal-scale">
+            {/* Main pricing card */}
+            <div className="relative bg-[#0a0a0a] rounded-2xl p-8 sm:p-10 text-white overflow-hidden">
+              <div className="absolute top-0 right-0 w-60 h-60 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[12px] font-semibold text-white/80 mb-6">
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
                   </svg>
+                  Le plus populaire
                 </div>
-                <span className="text-[14px] font-medium text-[#0a0a0a]">{item}</span>
+                <p className="text-[14px] text-white/50 font-medium mb-2">Votre site professionnel</p>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-[13px] text-white/40">a partir de</span>
+                </div>
+                <div className="flex items-baseline gap-2 mb-6">
+                  <span className="text-5xl sm:text-6xl font-extrabold tracking-tight">599</span>
+                  <span className="text-xl font-semibold text-white/60">&euro;</span>
+                </div>
+                <p className="text-[14px] text-white/50 mb-8 leading-relaxed">
+                  Paiement unique. Le site est a vous, pour toujours. Livraison en 5 jours.
+                </p>
+
+                <div className="space-y-3 mb-8">
+                  {included.map((item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      <span className="text-[14px] text-white/80">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/dashboard/enter-code"
+                  className="block w-full py-3.5 bg-white text-[#0a0a0a] text-[14px] font-semibold rounded-full text-center hover:bg-[#f5f5f5] transition-all duration-300"
+                >
+                  Commencer mon site
+                </Link>
               </div>
-            ))}
+            </div>
+
+            {/* Hosting option card */}
+            <div className="bg-white rounded-2xl border border-[#f5f5f5] p-8 sm:p-10 flex flex-col">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#fafafa] rounded-full text-[12px] font-semibold text-[#737373] mb-6 self-start">
+                <svg className="w-3.5 h-3.5 text-[#0066ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+                </svg>
+                Option
+              </div>
+              <p className="text-[14px] text-[#737373] font-medium mb-2">Hebergement & maintenance</p>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-5xl sm:text-6xl font-extrabold tracking-tight text-[#0a0a0a]">50</span>
+                <div className="flex flex-col">
+                  <span className="text-xl font-semibold text-[#a3a3a3]">&euro;</span>
+                  <span className="text-[12px] text-[#a3a3a3] -mt-1">/ mois</span>
+                </div>
+              </div>
+              <p className="text-[14px] text-[#a3a3a3] mb-8 leading-relaxed">
+                Optionnel. On s&apos;occupe de tout pour que votre site reste en ligne et a jour.
+              </p>
+
+              <div className="space-y-3 mb-8 flex-1">
+                {[
+                  "Hebergement rapide et securise",
+                  "Mises a jour & maintenance",
+                  "Sauvegardes automatiques",
+                  "Support prioritaire par email",
+                  "Modifications mineures incluses",
+                  "Renouvellement domaine + SSL",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#0066ff] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span className="text-[14px] text-[#525252]">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-6 border-t border-[#f5f5f5]">
+                <p className="text-[13px] text-[#a3a3a3] text-center">
+                  Sans engagement &middot; Resiliable a tout moment
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Reassurance */}
+          <div className="mt-12 text-center reveal">
+            <p className="text-[14px] text-[#a3a3a3]">
+              Tarif indicatif. Chaque projet est unique — contactez-nous pour un devis personnalise adapte a vos besoins.
+            </p>
           </div>
         </div>
       </section>
