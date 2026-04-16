@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
     email: body.email,
     telephone: body.telephone || "",
     budget: body.budget || "",
+    site_url: body.site_url || "",
+    audit_results: body.audit_results || "",
     statut: "nouveau",
   }).select().single();
 

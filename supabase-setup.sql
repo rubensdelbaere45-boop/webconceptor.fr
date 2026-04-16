@@ -72,3 +72,7 @@ CREATE POLICY "Service role can manage demandes"
   WITH CHECK (true);
 
 CREATE INDEX IF NOT EXISTS idx_demandes_created ON public.demandes(created_at DESC);
+
+-- Colonnes audit (à exécuter si la table existe déjà)
+ALTER TABLE public.demandes ADD COLUMN IF NOT EXISTS site_url TEXT;
+ALTER TABLE public.demandes ADD COLUMN IF NOT EXISTS audit_results TEXT;

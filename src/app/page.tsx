@@ -115,16 +115,15 @@ export default function Home() {
             animate="visible"
             className="text-[clamp(2.5rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-[-0.04em] max-w-3xl mb-8"
           >
-            {["Votre", "site"].map((w) => (
+            {["Création", "&", "refonte"].map((w) => (
               <motion.span key={w} variants={heroWord} className="inline-block mr-[0.2em]">{w}</motion.span>
             ))}
             <br />
-            {["professionnel."].map((w) => (
+            {["de", "sites"].map((w) => (
+              <motion.span key={w} variants={heroWord} className="inline-block mr-[0.2em]">{w}</motion.span>
+            ))}
+            {["professionnels."].map((w) => (
               <motion.span key={w} variants={heroWord} className="inline-block gradient-text">{w}</motion.span>
-            ))}
-            <br />
-            {["Clé", "en", "main."].map((w) => (
-              <motion.span key={w} variants={heroWord} className="inline-block mr-[0.2em]">{w}</motion.span>
             ))}
           </motion.h1>
 
@@ -135,7 +134,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#737373] text-lg max-w-md mx-auto mb-10 leading-relaxed"
           >
-            WebConceptor crée des sites sur-mesure pour les professionnels français. Design premium, livraison en 5 jours.
+            Création de sites sur-mesure ou refonte de votre site existant. Design premium, livraison en 5 jours.
           </motion.p>
 
           {/* CTAs */}
