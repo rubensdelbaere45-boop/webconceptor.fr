@@ -26,9 +26,9 @@ interface Demande {
 
 const statutColors: Record<string, { label: string; bg: string; text: string }> = {
   nouveau: { label: "Nouveau", bg: "bg-blue-50", text: "text-blue-700" },
-  contacte: { label: "Contacte", bg: "bg-yellow-50", text: "text-yellow-700" },
+  contacte: { label: "Contacté", bg: "bg-yellow-50", text: "text-yellow-700" },
   en_cours: { label: "En cours", bg: "bg-orange-50", text: "text-orange-700" },
-  termine: { label: "Termine", bg: "bg-green-50", text: "text-green-700" },
+  termine: { label: "Terminé", bg: "bg-green-50", text: "text-green-700" },
 };
 
 export default function DashboardPage() {
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             </Link>
           )}
           <button onClick={handleLogout} className="text-[12px] text-[#a3a3a3] hover:text-[#0a0a0a] transition">
-            Deconnexion
+            Déconnexion
           </button>
         </div>
       </nav>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
         {/* Admin view — demandes */}
         {isAdmin ? (
           <>
-            <h1 className="text-2xl font-bold tracking-tight mb-1">Demandes recues</h1>
+            <h1 className="text-2xl font-bold tracking-tight mb-1">Demandes reçues</h1>
             <p className="text-[#737373] text-[14px] mb-8">{demandes.length} demande{demandes.length !== 1 ? "s" : ""} au total</p>
 
             {loadingDemandes ? (
@@ -131,7 +131,7 @@ export default function DashboardPage() {
               /* Detail view */
               <div className="bg-white border border-[#f5f5f5] rounded-xl p-8">
                 <button onClick={() => setSelectedDemande(null)} className="text-[13px] text-[#0066ff] font-medium mb-6 hover:underline">
-                  ← Retour a la liste
+                  ← Retour à la liste
                 </button>
                 <div className="flex items-center gap-3 mb-6">
                   <h2 className="text-xl font-bold">{selectedDemande.nom}</h2>
@@ -146,11 +146,11 @@ export default function DashboardPage() {
                     <p className="font-medium">{selectedDemande.email}</p>
                   </div>
                   <div>
-                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-1">Telephone</p>
+                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-1">Téléphone</p>
                     <p className="font-medium">{selectedDemande.telephone || "—"}</p>
                   </div>
                   <div>
-                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-1">Activite</p>
+                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-1">Activité</p>
                     <p className="font-medium capitalize">{selectedDemande.activite}</p>
                   </div>
                   <div>
@@ -176,13 +176,13 @@ export default function DashboardPage() {
                 </div>
                 {selectedDemande.details && (
                   <div className="mt-6 pt-6 border-t border-[#f5f5f5]">
-                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-2">Details du projet</p>
+                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-2">Détails du projet</p>
                     <p className="text-[14px] text-[#525252] leading-relaxed whitespace-pre-line">{selectedDemande.details}</p>
                   </div>
                 )}
                 {selectedDemande.exemples && (
                   <div className="mt-4">
-                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-2">Exemples cites</p>
+                    <p className="text-[#a3a3a3] text-[12px] uppercase tracking-wider mb-2">Exemples cités</p>
                     <p className="text-[14px] text-[#525252] whitespace-pre-line">{selectedDemande.exemples}</p>
                   </div>
                 )}
@@ -235,7 +235,7 @@ export default function DashboardPage() {
               </div>
               <h2 className="text-lg font-bold mb-2">Aucun projet</h2>
               <p className="text-[#a3a3a3] text-[14px] mb-6 max-w-xs mx-auto">
-                Vous avez recu un code a 6 chiffres ? Entrez-le ci-dessous.
+                Vous avez reçu un code à 6 chiffres ? Entrez-le ci-dessous.
               </p>
               <Link href="/dashboard/enter-code" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0a0a0a] text-white rounded-lg text-[13px] font-medium hover:bg-[#262626] transition">
                 Entrer un code →

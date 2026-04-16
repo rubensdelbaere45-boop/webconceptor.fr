@@ -7,31 +7,31 @@ import { motion, AnimatePresence } from "framer-motion";
 const activites = [
   { id: "restaurant", label: "Restaurant", icon: "🍽" },
   { id: "avocat", label: "Avocat", icon: "⚖️" },
-  { id: "medecin", label: "Medecin", icon: "🩺" },
+  { id: "medecin", label: "Médecin", icon: "🩺" },
   { id: "architecte", label: "Architecte", icon: "📐" },
   { id: "artisan", label: "Artisan", icon: "🔧" },
-  { id: "commercant", label: "Commercant", icon: "🏪" },
+  { id: "commercant", label: "Commerçant", icon: "🏪" },
   { id: "autre", label: "Autre", icon: "✦" },
 ];
 
 const besoins = [
-  { id: "creer", label: "Creer un site" },
+  { id: "creer", label: "Créer un site" },
   { id: "refondre", label: "Refondre mon site" },
   { id: "ne_sais_pas", label: "Je ne sais pas encore" },
 ];
 
 const styles = [
-  { id: "elegant", label: "Elegant / classique" },
+  { id: "elegant", label: "Élégant / classique" },
   { id: "moderne", label: "Moderne / minimal" },
-  { id: "colore", label: "Colore / dynamique" },
-  { id: "pas_preference", label: "Pas de preference" },
+  { id: "colore", label: "Coloré / dynamique" },
+  { id: "pas_preference", label: "Pas de préférence" },
 ];
 
 const budgets = [
   { id: "<500", label: "Moins de 500 €" },
   { id: "500-1000", label: "500 — 1 000 €" },
   { id: ">1000", label: "Plus de 1 000 €" },
-  { id: "a_definir", label: "A definir ensemble" },
+  { id: "a_definir", label: "À définir ensemble" },
 ];
 
 const slideVariants = {
@@ -94,7 +94,7 @@ export default function DemandePage() {
       });
       setDone(true);
     } catch {
-      alert("Erreur. Veuillez reessayer.");
+      alert("Erreur. Veuillez réessayer.");
     }
     setSending(false);
   };
@@ -119,11 +119,11 @@ export default function DemandePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </motion.div>
-          <h1 className="text-3xl font-bold tracking-tight mb-4">Formulaire envoye !</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-4">Formulaire envoyé !</h1>
           <p className="text-[#737373] text-lg mb-2">Merci pour votre confiance.</p>
-          <p className="text-[#737373] mb-10">Vous serez recontacte sous <strong className="text-[#0a0a0a]">48 heures maximum</strong>.</p>
+          <p className="text-[#737373] mb-10">Vous serez recontacté sous <strong className="text-[#0a0a0a]">48 heures maximum</strong>.</p>
           <Link href="/" className="px-6 py-3 bg-[#0a0a0a] text-white text-[14px] font-medium rounded-full hover:bg-[#262626] transition-colors">
-            Retour a l&apos;accueil
+            Retour à l&apos;accueil
           </Link>
         </motion.div>
       </div>
@@ -147,7 +147,7 @@ export default function DemandePage() {
         {/* Progress bar */}
         <div className="w-full max-w-md mb-12">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[12px] text-[#a3a3a3] font-medium">Etape {step + 1} sur {totalSteps}</span>
+            <span className="text-[12px] text-[#a3a3a3] font-medium">Étape {step + 1} sur {totalSteps}</span>
             <span className="text-[12px] text-[#a3a3a3]">{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
           <div className="h-1 bg-[#f5f5f5] rounded-full overflow-hidden">
@@ -174,8 +174,8 @@ export default function DemandePage() {
                 exit="exit"
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               >
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Quelle est votre activite ?</h2>
-                <p className="text-[#737373] text-[15px] mb-8">Selectionnez votre secteur pour personnaliser votre site.</p>
+                <h2 className="text-2xl font-bold tracking-tight mb-2">Quelle est votre activité ?</h2>
+                <p className="text-[#737373] text-[15px] mb-8">Sélectionnez votre secteur pour personnaliser votre site.</p>
                 <div className="grid grid-cols-2 gap-3">
                   {activites.map((a) => (
                     <button
@@ -193,7 +193,7 @@ export default function DemandePage() {
                     type="text"
                     value={form.activite_autre}
                     onChange={(e) => setForm({ ...form, activite_autre: e.target.value })}
-                    placeholder="Votre activite..."
+                    placeholder="Votre activité..."
                     className="w-full mt-4 px-4 py-3 border border-[#e5e5e5] rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0066ff]"
                   />
                 )}
@@ -231,12 +231,12 @@ export default function DemandePage() {
                     onChange={(e) => setForm({ ...form, has_site: e.target.checked })}
                     className="w-5 h-5 rounded border-[#e5e5e5] text-[#0066ff] focus:ring-[#0066ff]"
                   />
-                  <span className="text-[14px] text-[#525252]">J&apos;ai deja un site web</span>
+                  <span className="text-[14px] text-[#525252]">J&apos;ai déjà un site web</span>
                 </label>
                 <textarea
                   value={form.details}
                   onChange={(e) => setForm({ ...form, details: e.target.value })}
-                  placeholder="Decrivez votre projet en quelques mots (optionnel)..."
+                  placeholder="Décrivez votre projet en quelques mots (optionnel)..."
                   rows={3}
                   className="w-full px-4 py-3 border border-[#e5e5e5] rounded-xl text-[14px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0066ff]"
                 />
@@ -255,7 +255,7 @@ export default function DemandePage() {
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               >
                 <h2 className="text-2xl font-bold tracking-tight mb-2">Quel style vous parle ?</h2>
-                <p className="text-[#737373] text-[15px] mb-8">Choisissez l&apos;ambiance qui correspond a votre image.</p>
+                <p className="text-[#737373] text-[15px] mb-8">Choisissez l&apos;ambiance qui correspond à votre image.</p>
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   {styles.map((s) => (
                     <button
@@ -288,7 +288,7 @@ export default function DemandePage() {
                 exit="exit"
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               >
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Vos coordonnees</h2>
+                <h2 className="text-2xl font-bold tracking-tight mb-2">Vos coordonnées</h2>
                 <p className="text-[#737373] text-[15px] mb-8">Pour que nous puissions vous recontacter.</p>
                 <div className="space-y-4">
                   <div>
@@ -312,7 +312,7 @@ export default function DemandePage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[13px] font-medium text-[#525252] block mb-1.5">Telephone</label>
+                    <label className="text-[13px] font-medium text-[#525252] block mb-1.5">Téléphone</label>
                     <input
                       type="tel"
                       value={form.telephone}
@@ -322,7 +322,7 @@ export default function DemandePage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[13px] font-medium text-[#525252] block mb-1.5">Budget envisage</label>
+                    <label className="text-[13px] font-medium text-[#525252] block mb-1.5">Budget envisagé</label>
                     <div className="grid grid-cols-2 gap-2">
                       {budgets.map((b) => (
                         <button
