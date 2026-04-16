@@ -77,7 +77,7 @@ export default function Home() {
             <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/enter-code" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
+            <Link href="/code" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
               J&apos;ai un code
             </Link>
             <Link href="/auth/login" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
