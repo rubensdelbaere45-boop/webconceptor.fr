@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
-const ADMIN_EMAIL = "rubensdelbaere@icloud.com";
+const ADMIN_EMAIL = "rubensdelbaere7@icloud.com";
 
 interface Demande {
   id: string;

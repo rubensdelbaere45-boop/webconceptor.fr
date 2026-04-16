@@ -17,7 +17,7 @@ export default function MentionsLegales() {
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Editeur du site</h2>
             <p>Le site webconceptor.fr est edite par WebConceptor, entreprise individuelle de creation de sites web professionnels.</p>
-            <p>Responsable de la publication : Rubens Delbaere<br />Email : rubensdelbaere@icloud.com</p>
+            <p>Responsable de la publication : Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Hebergement</h2>
@@ -29,7 +29,7 @@ export default function MentionsLegales() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Donnees personnelles</h2>
-            <p>Les informations recueillies via le formulaire de demande sont destinees exclusivement a WebConceptor pour le traitement de votre demande. Conformement au RGPD, vous disposez d&apos;un droit d&apos;acces, de rectification et de suppression de vos donnees. Pour exercer ces droits, contactez-nous a rubensdelbaere@icloud.com.</p>
+            <p>Les informations recueillies via le formulaire de demande sont destinees exclusivement a WebConceptor pour le traitement de votre demande. Conformement au RGPD, vous disposez d&apos;un droit d&apos;acces, de rectification et de suppression de vos donnees. Pour exercer ces droits, contactez-nous a rubensdelbaere7@icloud.com.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Cookies</h2>

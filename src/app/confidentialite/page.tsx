@@ -16,7 +16,7 @@ export default function Confidentialite() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Responsable du traitement</h2>
-            <p>WebConceptor — Rubens Delbaere<br />Email : rubensdelbaere@icloud.com</p>
+            <p>WebConceptor — Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Donnees collectees</h2>
@@ -61,7 +61,7 @@ export default function Confidentialite() {
               <li><strong>Droit a la portabilite</strong> : recevoir vos donnees dans un format lisible</li>
               <li><strong>Droit d&apos;opposition</strong> : vous opposer au traitement de vos donnees</li>
             </ul>
-            <p className="mt-2">Pour exercer ces droits, contactez-nous a rubensdelbaere@icloud.com. Nous repondrons sous 30 jours.</p>
+            <p className="mt-2">Pour exercer ces droits, contactez-nous a rubensdelbaere7@icloud.com. Nous repondrons sous 30 jours.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Cookies</h2>
@@ -69,7 +69,7 @@ export default function Confidentialite() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Contact</h2>
-            <p>Pour toute question relative a la protection de vos donnees, contactez-nous a rubensdelbaere@icloud.com.</p>
+            <p>Pour toute question relative a la protection de vos donnees, contactez-nous a rubensdelbaere7@icloud.com.</p>
           </section>
         </div>
         <div className="mt-12 pt-8 border-t border-[#f5f5f5]">
