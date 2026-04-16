@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maison Tete — Restaurant Gastronomique Lyon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0a08;--cream:#f5efe6;--gold:#c9a96e;--gold-light:#e6d5b0;--text:#f5efe6;--text-muted:rgba(245,239,230,0.55);--serif:'Playfair Display',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--gold);color:var(--bg)}
+img{display:block;max-width:100%}
+
+/* Watermark */
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:#0066ff;text-decoration:none;font-weight:600}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 40px;height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(12,10,8,0.6);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(201,169,110,0.08);transition:background 0.4s}
+.logo{font-family:var(--serif);font-size:20px;font-weight:600;letter-spacing:0.02em;color:var(--cream)}
+.logo em{font-style:italic;color:var(--gold)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.3s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{padding:10px 24px;border:1px solid var(--gold);color:var(--gold);font-size:12px;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.3s}
+.nav-cta:hover{background:var(--gold);color:var(--bg)}
+
+/* Hero */
+.hero{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop') center/cover no-repeat}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(12,10,8,0.4) 0%,rgba(12,10,8,0.7) 60%,var(--bg) 100%)}
+.hero-content{position:relative;z-index:2;max-width:700px;padding:0 24px}
+.hero-tag{display:inline-block;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:32px;border:1px solid rgba(201,169,110,0.3);padding:8px 20px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.8rem,7vw,5.5rem);font-weight:400;line-height:1.05;letter-spacing:-0.01em;margin-bottom:24px}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero p{font-size:16px;color:var(--text-muted);max-width:420px;margin:0 auto 40px;line-height:1.7}
+.hero-btn{display:inline-block;padding:16px 48px;background:var(--gold);color:var(--bg);font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;transition:all 0.4s}
+.hero-btn:hover{background:var(--gold-light);transform:translateY(-2px)}
+.scroll-line{position:absolute;bottom:40px;left:50%;width:1px;height:60px;background:linear-gradient(to bottom,transparent,var(--gold));animation:scrollPulse 2s ease infinite}
+@keyframes scrollPulse{0%,100%{opacity:0.3;transform:scaleY(0.6)}50%{opacity:1;transform:scaleY(1)}}
+
+/* Section titles */
+.section-tag{font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.section-title{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);font-weight:400;line-height:1.15;margin-bottom:20px}
+
+/* Philosophy */
+.philosophy{padding:140px 40px;display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:1200px;margin:0 auto;align-items:center}
+.philosophy img{width:100%;height:500px;object-fit:cover;filter:brightness(0.95)}
+.philosophy-text .section-title{max-width:400px}
+.philosophy-text p{color:var(--text-muted);line-height:1.8;font-size:15px;max-width:400px;margin-bottom:16px}
+.philosophy-text .divider{width:48px;height:1px;background:var(--gold);margin:32px 0}
+
+/* Menu highlight */
+.menu-section{padding:140px 40px;text-align:center;background:linear-gradient(to bottom,var(--bg),rgba(12,10,8,0.97))}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;max-width:900px;margin:60px auto 0}
+.menu-item .price{font-family:var(--serif);font-size:28px;color:var(--gold);margin-bottom:8px}
+.menu-item h3{font-family:var(--serif);font-size:20px;font-weight:400;margin-bottom:8px}
+.menu-item p{font-size:13px;color:var(--text-muted);line-height:1.6}
+.menu-item .line{width:32px;height:1px;background:rgba(201,169,110,0.3);margin:16px auto}
+
+/* Gallery */
+.gallery{padding:140px 40px}
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:1200px;margin:60px auto 0}
+.gallery-grid img{width:100%;height:320px;object-fit:cover;filter:brightness(0.85);transition:all 0.5s}
+.gallery-grid img:hover{filter:brightness(1);transform:scale(1.02)}
+
+/* Reservation CTA */
+.reservation{padding:160px 40px;text-align:center;position:relative}
+.reservation::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:80px;background:linear-gradient(to bottom,transparent,var(--gold))}
+.reservation .section-title{max-width:500px;margin:0 auto 16px}
+.reservation p{color:var(--text-muted);margin-bottom:40px}
+
+/* Footer */
+footer{border-top:1px solid rgba(201,169,110,0.08);padding:48px 40px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px}
+footer .foot-logo{font-family:var(--serif);font-size:16px;color:var(--cream)}
+footer .foot-links{display:flex;gap:24px}
+footer .foot-links a{color:var(--text-muted);text-decoration:none;font-size:12px;letter-spacing:0.05em}
+footer .foot-copy{font-size:11px;color:var(--text-muted)}
+
+/* Animate */
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+/* Responsive */
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .philosophy{grid-template-columns:1fr;gap:40px;padding:80px 20px}
+  .philosophy img{height:300px}
+  .menu-grid{grid-template-columns:1fr;gap:32px}
+  .gallery-grid{grid-template-columns:1fr}
+  .gallery-grid img{height:240px}
+  footer{flex-direction:column;gap:20px;text-align:center;padding:40px 20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Maison <em>Tete</em></div>
+  <ul class="nav-links">
+    <li><a href="#philosophie">Philosophie</a></li>
+    <li><a href="#carte">La Carte</a></li>
+    <li><a href="#galerie">Galerie</a></li>
+  </ul>
+  <a href="#reservation" class="nav-cta">Reserver</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <span class="hero-tag">Restaurant Gastronomique &middot; Lyon</span>
+    <h1>L'art de la <em>table</em></h1>
+    <p>Une cuisine d'auteur ancrée dans le terroir lyonnais. Produits d'exception, gestes précis, émotions sincères.</p>
+    <a href="#reservation" class="hero-btn">Réserver une table</a>
+  </div>
+  <div class="scroll-line"></div>
+</section>
+
+<section id="philosophie" class="philosophy">
+  <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80&auto=format&fit=crop" alt="Chef" class="fade-up">
+  <div class="philosophy-text fade-up">
+    <p class="section-tag">Notre philosophie</p>
+    <h2 class="section-title">Le produit avant tout, le geste ensuite.</h2>
+    <div class="divider"></div>
+    <p>Chaque matin, notre chef parcourt les marchés lyonnais pour sélectionner les plus beaux produits de saison. La carte change au fil des arrivages.</p>
+    <p>Maison Tête, c'est la conviction que la grande cuisine naît du respect absolu de la matière première.</p>
+  </div>
+</section>
+
+<section id="carte" class="menu-section">
+  <p class="section-tag fade-up">La Carte</p>
+  <h2 class="section-title fade-up">Menu Dégustation</h2>
+  <div class="menu-grid">
+    <div class="menu-item fade-up">
+      <p class="price">38 &euro;</p>
+      <h3>Entrées</h3>
+      <div class="line"></div>
+      <p>Tartare de Saint-Jacques, agrumes & caviar<br>Velouté de topinambours, noisettes torréfiées</p>
+    </div>
+    <div class="menu-item fade-up">
+      <p class="price">56 &euro;</p>
+      <h3>Plats</h3>
+      <div class="line"></div>
+      <p>Pigeon rôti, jus corsé au cassis<br>Bar de ligne, beurre blanc aux herbes</p>
+    </div>
+    <div class="menu-item fade-up">
+      <p class="price">22 &euro;</p>
+      <h3>Desserts</h3>
+      <div class="line"></div>
+      <p>Soufflé au Grand Marnier<br>Tarte fine aux pommes, glace vanille Bourbon</p>
+    </div>
+  </div>
+</section>
+
+<section id="galerie" class="gallery">
+  <div class="text-center" style="text-align:center">
+    <p class="section-tag fade-up">Galerie</p>
+    <h2 class="section-title fade-up">Instants de table</h2>
+  </div>
+  <div class="gallery-grid">
+    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80&auto=format&fit=crop" alt="Plat 1" class="fade-up" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600&q=80&auto=format&fit=crop" alt="Plat 2" class="fade-up" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80&auto=format&fit=crop" alt="Ambiance" class="fade-up" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80&auto=format&fit=crop" alt="Salle" class="fade-up" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80&auto=format&fit=crop" alt="Détail" class="fade-up" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80&auto=format&fit=crop" alt="Vin" class="fade-up" loading="lazy">
+  </div>
+</section>
+
+<section id="reservation" class="reservation">
+  <p class="section-tag fade-up">Réservation</p>
+  <h2 class="section-title fade-up">Votre table vous attend</h2>
+  <p class="fade-up">Du mardi au samedi, midi et soir. Réservation recommandée.</p>
+  <a href="tel:+33400000000" class="hero-btn fade-up">Appeler le restaurant</a>
+</section>
+
+<footer>
+  <div class="foot-logo">Maison Tête</div>
+  <div class="foot-links">
+    <a href="#">Carte</a>
+    <a href="#">Contact</a>
+    <a href="#">Instagram</a>
+  </div>
+  <p class="foot-copy">&copy; 2026 Maison Tête &middot; Lyon</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

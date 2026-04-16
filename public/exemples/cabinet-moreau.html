@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabinet Moreau — Avocat en droit des affaires, Paris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fcfbf9;--dark:#0c1829;--navy:#14243d;--accent:#1a4480;--accent-light:#2563eb;--gold:#b8975a;--text:#0c1829;--text-muted:#6b7280;--serif:'Source Serif 4',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#fff}
+img{display:block;max-width:100%}
+
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(12,24,41,0.94);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:#60a5fa;text-decoration:none;font-weight:600}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(252,251,249,0.8);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.04)}
+.logo{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--dark)}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.3s}
+.nav-links a:hover{color:var(--dark)}
+.nav-cta{padding:10px 28px;background:var(--dark);color:#fff;font-size:12px;font-weight:600;letter-spacing:0.04em;text-decoration:none;border-radius:6px;transition:all 0.3s}
+.nav-cta:hover{background:var(--navy)}
+
+.hero{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr;overflow:hidden}
+.hero-left{display:flex;flex-direction:column;justify-content:center;padding:0 80px;background:var(--bg)}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:32px}
+.hero-tag .dot{width:6px;height:6px;background:var(--gold);border-radius:50%}
+.hero h1{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.6rem);font-weight:600;line-height:1.15;margin-bottom:24px;letter-spacing:-0.01em}
+.hero p{font-size:16px;color:var(--text-muted);line-height:1.7;max-width:420px;margin-bottom:40px;font-weight:300}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-dark{padding:14px 32px;background:var(--dark);color:#fff;font-size:13px;font-weight:600;text-decoration:none;border-radius:6px;transition:all 0.3s}
+.btn-dark:hover{background:var(--navy);transform:translateY(-1px)}
+.btn-outline{padding:14px 32px;border:1px solid #d1d5db;color:var(--text);font-size:13px;font-weight:500;text-decoration:none;border-radius:6px;transition:all 0.3s}
+.btn-outline:hover{border-color:var(--dark)}
+.hero-right{position:relative;overflow:hidden;background:var(--dark)}
+.hero-right img{width:100%;height:100%;object-fit:cover;opacity:0.85}
+
+.section-tag{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:16px}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:600;line-height:1.2;margin-bottom:16px}
+
+/* Expertise */
+.expertise{padding:120px 48px;max-width:1100px;margin:0 auto}
+.expertise-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+.exp-card{padding:36px;border:1px solid #e5e7eb;border-radius:8px;transition:all 0.3s}
+.exp-card:hover{border-color:var(--accent);box-shadow:0 8px 32px rgba(0,0,0,0.04);transform:translateY(-2px)}
+.exp-card .icon{width:44px;height:44px;background:rgba(26,68,128,0.06);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:20px}
+.exp-card h3{font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:10px}
+.exp-card p{font-size:13px;color:var(--text-muted);line-height:1.6;font-weight:300}
+
+/* Values */
+.values{padding:120px 48px;background:#fff}
+.values-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.values-text p{color:var(--text-muted);line-height:1.8;font-size:15px;font-weight:300;margin-bottom:16px}
+.values-list{list-style:none;margin-top:24px}
+.values-list li{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f3f4f6;font-size:14px}
+.values-list li .check{width:20px;height:20px;background:rgba(26,68,128,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.values-list li .check svg{width:12px;height:12px;color:var(--accent)}
+.values-img{position:relative}
+.values-img img{width:100%;height:480px;object-fit:cover;border-radius:8px}
+.values-img .badge{position:absolute;bottom:-20px;left:-20px;background:var(--dark);color:#fff;padding:24px 32px;border-radius:8px}
+.badge .num{font-family:var(--serif);font-size:40px;font-weight:700}
+.badge .label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:4px}
+
+/* Team */
+.team{padding:120px 48px;text-align:center;max-width:900px;margin:0 auto}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:48px}
+.team-member img{width:100%;height:280px;object-fit:cover;border-radius:8px;filter:grayscale(0.3);transition:filter 0.4s}
+.team-member:hover img{filter:grayscale(0)}
+.team-member h3{font-family:var(--serif);font-size:17px;font-weight:600;margin-top:16px}
+.team-member p{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* Contact */
+.contact{padding:120px 48px;background:var(--dark);color:#fff;text-align:center}
+.contact .section-tag{color:var(--gold)}
+.contact .section-title{color:#fff;max-width:400px;margin:0 auto 16px}
+.contact p{color:rgba(255,255,255,0.6);margin-bottom:32px;font-weight:300}
+.contact .info{display:flex;gap:40px;justify-content:center;margin-bottom:40px;flex-wrap:wrap}
+.contact .info-item{text-align:center}
+.contact .info-item .label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px}
+.contact .info-item .value{font-size:15px;font-weight:500}
+.contact .btn-white{display:inline-block;padding:14px 36px;background:#fff;color:var(--dark);font-size:13px;font-weight:600;text-decoration:none;border-radius:6px;transition:all 0.3s}
+.contact .btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+
+footer{padding:32px 48px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px}
+footer .f-logo{font-family:var(--serif);font-size:15px;font-weight:600}
+footer .f-copy{font-size:11px;color:var(--text-muted)}
+
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hero{grid-template-columns:1fr;height:auto}
+  .hero-left{padding:120px 24px 60px}
+  .hero-right{height:50vh}
+  .expertise-grid{grid-template-columns:1fr}
+  .values-inner{grid-template-columns:1fr;gap:40px;padding:80px 24px}
+  .values-img img{height:300px}
+  .team-grid{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:12px;text-align:center;padding:32px 24px}
+  .contact .info{flex-direction:column;gap:24px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Cabinet <span>Moreau</span></div>
+  <ul class="nav-links">
+    <li><a href="#expertise">Expertise</a></li>
+    <li><a href="#cabinet">Le cabinet</a></li>
+    <li><a href="#equipe">Équipe</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Prendre rendez-vous</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <span class="hero-tag"><span class="dot"></span> Avocat en droit des affaires &middot; Paris</span>
+    <h1>Votre partenaire juridique de confiance</h1>
+    <p>Le Cabinet Moreau accompagne les entreprises et les dirigeants avec rigueur et pragmatisme depuis 2005.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-dark">Consultation gratuite</a>
+      <a href="#expertise" class="btn-outline">Nos domaines</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&q=80&auto=format&fit=crop" alt="Justice">
+  </div>
+</section>
+
+<section id="expertise" class="expertise">
+  <p class="section-tag fade-up">Domaines d'expertise</p>
+  <h2 class="section-title fade-up">Un conseil juridique complet</h2>
+  <div class="expertise-grid">
+    <div class="exp-card fade-up">
+      <div class="icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008V7.5z"/></svg>
+      </div>
+      <h3>Droit des sociétés</h3>
+      <p>Création, restructuration, fusions-acquisitions. Nous vous accompagnons à chaque étape de la vie de votre entreprise.</p>
+    </div>
+    <div class="exp-card fade-up">
+      <div class="icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3>Droit commercial</h3>
+      <p>Contrats, litiges commerciaux, distribution. Une expertise pointue pour sécuriser vos relations d'affaires.</p>
+    </div>
+    <div class="exp-card fade-up">
+      <div class="icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+      </div>
+      <h3>Droit du travail</h3>
+      <p>Contrats, licenciements, contentieux prudhommaux. Défense des intérêts des employeurs et des salariés.</p>
+    </div>
+  </div>
+</section>
+
+<section id="cabinet" class="values">
+  <div class="values-inner">
+    <div class="values-text fade-up">
+      <p class="section-tag">Le cabinet</p>
+      <h2 class="section-title">Rigueur, confidentialité, résultats</h2>
+      <p>Le Cabinet Moreau réunit une équipe d'avocats expérimentés, tous animés par la même exigence : offrir un conseil juridique d'excellence, adapté aux enjeux de chaque client.</p>
+      <ul class="values-list">
+        <li><span class="check"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>Plus de 500 dossiers traités avec succès</li>
+        <li><span class="check"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>Réactivité garantie sous 24 heures</li>
+        <li><span class="check"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>Honoraires transparents, sans surprise</li>
+        <li><span class="check"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>Première consultation offerte</li>
+      </ul>
+    </div>
+    <div class="values-img fade-up">
+      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80&auto=format&fit=crop" alt="Cabinet">
+      <div class="badge">
+        <p class="num">20+</p>
+        <p class="label">Années d'exercice</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="equipe" class="team">
+  <p class="section-tag fade-up">L'équipe</p>
+  <h2 class="section-title fade-up">Nos avocats</h2>
+  <div class="team-grid">
+    <div class="team-member fade-up">
+      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80&auto=format&fit=crop" alt="Marc Moreau" loading="lazy">
+      <h3>Marc Moreau</h3>
+      <p>Associé fondateur &middot; Droit des sociétés</p>
+    </div>
+    <div class="team-member fade-up">
+      <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80&auto=format&fit=crop" alt="Caroline Dubois" loading="lazy">
+      <h3>Caroline Dubois</h3>
+      <p>Associée &middot; Droit commercial</p>
+    </div>
+    <div class="team-member fade-up">
+      <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80&auto=format&fit=crop" alt="Antoine Lambert" loading="lazy">
+      <h3>Antoine Lambert</h3>
+      <p>Collaborateur &middot; Droit du travail</p>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="contact">
+  <p class="section-tag fade-up">Contact</p>
+  <h2 class="section-title fade-up">Prenons rendez-vous</h2>
+  <p class="fade-up">Première consultation gratuite et sans engagement.</p>
+  <div class="info fade-up">
+    <div class="info-item"><p class="label">Adresse</p><p class="value">42 avenue Hoche, 75008 Paris</p></div>
+    <div class="info-item"><p class="label">Téléphone</p><p class="value">01 42 00 00 00</p></div>
+    <div class="info-item"><p class="label">Email</p><p class="value">contact@cabinet-moreau.fr</p></div>
+  </div>
+  <a href="tel:+33142000000" class="btn-white fade-up">Appeler le cabinet</a>
+</section>
+
+<footer>
+  <div class="f-logo">Cabinet Moreau</div>
+  <p class="f-copy">&copy; 2026 Cabinet Moreau &middot; Barreau de Paris</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clara Nové — Photographe Bordeaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafafa;--dark:#111;--accent:#111;--text:#111;--text-muted:#888;--sans:'Sora',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:#111;color:#fff}
+img{display:block;max-width:100%}
+
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(17,17,17,0.92);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:#0066ff;text-decoration:none;font-weight:600}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,250,250,0.7);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.04)}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.02em}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.3s}
+.nav-links a:hover{color:var(--dark)}
+.nav-cta{padding:10px 24px;background:var(--dark);color:#fff;font-size:12px;font-weight:600;letter-spacing:0.04em;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.nav-cta:hover{background:#333}
+
+/* Hero - full bleed image with text overlay */
+.hero{height:100vh;position:relative;overflow:hidden;display:flex;align-items:flex-end}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1600&q=80&auto=format&fit=crop') center/cover}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%)}
+.hero-content{position:relative;z-index:2;padding:80px 48px;max-width:600px}
+.hero-content h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:700;line-height:1.05;letter-spacing:-0.03em;color:#fff;margin-bottom:16px}
+.hero-content p{font-size:16px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:32px;font-weight:300}
+.hero-content .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:#fff;color:#111;font-size:13px;font-weight:600;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.hero-content .btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+
+.section-tag{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:16px}
+.section-title{font-size:clamp(1.8rem,3vw,2.8rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:16px}
+
+/* Portfolio - masonry-style */
+.portfolio{padding:120px 48px}
+.portfolio-header{max-width:1200px;margin:0 auto 60px}
+.masonry{max-width:1200px;margin:0 auto;columns:3;column-gap:16px}
+.masonry-item{break-inside:avoid;margin-bottom:16px;position:relative;overflow:hidden;border-radius:8px;cursor:pointer}
+.masonry-item img{width:100%;display:block;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);filter:grayscale(0.3)}
+.masonry-item:hover img{transform:scale(1.04);filter:grayscale(0)}
+.masonry-item .caption{position:absolute;bottom:0;left:0;right:0;padding:24px;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);opacity:0;transform:translateY(8px);transition:all 0.4s}
+.masonry-item:hover .caption{opacity:1;transform:translateY(0)}
+.caption h3{color:#fff;font-size:15px;font-weight:600}
+.caption p{color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px}
+
+/* About */
+.about{padding:120px 48px;display:grid;grid-template-columns:1fr 1.2fr;gap:80px;max-width:1100px;margin:0 auto;align-items:center}
+.about img{width:100%;height:500px;object-fit:cover;border-radius:8px;filter:grayscale(0.2)}
+.about-text p{color:var(--text-muted);line-height:1.8;font-size:15px;font-weight:300;margin-bottom:16px}
+.about-text .stats{display:flex;gap:40px;margin-top:32px;padding-top:32px;border-top:1px solid rgba(0,0,0,0.06)}
+.stats .stat-item .num{font-size:32px;font-weight:700;letter-spacing:-0.02em}
+.stats .stat-item .label{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:4px}
+
+/* Services */
+.services{padding:120px 48px;background:#fff;text-align:center}
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;max-width:900px;margin:48px auto 0}
+.srv{padding:32px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);transition:all 0.3s}
+.srv:hover{border-color:#111;transform:translateY(-2px)}
+.srv h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.srv p{font-size:13px;color:var(--text-muted);line-height:1.5;font-weight:300}
+.srv .price{font-size:24px;font-weight:700;margin-bottom:16px}
+
+/* CTA */
+.cta{padding:140px 48px;text-align:center}
+.cta .section-title{max-width:400px;margin:0 auto 16px}
+.cta p{color:var(--text-muted);margin-bottom:32px}
+.cta .btn-dark{display:inline-flex;align-items:center;gap:8px;padding:16px 40px;background:#111;color:#fff;font-size:13px;font-weight:600;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.cta .btn-dark:hover{background:#333;transform:translateY(-2px)}
+
+footer{border-top:1px solid rgba(0,0,0,0.06);padding:40px 48px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px}
+footer .f-logo{font-size:16px;font-weight:700}
+footer .f-links{display:flex;gap:20px}
+footer .f-links a{color:var(--text-muted);text-decoration:none;font-size:12px}
+footer .f-copy{font-size:11px;color:var(--text-muted)}
+
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hero-content{padding:60px 24px}
+  .masonry{columns:1}
+  .about{grid-template-columns:1fr;gap:40px;padding:80px 24px}
+  .about img{height:300px}
+  .services-grid{grid-template-columns:1fr}
+  .portfolio{padding:80px 24px}
+  footer{flex-direction:column;gap:16px;text-align:center;padding:40px 24px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Clara Nové</div>
+  <ul class="nav-links">
+    <li><a href="#portfolio">Portfolio</a></li>
+    <li><a href="#apropos">À propos</a></li>
+    <li><a href="#tarifs">Tarifs</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Me contacter</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1>Photographe de l'émotion</h1>
+    <p>Mariages, portraits et événements à Bordeaux et partout en France. Des images qui racontent votre histoire.</p>
+    <a href="#portfolio" class="btn">Voir le portfolio</a>
+  </div>
+</section>
+
+<section id="portfolio" class="portfolio">
+  <div class="portfolio-header">
+    <p class="section-tag fade-up">Portfolio</p>
+    <h2 class="section-title fade-up">Moments choisis</h2>
+  </div>
+  <div class="masonry">
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80&auto=format&fit=crop" alt="Mariage" loading="lazy">
+      <div class="caption"><h3>Sarah & Thomas</h3><p>Mariage &middot; Bordeaux</p></div>
+    </div>
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80&auto=format&fit=crop" alt="Portrait" loading="lazy" style="height:350px;object-fit:cover">
+      <div class="caption"><h3>Portrait corporate</h3><p>Entreprise &middot; Paris</p></div>
+    </div>
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&q=80&auto=format&fit=crop" alt="Mariage 2" loading="lazy">
+      <div class="caption"><h3>Claire & Antoine</h3><p>Mariage &middot; Arcachon</p></div>
+    </div>
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80&auto=format&fit=crop" alt="Mariage 3" loading="lazy" style="height:420px;object-fit:cover">
+      <div class="caption"><h3>Léa & Hugo</h3><p>Mariage &middot; Saint-Émilion</p></div>
+    </div>
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1529634597503-139d3726fed5?w=600&q=80&auto=format&fit=crop" alt="Événement" loading="lazy">
+      <div class="caption"><h3>Gala de charité</h3><p>Événement &middot; Bordeaux</p></div>
+    </div>
+    <div class="masonry-item fade-up">
+      <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80&auto=format&fit=crop" alt="Portrait 2" loading="lazy" style="height:380px;object-fit:cover">
+      <div class="caption"><h3>Portrait lifestyle</h3><p>Personnel &middot; Bordeaux</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="apropos" class="about">
+  <img src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=600&q=80&auto=format&fit=crop" alt="Clara Nové" class="fade-up">
+  <div class="about-text fade-up">
+    <p class="section-tag">À propos</p>
+    <h2 class="section-title">L'instant juste</h2>
+    <p>Je suis Clara, photographe basée à Bordeaux. Depuis 8 ans, je capture les moments qui comptent avec un regard naturel et sans artifice.</p>
+    <p>Mon approche : discrétion, lumière naturelle et émotions vraies. Chaque image est une histoire en soi.</p>
+    <div class="stats">
+      <div class="stat-item"><p class="num">350+</p><p class="label">Séances</p></div>
+      <div class="stat-item"><p class="num">120</p><p class="label">Mariages</p></div>
+      <div class="stat-item"><p class="num">8</p><p class="label">Années</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="tarifs" class="services">
+  <p class="section-tag fade-up">Tarifs</p>
+  <h2 class="section-title fade-up">Formules</h2>
+  <div class="services-grid">
+    <div class="srv fade-up">
+      <p class="price">350 &euro;</p>
+      <h3>Portrait</h3>
+      <p>1h de shooting, 20 photos retouchées, galerie privée en ligne.</p>
+    </div>
+    <div class="srv fade-up" style="border-color:#111">
+      <p class="price">1 800 &euro;</p>
+      <h3>Mariage</h3>
+      <p>Journée complète, 400+ photos, album premium, galerie privée.</p>
+    </div>
+    <div class="srv fade-up">
+      <p class="price">800 &euro;</p>
+      <h3>Événement</h3>
+      <p>Demi-journée, 150 photos, livraison sous 7 jours.</p>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="cta">
+  <p class="section-tag fade-up">Contact</p>
+  <h2 class="section-title fade-up">Racontez-moi votre projet</h2>
+  <p class="fade-up">Disponible sur Bordeaux, le Sud-Ouest et toute la France.</p>
+  <a href="mailto:hello@claranouve.fr" class="btn-dark fade-up">Me contacter</a>
+</section>
+
+<footer>
+  <div class="f-logo">Clara Nové</div>
+  <div class="f-links">
+    <a href="#">Portfolio</a>
+    <a href="#">Tarifs</a>
+    <a href="#">Instagram</a>
+  </div>
+  <p class="f-copy">&copy; 2026 Clara Nové &middot; Bordeaux</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

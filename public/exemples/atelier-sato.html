@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L'Atelier Sato — Pâtisserie Japonaise, Lyon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf8f4;--dark:#1c1917;--rose:#b4637a;--rose-light:#d4879e;--sand:#d6c7aa;--matcha:#7a8c6e;--text:#1c1917;--text-muted:#78716c;--serif:'Noto Serif JP',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--rose);color:#fff}
+img{display:block;max-width:100%}
+
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(28,25,23,0.94);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:#0066ff;text-decoration:none;font-weight:600}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,248,244,0.75);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.04)}
+.logo{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--dark)}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.3s}
+.nav-links a:hover{color:var(--rose)}
+.nav-cta{padding:10px 24px;background:var(--dark);color:#fff;font-size:12px;font-weight:600;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.nav-cta:hover{background:var(--rose)}
+
+/* Hero - large image with centered text */
+.hero{height:100vh;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1587314168485-3236d6710814?w=1600&q=80&auto=format&fit=crop') center/cover}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(250,248,244,0.5),rgba(250,248,244,0.92) 85%)}
+.hero-content{position:relative;z-index:2;max-width:600px;padding:0 24px}
+.hero-jp{font-family:var(--serif);font-size:14px;letter-spacing:0.3em;color:var(--rose);margin-bottom:24px;font-weight:400}
+.hero h1{font-family:var(--serif);font-size:clamp(2.5rem,5vw,4rem);font-weight:500;line-height:1.15;margin-bottom:20px;letter-spacing:-0.01em}
+.hero p{font-size:16px;color:var(--text-muted);max-width:400px;margin:0 auto 36px;line-height:1.7;font-weight:300}
+.hero-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:var(--dark);color:#fff;font-size:13px;font-weight:600;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.hero-btn:hover{background:var(--rose);transform:translateY(-2px)}
+
+.section-tag{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--rose);font-weight:600;margin-bottom:12px}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:500;line-height:1.2;margin-bottom:16px}
+
+/* Philosophy */
+.philosophy{padding:120px 48px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.philosophy img{width:100%;height:480px;object-fit:cover;border-radius:8px}
+.philosophy-text p{color:var(--text-muted);line-height:1.8;font-size:15px;font-weight:300;margin-bottom:16px}
+.philosophy-text .jp{font-family:var(--serif);font-size:20px;color:var(--rose);margin-bottom:8px}
+.philosophy-text .divider{width:40px;height:2px;background:var(--sand);margin:24px 0}
+
+/* Creations */
+.creations{padding:120px 48px;background:#fff;text-align:center}
+.creations-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1100px;margin:48px auto 0}
+.creation{position:relative;overflow:hidden;border-radius:12px;cursor:pointer}
+.creation img{width:100%;height:320px;object-fit:cover;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1)}
+.creation:hover img{transform:scale(1.05)}
+.creation .label{position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(to top,rgba(28,25,23,0.8),transparent);opacity:0;transition:opacity 0.4s}
+.creation:hover .label{opacity:1}
+.label h3{font-family:var(--serif);font-size:16px;color:#fff}
+.label p{font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px}
+
+/* Savoir-faire */
+.savoir{padding:120px 48px;text-align:center;max-width:900px;margin:0 auto}
+.savoir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:48px}
+.sf-item{padding:32px;border:1px solid rgba(0,0,0,0.06);border-radius:12px;transition:all 0.3s}
+.sf-item:hover{border-color:var(--rose);transform:translateY(-3px)}
+.sf-item .emoji{font-size:28px;margin-bottom:16px}
+.sf-item h3{font-family:var(--serif);font-size:17px;font-weight:500;margin-bottom:8px}
+.sf-item p{font-size:13px;color:var(--text-muted);line-height:1.5;font-weight:300}
+
+/* Boutique info */
+.boutique{padding:120px 48px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.2fr 1fr;gap:0;overflow:hidden;border-radius:16px}
+.boutique-img{height:400px}
+.boutique-img img{width:100%;height:100%;object-fit:cover}
+.boutique-content{background:var(--dark);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:center}
+.boutique-content .section-tag{color:var(--rose-light)}
+.boutique-content .section-title{color:#fff}
+.boutique-content p{color:rgba(255,255,255,0.6);line-height:1.7;margin-bottom:8px;font-weight:300;font-size:14px}
+.boutique-content .hours{margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.1)}
+.boutique-content .hours p{font-size:13px}
+
+footer{padding:32px 48px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px}
+footer .f-logo{font-family:var(--serif);font-size:16px;font-weight:500}
+footer .f-copy{font-size:11px;color:var(--text-muted)}
+
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .philosophy{grid-template-columns:1fr;gap:40px;padding:80px 24px}
+  .philosophy img{height:280px}
+  .creations-grid{grid-template-columns:repeat(2,1fr)}
+  .creation img{height:220px}
+  .savoir-grid{grid-template-columns:1fr}
+  .boutique{grid-template-columns:1fr}
+  .boutique-img{height:240px}
+  .boutique-content{padding:40px 24px}
+  footer{flex-direction:column;gap:12px;text-align:center;padding:32px 24px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">L'Atelier Sato</div>
+  <ul class="nav-links">
+    <li><a href="#creations">Créations</a></li>
+    <li><a href="#savoirfaire">Savoir-faire</a></li>
+    <li><a href="#boutique">Boutique</a></li>
+  </ul>
+  <a href="#boutique" class="nav-cta">Nous trouver</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <p class="hero-jp">和菓子 &middot; Wagashi</p>
+    <h1>L'art de la pâtisserie japonaise</h1>
+    <p>Des créations artisanales qui marient la délicatesse japonaise et les saveurs françaises. À Lyon depuis 2018.</p>
+    <a href="#creations" class="hero-btn">Découvrir nos créations</a>
+  </div>
+</section>
+
+<section class="philosophy">
+  <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&q=80&auto=format&fit=crop" alt="Pâtisserie" class="fade-up">
+  <div class="philosophy-text fade-up">
+    <p class="section-tag">Notre philosophie</p>
+    <p class="jp">一期一会</p>
+    <h2 class="section-title">Chaque rencontre est unique</h2>
+    <div class="divider"></div>
+    <p>L'Atelier Sato est né de la rencontre entre Yuki Sato, pâtissière formée à Tokyo, et la gastronomie lyonnaise. Chaque création est un pont entre deux cultures.</p>
+    <p>Nous travaillons des ingrédients d'exception : matcha de Uji, yuzu frais, haricots azuki. Chaque pièce est façonnée à la main, chaque jour.</p>
+  </div>
+</section>
+
+<section id="creations" class="creations">
+  <p class="section-tag fade-up">Nos créations</p>
+  <h2 class="section-title fade-up">Pâtisseries du jour</h2>
+  <div class="creations-grid">
+    <div class="creation fade-up">
+      <img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500&q=80&auto=format&fit=crop" alt="Matcha roll" loading="lazy">
+      <div class="label"><h3>Roulé matcha</h3><p>Matcha Uji &middot; Crème yuzu</p></div>
+    </div>
+    <div class="creation fade-up">
+      <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&q=80&auto=format&fit=crop" alt="Mochi" loading="lazy">
+      <div class="label"><h3>Mochi frais</h3><p>Azuki &middot; Fraise</p></div>
+    </div>
+    <div class="creation fade-up">
+      <img src="https://images.unsplash.com/photo-1495147466023-ac5c588e2e94?w=500&q=80&auto=format&fit=crop" alt="Tarte" loading="lazy">
+      <div class="label"><h3>Tarte sésame noir</h3><p>Sésame &middot; Caramel</p></div>
+    </div>
+    <div class="creation fade-up">
+      <img src="https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=500&q=80&auto=format&fit=crop" alt="Financiers" loading="lazy">
+      <div class="label"><h3>Financiers matcha</h3><p>Beurre noisette &middot; Thé vert</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="savoirfaire" class="savoir">
+  <p class="section-tag fade-up">Savoir-faire</p>
+  <h2 class="section-title fade-up">L'excellence artisanale</h2>
+  <div class="savoir-grid">
+    <div class="sf-item fade-up">
+      <p class="emoji">🍵</p>
+      <h3>Matcha de Uji</h3>
+      <p>Notre thé vert est importé directement de la région de Uji, berceau du matcha japonais.</p>
+    </div>
+    <div class="sf-item fade-up">
+      <p class="emoji">🤲</p>
+      <h3>Fait main</h3>
+      <p>Chaque pièce est façonnée à la main chaque matin. Pas de production industrielle.</p>
+    </div>
+    <div class="sf-item fade-up">
+      <p class="emoji">🌿</p>
+      <h3>Ingrédients naturels</h3>
+      <p>Aucun colorant, aucun conservateur. Le goût authentique avant tout.</p>
+    </div>
+  </div>
+</section>
+
+<section id="boutique" class="boutique fade-up">
+  <div class="boutique-img">
+    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80&auto=format&fit=crop" alt="Boutique">
+  </div>
+  <div class="boutique-content">
+    <p class="section-tag">La boutique</p>
+    <h2 class="section-title">Venez nous rendre visite</h2>
+    <p>12 rue de la République, 69002 Lyon</p>
+    <p>Métro Bellecour (ligne A)</p>
+    <div class="hours">
+      <p>Mardi — Samedi : 9h — 19h</p>
+      <p>Dimanche : 10h — 14h</p>
+      <p>Lundi : Fermé</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">L'Atelier Sato</div>
+  <p class="f-copy">&copy; 2026 L'Atelier Sato &middot; Lyon</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

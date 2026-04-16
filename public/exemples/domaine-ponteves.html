@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domaine Pontevès — Vins de Provence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f9f6f1;--dark:#2d1f0e;--wine:#6b2737;--wine-light:#8e3a4e;--sage:#7a8c6e;--cream:#ede6d8;--text:#2d1f0e;--text-muted:#8a7e70;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Outfit',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--wine);color:#fff}
+img{display:block;max-width:100%}
+
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(45,31,14,0.92);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:#c9a96e;text-decoration:none;font-weight:600}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(249,246,241,0.7);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.04)}
+.logo{font-family:var(--serif);font-size:24px;font-weight:500;color:var(--dark)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:color 0.3s}
+.nav-links a:hover{color:var(--wine)}
+.nav-cta{padding:10px 28px;background:var(--wine);color:#fff;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.nav-cta:hover{background:var(--wine-light)}
+
+.hero{height:100vh;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1600&q=80&auto=format&fit=crop') center/cover}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(249,246,241,0.3),rgba(249,246,241,0.85) 80%,var(--bg))}
+.hero-content{position:relative;z-index:2;max-width:650px;padding:0 24px}
+.hero-tag{display:inline-block;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:var(--wine);font-weight:600;margin-bottom:28px}
+.hero h1{font-family:var(--serif);font-size:clamp(3rem,6vw,5rem);font-weight:400;line-height:1.1;margin-bottom:24px}
+.hero h1 em{font-style:italic;color:var(--wine)}
+.hero p{font-size:16px;color:var(--text-muted);max-width:420px;margin:0 auto 40px;line-height:1.7;font-weight:300}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-primary{padding:14px 36px;background:var(--wine);color:#fff;font-size:13px;font-weight:600;letter-spacing:0.04em;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.btn-primary:hover{background:var(--wine-light);transform:translateY(-2px)}
+.btn-outline{padding:14px 36px;border:1px solid var(--dark);color:var(--dark);font-size:13px;font-weight:500;letter-spacing:0.04em;text-decoration:none;border-radius:100px;transition:all 0.3s}
+.btn-outline:hover{background:var(--dark);color:#fff}
+
+.section-tag{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--wine);font-weight:600;margin-bottom:16px}
+.section-title{font-family:var(--serif);font-size:clamp(2rem,3.5vw,3rem);font-weight:400;line-height:1.15;margin-bottom:20px}
+
+/* Story */
+.story{padding:140px 48px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.story img{width:100%;height:500px;object-fit:cover;border-radius:8px}
+.story-text p{color:var(--text-muted);line-height:1.8;font-size:15px;font-weight:300;margin-bottom:16px}
+.story-text .highlight{font-family:var(--serif);font-size:24px;font-weight:400;color:var(--dark);line-height:1.4;margin-bottom:24px;font-style:italic}
+
+/* Wines */
+.wines{padding:140px 48px;background:#fff;text-align:center}
+.wines-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;max-width:1000px;margin:60px auto 0}
+.wine-card{padding:40px;border:1px solid rgba(0,0,0,0.06);border-radius:8px;transition:all 0.4s}
+.wine-card:hover{border-color:var(--wine);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,0.06)}
+.wine-card .wine-color{width:48px;height:48px;border-radius:50%;margin:0 auto 20px;border:2px solid rgba(0,0,0,0.06)}
+.wine-card h3{font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:8px}
+.wine-card .grape{font-size:12px;color:var(--wine);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px}
+.wine-card p{font-size:13px;color:var(--text-muted);line-height:1.6;font-weight:300}
+
+/* Terroir */
+.terroir{padding:140px 48px;text-align:center}
+.terroir-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:40px;max-width:900px;margin:60px auto 0}
+.stat{text-align:center}
+.stat .num{font-family:var(--serif);font-size:48px;color:var(--wine)}
+.stat .label{font-size:12px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:8px;font-weight:500}
+
+/* Visit */
+.visit{padding:140px 48px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;border-radius:12px}
+.visit-img{height:400px}
+.visit-img img{width:100%;height:100%;object-fit:cover}
+.visit-content{background:var(--wine);color:#fff;padding:60px;display:flex;flex-direction:column;justify-content:center}
+.visit-content .section-tag{color:rgba(255,255,255,0.6)}
+.visit-content .section-title{color:#fff;margin-bottom:16px}
+.visit-content p{color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:32px;font-weight:300}
+.visit-btn{display:inline-block;padding:14px 36px;background:#fff;color:var(--wine);font-size:13px;font-weight:600;text-decoration:none;border-radius:100px;transition:all 0.3s;align-self:flex-start}
+.visit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+
+footer{border-top:1px solid rgba(0,0,0,0.06);padding:40px 48px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px}
+footer .f-logo{font-family:var(--serif);font-size:18px}
+footer .f-links{display:flex;gap:24px}
+footer .f-links a{color:var(--text-muted);text-decoration:none;font-size:12px}
+footer .f-copy{font-size:11px;color:var(--text-muted)}
+
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .story{grid-template-columns:1fr;gap:40px;padding:80px 20px}
+  .story img{height:300px}
+  .wines-grid{grid-template-columns:1fr}
+  .terroir-stats{grid-template-columns:repeat(2,1fr)}
+  .visit{grid-template-columns:1fr}
+  .visit-img{height:240px}
+  .visit-content{padding:40px 24px}
+  footer{flex-direction:column;gap:16px;text-align:center;padding:40px 20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Domaine Pontevès</div>
+  <ul class="nav-links">
+    <li><a href="#histoire">Histoire</a></li>
+    <li><a href="#vins">Nos Vins</a></li>
+    <li><a href="#visite">Visiter</a></li>
+  </ul>
+  <a href="#visite" class="nav-cta">Réserver une visite</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <span class="hero-tag">Domaine Viticole &middot; Provence</span>
+    <h1>Le goût de la <em>Provence</em></h1>
+    <p>Depuis quatre générations, le Domaine Pontevès cultive la vigne avec passion sous le soleil méditerranéen.</p>
+    <div class="hero-btns">
+      <a href="#vins" class="btn-primary">Découvrir nos vins</a>
+      <a href="#visite" class="btn-outline">Visiter le domaine</a>
+    </div>
+  </div>
+</section>
+
+<section id="histoire" class="story">
+  <img src="https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800&q=80&auto=format&fit=crop" alt="Vignes" class="fade-up">
+  <div class="story-text fade-up">
+    <p class="section-tag">Notre histoire</p>
+    <h2 class="section-title">Un terroir d'exception</h2>
+    <p class="highlight">"La vigne ne ment jamais. Elle donne ce que la terre lui offre."</p>
+    <p>Niché au pied de la Sainte-Victoire, le Domaine Pontevès s'étend sur 35 hectares d'un terroir argilo-calcaire baigné de soleil et balayé par le mistral.</p>
+    <p>Nos vignes sont cultivées en agriculture biologique depuis 2008. Chaque cuvée raconte la sincérité d'un millésime et le respect d'un savoir-faire transmis.</p>
+  </div>
+</section>
+
+<section id="vins" class="wines">
+  <p class="section-tag fade-up">Nos vins</p>
+  <h2 class="section-title fade-up">Trois couleurs, une passion</h2>
+  <div class="wines-grid">
+    <div class="wine-card fade-up">
+      <div class="wine-color" style="background:linear-gradient(135deg,#f8d4c8,#f0b8a8)"></div>
+      <h3>Cuvée Rosé</h3>
+      <p class="grape">Grenache &middot; Cinsault</p>
+      <p>Robe pâle, notes de pêche blanche et d'agrumes. Fraîcheur et élégance provençale.</p>
+    </div>
+    <div class="wine-card fade-up">
+      <div class="wine-color" style="background:linear-gradient(135deg,#f5e6b8,#e8d49a)"></div>
+      <h3>Cuvée Blanc</h3>
+      <p class="grape">Vermentino &middot; Clairette</p>
+      <p>Nez floral, bouche vive et minérale. Un blanc de caractère à découvrir frais.</p>
+    </div>
+    <div class="wine-card fade-up">
+      <div class="wine-color" style="background:linear-gradient(135deg,#5c1a2a,#8b3045)"></div>
+      <h3>Cuvée Rouge</h3>
+      <p class="grape">Syrah &middot; Mourvèdre</p>
+      <p>Fruits noirs, épices et garrigue. Un vin structuré avec une belle longueur en bouche.</p>
+    </div>
+  </div>
+</section>
+
+<section class="terroir">
+  <p class="section-tag fade-up">Le domaine en chiffres</p>
+  <h2 class="section-title fade-up">Terroir & savoir-faire</h2>
+  <div class="terroir-stats">
+    <div class="stat fade-up"><p class="num">1928</p><p class="label">Fondation</p></div>
+    <div class="stat fade-up"><p class="num">35</p><p class="label">Hectares</p></div>
+    <div class="stat fade-up"><p class="num">Bio</p><p class="label">Certifié depuis 2008</p></div>
+    <div class="stat fade-up"><p class="num">4</p><p class="label">Générations</p></div>
+  </div>
+</section>
+
+<section id="visite" class="visit fade-up">
+  <div class="visit-img">
+    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80&auto=format&fit=crop" alt="Dégustation">
+  </div>
+  <div class="visit-content">
+    <p class="section-tag">Visites & dégustations</p>
+    <h2 class="section-title">Venez goûter la Provence</h2>
+    <p>Visite guidée du domaine et dégustation commentée de nos cuvées. Du lundi au samedi, sur rendez-vous.</p>
+    <a href="mailto:contact@domaine-ponteves.fr" class="visit-btn">Réserver une visite</a>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">Domaine Pontevès</div>
+  <div class="f-links">
+    <a href="#">Nos Vins</a>
+    <a href="#">Visites</a>
+    <a href="#">Contact</a>
+  </div>
+  <p class="f-copy">&copy; 2026 Domaine Pontevès &middot; Provence</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

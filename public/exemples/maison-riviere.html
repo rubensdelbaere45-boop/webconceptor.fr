@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maison Rivière — Hôtel Boutique, Nice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f7f5f2;--dark:#1c2e3a;--navy:#243b4a;--gold:#c5a87d;--gold-light:#dcc9a6;--sky:#87ceeb;--text:#1c2e3a;--text-muted:#7a8a94;--serif:'Playfair Display',Georgia,serif;--sans:'Montserrat',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--dark);color:#fff}
+img{display:block;max-width:100%}
+
+.watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(28,46,58,0.94);backdrop-filter:blur(12px);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.1em;text-transform:uppercase}
+.watermark span{color:#fff;font-weight:600}
+.watermark a{color:var(--gold);text-decoration:none;font-weight:600}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(247,245,242,0.7);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,0.04)}
+.logo{font-family:var(--serif);font-size:22px;font-weight:500;color:var(--dark)}
+.logo em{font-style:italic;color:var(--gold)}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.3s}
+.nav-links a:hover{color:var(--dark)}
+.nav-cta{padding:10px 28px;background:var(--dark);color:#fff;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;border-radius:0;transition:all 0.3s}
+.nav-cta:hover{background:var(--gold)}
+
+/* Hero - cinematic */
+.hero{height:100vh;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80&auto=format&fit=crop') center/cover}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(28,46,58,0.25),rgba(28,46,58,0.5) 70%,var(--dark))}
+.hero-content{position:absolute;bottom:120px;left:48px;z-index:2;max-width:550px}
+.hero-stars{display:flex;gap:4px;margin-bottom:20px}
+.hero-stars span{color:var(--gold);font-size:14px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.5rem,5vw,4.2rem);font-weight:400;line-height:1.1;color:#fff;margin-bottom:20px}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero p{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:32px;font-weight:300}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-gold{padding:14px 36px;background:var(--gold);color:var(--dark);font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;transition:all 0.3s}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-2px)}
+.btn-white-outline{padding:14px 36px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;transition:all 0.3s}
+.btn-white-outline:hover{border-color:#fff;background:rgba(255,255,255,0.1)}
+
+.section-tag{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:12px}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:400;line-height:1.15;margin-bottom:16px}
+
+/* Rooms */
+.rooms{padding:120px 48px;text-align:center}
+.rooms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1200px;margin:48px auto 0}
+.room-card{position:relative;overflow:hidden;cursor:pointer;border-radius:8px}
+.room-card img{width:100%;height:400px;object-fit:cover;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1)}
+.room-card:hover img{transform:scale(1.05)}
+.room-card .overlay{position:absolute;bottom:0;left:0;right:0;padding:32px;background:linear-gradient(to top,rgba(28,46,58,0.9),transparent);transform:translateY(8px);opacity:0;transition:all 0.4s}
+.room-card:hover .overlay{transform:translateY(0);opacity:1}
+.overlay h3{font-family:var(--serif);font-size:20px;color:#fff;margin-bottom:4px}
+.overlay .price{font-size:14px;color:var(--gold)}
+.overlay p{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px}
+
+/* Experience */
+.experience{padding:120px 48px;background:#fff}
+.exp-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.exp-text p{color:var(--text-muted);line-height:1.8;font-size:15px;font-weight:300;margin-bottom:16px}
+.exp-features{list-style:none;margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-features li{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500}
+.exp-features li .dot{width:6px;height:6px;background:var(--gold);border-radius:50%;flex-shrink:0}
+.exp-img{position:relative}
+.exp-img img{width:100%;height:500px;object-fit:cover;border-radius:8px}
+
+/* Testimonial */
+.testimonial{padding:120px 48px;text-align:center;max-width:700px;margin:0 auto}
+.testimonial blockquote{font-family:var(--serif);font-size:clamp(1.4rem,2.5vw,2rem);font-weight:400;line-height:1.4;font-style:italic;color:var(--dark);margin:32px 0 24px}
+.testimonial .author{font-size:13px;color:var(--text-muted);font-weight:500}
+.testimonial .stars{display:flex;gap:4px;justify-content:center;margin-bottom:8px}
+.testimonial .stars span{color:var(--gold);font-size:16px}
+
+/* CTA */
+.cta{padding:0 48px 120px}
+.cta-inner{max-width:1200px;margin:0 auto;position:relative;overflow:hidden;border-radius:12px;height:400px}
+.cta-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80&auto=format&fit=crop') center/cover}
+.cta-bg::after{content:'';position:absolute;inset:0;background:rgba(28,46,58,0.7)}
+.cta-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px}
+.cta-content .section-tag{color:var(--gold)}
+.cta-content .section-title{color:#fff;max-width:400px;margin:0 auto 16px}
+.cta-content p{color:rgba(255,255,255,0.6);margin-bottom:32px}
+
+footer{padding:40px 48px;display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;margin-bottom:44px;border-top:1px solid rgba(0,0,0,0.06)}
+footer .f-logo{font-family:var(--serif);font-size:18px}
+footer .f-links{display:flex;gap:20px}
+footer .f-links a{color:var(--text-muted);text-decoration:none;font-size:12px;letter-spacing:0.04em}
+footer .f-copy{font-size:11px;color:var(--text-muted)}
+
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1)}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hero-content{left:24px;right:24px;bottom:80px}
+  .rooms-grid{grid-template-columns:1fr}
+  .room-card img{height:280px}
+  .exp-inner{grid-template-columns:1fr;gap:40px;padding:80px 24px}
+  .exp-features{grid-template-columns:1fr}
+  .exp-img img{height:300px}
+  .cta-inner{height:auto;border-radius:8px}
+  .cta-content{padding:60px 24px}
+  footer{flex-direction:column;gap:16px;text-align:center;padding:40px 24px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Maison <em>Rivière</em></div>
+  <ul class="nav-links">
+    <li><a href="#chambres">Chambres</a></li>
+    <li><a href="#experience">L'expérience</a></li>
+    <li><a href="#reserver">Réserver</a></li>
+  </ul>
+  <a href="#reserver" class="nav-cta">Réserver</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-stars">
+      <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+    </div>
+    <h1>Un refuge d'<em>élégance</em> sur la Riviera</h1>
+    <p>Hôtel boutique au coeur du Vieux-Nice. 12 chambres d'exception entre mer et collines, à deux pas de la Promenade des Anglais.</p>
+    <div class="hero-btns">
+      <a href="#reserver" class="btn-gold">Réserver un séjour</a>
+      <a href="#chambres" class="btn-white-outline">Nos chambres</a>
+    </div>
+  </div>
+</section>
+
+<section id="chambres" class="rooms">
+  <p class="section-tag fade-up">Nos chambres</p>
+  <h2 class="section-title fade-up">Chaque chambre, un voyage</h2>
+  <div class="rooms-grid">
+    <div class="room-card fade-up">
+      <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80&auto=format&fit=crop" alt="Chambre Azur" loading="lazy">
+      <div class="overlay">
+        <h3>Chambre Azur</h3>
+        <p class="price">À partir de 220 &euro; / nuit</p>
+        <p>Vue mer, 28 m², balcon privé</p>
+      </div>
+    </div>
+    <div class="room-card fade-up">
+      <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80&auto=format&fit=crop" alt="Suite Colline" loading="lazy">
+      <div class="overlay">
+        <h3>Suite Colline</h3>
+        <p class="price">À partir de 350 &euro; / nuit</p>
+        <p>Vue collines, 45 m², terrasse</p>
+      </div>
+    </div>
+    <div class="room-card fade-up">
+      <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80&auto=format&fit=crop" alt="Suite Riviera" loading="lazy">
+      <div class="overlay">
+        <h3>Suite Riviera</h3>
+        <p class="price">À partir de 480 &euro; / nuit</p>
+        <p>Panoramique, 65 m², jacuzzi</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="experience" class="experience">
+  <div class="exp-inner">
+    <div class="exp-text fade-up">
+      <p class="section-tag">L'expérience</p>
+      <h2 class="section-title">Le luxe dans les détails</h2>
+      <p>Maison Rivière incarne l'art de vivre méditerranéen : des matériaux nobles, un service discret et attentionné, et cette lumière unique de la Côte d'Azur.</p>
+      <p>Chaque chambre a été conçue comme un cocon par l'architecte d'intérieur Sophie Vernet, avec des pièces de mobilier chinées et des tissus d'exception.</p>
+      <ul class="exp-features">
+        <li><span class="dot"></span>Petit-déjeuner bio</li>
+        <li><span class="dot"></span>Spa & hammam</li>
+        <li><span class="dot"></span>Conciergerie 24h/24</li>
+        <li><span class="dot"></span>Rooftop bar</li>
+        <li><span class="dot"></span>Wi-Fi haut débit</li>
+        <li><span class="dot"></span>Parking privé</li>
+      </ul>
+    </div>
+    <div class="exp-img fade-up">
+      <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80&auto=format&fit=crop" alt="Expérience">
+    </div>
+  </div>
+</section>
+
+<section class="testimonial">
+  <p class="section-tag fade-up">Témoignages</p>
+  <div class="stars fade-up"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
+  <blockquote class="fade-up">Un lieu magique où chaque détail compte. Le personnel est d'une gentillesse rare. On y reviendra sans hésiter.</blockquote>
+  <p class="author fade-up">— Isabelle & François, Paris</p>
+</section>
+
+<section id="reserver" class="cta">
+  <div class="cta-inner fade-up">
+    <div class="cta-bg"></div>
+    <div class="cta-content">
+      <p class="section-tag">Réservation</p>
+      <h2 class="section-title">Réservez votre séjour</h2>
+      <p>Meilleur tarif garanti en direct. Annulation gratuite jusqu'à 48h avant.</p>
+      <a href="mailto:reservation@maison-riviere.fr" class="btn-gold">Réserver maintenant</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">Maison Rivière</div>
+  <div class="f-links">
+    <a href="#">Chambres</a>
+    <a href="#">Restaurant</a>
+    <a href="#">Contact</a>
+  </div>
+  <p class="f-copy">&copy; 2026 Maison Rivière &middot; Nice</p>
+</footer>
+
+<div class="watermark">
+  Site créé par <span>WebConceptor</span> &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+</div>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
