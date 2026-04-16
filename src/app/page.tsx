@@ -411,51 +411,70 @@ export default function Home() {
                 >
                   Commencer mon site
                 </Link>
+                <p className="text-[12px] text-white/30 text-center mt-4">
+                  Sans Formule Serenite, le site reste tel quel apres livraison.
+                </p>
               </div>
             </div>
 
-            {/* Hosting option card */}
-            <div className="bg-white rounded-2xl border border-[#f5f5f5] p-8 sm:p-10 flex flex-col">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#fafafa] rounded-full text-[12px] font-semibold text-[#737373] mb-6 self-start">
-                <svg className="w-3.5 h-3.5 text-[#0066ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
-                </svg>
-                Option
-              </div>
-              <p className="text-[14px] text-[#737373] font-medium mb-2">Hebergement & maintenance</p>
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-5xl sm:text-6xl font-extrabold tracking-tight text-[#0a0a0a]">50</span>
-                <div className="flex flex-col">
-                  <span className="text-xl font-semibold text-[#a3a3a3]">&euro;</span>
-                  <span className="text-[12px] text-[#a3a3a3] -mt-1">/ mois</span>
+            {/* Hosting + gestion card — THE money maker */}
+            <div className="relative bg-white rounded-2xl border-2 border-[#0066ff] p-8 sm:p-10 flex flex-col overflow-hidden">
+              {/* Subtle blue glow */}
+              <div className="absolute -top-20 -right-20 w-48 h-48 bg-blue-500/[0.06] rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#0066ff] rounded-full text-[12px] font-semibold text-white mb-6 self-start">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
+                  </svg>
+                  Recommande &middot; 90% des clients
                 </div>
-              </div>
-              <p className="text-[14px] text-[#a3a3a3] mb-8 leading-relaxed">
-                Optionnel. On s&apos;occupe de tout pour que votre site reste en ligne et a jour.
-              </p>
-
-              <div className="space-y-3 mb-8 flex-1">
-                {[
-                  "Hebergement rapide et securise",
-                  "Mises a jour & maintenance",
-                  "Sauvegardes automatiques",
-                  "Support prioritaire par email",
-                  "Modifications mineures incluses",
-                  "Renouvellement domaine + SSL",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#0066ff] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    <span className="text-[14px] text-[#525252]">{item}</span>
+                <p className="text-[14px] text-[#0066ff] font-semibold mb-2">Formule Serenite</p>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-5xl sm:text-6xl font-extrabold tracking-tight text-[#0a0a0a]">50</span>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-semibold text-[#a3a3a3]">&euro;</span>
+                    <span className="text-[12px] text-[#a3a3a3] -mt-1">/ mois</span>
                   </div>
-                ))}
-              </div>
-
-              <div className="pt-6 border-t border-[#f5f5f5]">
-                <p className="text-[13px] text-[#a3a3a3] text-center">
-                  Sans engagement &middot; Resiliable a tout moment
+                </div>
+                <p className="text-[14px] text-[#525252] mb-8 leading-relaxed">
+                  Votre site reste <strong className="text-[#0a0a0a]">vivant et a jour</strong>. Un email suffit pour modifier quoi que ce soit.
                 </p>
+
+                <div className="space-y-3.5 mb-8 flex-1">
+                  {[
+                    { text: "Mises a jour du contenu sur simple email", highlight: true },
+                    { text: "Promos, actualites, changements d'horaires", highlight: true },
+                    { text: "Bannieres et animations promotionnelles", highlight: true },
+                    { text: "Hebergement rapide et securise", highlight: false },
+                    { text: "Sauvegardes automatiques quotidiennes", highlight: false },
+                    { text: "Support prioritaire sous 24h", highlight: false },
+                    { text: "Renouvellement domaine + SSL inclus", highlight: false },
+                    { text: "Maintenance technique & securite", highlight: false },
+                  ].map((item) => (
+                    <div key={item.text} className="flex items-center gap-3">
+                      <svg className={`w-4 h-4 flex-shrink-0 ${item.highlight ? "text-[#0066ff]" : "text-emerald-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      <span className={`text-[14px] ${item.highlight ? "text-[#0a0a0a] font-medium" : "text-[#525252]"}`}>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Social proof nudge */}
+                <div className="bg-[#fafafa] border border-[#f5f5f5] rounded-xl p-4 mb-6">
+                  <p className="text-[13px] text-[#525252] leading-relaxed">
+                    <span className="font-semibold text-[#0a0a0a]">&ldquo;Je leur envoie un email et le site est a jour dans la journee.&rdquo;</span>
+                    <br />
+                    <span className="text-[12px] text-[#a3a3a3] mt-1 inline-block">— Marie T., restauratrice a Lyon</span>
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-[13px] text-[#a3a3a3]">
+                    Sans engagement &middot; Resiliable a tout moment
+                  </p>
+                </div>
               </div>
             </div>
           </div>
