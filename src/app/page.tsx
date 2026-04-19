@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
 
-/* ── Data ── */
+/* ══════════════════════════════════════════
+   DATA
+   ══════════════════════════════════════════ */
+
 const sites = [
   { name: "Maison Tête", type: "Restaurant", city: "Lyon", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-tete.html" },
   { name: "Studio Lamarre", type: "Architecte", city: "Paris", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80&auto=format&fit=crop", url: "/exemples/studio-lamarre.html" },
@@ -16,10 +20,50 @@ const sites = [
 ];
 
 const benefits = [
-  { icon: "🔍", title: "Trouvé sur Google", desc: "Vos clients vous cherchent en ligne. Soyez là où ils regardent.", color: "from-blue-500/10 to-indigo-500/10" },
-  { icon: "✨", title: "Crédibilité instantanée", desc: "Un site professionnel inspire confiance dès la première visite.", color: "from-purple-500/10 to-pink-500/10" },
-  { icon: "🕐", title: "Disponible 24h/24", desc: "Votre vitrine ne ferme jamais. Même le dimanche à 3h du matin.", color: "from-amber-500/10 to-orange-500/10" },
-  { icon: "📈", title: "Plus de clients", desc: "Convertissez les visiteurs en rendez-vous, réservations ou appels.", color: "from-emerald-500/10 to-teal-500/10" },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+    ),
+    title: "Trouvé sur Google",
+    desc: "Vos clients vous cherchent en ligne. Soyez là où ils regardent.",
+    color: "from-blue-500/10 to-indigo-500/10",
+    iconBg: "bg-blue-500 text-white"
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+      </svg>
+    ),
+    title: "Crédibilité instantanée",
+    desc: "Un site professionnel inspire confiance dès la première visite.",
+    color: "from-purple-500/10 to-pink-500/10",
+    iconBg: "bg-purple-500 text-white"
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    title: "Disponible 24h/24",
+    desc: "Votre vitrine ne ferme jamais. Même le dimanche à 3h du matin.",
+    color: "from-amber-500/10 to-orange-500/10",
+    iconBg: "bg-amber-500 text-white"
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+      </svg>
+    ),
+    title: "Plus de clients",
+    desc: "Convertissez les visiteurs en rendez-vous, réservations ou appels.",
+    color: "from-emerald-500/10 to-teal-500/10",
+    iconBg: "bg-emerald-500 text-white"
+  },
 ];
 
 const testimonials = [
@@ -50,13 +94,140 @@ const sereniteItems = [
   { text: "Maintenance technique", bold: false },
 ];
 
-/* ── Variants ── */
+const faqs = [
+  {
+    q: "Combien de temps pour livrer un site ?",
+    a: "5 jours ouvrés en moyenne. Dès validation de votre devis, nous concevons la maquette en 48h, puis nous intégrons votre contenu et apportons les ajustements jusqu\u2019à satisfaction complète."
+  },
+  {
+    q: "Que se passe-t-il si je n\u2019aime pas le résultat ?",
+    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 599€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
+  },
+  {
+    q: "Le site est-il vraiment à moi après paiement ?",
+    a: "Oui, 100%. Vous êtes propriétaire du site, du code source, du nom de domaine. Vous pouvez l\u2019héberger où vous voulez, le modifier, le revendre. Nous ne détenons rien."
+  },
+  {
+    q: "Dois-je fournir du contenu ou des photos ?",
+    a: "Non, nous nous occupons de la rédaction et pouvons utiliser des photos libres de droit. Si vous avez vos propres contenus, tant mieux. Sinon, nous créons tout."
+  },
+  {
+    q: "C\u2019est quoi la Formule Sérénité ?",
+    a: "50€/mois pour des mises à jour illimitées sur simple email : promos, actualités, changements d\u2019horaires, nouvelles photos, bannières événementielles. Vous envoyez un email, on applique dans la journée. Sans engagement, résiliable à tout moment."
+  },
+  {
+    q: "Je peux refondre un site existant ?",
+    a: "Oui, c\u2019est même 70% de nos projets. Nous analysons votre site actuel (performance, SEO, design), identifions ce qui fonctionne, et livrons une nouvelle version optimisée — tout en gardant ce qui marche déjà."
+  },
+  {
+    q: "Les paiements sont-ils sécurisés ?",
+    a: "Oui. Tous les paiements passent par Stripe, leader mondial du paiement en ligne (Netflix, Shopify, Zoom l\u2019utilisent). Vos données bancaires ne transitent jamais par nos serveurs."
+  },
+];
+
+/* ══════════════════════════════════════════
+   VARIANTS
+   ══════════════════════════════════════════ */
+
 const ease = [0.16, 1, 0.3, 1] as const;
 const fadeUp = { hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease } } };
 const scaleIn = { hidden: { opacity: 0, scale: 0.96 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease } } };
 const heroWord = { hidden: { opacity: 0, y: 24, filter: "blur(10px)" }, visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.7, ease } } };
 const stagger = (d = 0.1) => ({ hidden: {}, visible: { transition: { staggerChildren: d, delayChildren: 0.1 } } });
 const starPop = { hidden: { opacity: 0, scale: 0 }, visible: { opacity: 1, scale: 1, transition: { type: "spring" as const, stiffness: 400, damping: 15 } } };
+
+/* ══════════════════════════════════════════
+   COUNTER COMPONENT
+   ══════════════════════════════════════════ */
+
+function Counter({ to, suffix = "", duration = 1.8 }: { to: number; suffix?: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = (now - startTime) / 1000;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.floor(eased * to));
+      if (progress < 1) requestAnimationFrame(animate);
+      else setValue(to);
+    };
+    requestAnimationFrame(animate);
+  }, [isInView, to, duration]);
+
+  return <span ref={ref}>{value}{suffix}</span>;
+}
+
+/* ══════════════════════════════════════════
+   FAQ ITEM
+   ══════════════════════════════════════════ */
+
+function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.div
+      variants={fadeUp}
+      className="border-b border-[#eeeeee]"
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full py-5 flex items-center justify-between gap-4 text-left"
+      >
+        <div className="flex items-center gap-4">
+          <span className="text-[12px] font-bold text-[#0066ff] tabular-nums">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="text-[15px] font-semibold text-[#0a0a0a]">{q}</span>
+        </div>
+        <motion.svg
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.3, ease }}
+          className="w-5 h-5 text-[#a3a3a3] flex-shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </motion.svg>
+      </button>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.3, ease }}
+        className="overflow-hidden"
+      >
+        <p className="text-[14px] text-[#525252] leading-relaxed pl-10 pb-5 pr-4">{a}</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   PROXI LOGO (inline SVG style)
+   ══════════════════════════════════════════ */
+
+function ProxiLogo() {
+  return (
+    <div className="flex items-center gap-2 px-5 py-3 bg-[#FFCC00] rounded-xl shadow-sm" title="Proxi Aubenton — Client WebConceptor">
+      <span className="text-[#0a0a0a] font-black text-xl tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        Proxi
+      </span>
+      <span className="w-px h-5 bg-black/20" />
+      <span className="text-[10px] font-semibold text-[#0a0a0a]/70 tracking-wider uppercase">
+        Aubenton
+      </span>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   MAIN
+   ══════════════════════════════════════════ */
 
 export default function Home() {
   return (
@@ -76,7 +247,12 @@ export default function Home() {
             </span>
             <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6 text-[13px] text-[#737373]">
+            <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
+            <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors">Tarif</a>
+            <a href="#faq" className="hover:text-[#0a0a0a] transition-colors">FAQ</a>
+          </div>
+          <div className="flex items-center gap-3">
             <Link href="/code" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
               J&apos;ai un code
             </Link>
@@ -91,12 +267,15 @@ export default function Home() {
       </motion.nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 via-white to-white pointer-events-none" />
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-400/[0.08] to-purple-400/[0.08] rounded-full blur-3xl pointer-events-none glow-orb" />
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden pt-14">
+        {/* Mesh gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-purple-50/30 to-white pointer-events-none" />
+        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-blue-400/[0.15] to-cyan-400/[0.1] rounded-full blur-3xl pointer-events-none glow-orb" />
+        <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-gradient-to-r from-purple-400/[0.12] to-pink-400/[0.08] rounded-full blur-3xl pointer-events-none glow-orb" style={{ animationDelay: "3s" }} />
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(#0a0a0a 1px, transparent 1px), linear-gradient(90deg, #0a0a0a 1px, transparent 1px)`, backgroundSize: "48px 48px" }} />
 
-        <div className="relative z-10">
+        <div className="relative z-10 max-w-4xl">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -105,7 +284,7 @@ export default function Home() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#e5e5e5] rounded-full text-[13px] text-[#525252] mb-10 shadow-sm"
           >
             <span className="w-2 h-2 bg-emerald-500 rounded-full pulse-dot-anim" />
-            50+ sites livrés en France
+            <span>Agence française &middot; Disponible</span>
           </motion.div>
 
           {/* Headline */}
@@ -113,7 +292,7 @@ export default function Home() {
             variants={stagger(0.08)}
             initial="hidden"
             animate="visible"
-            className="text-[clamp(2.5rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-[-0.04em] max-w-3xl mb-8"
+            className="text-[clamp(2.5rem,7vw,5.5rem)] font-extrabold leading-[0.92] tracking-[-0.04em] mb-8"
           >
             {["Création", "&", "refonte"].map((w) => (
               <motion.span key={w} variants={heroWord} className="inline-block mr-[0.2em]">{w}</motion.span>
@@ -132,9 +311,10 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-[#737373] text-lg max-w-md mx-auto mb-10 leading-relaxed"
+            className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Création de sites sur-mesure ou refonte de votre site existant. Design premium, livraison en 5 jours.
+            Design premium, livraison en 5 jours. 599 € tout compris.<br />
+            <span className="text-[#a3a3a3] text-base">Nous créons votre site ou nous améliorons l&apos;existant.</span>
           </motion.p>
 
           {/* CTAs */}
@@ -142,37 +322,95 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.6, ease }}
-            className="flex flex-col sm:flex-row gap-3 justify-center"
+            className="flex flex-col sm:flex-row gap-3 justify-center mb-16"
           >
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/demande" className="px-7 py-3.5 bg-[#0066ff] text-white text-[15px] font-medium rounded-full hover:bg-[#0052cc] transition-colors inline-flex items-center gap-2">
-                Créer mon site
+              <Link href="/demande" className="px-7 py-3.5 bg-[#0a0a0a] text-white text-[15px] font-medium rounded-full hover:bg-[#262626] transition-colors inline-flex items-center gap-2 shadow-lg shadow-black/10">
+                Démarrer mon projet
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
               </Link>
             </motion.div>
-            <a href="#realisations" className="px-7 py-3.5 border border-[#e5e5e5] text-[#525252] text-[15px] font-medium rounded-full hover:border-[#0a0a0a] hover:text-[#0a0a0a] transition-all inline-flex items-center justify-center">
+            <a href="#realisations" className="px-7 py-3.5 bg-white border border-[#e5e5e5] text-[#525252] text-[15px] font-medium rounded-full hover:border-[#0a0a0a] hover:text-[#0a0a0a] transition-all inline-flex items-center justify-center">
               Voir nos réalisations
             </a>
           </motion.div>
 
-          {/* Stats inline */}
+          {/* Animated stats */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="flex items-center justify-center gap-8 mt-16 text-[13px] text-[#a3a3a3]"
+            className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto"
           >
-            <span><strong className="text-[#0a0a0a] text-[15px]">50+</strong> sites livrés</span>
-            <span className="w-px h-4 bg-[#e5e5e5]" />
-            <span><strong className="text-[#0a0a0a] text-[15px]">5 jours</strong> de délai</span>
-            <span className="w-px h-4 bg-[#e5e5e5] hidden sm:block" />
-            <span className="hidden sm:inline"><strong className="text-[#0a0a0a] text-[15px]">100%</strong> satisfaits</span>
+            <div className="text-center">
+              <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0a0a0a]">
+                <Counter to={50} suffix="+" />
+              </p>
+              <p className="text-[12px] text-[#a3a3a3] mt-1 uppercase tracking-wider">Sites livrés</p>
+            </div>
+            <div className="text-center border-x border-[#e5e5e5]">
+              <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0a0a0a]">
+                <Counter to={5} />
+              </p>
+              <p className="text-[12px] text-[#a3a3a3] mt-1 uppercase tracking-wider">Jours de délai</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0a0a0a]">
+                <Counter to={100} suffix="%" />
+              </p>
+              <p className="text-[12px] text-[#a3a3a3] mt-1 uppercase tracking-wider">Satisfaits</p>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ─── POURQUOI UN SITE ? ─── */}
-      <section className="px-6 py-24 bg-gradient-to-b from-[#fafafa] to-white">
+      {/* ─── TRUST BAR (Proxi + clients) ─── */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="border-y border-[#f5f5f5] bg-white/50 backdrop-blur px-6 py-10"
+      >
+        <div className="max-w-6xl mx-auto">
+          <p className="text-center text-[11px] font-semibold text-[#a3a3a3] tracking-[0.2em] uppercase mb-8">
+            Ils nous font confiance
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            <motion.a
+              href="https://proxi-aubenton.onrender.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              className="inline-block"
+            >
+              <ProxiLogo />
+            </motion.a>
+
+            {/* Industry categories */}
+            {[
+              "CABINETS MÉDICAUX",
+              "RESTAURATION",
+              "ARTISANS BTP",
+              "AVOCATS",
+              "HÔTELLERIE",
+            ].map((cat) => (
+              <span
+                key={cat}
+                className="text-[11px] font-semibold text-[#a3a3a3] tracking-[0.15em] hover:text-[#525252] transition-colors"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+          <p className="text-center text-[12px] text-[#a3a3a3] mt-8">
+            Commerces de proximité, professions libérales, artisans et entreprises en France.
+          </p>
+        </div>
+      </motion.section>
+
+      {/* ─── POURQUOI UN SITE ─── */}
+      <section className="px-6 py-24 bg-gradient-to-b from-white to-[#fafafa]">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={fadeUp}
@@ -182,7 +420,8 @@ export default function Home() {
             className="text-center mb-16"
           >
             <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-3">Pourquoi ?</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Un site web, ça change tout.</h2>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">Un site web, ça change tout.</h2>
+            <p className="text-[#737373] mt-4 max-w-md mx-auto">Les 4 raisons pour lesquelles vos concurrents vous prennent des clients.</p>
           </motion.div>
 
           <motion.div
@@ -196,11 +435,13 @@ export default function Home() {
               <motion.div
                 key={b.title}
                 variants={fadeUp}
-                whileHover={{ y: -4 }}
-                className={`rounded-2xl p-6 bg-gradient-to-br ${b.color} border border-white/60`}
+                whileHover={{ y: -6 }}
+                className={`rounded-2xl p-7 bg-gradient-to-br ${b.color} border border-white relative overflow-hidden`}
               >
-                <span className="text-3xl block mb-4">{b.icon}</span>
-                <h3 className="text-[15px] font-bold mb-2">{b.title}</h3>
+                <div className={`w-11 h-11 rounded-xl ${b.iconBg} flex items-center justify-center mb-5 shadow-sm`}>
+                  {b.icon}
+                </div>
+                <h3 className="text-[16px] font-bold mb-2 tracking-tight">{b.title}</h3>
                 <p className="text-[13px] text-[#525252] leading-relaxed">{b.desc}</p>
               </motion.div>
             ))}
@@ -209,7 +450,7 @@ export default function Home() {
       </section>
 
       {/* ─── TEMOIGNAGES ─── */}
-      <section className="px-6 py-24">
+      <section className="px-6 py-24 bg-[#fafafa]">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={fadeUp}
@@ -219,7 +460,7 @@ export default function Home() {
             className="text-center mb-16"
           >
             <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-3">Témoignages</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Ils nous font confiance.</h2>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">Ce qu&apos;ils en disent.</h2>
           </motion.div>
 
           <motion.div
@@ -234,7 +475,7 @@ export default function Home() {
                 key={t.author}
                 variants={fadeUp}
                 whileHover={{ y: -4 }}
-                className="bg-[#fafafa] border border-[#f5f5f5] rounded-2xl p-7"
+                className="bg-white border border-[#f5f5f5] rounded-2xl p-7 shadow-sm"
               >
                 <motion.div variants={stagger(0.06)} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -253,7 +494,7 @@ export default function Home() {
       </section>
 
       {/* ─── REALISATIONS ─── */}
-      <section id="realisations" className="px-4 sm:px-6 py-24 bg-[#fafafa]">
+      <section id="realisations" className="px-4 sm:px-6 py-24 bg-white">
         <div className="max-w-7xl mx-auto">
           <motion.div
             variants={fadeUp}
@@ -263,7 +504,7 @@ export default function Home() {
             className="text-center mb-16"
           >
             <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-3">Portfolio</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Nos réalisations</h2>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">Nos réalisations</h2>
             <p className="text-[#737373] mt-3">Chaque site est unique. Cliquez pour découvrir.</p>
           </motion.div>
 
@@ -306,11 +547,11 @@ export default function Home() {
       </section>
 
       {/* ─── TARIF ─── */}
-      <section id="tarif" className="px-6 py-24">
+      <section id="tarif" className="px-6 py-24 bg-[#fafafa]">
         <div className="max-w-5xl mx-auto">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="text-center mb-16">
             <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-3">Tarif</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Un prix clair. Zéro surprise.</h2>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">Un prix clair. Zéro surprise.</h2>
           </motion.div>
 
           <motion.div variants={stagger(0.15)} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="max-w-3xl mx-auto grid md:grid-cols-2 gap-5">
@@ -330,14 +571,14 @@ export default function Home() {
                   ))}
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link href="/demande" className="block w-full py-3 bg-white text-[#0a0a0a] text-[13px] font-semibold rounded-full text-center">Demander un devis</Link>
+                  <Link href="/demande" className="block w-full py-3 bg-white text-[#0a0a0a] text-[13px] font-semibold rounded-full text-center">Démarrer mon projet</Link>
                 </motion.div>
                 <p className="text-[11px] text-white/20 text-center mt-3">Sans Formule Sérénité, aucune modification après livraison.</p>
               </div>
             </motion.div>
 
             {/* Sérénité */}
-            <motion.div variants={scaleIn} whileHover={{ y: -4, boxShadow: "0 20px 60px -12px rgba(0,102,255,0.12)" }} className="bg-white rounded-2xl border-2 border-[#0066ff] p-8 relative overflow-hidden breathe-border">
+            <motion.div variants={scaleIn} whileHover={{ y: -4, boxShadow: "0 20px 60px -12px rgba(0,102,255,0.15)" }} className="bg-white rounded-2xl border-2 border-[#0066ff] p-8 relative overflow-hidden breathe-border">
               <div className="absolute -top-16 -right-16 w-40 h-40 bg-blue-500/[0.04] rounded-full blur-3xl" />
               <div className="relative z-10">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#0066ff] text-white text-[11px] font-semibold rounded-full mb-4">
@@ -365,38 +606,105 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── FAQ ─── */}
+      <section id="faq" className="px-6 py-24">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            className="text-center mb-12"
+          >
+            <p className="text-[13px] font-semibold text-[#0066ff] tracking-widest uppercase mb-3">FAQ</p>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">Questions fréquentes</h2>
+            <p className="text-[#737373] mt-3">Tout ce que vous devez savoir avant de démarrer.</p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger(0.05)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            className="border-t border-[#eeeeee]"
+          >
+            {faqs.map((faq, i) => (
+              <FaqItem key={faq.q} q={faq.q} a={faq.a} index={i} />
+            ))}
+          </motion.div>
+
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <p className="text-[14px] text-[#737373] mb-4">Une autre question ?</p>
+            <a
+              href="mailto:contact@webconceptor.fr"
+              className="text-[14px] font-semibold text-[#0066ff] hover:underline"
+            >
+              contact@webconceptor.fr →
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ─── CTA FINAL ─── */}
-      <section className="px-6 py-24">
+      <section className="px-6 py-24 bg-[#fafafa]">
         <motion.div variants={scaleIn} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} className="max-w-3xl mx-auto">
-          <div className="relative bg-gradient-to-br from-[#0066ff] to-[#4f46e5] rounded-3xl p-12 sm:p-16 text-center overflow-hidden">
+          <div className="relative bg-gradient-to-br from-[#0066ff] via-[#4f46e5] to-[#7c3aed] rounded-3xl p-12 sm:p-16 text-center overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none float-orb" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none float-orb" style={{ animationDelay: "3s" }} />
             <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">Prêt à lancer votre site ?</h2>
-              <p className="text-white/70 text-lg mb-8 max-w-sm mx-auto">Décrivez votre projet. Réponse sous 48h.</p>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                <Link href="/demande" className="px-8 py-4 bg-white text-[#0066ff] text-[15px] font-semibold rounded-full hover:bg-white/90 transition-colors inline-block">
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">Prêt à lancer votre site ?</h2>
+              <p className="text-white/80 text-lg mb-8 max-w-md mx-auto">Décrivez votre projet en 5 minutes. Réponse garantie sous 48h.</p>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} className="inline-block">
+                <Link href="/demande" className="px-8 py-4 bg-white text-[#0066ff] text-[15px] font-semibold rounded-full hover:bg-white/90 transition-colors inline-flex items-center gap-2 shadow-xl">
                   Créer mon site gratuitement
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                 </Link>
               </motion.div>
+              <p className="text-white/60 text-[12px] mt-5">Gratuit &middot; Sans engagement &middot; Réponse sous 48h</p>
             </div>
           </div>
         </motion.div>
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="border-t border-[#f5f5f5] px-6 py-10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">W</span>
-            </span>
-            <span className="text-[13px] text-[#a3a3a3]">&copy; 2026 WebConceptor</span>
+      <footer className="border-t border-[#f5f5f5] px-6 py-12 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-7 h-7 bg-[#0066ff] rounded-lg flex items-center justify-center">
+                  <span className="text-white text-[11px] font-bold">W</span>
+                </span>
+                <span className="text-[16px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+              </div>
+              <p className="text-[13px] text-[#737373] max-w-xs leading-relaxed">
+                Agence française de création et refonte de sites professionnels.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-6 text-[13px] text-[#737373]">
+              <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
+              <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors">Tarif</a>
+              <a href="#faq" className="hover:text-[#0a0a0a] transition-colors">FAQ</a>
+              <Link href="/code" className="hover:text-[#0a0a0a] transition-colors">J&apos;ai un code</Link>
+              <Link href="/auth/login" className="hover:text-[#0a0a0a] transition-colors">Connexion</Link>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-5 text-[12px] text-[#a3a3a3]">
-            <Link href="/mentions-legales" className="hover:text-[#0a0a0a] transition-colors">Mentions légales</Link>
-            <Link href="/cgu" className="hover:text-[#0a0a0a] transition-colors">CGU</Link>
-            <Link href="/confidentialite" className="hover:text-[#0a0a0a] transition-colors">Confidentialité</Link>
-            <Link href="/auth/login" className="hover:text-[#0a0a0a] transition-colors">Connexion</Link>
+
+          <div className="pt-8 border-t border-[#f5f5f5] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[12px] text-[#a3a3a3]">
+              &copy; 2026 WebConceptor &middot; Fait en France
+            </p>
+            <div className="flex flex-wrap gap-5 text-[12px] text-[#a3a3a3]">
+              <Link href="/mentions-legales" className="hover:text-[#0a0a0a] transition-colors">Mentions légales</Link>
+              <Link href="/cgu" className="hover:text-[#0a0a0a] transition-colors">CGU</Link>
+              <Link href="/confidentialite" className="hover:text-[#0a0a0a] transition-colors">Confidentialité</Link>
+            </div>
           </div>
         </div>
       </footer>
