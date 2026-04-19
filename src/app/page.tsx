@@ -9,7 +9,7 @@ import { motion, useInView } from "framer-motion";
    ══════════════════════════════════════════ */
 
 const sites = [
-  { name: "Proxi Aubenton", type: "Commerce de proximité", city: "Aubenton", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop", url: "https://proxi-aubenton.onrender.com", external: true },
+  { name: "Proxi Aubenton", type: "Commerce de proximité", city: "Aubenton", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop", url: "/exemples/proxi-aubenton.html" },
   { name: "Maison Tête", type: "Restaurant", city: "Lyon", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-tete.html" },
   { name: "Studio Lamarre", type: "Architecte", city: "Paris", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80&auto=format&fit=crop", url: "/exemples/studio-lamarre.html" },
   { name: "Domaine Pontevès", type: "Vigneron", city: "Provence", img: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=900&q=80&auto=format&fit=crop", url: "/exemples/domaine-ponteves.html" },
