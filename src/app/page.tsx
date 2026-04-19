@@ -9,6 +9,7 @@ import { motion, useInView } from "framer-motion";
    ══════════════════════════════════════════ */
 
 const sites = [
+  { name: "Proxi Aubenton", type: "Commerce de proximité", city: "Aubenton", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop", url: "https://proxi-aubenton.onrender.com", external: true },
   { name: "Maison Tête", type: "Restaurant", city: "Lyon", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-tete.html" },
   { name: "Studio Lamarre", type: "Architecte", city: "Paris", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80&auto=format&fit=crop", url: "/exemples/studio-lamarre.html" },
   { name: "Domaine Pontevès", type: "Vigneron", city: "Provence", img: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=900&q=80&auto=format&fit=crop", url: "/exemples/domaine-ponteves.html" },
@@ -213,14 +214,24 @@ function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
 
 function ProxiLogo() {
   return (
-    <div className="flex items-center gap-2 px-5 py-3 bg-[#FFCC00] rounded-xl shadow-sm" title="Proxi Aubenton — Client WebConceptor">
-      <span className="text-[#0a0a0a] font-black text-xl tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-        Proxi
-      </span>
-      <span className="w-px h-5 bg-black/20" />
-      <span className="text-[10px] font-semibold text-[#0a0a0a]/70 tracking-wider uppercase">
-        Aubenton
-      </span>
+    <div className="relative" title="Proxi Aubenton — Client WebConceptor">
+      {/* Main purple rounded badge */}
+      <div className="relative bg-[#6F1A43] rounded-[14px] pl-5 pr-7 py-3 flex items-center gap-1 shadow-sm">
+        <span className="text-white font-black text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "-0.02em" }}>
+          Pr
+        </span>
+        {/* Cart icon in white circle replacing "o" */}
+        <span className="w-7 h-7 bg-white rounded-full flex items-center justify-center">
+          <svg className="w-4 h-4 text-[#6F1A43]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+          </svg>
+        </span>
+        <span className="text-white font-black text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "-0.02em" }}>
+          xi
+        </span>
+      </div>
+      {/* Green dot top-right */}
+      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#8BC34A] rounded-full border-2 border-white"></div>
     </div>
   );
 }
