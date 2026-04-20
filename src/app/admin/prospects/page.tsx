@@ -20,6 +20,8 @@ interface Prospect {
   opened_at: string;
   replied_at: string;
   created_at: string;
+  project_code?: string | null;
+  business_type?: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -109,6 +111,66 @@ export default function AdminProspectsPage() {
       } else {
         const sent = data.results?.filter((r: { status: string }) => r.status === "sent" || r.status === "ready").length || 0;
         addLog(`✓ ${sent}/${data.processed} ${dryRun ? "maquettes générées" : "emails envoyés"}`);
+        loadProspects();
+      }
+    } catch (err) {
+      addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
+    }
+    setLoading(false);
+  };
+
+  const handleExport = (p: Prospect) => {
+    // Download the mockup HTML via the export endpoint.
+    // We put the key in the URL param (safe because it's the user's own browser).
+    const url = `/api/prospect/export?id=${encodeURIComponent(p.id)}&key=${encodeURIComponent(adminKey)}`;
+    // Open in a same-tab navigation → triggers the Content-Disposition attachment
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mockup-${p.slug || p.id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    addLog(`📦 Export HTML lancé : ${p.name}`);
+  };
+
+  const handleGenerateCode = async (p: Prospect) => {
+    if (p.project_code) {
+      // Already has a code → copy it + show
+      const msg =
+        `Code existant pour ${p.name} :\n\n` +
+        `CODE : ${p.project_code}\n` +
+        `Lien : https://webconceptor.fr/code?c=${p.project_code}\n\n` +
+        `Copiez le code ci-dessus et envoyez-le au client.`;
+      alert(msg);
+      navigator.clipboard?.writeText(p.project_code).catch(() => {});
+      return;
+    }
+    if (!confirm(`Générer un code PIN pour ${p.name} ?\n\nCela créera un projet Stripe à 599 € lié à sa maquette. Le code est à envoyer au client, qui l'entrera sur /code pour payer.`)) {
+      return;
+    }
+    setLoading(true);
+    addLog(`Génération code PIN pour ${p.name}...`);
+    try {
+      const res = await fetch("/api/prospect/generate-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addLog(`❌ ${data.error || "Erreur"}`);
+        alert(`Erreur : ${data.error || "inconnue"}`);
+      } else {
+        addLog(`✅ Code ${data.code} généré pour ${p.name}`);
+        navigator.clipboard?.writeText(data.code).catch(() => {});
+        alert(
+          `✅ Code PIN généré !\n\n` +
+          `CODE : ${data.code}\n` +
+          `(copié dans le presse-papier)\n\n` +
+          `Lien client : ${data.code_url}\n\n` +
+          `Envoyez ce code par email au client.\n` +
+          `Il le saisira sur webconceptor.fr/code pour payer.`
+        );
         loadProspects();
       }
     } catch (err) {
@@ -306,8 +368,13 @@ export default function AdminProspectsPage() {
                 return (
                   <div key={p.id} className="p-4 flex items-center gap-4 hover:bg-gray-50">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14px] font-semibold truncate">{p.name}</p>
+                        {p.business_type === "restaurant" ? (
+                          <span className="text-[11px]">🍽️</span>
+                        ) : p.business_type === "epicerie" ? (
+                          <span className="text-[11px]">🛒</span>
+                        ) : null}
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colorClass}`}>
                           {p.status}
                         </span>
@@ -316,18 +383,24 @@ export default function AdminProspectsPage() {
                             ★ {p.google_rating} ({p.google_reviews_count || 0})
                           </span>
                         )}
+                        {p.project_code && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-100 text-indigo-700">
+                            PIN {p.project_code}
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-gray-500 truncate">
                         {p.city} &middot; {p.distance_km} km &middot; {p.email || "pas d'email"}{p.phone ? ` · ${p.phone}` : ""}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       {p.slug && (
                         <a
                           href={`/prospects/${p.slug}`}
                           target="_blank"
                           rel="noopener"
-                          className="px-3 py-1.5 text-[12px] font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+                          className="px-2.5 py-1.5 text-[11px] font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+                          title="Voir la maquette en ligne"
                         >
                           Maquette →
                         </a>
@@ -335,9 +408,37 @@ export default function AdminProspectsPage() {
                       {p.email && p.status === "found" && (
                         <button
                           onClick={() => handleSend(p.id)}
-                          className="px-3 py-1.5 text-[12px] font-semibold bg-[#0066ff] text-white rounded-lg hover:bg-[#0052cc] transition"
+                          disabled={loading}
+                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#0066ff] text-white rounded-lg hover:bg-[#0052cc] transition disabled:opacity-50"
+                          title={dryRun ? "Générer la maquette sans envoyer" : "Envoyer l'email au prospect"}
                         >
                           {dryRun ? "Générer" : "Envoyer"}
+                        </button>
+                      )}
+                      {/* Export HTML — disponible dès qu'une maquette existe */}
+                      {["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
+                        <button
+                          onClick={() => handleExport(p)}
+                          disabled={loading}
+                          className="px-2.5 py-1.5 text-[11px] font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
+                          title="Télécharger le HTML de la maquette"
+                        >
+                          📦 Exporter
+                        </button>
+                      )}
+                      {/* Générer / afficher code PIN — disponible dès qu'une maquette existe */}
+                      {["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
+                        <button
+                          onClick={() => handleGenerateCode(p)}
+                          disabled={loading}
+                          className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition disabled:opacity-50 ${
+                            p.project_code
+                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                              : "bg-black text-white hover:bg-gray-800"
+                          }`}
+                          title={p.project_code ? `Afficher le code ${p.project_code}` : "Générer un code PIN pour le paiement"}
+                        >
+                          {p.project_code ? `🔐 ${p.project_code}` : "🔐 Générer code"}
                         </button>
                       )}
                       {p.website && (
@@ -345,7 +446,8 @@ export default function AdminProspectsPage() {
                           href={p.website}
                           target="_blank"
                           rel="noopener"
-                          className="text-[11px] text-gray-400 hover:text-[#0066ff]"
+                          className="text-[11px] text-gray-400 hover:text-[#0066ff] ml-1"
+                          title="Voir son site actuel"
                         >
                           site
                         </a>

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from("prospects")
-    .select("id, slug, name, city, address, distance_km, phone, website, email, google_rating, google_reviews_count, status, sent_at, opened_at, replied_at, created_at")
+    .select("id, slug, name, city, address, distance_km, phone, website, email, google_rating, google_reviews_count, status, sent_at, opened_at, replied_at, created_at, project_code, business_type")
     .order("created_at", { ascending: false })
     .limit(500);
 

@@ -132,10 +132,12 @@ CREATE INDEX IF NOT EXISTS idx_prospects_status ON public.prospects(status);
 CREATE INDEX IF NOT EXISTS idx_prospects_slug ON public.prospects(slug);
 CREATE INDEX IF NOT EXISTS idx_prospects_email ON public.prospects(email);
 
--- Migration: add business_type + menu_items columns
+-- Migration: add business_type + menu_items + project_code columns
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'epicerie';
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS menu_items JSONB;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS project_code VARCHAR(6);
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
+CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);
 
 -- ============================================
 -- Table bookings (réservations via maquettes restaurant)
