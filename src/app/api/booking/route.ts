@@ -105,7 +105,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Impossible d'enregistrer la reservation" }, { status: 500 });
   }
 
-  // Notify Telegram (admin)
+  // Notif Telegram DÉSACTIVÉE — les réservations sur les maquettes démos
+  // ne sont pas un signal d'appel pour Rubens. Les données restent dans la DB
+  // (table bookings) pour stats / argument de vente ("X réservations déjà !").
+  // Décommenter si besoin :
+  /*
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (token && chatId) {
@@ -131,8 +135,9 @@ export async function POST(req: NextRequest) {
         parse_mode: "HTML",
         disable_web_page_preview: true,
       }),
-    }).catch(() => { /* silent */ });
+    }).catch(() => { });
   }
+  */
 
   return NextResponse.json({
     success: true,

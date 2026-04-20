@@ -24,7 +24,9 @@ export interface RestaurantContent {
   heroTitle: string;
   heroSubtitle: string;
   aboutText: string;
-  menuItems: Array<{ name: string; description: string; price: string; category: "entrée" | "plat" | "dessert" }>;
+  // category can be anything now : "entrée", "plat", "dessert", "pains",
+  // "viennoiseries", "pâtisseries", "soins", "glaces", "crêpes salées", etc.
+  menuItems: Array<{ name: string; description: string; price: string; category: string }>;
   cuisineType: string;
   talkingPoints: string[];
   emailSubject: string;
@@ -168,9 +170,15 @@ export function generateRestaurantMockupHtml(
   const img = (primary: string, fallback: string, alt: string, attrs = "") =>
     `<img src="${esc(primary)}" data-fb="${esc(fallback)}" onerror="var s=this.dataset.s||0;if(s==0){this.dataset.s=1;this.src=this.dataset.fb}else{this.style.display='none'}" alt="${esc(alt)}" ${attrs}>`;
 
-  const entrees = content.menuItems.filter((m) => m.category === "entrée");
-  const plats = content.menuItems.filter((m) => m.category === "plat");
-  const desserts = content.menuItems.filter((m) => m.category === "dessert");
+  // Group items by category (any category — entrée/plat/dessert for resto,
+  // pains/viennoiseries/pâtisseries for boulangerie, etc.)
+  // Preserves insertion order via Map.
+  const grouped = new Map<string, typeof content.menuItems>();
+  for (const m of content.menuItems) {
+    const cat = (m.category || "Carte").trim();
+    if (!grouped.has(cat)) grouped.set(cat, []);
+    grouped.get(cat)!.push(m);
+  }
 
   const menuHtml = (items: typeof content.menuItems) =>
     items
@@ -186,6 +194,23 @@ export function generateRestaurantMockupHtml(
     </div>`
       )
       .join("");
+
+  // Titre section avec 1ère lettre en majuscule
+  const sectionTitle = (cat: string) => {
+    if (!cat) return "Carte";
+    const s = cat.trim();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+
+  // Build all sections dynamically
+  const menuSectionsHtml = Array.from(grouped.entries())
+    .map(
+      ([cat, items]) => `<div class="menu-section">
+      <div class="menu-section-title">${esc(sectionTitle(cat))}</div>
+      ${menuHtml(items)}
+    </div>`
+    )
+    .join("\n    ");
 
   // Build Google Fonts URL
   const fontUrl = `https://fonts.googleapis.com/css2?family=${fontPair.serifParam}&family=${fontPair.sansParam}&family=${fontPair.scriptParam}&display=swap`;
@@ -519,30 +544,7 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
       <h2>Quelques suggestions</h2>
       <p class="menu-subtitle">Produits frais, de saison, travaillés avec passion</p>
     </div>
-    ${
-      entrees.length
-        ? `<div class="menu-section">
-      <div class="menu-section-title">Entrées</div>
-      ${menuHtml(entrees)}
-    </div>`
-        : ""
-    }
-    ${
-      plats.length
-        ? `<div class="menu-section">
-      <div class="menu-section-title">Plats</div>
-      ${menuHtml(plats)}
-    </div>`
-        : ""
-    }
-    ${
-      desserts.length
-        ? `<div class="menu-section">
-      <div class="menu-section-title">Desserts</div>
-      ${menuHtml(desserts)}
-    </div>`
-        : ""
-    }
+    ${menuSectionsHtml}
     <div class="menu-cta">
       <button class="btn-primary" onclick="bkOpen()" style="background:var(--accent);border-color:var(--accent);color:#fff">Réserver une table →</button>
     </div>

@@ -192,26 +192,38 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
   // If we already have a scraped real menu, we don't need Claude to invent dishes
   const hasScrapedMenu = Array.isArray(prospect.menu_items) && prospect.menu_items.length >= 4;
 
-  const prompt = `Tu prépares une maquette de site web premium pour un restaurant français que nous prospectons.
+  const prompt = `Tu prépares une maquette de site web premium pour un établissement français que nous prospectons. Ça peut être : restaurant, brasserie, bistrot, pizzeria, crêperie, boulangerie, pâtisserie, chocolatier, glacier, café, salon de thé, food truck.
 
-Infos du restaurant :
+Infos de l'établissement :
 ${infoLines}
+
+INFÈRE le type précis depuis le nom (ex: "Le Pain Quotidien" → boulangerie, "La Petite Italie" → pizzeria/resto italien, "Aux Délices Sucrés" → pâtisserie).
 
 Génère un objet JSON avec ces clés EXACTEMENT :
 {
-  "heroTitle": "titre hero élégant et court (4-8 mots), évoque l'adresse/la table, PAS le nom du restaurant (il est déjà dans le header)",
-  "heroSubtitle": "phrase d'accroche 12-18 mots, évoque l'ambiance ou la cuisine",
-  "aboutText": "paragraphe 50-80 mots pour la section 'À propos', chaleureux, évoque la cuisine, l'ambiance, la philosophie. Pas de mensonge, reste plausible.",${
+  "heroTitle": "titre hero élégant et court (4-8 mots), évoque l'adresse/l'établissement, PAS le nom (déjà dans le header)",
+  "heroSubtitle": "phrase d'accroche 12-18 mots, évoque l'ambiance, la spécialité ou le savoir-faire",
+  "aboutText": "paragraphe 50-80 mots 'À propos', chaleureux, évoque les produits/l'ambiance/la philosophie. Reste plausible, n'invente rien de spécifique.",${
     hasScrapedMenu
       ? ""
       : `
-  "menuItems": [10 plats max, mélange 3-4 entrées, 4-5 plats, 2-3 desserts], chaque item = { "category": "entrée"|"plat"|"dessert", "name": "nom du plat", "description": "courte description 5-10 mots des ingrédients", "price": "XX€" } — choisis des plats PLAUSIBLES pour ce type de restaurant (si nom italien → italien, si brasserie → brasserie, sinon cuisine française classique). Prix réalistes.`
+  "menuItems": [8 à 12 items ADAPTÉS au type d'établissement avec des catégories pertinentes] :
+    - Pour RESTAURANT / brasserie / bistrot → 3 catégories "entrée" / "plat" / "dessert"
+    - Pour PIZZERIA → "entrée" / "pizza" / "dessert"
+    - Pour BOULANGERIE → "pains" / "viennoiseries" / "pâtisseries"
+    - Pour PÂTISSERIE / chocolatier → "pâtisseries" / "chocolats" / "gâteaux sur commande"
+    - Pour CRÊPERIE → "crêpes salées" / "crêpes sucrées" / "boissons"
+    - Pour GLACIER → "glaces" / "sorbets" / "coupes"
+    - Pour CAFÉ / salon de thé → "boissons" / "douceurs" / "en-cas salés"
+    - Pour FOOD TRUCK → adapte au type de cuisine
+
+    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du produit", "description": "5-10 mots sur les ingrédients/particularités", "price": "X,XX€" ou "XX€" }. Prix réalistes selon le type.`
   }
-  "cuisineType": "type de cuisine en 3-6 mots (ex: 'brasserie française traditionnelle', 'cuisine italienne', 'gastronomie française', 'bistro moderne')",
-  "talkingPoints": [5 bullet points courts (max 12 mots chacun) que le fondateur peut dire au patron par téléphone. Ex: 'Réservations en ligne sans commission', 'Mise à jour de la carte en 2 min via admin'. Focus bénéfices concrets du site WebConceptor : création sur-mesure 599€, livraison 5j, module réservation, admin simple, option Sérénité 50€/mois.],
-  "emailSubject": "objet email, 50 caractères max, personnalisé avec nom restaurant",
+  "cuisineType": "type d'établissement en 3-6 mots (ex: 'brasserie française', 'boulangerie artisanale', 'pâtisserie fine', 'glacier artisanal', 'pizzeria napolitaine')",
+  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 599€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
+  "emailSubject": "objet email, 50 caractères max, personnalisé avec nom établissement",
   "emailOpening": "salutation (Bonjour,)",
-  "emailPitch": "1-2 phrases cordiales : tu as préparé une maquette avec système de réservation en ligne. Mentionne 1 détail réel (ville, note Google>4, etc.) si disponible."
+  "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté (réservation si resto, vitrine produits si boulangerie, etc.). Mentionne 1 détail réel (ville, note Google>4, etc.) si disponible."
 }
 
 Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
@@ -251,10 +263,8 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
     if (!jsonMatch) return fallback;
     const parsed = JSON.parse(jsonMatch[0]);
 
-    // Priorité 1 : si le menu a été scrapé en amont (find), on l'utilise
-    // Priorité 2 : sinon ce que Claude a généré
-    // Priorité 3 : fallback
-    type MenuItem = { category: "entrée" | "plat" | "dessert"; name: string; description: string; price: string };
+    // Priorité 1 : menu scrapé → Priorité 2 : Claude → Priorité 3 : fallback
+    type MenuItem = { category: string; name: string; description: string; price: string };
     let menuItems: MenuItem[] = fallback.menuItems;
     if (hasScrapedMenu) {
       menuItems = prospect.menu_items as MenuItem[];
@@ -262,16 +272,16 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
       const filtered = parsed.menuItems
         .filter((m: unknown): m is MenuItem =>
           typeof m === "object" && m !== null &&
-          ["entrée", "plat", "dessert"].includes((m as { category?: unknown }).category as string) &&
+          typeof (m as { category?: unknown }).category === "string" &&
+          ((m as { category: string }).category).trim().length > 0 &&
           typeof (m as { name?: unknown }).name === "string" &&
-          typeof (m as { description?: unknown }).description === "string" &&
           typeof (m as { price?: unknown }).price === "string"
         )
         .slice(0, 12)
         .map((m: MenuItem) => ({
-          category: m.category,
+          category: String(m.category).slice(0, 30).trim().toLowerCase(),
           name: String(m.name).slice(0, 60),
-          description: String(m.description).slice(0, 120),
+          description: String(m.description || "").slice(0, 120),
           price: String(m.price).slice(0, 10),
         }));
       if (filtered.length >= 4) menuItems = filtered;
