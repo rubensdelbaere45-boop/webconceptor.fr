@@ -209,5 +209,78 @@ footer .f-copy{font-size:11px;color:var(--text-muted)}
 const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
 </script>
+<!-- ═══ WEBCONCEPTOR OVERLAY — home button + demo disclaimer ═══ -->
+<style>
+.wc-home-btn{position:fixed;top:14px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.96);color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,0.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:all 0.2s;font-family:'Inter','Plus Jakarta Sans',system-ui,sans-serif;border:1px solid rgba(0,0,0,0.06);cursor:pointer}
+.wc-home-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.18)}
+.wc-home-btn-logo{width:24px;height:24px;background:#0066ff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;font-family:'Inter',system-ui,sans-serif;flex-shrink:0}
+.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.92);color:#fff;padding:7px 14px;border-radius:100px;font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.2);font-family:'Inter','Plus Jakarta Sans',system-ui,sans-serif;display:inline-flex;align-items:center;gap:6px}
+.wc-demo-badge-dot{width:6px;height:6px;background:#ef4444;border-radius:50%;animation:wcPulse 2s infinite}
+@keyframes wcPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+.wc-demo-modal{position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity 0.4s ease;font-family:'Inter','Plus Jakarta Sans',system-ui,sans-serif}
+.wc-demo-modal.show{opacity:1;pointer-events:auto}
+.wc-demo-modal-box{max-width:480px;width:100%;background:#fff;border-radius:24px;padding:40px 32px;text-align:center;transform:translateY(20px) scale(0.98);transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);box-shadow:0 30px 80px rgba(0,0,0,0.3);color:#0a0a0a}
+.wc-demo-modal.show .wc-demo-modal-box{transform:translateY(0) scale(1)}
+.wc-demo-icon{width:56px;height:56px;background:linear-gradient(135deg,#fee2e2,#fef3c7);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#ef4444}
+.wc-demo-icon svg{width:28px;height:28px}
+.wc-demo-modal h2{font-size:22px;font-weight:800;margin-bottom:12px;letter-spacing:-0.02em;color:#0a0a0a;font-family:inherit}
+.wc-demo-body{font-size:14px;color:#525252;line-height:1.65;margin:0 0 8px}
+.wc-demo-body strong{color:#0a0a0a;font-weight:700}
+.wc-demo-legal{font-size:11px;color:#a3a3a3;margin:18px 0 24px;padding-top:18px;border-top:1px solid #f5f5f5;line-height:1.5}
+.wc-demo-btn{padding:12px 28px;background:#0a0a0a;color:#fff;border:none;border-radius:100px;font-weight:700;cursor:pointer;font-size:13px;letter-spacing:0.02em;transition:background 0.2s;font-family:inherit}
+.wc-demo-btn:hover{background:#262626}
+@media(max-width:600px){
+  .wc-home-btn{padding:7px 12px 7px 7px;font-size:12px;top:10px;left:10px}
+  .wc-home-btn-txt{display:none}
+  .wc-demo-badge{top:10px;right:10px;font-size:9px;padding:6px 10px}
+  .wc-demo-modal-box{padding:32px 24px}
+}
+</style>
+
+<a href="https://webconceptor.fr" class="wc-home-btn" title="Retour à WebConceptor">
+  <span class="wc-home-btn-logo">W</span>
+  <span class="wc-home-btn-txt">Retour à WebConceptor</span>
+</a>
+
+<div class="wc-demo-badge">
+  <span class="wc-demo-badge-dot"></span>
+  Démo
+</div>
+
+<div class="wc-demo-modal" id="wcDemoModal">
+  <div class="wc-demo-modal-box">
+    <div class="wc-demo-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+      </svg>
+    </div>
+    <h2>Maquette de démonstration</h2>
+    <p class="wc-demo-body">Vous consultez une <strong>maquette de démonstration</strong> réalisée par <strong>WebConceptor</strong>.</p>
+    <p class="wc-demo-body">Ce site n'est <strong>pas publié dans son intégralité</strong> : les boutons, formulaires, espaces membres et liens de paiement sont <strong>à titre illustratif</strong>.</p>
+    <p class="wc-demo-legal">Design, code et intégration protégés par le droit d'auteur.<br>Toute reproduction — totale ou partielle — est interdite.</p>
+    <button class="wc-demo-btn" onclick="wcCloseDemoModal()">J'ai compris</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      var m = document.getElementById('wcDemoModal');
+      if (m && !sessionStorage.getItem('wcDemoSeen')) m.classList.add('show');
+    }, 700);
+  });
+  window.wcCloseDemoModal = function(){
+    var m = document.getElementById('wcDemoModal');
+    if (m){ m.classList.remove('show'); sessionStorage.setItem('wcDemoSeen','1'); }
+  };
+  document.addEventListener('click', function(e){
+    if (e.target.classList && e.target.classList.contains('wc-demo-modal')) window.wcCloseDemoModal();
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.wcCloseDemoModal(); });
+})();
+</script>
+<!-- ═══ END WEBCONCEPTOR OVERLAY ═══ -->
+
 </body>
 </html>
