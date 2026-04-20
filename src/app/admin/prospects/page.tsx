@@ -140,12 +140,12 @@ export default function AdminProspectsPage() {
         `Code existant pour ${p.name} :\n\n` +
         `CODE : ${p.project_code}\n` +
         `Lien : https://webconceptor.fr/code?c=${p.project_code}\n\n` +
-        `Copiez le code ci-dessus et envoyez-le au client.`;
+        `(code copié dans le presse-papier)`;
       alert(msg);
       navigator.clipboard?.writeText(p.project_code).catch(() => {});
       return;
     }
-    if (!confirm(`Générer un code PIN pour ${p.name} ?\n\nCela créera un projet Stripe à 599 € lié à sa maquette. Le code est à envoyer au client, qui l'entrera sur /code pour payer.`)) {
+    if (!confirm(`Générer un code PIN pour ${p.name} ?\n\nCela créera un projet Stripe à 599 € lié à sa maquette. Code seulement, pas d'email envoyé.`)) {
       return;
     }
     setLoading(true);
@@ -167,9 +167,46 @@ export default function AdminProspectsPage() {
           `✅ Code PIN généré !\n\n` +
           `CODE : ${data.code}\n` +
           `(copié dans le presse-papier)\n\n` +
-          `Lien client : ${data.code_url}\n\n` +
-          `Envoyez ce code par email au client.\n` +
-          `Il le saisira sur webconceptor.fr/code pour payer.`
+          `Lien client : ${data.code_url}`
+        );
+        loadProspects();
+      }
+    } catch (err) {
+      addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
+    }
+    setLoading(false);
+  };
+
+  const handleSendCodeEmail = async (p: Prospect) => {
+    const action = p.project_code ? "Renvoyer" : "Générer et envoyer";
+    if (!p.email) {
+      alert(`${p.name} n'a pas d'email. Impossible d'envoyer.`);
+      return;
+    }
+    if (!confirm(`${action} l'email avec le code à ${p.name} (${p.email}) ?\n\nL'email premium sera envoyé depuis contact@webconceptor.fr.`)) {
+      return;
+    }
+    setLoading(true);
+    addLog(`Envoi email code à ${p.name}...`);
+    try {
+      const res = await fetch("/api/prospect/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addLog(`❌ ${data.error || "Erreur"}`);
+        alert(`Erreur : ${data.error || "inconnue"}`);
+      } else {
+        addLog(`📧 Code ${data.code} envoyé à ${data.sent_to}`);
+        alert(
+          `📧 Email envoyé !\n\n` +
+          `Destinataire : ${data.sent_to}\n` +
+          `Code : ${data.code}\n\n` +
+          `Le client a reçu un email premium avec le code bien visible, ` +
+          `le bouton vers /code, le lien pour revoir sa maquette, ` +
+          `et le détail des délais (5j site seul / 7j avec option Sérénité).`
         );
         loadProspects();
       }
@@ -433,12 +470,25 @@ export default function AdminProspectsPage() {
                           disabled={loading}
                           className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition disabled:opacity-50 ${
                             p.project_code
-                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                              ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-300"
                               : "bg-black text-white hover:bg-gray-800"
                           }`}
-                          title={p.project_code ? `Afficher le code ${p.project_code}` : "Générer un code PIN pour le paiement"}
+                          title={p.project_code ? `Afficher le code ${p.project_code}` : "Générer un code PIN sans email"}
                         >
-                          {p.project_code ? `🔐 ${p.project_code}` : "🔐 Générer code"}
+                          {p.project_code ? `🔐 ${p.project_code}` : "🔐 Code"}
+                        </button>
+                      )}
+                      {/* Envoyer code par email premium — dès qu'une maquette + email existent */}
+                      {p.email && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
+                        <button
+                          onClick={() => handleSendCodeEmail(p)}
+                          disabled={loading}
+                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
+                          title={p.project_code
+                            ? `Renvoyer l'email avec le code ${p.project_code} à ${p.email}`
+                            : `Générer un code + envoyer email premium à ${p.email}`}
+                        >
+                          {p.project_code ? "📧 Renvoyer" : "📧 Envoyer code"}
                         </button>
                       )}
                       {p.website && (
