@@ -43,6 +43,7 @@ export default function AdminProspectsPage() {
   const [searchQuery, setSearchQuery] = useState("Proxi épicerie France");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "restaurant" | "epicerie">("all");
+  const [searchText, setSearchText] = useState("");
   const [batchSize, setBatchSize] = useState(5);
   const [dryRun, setDryRun] = useState(true);
   const [log, setLog] = useState<string[]>([]);
@@ -334,9 +335,37 @@ export default function AdminProspectsPage() {
   };
 
   // Filtrage par type (client-side) : restaurant / epicerie / all
-  const filteredProspects = typeFilter === "all"
+  // Filtrage par type
+  const typeFiltered = typeFilter === "all"
     ? prospects
     : prospects.filter((p) => (p.business_type || "epicerie") === typeFilter);
+
+  // Recherche texte intelligente : normalise accents + case, match dans plusieurs champs
+  const normalize = (s: string): string =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const filteredProspects = (() => {
+    const q = searchText.trim();
+    if (!q) return typeFiltered;
+    const terms = normalize(q).split(/\s+/).filter(Boolean);
+    return typeFiltered.filter((p) => {
+      const haystack = normalize(
+        [
+          p.name,
+          p.city,
+          p.address,
+          p.email,
+          p.phone,
+          p.website,
+          p.project_code || "",
+          p.business_type || "",
+          p.status,
+        ].filter(Boolean).join(" ")
+      );
+      // Tous les termes doivent matcher (AND)
+      return terms.every((t) => haystack.includes(t));
+    });
+  })();
 
   const stats = {
     total: filteredProspects.length,
@@ -524,6 +553,44 @@ export default function AdminProspectsPage() {
               {loading ? "En cours..." : dryRun ? "Générer les maquettes (test)" : `Envoyer ${batchSize} emails`}
             </button>
           </div>
+        </div>
+
+        {/* Barre de recherche intelligente */}
+        <div className="mb-4 relative">
+          <div className="relative">
+            <svg
+              width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            >
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input
+              type="search"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Rechercher par nom, ville, email, téléphone, code PIN…"
+              className="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl text-[14px] bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+              autoComplete="off"
+            />
+            {searchText && (
+              <button
+                onClick={() => setSearchText("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition"
+                title="Effacer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchText && (
+            <p className="mt-2 text-[12px] text-gray-500">
+              <strong className="text-gray-700">{filteredProspects.length}</strong> résultat{filteredProspects.length !== 1 ? "s" : ""} pour &laquo;&nbsp;{searchText}&nbsp;&raquo;
+            </p>
+          )}
         </div>
 
         {/* Filter par type de commerce */}
