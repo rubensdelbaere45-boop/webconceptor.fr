@@ -112,6 +112,31 @@ async function runCron(req: NextRequest) {
       log.push(`[send] EXCEPTION: ${msg}`);
     }
 
+    // ─── Étape 3 : SMS de relance aux prospects ayant ouvert il y a 2+ jours ───
+    log.push(`[sms-reminders] Recherche prospects à relancer par SMS...`);
+    try {
+      const r = await fetch(`${origin}/api/prospect/sms-reminders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        signal: AbortSignal.timeout(120000),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok) {
+        log.push(`[sms-reminders] ${data.sent || 0}/${data.processed || 0} SMS envoyés (${data.errors || 0} erreurs, ${data.skipped || 0} non mobiles)`);
+        if (typeof data.remaining_credits === "number") {
+          log.push(`[sms-reminders] Crédits restants : ${data.remaining_credits}`);
+        }
+      } else {
+        const msg = `sms-reminders failed: ${data.error || r.status}`;
+        results.errors.push(msg);
+        log.push(`[sms-reminders] ERREUR: ${msg}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      results.errors.push(`sms-reminders: ${msg}`);
+      log.push(`[sms-reminders] EXCEPTION: ${msg}`);
+    }
+
     // ─── Notification Telegram de synthèse ───
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;

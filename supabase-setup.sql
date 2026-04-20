@@ -136,8 +136,10 @@ CREATE INDEX IF NOT EXISTS idx_prospects_email ON public.prospects(email);
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'epicerie';
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS menu_items JSONB;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS project_code VARCHAR(6);
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS sms_reminder_sent_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
 CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);
+CREATE INDEX IF NOT EXISTS idx_prospects_sms_reminder ON public.prospects(sms_reminder_sent_at);
 
 -- ============================================
 -- Table bookings (réservations via maquettes restaurant)
