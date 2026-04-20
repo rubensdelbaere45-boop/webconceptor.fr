@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram, safeCompare } from "@/lib/security";
+import {
+  generateRestaurantMockupHtml,
+  type RestaurantProspect,
+  type RestaurantContent,
+} from "@/lib/mockup-restaurant";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -26,6 +31,7 @@ interface Prospect {
   google_reviews_count?: number;
   photos?: string[];
   hours?: string;
+  business_type?: string;
 }
 
 interface PersonalizedContent {
@@ -124,6 +130,139 @@ Ton : chaleureux, professionnel, francophone France. N'invente PAS d'information
       emailSubject: parsed.emailSubject || fallback.emailSubject,
       emailOpening: parsed.emailOpening || fallback.emailOpening,
       emailPitch: parsed.emailPitch || fallback.emailPitch,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+/* ══════════════════════════════════════════
+   Restaurant personalization — menu + content
+   ══════════════════════════════════════════ */
+
+async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<RestaurantContent> {
+  const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
+
+  const fallback: RestaurantContent = {
+    heroTitle: prospect.name,
+    heroSubtitle: `Une table${prospect.city ? ` à ${prospect.city}` : ""}, pensée pour vous faire vivre un moment.`,
+    aboutText: `Nous vous accueillons dans un cadre chaleureux pour vous faire découvrir une cuisine généreuse, inspirée des produits de saison. Chaque plat est préparé avec soin et passion.`,
+    menuItems: [
+      { category: "entrée", name: "Salade de chèvre chaud", description: "Mesclun, toasts de chèvre, miel, noix grillées", price: "12€" },
+      { category: "entrée", name: "Tartare de saumon", description: "Saumon label rouge, aneth, citron vert, toasts", price: "14€" },
+      { category: "entrée", name: "Velouté du moment", description: "Légumes de saison mijotés, crème fraîche", price: "9€" },
+      { category: "plat", name: "Entrecôte grillée", description: "Pièce maturée 300g, frites maison, sauce au poivre", price: "24€" },
+      { category: "plat", name: "Filet de dorade", description: "Dorade rôtie, légumes de saison, huile d'olive", price: "22€" },
+      { category: "plat", name: "Risotto aux champignons", description: "Arborio crémeux, champignons des bois, parmesan 24 mois", price: "18€" },
+      { category: "plat", name: "Magret de canard", description: "Sauce au miel et épices douces, purée de patates douces", price: "23€" },
+      { category: "dessert", name: "Moelleux au chocolat", description: "Cœur coulant, glace vanille de Madagascar", price: "9€" },
+      { category: "dessert", name: "Tarte fine aux pommes", description: "Pâte feuilletée, pommes caramélisées, crème d'amande", price: "8€" },
+      { category: "dessert", name: "Café gourmand", description: "Expresso, mignardises du jour", price: "9€" },
+    ],
+    emailSubject: `Maquette de votre site pour ${prospect.name}`,
+    emailOpening: `Bonjour,`,
+    emailPitch: `J'ai pris l'initiative de préparer une maquette complète du site web de ${prospect.name}, avec une interface de réservation en ligne intégrée.`,
+  };
+
+  if (!key) return fallback;
+
+  const isOpenRouter = key.startsWith("sk-or-");
+  const endpoint = isOpenRouter
+    ? "https://openrouter.ai/api/v1/chat/completions"
+    : "https://api.anthropic.com/v1/messages";
+
+  const infoLines = [
+    `Nom du restaurant : ${prospect.name}`,
+    prospect.city ? `Ville : ${prospect.city}` : "",
+    prospect.address ? `Adresse : ${prospect.address}` : "",
+    prospect.google_rating ? `Note Google : ${prospect.google_rating}/5 (${prospect.google_reviews_count || 0} avis)` : "",
+    prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
+    prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
+  ].filter(Boolean).join("\n");
+
+  const prompt = `Tu prépares une maquette de site web premium pour un restaurant français que nous prospectons.
+
+Infos du restaurant :
+${infoLines}
+
+Génère un objet JSON avec ces clés EXACTEMENT :
+{
+  "heroTitle": "titre hero élégant et court (4-8 mots), évoque l'adresse/la table, PAS le nom du restaurant (il est déjà dans le header)",
+  "heroSubtitle": "phrase d'accroche 12-18 mots, évoque l'ambiance ou la cuisine",
+  "aboutText": "paragraphe 50-80 mots pour la section 'À propos', chaleureux, évoque la cuisine, l'ambiance, la philosophie. Pas de mensonge, reste plausible.",
+  "menuItems": [10 plats max, mélange 3-4 entrées, 4-5 plats, 2-3 desserts], chaque item = { "category": "entrée"|"plat"|"dessert", "name": "nom du plat", "description": "courte description 5-10 mots des ingrédients", "price": "XX€" } — choisis des plats PLAUSIBLES pour ce type de restaurant (si nom italien → italien, si brasserie → brasserie, sinon cuisine française classique). Prix réalistes.
+  "emailSubject": "objet email, 50 caractères max, personnalisé avec nom restaurant",
+  "emailOpening": "salutation (Bonjour,)",
+  "emailPitch": "1-2 phrases cordiales : tu as préparé une maquette avec système de réservation en ligne. Mentionne 1 détail réel (ville, note Google>4, etc.) si disponible."
+}
+
+Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
+
+  try {
+    const body = isOpenRouter
+      ? {
+          model: "anthropic/claude-haiku-4.5",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 1500,
+          response_format: { type: "json_object" },
+        }
+      : {
+          model: "claude-haiku-4-5",
+          max_tokens: 1500,
+          messages: [{ role: "user", content: prompt }],
+        };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: isOpenRouter
+        ? { "Content-Type": "application/json", "Authorization": `Bearer ${key}` }
+        : { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!res.ok) return fallback;
+
+    const data = await res.json();
+    const raw = isOpenRouter
+      ? data.choices?.[0]?.message?.content
+      : data.content?.[0]?.text;
+    if (!raw) return fallback;
+
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return fallback;
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Validate menu items — must be an array of 4+ items with required fields
+    type MenuItem = { category: "entrée" | "plat" | "dessert"; name: string; description: string; price: string };
+    let menuItems: MenuItem[] = fallback.menuItems;
+    if (Array.isArray(parsed.menuItems) && parsed.menuItems.length >= 4) {
+      const filtered = parsed.menuItems
+        .filter((m: unknown): m is MenuItem =>
+          typeof m === "object" && m !== null &&
+          ["entrée", "plat", "dessert"].includes((m as { category?: unknown }).category as string) &&
+          typeof (m as { name?: unknown }).name === "string" &&
+          typeof (m as { description?: unknown }).description === "string" &&
+          typeof (m as { price?: unknown }).price === "string"
+        )
+        .slice(0, 12)
+        .map((m: MenuItem) => ({
+          category: m.category,
+          name: String(m.name).slice(0, 60),
+          description: String(m.description).slice(0, 120),
+          price: String(m.price).slice(0, 10),
+        }));
+      if (filtered.length >= 4) menuItems = filtered;
+    }
+
+    return {
+      heroTitle: String(parsed.heroTitle || fallback.heroTitle).slice(0, 100),
+      heroSubtitle: String(parsed.heroSubtitle || fallback.heroSubtitle).slice(0, 200),
+      aboutText: String(parsed.aboutText || fallback.aboutText).slice(0, 500),
+      menuItems,
+      emailSubject: String(parsed.emailSubject || fallback.emailSubject).slice(0, 100),
+      emailOpening: String(parsed.emailOpening || fallback.emailOpening).slice(0, 50),
+      emailPitch: String(parsed.emailPitch || fallback.emailPitch).slice(0, 500),
     };
   } catch {
     return fallback;
@@ -472,6 +611,46 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
 </div>`;
 }
 
+function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
+  return `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#1a1310;line-height:1.6;background:#fdfaf5">
+  <p style="font-size:15px;margin-bottom:16px">${escape(content.emailOpening)}</p>
+  <p style="font-size:15px;margin-bottom:20px">${escape(content.emailPitch)}</p>
+
+  <div style="background:#fff;border:1px solid #e8dfd0;padding:28px;margin:24px 0;border-radius:4px;text-align:center">
+    <p style="font-size:12px;color:#8b7e6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre maquette</p>
+    <p style="font-family:Georgia,serif;font-size:24px;font-weight:500;color:#1a1310;margin-bottom:6px">${escape(prospect.name)}</p>
+    ${prospect.city ? `<p style="font-size:13px;color:#8b7e6e;margin-bottom:20px;font-style:italic">${escape(prospect.city)}</p>` : ""}
+    <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:2px;font-weight:600;font-size:13px;letter-spacing:0.15em;text-transform:uppercase">Découvrir ma maquette →</a>
+  </div>
+
+  <p style="font-size:14px;color:#4a4340;margin-bottom:12px"><strong style="color:#1a1310">Ce que votre site inclut :</strong></p>
+  <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px">
+    <li><strong>Page d'accueil premium</strong> avec photos et ambiance</li>
+    <li><strong>Carte complète</strong> avec entrées, plats et desserts</li>
+    <li style="color:#c19a56;font-weight:600">Système de réservation en ligne intégré (le client choisit sa date, son heure, le nombre de couverts)</li>
+    <li>Galerie d'ambiance et informations pratiques</li>
+    <li>Design responsive mobile, tablette, ordinateur</li>
+  </ul>
+
+  <div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
+    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
+    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque réservation vous arrive par email + notification. Vous confirmez d'un clic. Un tableau de bord privé vous permet de voir vos réservations à venir, modifier la carte en 2 minutes, et suivre la fréquentation.</p>
+  </div>
+
+  <p style="font-size:14px;color:#4a4340;margin-bottom:16px">Tarif clair : <strong>599 € HT</strong> pour la mise en ligne complète (livraison 5 jours). Option <strong>Sérénité 50 €/mois</strong> incluant hébergement, mises à jour de la carte, modifications illimitées.</p>
+
+  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Répondez simplement à cet email si vous souhaitez discuter ou modifier quelque chose sur la maquette.</p>
+
+  <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#8b7e6e">
+    <p style="margin-bottom:4px"><strong style="color:#1a1310">Tom Bauer</strong></p>
+    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
+    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
+    <p><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
+  </div>
+  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:16px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
+</div>`;
+}
+
 /* ══════════════════════════════════════════
    POST
    ══════════════════════════════════════════ */
@@ -523,17 +702,39 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const content = await personalizeWithClaude(p);
-      const html = generateMockupHtml(p, content, origin);
+      // Branch by business_type
+      const isRestaurant = p.business_type === "restaurant";
       const mockupUrl = `${origin}/prospects/${p.slug}`;
-      const emailBody = buildEmailBody(p, content, mockupUrl);
+
+      let html: string;
+      let emailBody: string;
+      let emailSubject: string;
+
+      if (isRestaurant) {
+        const restoContent = await personalizeRestaurantWithClaude(p);
+        const restoProspect: RestaurantProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, email: p.email,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          photos: p.photos, hours: p.hours,
+        };
+        html = generateRestaurantMockupHtml(restoProspect, restoContent, origin);
+        emailBody = buildRestaurantEmailBody(p, restoContent, mockupUrl);
+        emailSubject = restoContent.emailSubject;
+      } else {
+        const content = await personalizeWithClaude(p);
+        html = generateMockupHtml(p, content, origin);
+        emailBody = buildEmailBody(p, content, mockupUrl);
+        emailSubject = content.emailSubject;
+      }
 
       // Save mockup + email content to DB
       await supabase
         .from("prospects")
         .update({
           mockup_html: html,
-          email_subject: content.emailSubject,
+          email_subject: emailSubject,
           email_body: emailBody,
           status: dry_run ? "ready" : "sent",
           sent_at: dry_run ? null : new Date().toISOString(),
@@ -541,7 +742,7 @@ export async function POST(req: NextRequest) {
         .eq("id", p.id);
 
       if (!dry_run) {
-        const ok = await sendEmail(p.email, p.name, content.emailSubject, emailBody);
+        const ok = await sendEmail(p.email, p.name, emailSubject, emailBody);
         if (!ok) {
           await supabase
             .from("prospects")

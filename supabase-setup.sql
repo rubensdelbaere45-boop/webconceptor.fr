@@ -131,3 +131,39 @@ CREATE POLICY "Service role only prospects"
 CREATE INDEX IF NOT EXISTS idx_prospects_status ON public.prospects(status);
 CREATE INDEX IF NOT EXISTS idx_prospects_slug ON public.prospects(slug);
 CREATE INDEX IF NOT EXISTS idx_prospects_email ON public.prospects(email);
+
+-- Migration: add business_type + menu_items columns
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'epicerie';
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS menu_items JSONB;
+CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
+
+-- ============================================
+-- Table bookings (réservations via maquettes restaurant)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.bookings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  prospect_id UUID REFERENCES public.prospects(id) ON DELETE CASCADE,
+  prospect_slug TEXT,
+  prospect_name TEXT,
+  customer_name TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  customer_phone TEXT,
+  booking_date DATE NOT NULL,
+  booking_time TEXT NOT NULL,
+  guests INTEGER NOT NULL DEFAULT 2 CHECK (guests > 0 AND guests <= 20),
+  notes TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role only bookings"
+  ON public.bookings FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_prospect ON public.bookings(prospect_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_created ON public.bookings(created_at DESC);

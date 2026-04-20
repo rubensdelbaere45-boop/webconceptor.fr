@@ -195,7 +195,22 @@ export async function POST(req: NextRequest) {
     ? rawBody.query.trim().slice(0, 200)
     : "Proxi épicerie France";
 
-  let stats = { found: 0, inserted: 0, skippedNearby: 0, skippedDuplicate: 0, withEmail: 0 };
+  // business_type : 'epicerie' (default, excludes 350km around Aubenton) | 'restaurant' (no filter)
+  const businessType: string = typeof rawBody.business_type === "string"
+    && ["epicerie", "restaurant"].includes(rawBody.business_type)
+    ? rawBody.business_type
+    : "epicerie";
+
+  // Minimum Google rating filter (restaurants with rating ≥ this value = quality signal)
+  const minRating: number = typeof rawBody.min_rating === "number"
+    && rawBody.min_rating >= 0 && rawBody.min_rating <= 5
+    ? rawBody.min_rating
+    : 0;
+
+  // Only epicerie triggers the 350km exclusion (father's Proxi competition zone)
+  const applyDistanceFilter = businessType === "epicerie";
+
+  let stats = { found: 0, inserted: 0, skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0, withEmail: 0 };
 
   try {
     const places = await searchProxiStores(query, googleKey);
@@ -206,10 +221,16 @@ export async function POST(req: NextRequest) {
     for (const place of places) {
       if (!place.location || !place.displayName?.text) continue;
 
-      // Filter: exclude if too close to Aubenton
+      // Distance filter (only for Proxi / épicerie prospects)
       const dKm = distanceKm(AUBENTON_LAT, AUBENTON_LNG, place.location.latitude, place.location.longitude);
-      if (dKm < EXCLUSION_RADIUS_KM) {
+      if (applyDistanceFilter && dKm < EXCLUSION_RADIUS_KM) {
         stats.skippedNearby++;
+        continue;
+      }
+
+      // Rating filter (restaurants with rating < min_rating are skipped)
+      if (minRating > 0 && (!place.rating || place.rating < minRating)) {
+        stats.skippedLowRating++;
         continue;
       }
 
@@ -258,6 +279,7 @@ export async function POST(req: NextRequest) {
         google_reviews_count: place.userRatingCount || null,
         photos: photos.length ? photos : null,
         hours: place.regularOpeningHours?.weekdayDescriptions?.join(" | ") || "",
+        business_type: businessType,
         status: email ? "found" : "no_email",
       });
 
