@@ -42,9 +42,126 @@ export default function AdminProspectsPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("Proxi épicerie France");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "restaurant" | "epicerie">("all");
   const [batchSize, setBatchSize] = useState(5);
   const [dryRun, setDryRun] = useState(true);
   const [log, setLog] = useState<string[]>([]);
+
+  // State supplémentaire pour Face/Touch ID
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricPrompting, setBiometricPrompting] = useState(false);
+  const [biometricError, setBiometricError] = useState<string | null>(null);
+
+  // Autoload : localStorage garde la clé après fermeture du navigateur.
+  // Si une credential biométrique a été enregistrée, on la demande en plus.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Détection support Face/Touch ID via WebAuthn platform authenticator
+    if (window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) {
+      window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        .then((avail) => setBiometricAvailable(avail))
+        .catch(() => setBiometricAvailable(false));
+    }
+
+    const credId = localStorage.getItem("wc_admin_cred_id");
+    if (credId) setBiometricEnabled(true);
+
+    const storedKey = localStorage.getItem("wc_admin_key");
+    if (storedKey) {
+      setAdminKey(storedKey);
+      // Si Face/Touch ID actif → on demande biométrie avant d'auto-logger
+      // Sinon → auto-login direct
+      if (!credId) {
+        setAuthed(true);
+      }
+      // Sinon on reste sur l'écran de login avec bouton "Se connecter avec Face ID"
+    }
+  }, []);
+
+  // ═══ WebAuthn : enregistrer Face/Touch ID ═══════════════════════
+  const enableBiometric = async () => {
+    setBiometricError(null);
+    setBiometricPrompting(true);
+    try {
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+      const userId = new Uint8Array(16);
+      crypto.getRandomValues(userId);
+
+      const cred = (await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "WebConceptor Admin", id: window.location.hostname },
+          user: { id: userId, name: "admin", displayName: "Admin WebConceptor" },
+          pubKeyCredParams: [
+            { alg: -7, type: "public-key" },
+            { alg: -257, type: "public-key" },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required",
+            residentKey: "preferred",
+          },
+          timeout: 60000,
+        },
+      })) as PublicKeyCredential | null;
+
+      if (!cred) throw new Error("Pas de credential créée");
+
+      const rawId = new Uint8Array(cred.rawId);
+      const credIdBase64 = btoa(String.fromCharCode(...rawId));
+      localStorage.setItem("wc_admin_cred_id", credIdBase64);
+      setBiometricEnabled(true);
+      addLog("✅ Face/Touch ID activé");
+    } catch (err) {
+      setBiometricError(err instanceof Error ? err.message : "Erreur WebAuthn");
+    } finally {
+      setBiometricPrompting(false);
+    }
+  };
+
+  const disableBiometric = () => {
+    localStorage.removeItem("wc_admin_cred_id");
+    setBiometricEnabled(false);
+  };
+
+  // ═══ WebAuthn : authentifier avec Face/Touch ID ════════════════
+  const loginBiometric = async () => {
+    setBiometricError(null);
+    setBiometricPrompting(true);
+    try {
+      const credIdBase64 = localStorage.getItem("wc_admin_cred_id");
+      const storedKey = localStorage.getItem("wc_admin_key");
+      if (!credIdBase64 || !storedKey) {
+        throw new Error("Aucune credential enregistrée");
+      }
+      const rawId = Uint8Array.from(atob(credIdBase64), (c) => c.charCodeAt(0));
+
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ id: rawId, type: "public-key" }],
+          userVerification: "required",
+          timeout: 60000,
+        },
+      })) as PublicKeyCredential | null;
+
+      if (!assertion) throw new Error("Authentification annulée");
+
+      // Success → on active la session
+      setAdminKey(storedKey);
+      setAuthed(true);
+    } catch (err) {
+      setBiometricError(err instanceof Error ? err.message : "Erreur Face ID");
+    } finally {
+      setBiometricPrompting(false);
+    }
+  };
 
   const addLog = (msg: string) => {
     setLog((l) => [`${new Date().toLocaleTimeString()} — ${msg}`, ...l].slice(0, 30));
@@ -216,12 +333,17 @@ export default function AdminProspectsPage() {
     setLoading(false);
   };
 
+  // Filtrage par type (client-side) : restaurant / epicerie / all
+  const filteredProspects = typeFilter === "all"
+    ? prospects
+    : prospects.filter((p) => (p.business_type || "epicerie") === typeFilter);
+
   const stats = {
-    total: prospects.length,
-    with_email: prospects.filter((p) => p.email).length,
-    sent: prospects.filter((p) => p.status === "sent" || p.status === "opened" || p.status === "replied").length,
-    opened: prospects.filter((p) => p.status === "opened" || p.status === "replied").length,
-    replied: prospects.filter((p) => p.status === "replied" || p.status === "converted").length,
+    total: filteredProspects.length,
+    with_email: filteredProspects.filter((p) => p.email).length,
+    sent: filteredProspects.filter((p) => p.status === "sent" || p.status === "opened" || p.status === "replied").length,
+    opened: filteredProspects.filter((p) => p.status === "opened" || p.status === "replied").length,
+    replied: filteredProspects.filter((p) => p.status === "replied" || p.status === "converted").length,
   };
 
   if (!authed) {
@@ -235,8 +357,26 @@ export default function AdminProspectsPage() {
             <h1 className="text-2xl font-bold tracking-tight mt-6">Prospection</h1>
             <p className="text-sm text-gray-500 mt-2">Espace reserve</p>
           </div>
+
           <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-            <form onSubmit={(e) => { e.preventDefault(); setAuthed(true); }} className="space-y-4">
+            {/* Face/Touch ID button si enregistré */}
+            {biometricEnabled && (
+              <>
+                <button
+                  onClick={loginBiometric}
+                  disabled={biometricPrompting}
+                  className="w-full py-4 mb-4 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
+                  </svg>
+                  {biometricPrompting ? "Authentification..." : "Se connecter avec Face ID / Touch ID"}
+                </button>
+                <div className="text-center text-[11px] text-gray-400 mb-4">ou connexion classique</div>
+              </>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); if (typeof window !== "undefined") localStorage.setItem("wc_admin_key", adminKey); setAuthed(true); }} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Cle admin</label>
                 <input
@@ -252,7 +392,17 @@ export default function AdminProspectsPage() {
                 Acceder
               </button>
             </form>
+
+            {biometricError && (
+              <p className="mt-3 text-[12px] text-red-600 text-center">{biometricError}</p>
+            )}
           </div>
+
+          {biometricAvailable && !biometricEnabled && (
+            <p className="text-center text-[11px] text-gray-500 mt-4">
+              💡 Astuce : après connexion, activez Face ID / Touch ID pour un login instantané.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -270,9 +420,28 @@ export default function AdminProspectsPage() {
             <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded">PROSPECTION</span>
           </span>
         </Link>
-        <div className="flex gap-3 text-[13px]">
+        <div className="flex gap-3 text-[13px] items-center">
           <Link href="/admin" className="text-[#737373] hover:text-[#0a0a0a]">← Admin projets</Link>
-          <button onClick={() => setAuthed(false)} className="text-[#a3a3a3] hover:text-[#0a0a0a]">Deconnexion</button>
+          {biometricAvailable && !biometricEnabled && (
+            <button
+              onClick={enableBiometric}
+              disabled={biometricPrompting}
+              className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-[12px] font-semibold hover:bg-blue-100 transition disabled:opacity-50"
+              title="Active Face ID / Touch ID pour les prochaines connexions"
+            >
+              🔒 Activer Face ID
+            </button>
+          )}
+          {biometricEnabled && (
+            <button
+              onClick={disableBiometric}
+              className="text-[12px] text-green-700 border border-green-200 bg-green-50 px-2 py-1 rounded-lg font-medium"
+              title="Face ID activé — cliquer pour désactiver"
+            >
+              ✓ Face ID actif
+            </button>
+          )}
+          <button onClick={() => { if (typeof window !== "undefined") { localStorage.removeItem("wc_admin_key"); localStorage.removeItem("wc_admin_cred_id"); } setAuthed(false); setBiometricEnabled(false); }} className="text-[#a3a3a3] hover:text-[#0a0a0a]">Deconnexion</button>
         </div>
       </nav>
 
@@ -357,9 +526,32 @@ export default function AdminProspectsPage() {
           </div>
         </div>
 
-        {/* Filter */}
+        {/* Filter par type de commerce */}
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <span className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 mr-2">Type :</span>
+          {[
+            { value: "all", label: "Tous", emoji: "" },
+            { value: "restaurant", label: "Restaurateurs", emoji: "🍽️" },
+            { value: "epicerie", label: "Épiceries (Proxi)", emoji: "🛒" },
+          ].map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTypeFilter(t.value as "all" | "restaurant" | "epicerie")}
+              className={`px-4 py-1.5 rounded-full text-[12px] font-semibold transition ${
+                typeFilter === t.value
+                  ? "bg-[#0066ff] text-white shadow-sm"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-[#0066ff] hover:text-[#0066ff]"
+              }`}
+            >
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Filter par statut */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2 flex-wrap">
+            <span className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 mr-2 self-center">Statut :</span>
             {["all", "found", "no_email", "ready", "sent", "opened", "replied", "error"].map((s) => (
               <button
                 key={s}
@@ -394,13 +586,13 @@ export default function AdminProspectsPage() {
 
         {/* Prospects list */}
         <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-          {prospects.length === 0 ? (
+          {filteredProspects.length === 0 ? (
             <div className="p-12 text-center text-[#a3a3a3] text-[14px]">
               Aucun prospect. Lancez une recherche pour commencer.
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {prospects.map((p) => {
+              {filteredProspects.map((p) => {
                 const colorClass = statusColors[p.status] || "bg-gray-100 text-gray-500";
                 return (
                   <div key={p.id} className="p-4 flex items-center gap-4 hover:bg-gray-50">
@@ -435,9 +627,17 @@ export default function AdminProspectsPage() {
                         <a
                           href={`/prospects/${p.slug}`}
                           target="_blank"
-                          rel="noopener"
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            // Force l'ouverture en nouvel onglet via JS (certains
+                            // navigateurs mobiles Safari ignorent target="_blank"
+                            // sur les taps, ce qui navigue dans la MÊME fenêtre et
+                            // déconnecte l'admin quand on fait "retour").
+                            e.preventDefault();
+                            window.open(`/prospects/${p.slug}`, "_blank", "noopener,noreferrer");
+                          }}
                           className="px-2.5 py-1.5 text-[11px] font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition"
-                          title="Voir la maquette en ligne"
+                          title="Voir la maquette en ligne (nouvel onglet)"
                         >
                           Maquette →
                         </a>
