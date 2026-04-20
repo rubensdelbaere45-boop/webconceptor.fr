@@ -18,9 +18,11 @@ export async function GET(req: NextRequest) {
   const status = req.nextUrl.searchParams.get("status") || "all";
   const supabase = getSupabaseAdmin();
 
+  // select * pour survivre aux colonnes optionnelles (project_code, business_type)
+  // qui peuvent ne pas encore exister si la migration n'a pas été lancée.
   let query = supabase
     .from("prospects")
-    .select("id, slug, name, city, address, distance_km, phone, website, email, google_rating, google_reviews_count, status, sent_at, opened_at, replied_at, created_at, project_code, business_type")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(500);
 
