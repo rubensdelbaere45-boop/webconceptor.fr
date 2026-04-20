@@ -133,6 +133,142 @@ async function fetchUrl(url: string, timeout = 8000): Promise<string | null> {
   }
 }
 
+/* ══════════════════════════════════════════
+   MENU SCRAPING — extract real dishes from restaurant website
+   ══════════════════════════════════════════ */
+
+interface ScrapedMenuItem {
+  category: "entrée" | "plat" | "dessert";
+  name: string;
+  description: string;
+  price: string;
+}
+
+// Rough heuristic to strip HTML to readable text (we only need keywords for Claude)
+function stripHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function scrapeRestaurantMenu(website: string): Promise<ScrapedMenuItem[] | null> {
+  const claudeKey = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
+  if (!claudeKey) return null;
+
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return null;
+    const base = new URL(website);
+
+    // Menu-related paths to try, in priority order
+    const paths = [
+      "/menu", "/carte", "/la-carte", "/notre-carte", "/nos-menus", "/menus",
+      "/menu.html", "/carte.html", "/our-menu", "/our-menus", "/",
+    ];
+
+    let bestMenuText: string | null = null;
+    for (const path of paths) {
+      const url = base.origin + path;
+      if (isPrivateOrUnsafeUrl(url)) continue;
+      const html = await fetchUrl(url, 8000);
+      if (!html) continue;
+
+      const text = stripHtml(html);
+      // Heuristic: a menu page usually contains € prices frequently
+      const euroMatches = text.match(/[0-9]{1,3}[.,][0-9]{2}\s*€|€\s*[0-9]{1,3}/g) || [];
+      if (euroMatches.length >= 3) {
+        bestMenuText = text.slice(0, 12000); // cap for Claude
+        break;
+      }
+    }
+
+    if (!bestMenuText) return null;
+
+    // Ask Claude to extract structured items
+    const isOpenRouter = claudeKey.startsWith("sk-or-");
+    const endpoint = isOpenRouter
+      ? "https://openrouter.ai/api/v1/chat/completions"
+      : "https://api.anthropic.com/v1/messages";
+
+    const prompt = `Voici le texte brut extrait d'une page de menu de restaurant français. Extrait les plats dans un format JSON structuré.
+
+Texte du menu (peut contenir du bruit) :
+"""
+${bestMenuText}
+"""
+
+Retourne un JSON tableau de 8 à 12 plats RÉELS trouvés dans ce texte. Format :
+[
+  { "category": "entrée" | "plat" | "dessert", "name": "nom du plat", "description": "courte description 5-12 mots", "price": "XX€" }
+]
+
+Règles STRICTES :
+- N'invente AUCUN plat : si tu n'es pas sûr, ignore.
+- Prix : extrait le prix exact du texte, format "24€" ou "24,50€".
+- Catégorise correctement (entrée / plat / dessert).
+- Description : prends celle du site si présente, sinon résume en 5-10 mots.
+- Si moins de 4 plats identifiables → retourne un tableau vide [].
+- Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
+
+    const body = isOpenRouter
+      ? {
+          model: "anthropic/claude-haiku-4.5",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 1200,
+        }
+      : {
+          model: "claude-haiku-4-5",
+          max_tokens: 1200,
+          messages: [{ role: "user", content: prompt }],
+        };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: isOpenRouter
+        ? { "Content-Type": "application/json", "Authorization": `Bearer ${claudeKey}` }
+        : { "Content-Type": "application/json", "x-api-key": claudeKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(25000),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = isOpenRouter
+      ? data.choices?.[0]?.message?.content
+      : data.content?.[0]?.text;
+    if (!raw) return null;
+
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(parsed) || parsed.length < 4) return null;
+
+    return parsed
+      .filter((m: unknown) =>
+        typeof m === "object" && m !== null &&
+        ["entrée", "plat", "dessert"].includes((m as { category?: string }).category || "") &&
+        typeof (m as { name?: string }).name === "string" &&
+        typeof (m as { price?: string }).price === "string"
+      )
+      .slice(0, 12)
+      .map((m: unknown) => {
+        const x = m as { category: string; name: string; description?: string; price: string };
+        return {
+          category: x.category as "entrée" | "plat" | "dessert",
+          name: String(x.name).slice(0, 60),
+          description: String(x.description || "").slice(0, 120),
+          price: String(x.price).slice(0, 10),
+        };
+      });
+  } catch {
+    return null;
+  }
+}
+
 async function findEmailOnWebsite(website: string): Promise<string | null> {
   try {
     // SSRF : even though URLs come from Google Places, a compromised/malicious
@@ -251,9 +387,15 @@ export async function POST(req: NextRequest) {
 
       // Try scraping email from website (non-blocking)
       let email: string | null = null;
+      let scrapedMenu: ScrapedMenuItem[] | null = null;
       if (place.websiteUri) {
         email = await findEmailOnWebsite(place.websiteUri);
         if (email) stats.withEmail++;
+
+        // For restaurants: try to scrape the REAL menu
+        if (businessType === "restaurant") {
+          scrapedMenu = await scrapeRestaurantMenu(place.websiteUri);
+        }
       }
 
       // Store Google photo references only (NO API key in DB) — served via /api/prospect/photo proxy
@@ -280,6 +422,7 @@ export async function POST(req: NextRequest) {
         photos: photos.length ? photos : null,
         hours: place.regularOpeningHours?.weekdayDescriptions?.join(" | ") || "",
         business_type: businessType,
+        menu_items: scrapedMenu && scrapedMenu.length >= 4 ? scrapedMenu : null,
         status: email ? "found" : "no_email",
       });
 

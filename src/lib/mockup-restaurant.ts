@@ -24,6 +24,8 @@ export interface RestaurantContent {
   heroSubtitle: string;
   aboutText: string;
   menuItems: Array<{ name: string; description: string; price: string; category: "entrée" | "plat" | "dessert" }>;
+  cuisineType: string;
+  talkingPoints: string[];
   emailSubject: string;
   emailOpening: string;
   emailPitch: string;

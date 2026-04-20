@@ -32,6 +32,7 @@ interface Prospect {
   photos?: string[];
   hours?: string;
   business_type?: string;
+  menu_items?: Array<{ category: "entrée" | "plat" | "dessert"; name: string; description: string; price: string }> | null;
 }
 
 interface PersonalizedContent {
@@ -159,6 +160,14 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       { category: "dessert", name: "Tarte fine aux pommes", description: "Pâte feuilletée, pommes caramélisées, crème d'amande", price: "8€" },
       { category: "dessert", name: "Café gourmand", description: "Expresso, mignardises du jour", price: "9€" },
     ],
+    cuisineType: "cuisine française traditionnelle",
+    talkingPoints: [
+      "Site vitrine personnalisé avec votre identité",
+      "Module de réservation en ligne intégré (sans commission)",
+      "Espace admin pour gérer la carte en 2 minutes",
+      "Livraison en 5 jours pour 599 € HT",
+      "Option Sérénité 50 €/mois : mises à jour illimitées",
+    ],
     emailSubject: `Maquette de votre site pour ${prospect.name}`,
     emailOpening: `Bonjour,`,
     emailPitch: `J'ai pris l'initiative de préparer une maquette complète du site web de ${prospect.name}, avec une interface de réservation en ligne intégrée.`,
@@ -180,6 +189,9 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
   ].filter(Boolean).join("\n");
 
+  // If we already have a scraped real menu, we don't need Claude to invent dishes
+  const hasScrapedMenu = Array.isArray(prospect.menu_items) && prospect.menu_items.length >= 4;
+
   const prompt = `Tu prépares une maquette de site web premium pour un restaurant français que nous prospectons.
 
 Infos du restaurant :
@@ -189,8 +201,14 @@ Génère un objet JSON avec ces clés EXACTEMENT :
 {
   "heroTitle": "titre hero élégant et court (4-8 mots), évoque l'adresse/la table, PAS le nom du restaurant (il est déjà dans le header)",
   "heroSubtitle": "phrase d'accroche 12-18 mots, évoque l'ambiance ou la cuisine",
-  "aboutText": "paragraphe 50-80 mots pour la section 'À propos', chaleureux, évoque la cuisine, l'ambiance, la philosophie. Pas de mensonge, reste plausible.",
-  "menuItems": [10 plats max, mélange 3-4 entrées, 4-5 plats, 2-3 desserts], chaque item = { "category": "entrée"|"plat"|"dessert", "name": "nom du plat", "description": "courte description 5-10 mots des ingrédients", "price": "XX€" } — choisis des plats PLAUSIBLES pour ce type de restaurant (si nom italien → italien, si brasserie → brasserie, sinon cuisine française classique). Prix réalistes.
+  "aboutText": "paragraphe 50-80 mots pour la section 'À propos', chaleureux, évoque la cuisine, l'ambiance, la philosophie. Pas de mensonge, reste plausible.",${
+    hasScrapedMenu
+      ? ""
+      : `
+  "menuItems": [10 plats max, mélange 3-4 entrées, 4-5 plats, 2-3 desserts], chaque item = { "category": "entrée"|"plat"|"dessert", "name": "nom du plat", "description": "courte description 5-10 mots des ingrédients", "price": "XX€" } — choisis des plats PLAUSIBLES pour ce type de restaurant (si nom italien → italien, si brasserie → brasserie, sinon cuisine française classique). Prix réalistes.`
+  }
+  "cuisineType": "type de cuisine en 3-6 mots (ex: 'brasserie française traditionnelle', 'cuisine italienne', 'gastronomie française', 'bistro moderne')",
+  "talkingPoints": [5 bullet points courts (max 12 mots chacun) que le fondateur peut dire au patron par téléphone. Ex: 'Réservations en ligne sans commission', 'Mise à jour de la carte en 2 min via admin'. Focus bénéfices concrets du site WebConceptor : création sur-mesure 599€, livraison 5j, module réservation, admin simple, option Sérénité 50€/mois.],
   "emailSubject": "objet email, 50 caractères max, personnalisé avec nom restaurant",
   "emailOpening": "salutation (Bonjour,)",
   "emailPitch": "1-2 phrases cordiales : tu as préparé une maquette avec système de réservation en ligne. Mentionne 1 détail réel (ville, note Google>4, etc.) si disponible."
@@ -233,10 +251,14 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
     if (!jsonMatch) return fallback;
     const parsed = JSON.parse(jsonMatch[0]);
 
-    // Validate menu items — must be an array of 4+ items with required fields
+    // Priorité 1 : si le menu a été scrapé en amont (find), on l'utilise
+    // Priorité 2 : sinon ce que Claude a généré
+    // Priorité 3 : fallback
     type MenuItem = { category: "entrée" | "plat" | "dessert"; name: string; description: string; price: string };
     let menuItems: MenuItem[] = fallback.menuItems;
-    if (Array.isArray(parsed.menuItems) && parsed.menuItems.length >= 4) {
+    if (hasScrapedMenu) {
+      menuItems = prospect.menu_items as MenuItem[];
+    } else if (Array.isArray(parsed.menuItems) && parsed.menuItems.length >= 4) {
       const filtered = parsed.menuItems
         .filter((m: unknown): m is MenuItem =>
           typeof m === "object" && m !== null &&
@@ -255,11 +277,23 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
       if (filtered.length >= 4) menuItems = filtered;
     }
 
+    // Validate talkingPoints (array of strings)
+    let talkingPoints = fallback.talkingPoints;
+    if (Array.isArray(parsed.talkingPoints)) {
+      const tp = parsed.talkingPoints
+        .filter((t: unknown): t is string => typeof t === "string" && t.length > 0)
+        .slice(0, 6)
+        .map((t: string) => t.slice(0, 120));
+      if (tp.length >= 2) talkingPoints = tp;
+    }
+
     return {
       heroTitle: String(parsed.heroTitle || fallback.heroTitle).slice(0, 100),
       heroSubtitle: String(parsed.heroSubtitle || fallback.heroSubtitle).slice(0, 200),
       aboutText: String(parsed.aboutText || fallback.aboutText).slice(0, 500),
       menuItems,
+      cuisineType: String(parsed.cuisineType || fallback.cuisineType).slice(0, 80),
+      talkingPoints,
       emailSubject: String(parsed.emailSubject || fallback.emailSubject).slice(0, 100),
       emailOpening: String(parsed.emailOpening || fallback.emailOpening).slice(0, 50),
       emailPitch: String(parsed.emailPitch || fallback.emailPitch).slice(0, 500),
@@ -752,13 +786,36 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        await notifyTelegram(
-          `📧 <b>Prospect contacté</b>\n\n` +
-          `<b>${escapeTelegram(p.name)}</b>\n${p.city ? escapeTelegram(p.city) + " · " : ""}${escapeTelegram(p.phone || "")}\n` +
-          `Email : ${escapeTelegram(p.email)}\n` +
-          `Note : ${p.google_rating ? escapeTelegram(String(p.google_rating)) : "?"}/5\n\n` +
-          `<a href="${escapeTelegram(mockupUrl)}">Voir la maquette</a>`
-        );
+        if (isRestaurant) {
+          // Rich restaurant notif with cuisine + talking points for phone follow-up
+          const restoContent = await personalizeRestaurantWithClaude(p);
+          const talkingPointsTxt = restoContent.talkingPoints
+            .slice(0, 5)
+            .map((t, i) => `${i + 1}. ${escapeTelegram(t)}`)
+            .join("\n");
+          await notifyTelegram(
+            `🍽️ <b>Restaurant contacté</b>\n\n` +
+            `<b>${escapeTelegram(p.name)}</b>\n` +
+            `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
+            `📞 <b>${escapeTelegram(p.phone || "pas de tél")}</b>\n` +
+            `✉️ ${escapeTelegram(p.email)}\n` +
+            `🍴 ${escapeTelegram(restoContent.cuisineType)}\n` +
+            `⭐ ${p.google_rating ? escapeTelegram(String(p.google_rating)) : "?"}/5 (${p.google_reviews_count || 0} avis)\n\n` +
+            `<b>💬 Grandes lignes pour l'appel :</b>\n${talkingPointsTxt}\n\n` +
+            `<a href="${escapeTelegram(mockupUrl)}">→ Voir la maquette</a>`
+          );
+        } else {
+          // Compact épicerie notif
+          await notifyTelegram(
+            `📧 <b>Prospect contacté</b>\n\n` +
+            `<b>${escapeTelegram(p.name)}</b>\n` +
+            `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
+            `📞 <b>${escapeTelegram(p.phone || "pas de tél")}</b>\n` +
+            `✉️ ${escapeTelegram(p.email)}\n` +
+            `⭐ ${p.google_rating ? escapeTelegram(String(p.google_rating)) : "?"}/5\n\n` +
+            `<a href="${escapeTelegram(mockupUrl)}">→ Voir la maquette</a>`
+          );
+        }
       }
 
       results.push({ id: p.id, name: p.name, status: dry_run ? "ready" : "sent" });
