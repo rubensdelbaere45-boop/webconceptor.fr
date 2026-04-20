@@ -337,6 +337,69 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .wc-watermark strong{color:#fff;letter-spacing:0.15em}
 .wc-watermark a{color:var(--accent);font-weight:700}
 
+/* Sticky CTA Bar ("Obtenir ce site") — au-dessus du watermark */
+.wc-cta-bar{position:fixed;bottom:34px;left:0;right:0;z-index:9997;background:linear-gradient(135deg,var(--deep) 0%,var(--ink) 100%);padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;box-shadow:0 -8px 30px rgba(0,0,0,0.25);border-top:2px solid var(--accent)}
+.wc-cta-bar-text{color:#fff;font-size:14px;font-weight:500;letter-spacing:0.02em}
+.wc-cta-bar-text strong{color:var(--accent);font-weight:700}
+.wc-cta-bar-btn{padding:12px 28px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;border-radius:2px;cursor:pointer;border:none;transition:all 0.25s;font-family:var(--sans)}
+.wc-cta-bar-btn:hover{background:#fff;color:var(--ink);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+
+/* Purchase Modal — similaire en style à bk-modal mais dédié à l'achat */
+.pm-overlay{position:fixed;inset:0;z-index:10001;background:var(--shadow);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px;opacity:0}
+.pm-overlay.open{display:flex;opacity:1;animation:bkFadeIn 0.4s ease}
+.pm-modal{background:var(--warm);max-width:640px;width:100%;max-height:94vh;overflow-y:auto;border-radius:4px;position:relative;animation:bkSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);box-shadow:0 40px 100px rgba(0,0,0,0.4)}
+.pm-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;color:var(--ink);transition:all 0.2s;z-index:2;border:none;cursor:pointer}
+.pm-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
+.pm-header{padding:44px 48px 24px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.08)}
+.pm-kicker{font-family:var(--script);font-size:26px;color:var(--accent);margin-bottom:4px}
+.pm-header h3{font-family:var(--serif);font-size:30px;font-weight:500;color:var(--ink)}
+.pm-header p{font-size:13px;color:var(--stone);margin-top:8px}
+.pm-body{padding:28px 48px 24px}
+.pm-label{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone);margin-bottom:14px;display:block}
+
+/* Plan cards */
+.pm-plans{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.pm-plan{border:1.5px solid rgba(0,0,0,0.08);border-radius:4px;padding:20px 16px;cursor:pointer;transition:all 0.2s;background:#fff;position:relative}
+.pm-plan:hover{border-color:var(--accent)}
+.pm-plan.selected{border-color:var(--accent);background:var(--cream);box-shadow:0 4px 16px rgba(0,0,0,0.05)}
+.pm-plan.recommended::before{content:'RECOMMANDÉ';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:9px;font-weight:800;letter-spacing:0.18em;padding:3px 10px;border-radius:100px}
+.pm-plan-title{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.pm-plan-price{font-family:var(--serif);font-size:22px;color:var(--accent);font-weight:600;margin-bottom:2px}
+.pm-plan-price-sub{font-size:11px;color:var(--stone);margin-bottom:14px}
+.pm-plan ul{list-style:none;padding:0;margin:0}
+.pm-plan li{font-size:12px;color:var(--ink);padding:4px 0 4px 18px;position:relative;line-height:1.4}
+.pm-plan li::before{content:'✓';position:absolute;left:0;color:var(--accent);font-weight:700}
+
+/* Form fields */
+.pm-field{margin-bottom:16px}
+.pm-row{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.pm-field label{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--stone);margin-bottom:6px;display:block}
+.pm-field input,.pm-field select{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:2px;background:#fff;font-family:var(--sans);font-size:14px;color:var(--ink);outline:none;transition:border-color 0.2s}
+.pm-field input:focus,.pm-field select:focus{border-color:var(--accent)}
+
+/* Domain row avec indicateur de dispo */
+.pm-domain-row{display:grid;grid-template-columns:1fr 110px;gap:6px;align-items:stretch}
+.pm-domain-row input{padding-right:14px}
+.pm-domain-status{font-size:12px;color:var(--stone);margin-top:6px;min-height:18px}
+.pm-domain-status.ok{color:#2e7d32}
+.pm-domain-status.ko{color:#c62828}
+.pm-domain-status.loading{color:var(--accent)}
+
+/* Total */
+.pm-total{background:var(--cream);padding:18px 20px;border-radius:4px;margin:20px 0}
+.pm-total-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:var(--ink)}
+.pm-total-row.grand{font-family:var(--serif);font-size:22px;font-weight:600;border-top:1.5px solid rgba(0,0,0,0.12);padding-top:12px;margin-top:8px}
+.pm-total-row.grand span:last-child{color:var(--accent)}
+
+/* Submit */
+.pm-submit{width:100%;padding:18px;background:var(--ink);color:#fff;font-size:14px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;border-radius:2px;cursor:pointer;border:none;transition:all 0.25s}
+.pm-submit:hover:not(:disabled){background:var(--accent)}
+.pm-submit:disabled{opacity:0.4;cursor:not-allowed}
+.pm-legal{font-size:11px;color:var(--stone);text-align:center;margin-top:12px;line-height:1.5}
+.pm-legal a{color:var(--accent);text-decoration:none}
+.pm-error{color:#c62828;font-size:13px;margin-top:12px;text-align:center;display:none}
+.pm-error.show{display:block}
+
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
@@ -576,7 +639,16 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
   .bk-times{grid-template-columns:repeat(4,1fr)}
   .bk-guests{grid-template-columns:repeat(5,1fr)}
   body::after{font-size:60px}
+  .pm-modal{max-height:96vh}
+  .pm-header,.pm-body{padding-left:24px;padding-right:24px}
+  .pm-plans{grid-template-columns:1fr}
+  .pm-row{grid-template-columns:1fr}
+  .wc-cta-bar{bottom:34px;padding:10px 14px}
+  .wc-cta-bar-text{font-size:12px;text-align:center;flex:1 1 100%}
+  .wc-cta-bar-btn{padding:10px 18px;font-size:11px}
 }
+/* Padding-bottom sur le body pour ne pas cacher les sections derrière le CTA + watermark */
+body{padding-bottom:110px}
 </style>
 </head>
 <body>
@@ -840,6 +912,115 @@ ${
   </div>
 </div>
 
+<!-- Sticky CTA Bar — 'Obtenir ce site' -->
+<div class="wc-cta-bar">
+  <span class="wc-cta-bar-text">Ce site vous plaît ? <strong>Obtenez-le pour 599 € TTC</strong></span>
+  <button class="wc-cta-bar-btn" onclick="pmOpen()">J'achète ce site →</button>
+</div>
+
+<!-- Purchase Modal -->
+<div class="pm-overlay" id="pm-overlay" onclick="if(event.target===this)pmClose()">
+  <div class="pm-modal">
+    <button class="pm-close" onclick="pmClose()" aria-label="Fermer">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+
+    <div class="pm-header">
+      <div class="pm-kicker">Votre site web</div>
+      <h3>${esc(prospect.name)}</h3>
+      <p>Commande en 2 minutes, livraison en 5 à 7 jours</p>
+    </div>
+
+    <div class="pm-body">
+      <span class="pm-label">Choisissez votre formule</span>
+      <div class="pm-plans">
+        <div class="pm-plan selected" data-plan="simple" onclick="pmSelectPlan('simple')">
+          <div class="pm-plan-title">Simple</div>
+          <div class="pm-plan-price">599 €</div>
+          <div class="pm-plan-price-sub">Paiement unique TTC · 3× sans frais dispo</div>
+          <ul>
+            <li>Livraison en 5 jours</li>
+            <li>Design premium responsive</li>
+            <li>Module réservation intégré</li>
+            <li>URL provisoire WebConceptor</li>
+            <li>2 rounds de modifications</li>
+          </ul>
+        </div>
+        <div class="pm-plan recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
+          <div class="pm-plan-title">Sérénité</div>
+          <div class="pm-plan-price">599 € + 50 €/mois</div>
+          <div class="pm-plan-price-sub">+ prix du nom de domaine (~10-60 €/an)</div>
+          <ul>
+            <li>Livraison en 7 jours</li>
+            <li>Votre nom de domaine <strong>.fr .com</strong> etc.</li>
+            <li>Hébergement inclus à vie</li>
+            <li>Emails pros (contact@votresite.fr)</li>
+            <li><strong>Modifications illimitées</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="pm-domain-block" style="display:none">
+        <span class="pm-label">Nom de domaine souhaité</span>
+        <div class="pm-domain-row">
+          <input type="text" id="pm-domain-name" maxlength="63" placeholder="monrestaurant" autocomplete="off">
+          <select id="pm-domain-tld">
+            <option value="fr">.fr</option>
+            <option value="com">.com</option>
+            <option value="eu">.eu</option>
+            <option value="net">.net</option>
+            <option value="org">.org</option>
+            <option value="bio">.bio</option>
+            <option value="shop">.shop</option>
+          </select>
+        </div>
+        <div class="pm-domain-status" id="pm-domain-status">Commencez à taper pour vérifier la disponibilité</div>
+      </div>
+
+      <span class="pm-label">Vos coordonnées (facturation)</span>
+      <div class="pm-field">
+        <label for="pm-nom">Nom complet</label>
+        <input type="text" id="pm-nom" maxlength="120" placeholder="Jean Dupont" autocomplete="name">
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-email">Email</label>
+          <input type="email" id="pm-email" maxlength="200" placeholder="jean@monresto.fr" autocomplete="email">
+        </div>
+        <div class="pm-field">
+          <label for="pm-tel">Téléphone</label>
+          <input type="tel" id="pm-tel" maxlength="30" placeholder="06 12 34 56 78" autocomplete="tel">
+        </div>
+      </div>
+      <div class="pm-field">
+        <label for="pm-adresse">Adresse</label>
+        <input type="text" id="pm-adresse" maxlength="200" placeholder="12 rue de la République" autocomplete="street-address">
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-ville">Ville</label>
+          <input type="text" id="pm-ville" maxlength="100" placeholder="Paris" autocomplete="address-level2">
+        </div>
+        <div class="pm-field">
+          <label for="pm-cp">Code postal</label>
+          <input type="text" id="pm-cp" maxlength="20" placeholder="75004" autocomplete="postal-code">
+        </div>
+      </div>
+
+      <div class="pm-total">
+        <div class="pm-total-row"><span>Site web</span><span>599,00 €</span></div>
+        <div class="pm-total-row" id="pm-total-domain" style="display:none"><span id="pm-total-domain-label">Nom de domaine</span><span id="pm-total-domain-price">—</span></div>
+        <div class="pm-total-row" id="pm-total-serenite" style="display:none"><span>Formule Sérénité (1er mois)</span><span>50,00 €</span></div>
+        <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">599,00 €</span></div>
+      </div>
+
+      <button class="pm-submit" id="pm-submit" onclick="pmSubmit()">Payer en ligne (Stripe)</button>
+      <p class="pm-legal">Paiement sécurisé · 1× ou 3× sans frais via Klarna · Facture envoyée après paiement</p>
+      <p class="pm-error" id="pm-error"></p>
+    </div>
+  </div>
+</div>
+
 <div class="wc-watermark">
   Maquette conçue par <strong>WEBCONCEPTOR</strong> &middot;
   <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a> &middot;
@@ -1033,6 +1214,187 @@ function bkBuildSummary() {
 }
 
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") bkClose(); });
+
+// ─── Purchase Modal ─────────────────────────────────
+const PM = {
+  plan: "simple",
+  domainAvailable: false,
+  domainPriceCents: 0,
+  domainCheckTimer: null,
+};
+
+function pmOpen() {
+  document.getElementById("pm-overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function pmClose() {
+  document.getElementById("pm-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function pmSelectPlan(plan) {
+  PM.plan = plan;
+  document.querySelectorAll(".pm-plan").forEach((el) => {
+    el.classList.toggle("selected", el.dataset.plan === plan);
+  });
+  document.getElementById("pm-domain-block").style.display = plan === "serenite" ? "" : "none";
+  document.getElementById("pm-total-domain").style.display = (plan === "serenite" && PM.domainAvailable) ? "flex" : "none";
+  document.getElementById("pm-total-serenite").style.display = plan === "serenite" ? "flex" : "none";
+  pmUpdateTotal();
+  pmUpdateSubmit();
+}
+
+function pmUpdateTotal() {
+  let cents = 59900;
+  if (PM.plan === "serenite") {
+    cents += 5000;
+    if (PM.domainAvailable) cents += PM.domainPriceCents;
+  }
+  document.getElementById("pm-total-grand").textContent = (cents / 100).toFixed(2).replace(".", ",") + " €";
+}
+
+function pmUpdateSubmit() {
+  const nom = document.getElementById("pm-nom").value.trim();
+  const email = document.getElementById("pm-email").value.trim();
+  const tel = document.getElementById("pm-tel").value.trim();
+  const adr = document.getElementById("pm-adresse").value.trim();
+  const ville = document.getElementById("pm-ville").value.trim();
+  const cp = document.getElementById("pm-cp").value.trim();
+  let valid = nom.length >= 2
+    && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/.test(email)
+    && tel.length >= 6
+    && adr.length >= 3
+    && ville.length >= 2
+    && cp.length >= 2;
+  if (PM.plan === "serenite") {
+    // En Sérénité, soit on a un domaine disponible, soit on accepte sans domaine (il choisira plus tard)
+    // valid reste true
+  }
+  document.getElementById("pm-submit").disabled = !valid;
+}
+
+async function pmCheckDomain() {
+  const name = (document.getElementById("pm-domain-name").value || "").trim().toLowerCase();
+  const tld = document.getElementById("pm-domain-tld").value;
+  const statusEl = document.getElementById("pm-domain-status");
+
+  if (!name || !/^[a-z0-9](-?[a-z0-9])+$/i.test(name)) {
+    PM.domainAvailable = false;
+    PM.domainPriceCents = 0;
+    statusEl.className = "pm-domain-status";
+    statusEl.textContent = "Commencez à taper pour vérifier la disponibilité";
+    document.getElementById("pm-total-domain").style.display = "none";
+    pmUpdateTotal();
+    return;
+  }
+
+  statusEl.className = "pm-domain-status loading";
+  statusEl.textContent = "Vérification en cours…";
+
+  try {
+    const res = await fetch("/api/domain-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullDomain: name + "." + tld }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.className = "pm-domain-status ko";
+      statusEl.textContent = data.error || "Vérification impossible";
+      PM.domainAvailable = false;
+      PM.domainPriceCents = 0;
+      document.getElementById("pm-total-domain").style.display = "none";
+      pmUpdateTotal();
+      return;
+    }
+    if (data.available) {
+      PM.domainAvailable = true;
+      PM.domainPriceCents = data.priceCents;
+      statusEl.className = "pm-domain-status ok";
+      statusEl.textContent = "✓ " + data.domain + " disponible · " + data.price + " € TTC / an";
+      document.getElementById("pm-total-domain-label").textContent = "Nom de domaine " + data.domain;
+      document.getElementById("pm-total-domain-price").textContent = data.price.toFixed(2).replace(".", ",") + " €";
+      document.getElementById("pm-total-domain").style.display = "flex";
+    } else {
+      PM.domainAvailable = false;
+      PM.domainPriceCents = 0;
+      statusEl.className = "pm-domain-status ko";
+      statusEl.textContent = "✗ " + (data.domain || (name + "." + tld)) + " indisponible. Essayez une autre extension.";
+      document.getElementById("pm-total-domain").style.display = "none";
+    }
+    pmUpdateTotal();
+  } catch (err) {
+    statusEl.className = "pm-domain-status ko";
+    statusEl.textContent = "Vérification impossible. Réessayez.";
+  }
+}
+
+async function pmSubmit() {
+  const btn = document.getElementById("pm-submit");
+  const err = document.getElementById("pm-error");
+  err.className = "pm-error";
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "Préparation du paiement…";
+
+  const payload = {
+    prospect_slug: ${JSON.stringify(prospect.slug)},
+    plan: PM.plan,
+    buyer: {
+      nom: document.getElementById("pm-nom").value.trim(),
+      email: document.getElementById("pm-email").value.trim(),
+      telephone: document.getElementById("pm-tel").value.trim(),
+      adresse: document.getElementById("pm-adresse").value.trim(),
+      ville: document.getElementById("pm-ville").value.trim(),
+      cp: document.getElementById("pm-cp").value.trim(),
+    },
+  };
+  if (PM.plan === "serenite" && PM.domainAvailable) {
+    payload.domain = {
+      name: document.getElementById("pm-domain-name").value.trim().toLowerCase(),
+      tld: document.getElementById("pm-domain-tld").value,
+      priceCents: PM.domainPriceCents,
+    };
+  }
+
+  try {
+    const res = await fetch("/api/prospect/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) {
+      throw new Error(data.error || "Erreur lors du paiement");
+    }
+    // Redirect to Stripe Checkout
+    window.location.href = data.url;
+  } catch (e) {
+    err.textContent = e.message || "Erreur, réessayez ou contactez contact@webconceptor.fr";
+    err.className = "pm-error show";
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// Listeners pour la validation du form + domaine live
+["pm-nom", "pm-email", "pm-tel", "pm-adresse", "pm-ville", "pm-cp"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("input", pmUpdateSubmit);
+});
+const domainNameInput = document.getElementById("pm-domain-name");
+if (domainNameInput) {
+  domainNameInput.addEventListener("input", () => {
+    if (PM.domainCheckTimer) clearTimeout(PM.domainCheckTimer);
+    PM.domainCheckTimer = setTimeout(pmCheckDomain, 500);
+  });
+}
+const domainTldSelect = document.getElementById("pm-domain-tld");
+if (domainTldSelect) domainTldSelect.addEventListener("change", pmCheckDomain);
+
+pmUpdateSubmit();
+
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { pmClose(); bkClose(); } });
 </script>
 
 </body>

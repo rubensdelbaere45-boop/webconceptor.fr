@@ -109,8 +109,94 @@ export async function POST(req: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
-    const code = metadata.code;
+    const source = metadata.source || "";
+    const code = metadata.code || "";
+    const prospectId = metadata.prospect_id || "";
 
+    // ═══════════════════════════════════════════════════════
+    // FLOW 1 : Self-serve depuis la maquette (pas de code PIN)
+    // source === "self_serve_mockup" + prospect_id
+    // ═══════════════════════════════════════════════════════
+    if (source === "self_serve_mockup" && prospectId) {
+      // Idempotence : si le prospect est déjà "converted", on skip
+      const { data: prospect } = await supabase
+        .from("prospects")
+        .select("id, name, status, phone")
+        .eq("id", prospectId)
+        .single();
+
+      if (!prospect) return NextResponse.json({ received: true });
+      if (prospect.status === "converted") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+
+      await supabase
+        .from("prospects")
+        .update({
+          status: "converted",
+          updated_at: new Date().toISOString(),
+          notes: `PAID via Stripe self-serve ${new Date().toISOString()} — session ${session.id}`,
+        })
+        .eq("id", prospectId);
+
+      const amountPaid = (session.amount_total || 0) / 100;
+      const buyerName = metadata.buyer_nom || "Client";
+      const buyerEmail = metadata.buyer_email || "";
+      const buyerTel = metadata.buyer_tel || "";
+      const domain = metadata.domain || "(aucun)";
+      const hasSerenite = metadata.has_serenite === "true";
+
+      // Telegram : ÇA DOIT SONNER — paiement = event critique
+      const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      if (tgToken && chatId) {
+        const telegramMsg = [
+          `💰 <b>NOUVEAU PAIEMENT — Self-serve</b>`,
+          ``,
+          `<b>${escapeTelegram(prospect.name)}</b>`,
+          `<b>Client :</b> ${escapeTelegram(buyerName)}`,
+          `<b>Email :</b> ${escapeTelegram(buyerEmail)}`,
+          `<b>Téléphone :</b> ${escapeTelegram(buyerTel)}`,
+          ``,
+          `<b>Plan :</b> ${hasSerenite ? "Sérénité 🟢" : "Simple"}`,
+          hasSerenite ? `<b>Domaine :</b> ${escapeTelegram(domain)}` : "",
+          `<b>TOTAL PAYÉ :</b> ${amountPaid} €`,
+          ``,
+          `<b>Adresse :</b>`,
+          `${escapeTelegram(metadata.buyer_adresse || "—")}`,
+          `${escapeTelegram(metadata.buyer_cp || "")} ${escapeTelegram(metadata.buyer_ville || "")}`,
+          ``,
+          `📋 <b>À FAIRE :</b>`,
+          `1. Appeler le client pour valider les détails (logo, couleurs, photos)`,
+          hasSerenite ? `2. Acheter le domaine ${escapeTelegram(domain)} sur IONOS au nom de l'acheteur` : "",
+          `${hasSerenite ? "3" : "2"}. Finaliser le site & déployer`,
+          hasSerenite ? `4. Créer la souscription Sérénité 50€/mois dans Stripe` : "",
+        ].filter(Boolean).join("\n");
+
+        // SON : pas de disable_notification → Rubens entend la notif
+        fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: telegramMsg,
+            parse_mode: "HTML",
+          }),
+        }).catch(() => { /* silent */ });
+      }
+
+      // Email de confirmation au client (Brevo)
+      if (buyerEmail) {
+        await sendConfirmationEmail(buyerEmail, buyerName, `Commande ${prospect.name}`, domain);
+      }
+
+      return NextResponse.json({ received: true, prospect_id: prospectId });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FLOW 2 : Code PIN (existant, via /code)
+    // metadata.code présent
+    // ═══════════════════════════════════════════════════════
     if (!code) {
       return NextResponse.json({ received: true });
     }
