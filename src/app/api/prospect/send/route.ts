@@ -635,6 +635,14 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
   </ul>
   <p style="font-size:14px;color:#525252;margin-bottom:12px">Si la maquette vous convient, nous la livrons en 5 jours pour <strong>599&nbsp;€</strong>. Vous pouvez aussi choisir l&rsquo;option <strong>Sérénité</strong> (50&nbsp;€/mois) pour que nous mettions à jour votre site chaque semaine (promos, arrivages, actualités).</p>
   <p style="font-size:14px;color:#525252;margin-bottom:24px">Répondez simplement à cet email si vous êtes intéressé ou si vous voulez des modifications.</p>
+
+  <div style="background:#f8f9fa;border-left:3px solid #0066ff;padding:18px 20px;margin:24px 0;border-radius:6px">
+    <p style="font-size:14px;color:#0a0a0a;margin-bottom:10px;font-weight:600">Une question ? Contactez-moi directement :</p>
+    <p style="font-size:14px;color:#525252;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
+    <p style="font-size:14px;color:#525252;margin-bottom:10px">📞 <a href="tel:+33635592471" style="color:#0066ff;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
+    <p style="font-size:13px;color:#737373;margin:0;font-style:italic">Merci de vous présenter avec le nom de votre commerce (<strong style="color:#0a0a0a">${escape(prospect.name)}</strong>) pour que je retrouve votre dossier rapidement.</p>
+  </div>
+
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
     <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
@@ -674,6 +682,13 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
   <p style="font-size:14px;color:#4a4340;margin-bottom:16px">Tarif clair : <strong>599 € HT</strong> pour la mise en ligne complète (livraison 5 jours). Option <strong>Sérénité 50 €/mois</strong> incluant hébergement, mises à jour de la carte, modifications illimitées.</p>
 
   <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Répondez simplement à cet email si vous souhaitez discuter ou modifier quelque chose sur la maquette.</p>
+
+  <div style="background:#fff;border-left:3px solid #c19a56;padding:20px 24px;margin:24px 0;border-radius:4px">
+    <p style="font-size:14px;color:#1a1310;margin-bottom:12px;font-weight:600">Une question ? Contactez-moi directement :</p>
+    <p style="font-size:14px;color:#4a4340;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#c19a56;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
+    <p style="font-size:14px;color:#4a4340;margin-bottom:12px">📞 <a href="tel:+33635592471" style="color:#c19a56;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
+    <p style="font-size:13px;color:#8b7e6e;margin:0;font-style:italic">Merci de vous présenter avec le nom de votre restaurant (<strong style="color:#1a1310">${escape(prospect.name)}</strong>) pour que je retrouve votre dossier rapidement.</p>
+  </div>
 
   <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#8b7e6e">
     <p style="margin-bottom:4px"><strong style="color:#1a1310">Tom Bauer</strong></p>
