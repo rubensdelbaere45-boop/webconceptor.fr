@@ -56,7 +56,11 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: "WebConcept", // 10 chars max alphanumeric
+        // Expéditeur alphanumérique (max 11 chars sur Brevo FR).
+        // ON NE MET PAS LE VRAI NUMÉRO pour préserver la réputation du mobile
+        // perso de Rubens : si un destinataire signale l'SMS comme spam, c'est
+        // l'ID "WebConcept" qui prend, pas son 06.
+        sender: "WebConcept",
         recipient: to,
         content,
         type: "transactional",
