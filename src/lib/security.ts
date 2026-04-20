@@ -5,6 +5,22 @@
 import { timingSafeEqual } from "node:crypto";
 
 /**
+ * Renvoie true si l'heure actuelle (Europe/Paris) est dans la fenêtre
+ * d'envoi autorisée [startHour, endHour) — 9h00 à 18h59 par défaut.
+ * Utilisé pour ne pas spammer les patrons d'établissement en soirée/nuit.
+ */
+export function isWithinSendingHours(startHour = 9, endHour = 19): boolean {
+  const hourStr = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    hour12: false,
+  }).format(new Date());
+  // "24" possible pour minuit dans certaines locales → normaliser
+  const hour = parseInt(hourStr, 10) % 24;
+  return hour >= startHour && hour < endHour;
+}
+
+/**
  * Constant-time string comparison. Always runs through the full buffer length
  * so attacker can't infer the secret byte-by-byte from response latency.
  *

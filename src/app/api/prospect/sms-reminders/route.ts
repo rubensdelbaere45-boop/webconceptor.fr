@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { safeCompare, escapeTelegram } from "@/lib/security";
+import { safeCompare, escapeTelegram, isWithinSendingHours } from "@/lib/security";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -85,6 +85,16 @@ async function handler(req: NextRequest) {
   const cronOK = safeCompare(cronSecret, process.env.CRON_SECRET);
   if (!adminOK && !cronOK) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+  }
+
+  // COUVRE-FEU : pas de SMS entre 19h et 9h (heure Paris)
+  if (!isWithinSendingHours(9, 19)) {
+    return NextResponse.json({
+      success: true,
+      processed: 0,
+      skipped_curfew: true,
+      message: "SMS bloqués — hors plage horaire (9h-19h heure Paris)",
+    });
   }
 
   const supabase = getSupabaseAdmin();

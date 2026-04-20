@@ -140,6 +140,10 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS sms_reminder_sent_at TIMES
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS reviews JSONB;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS about_scraped TEXT;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS website_photos TEXT[];
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_quality TEXT;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_audit_score INTEGER;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_audit_issues TEXT[];
+CREATE INDEX IF NOT EXISTS idx_prospects_site_quality ON public.prospects(site_quality);
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
 CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);
 CREATE INDEX IF NOT EXISTS idx_prospects_sms_reminder ON public.prospects(sms_reminder_sent_at);

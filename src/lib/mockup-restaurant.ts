@@ -44,6 +44,8 @@ export interface RestaurantContent {
   // Vibe choisi par Claude selon le caractère du business
   vibe?: RestaurantVibe;
   reviews?: RestaurantReview[];
+  // Teaser mystérieux pour sites audités — généré par Claude selon les issues
+  auditTeaser?: string;
 }
 
 export interface RestaurantProspectExtended extends RestaurantProspect {

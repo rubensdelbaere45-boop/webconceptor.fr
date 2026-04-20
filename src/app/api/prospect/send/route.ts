@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { escapeTelegram, safeCompare } from "@/lib/security";
+import { escapeTelegram, safeCompare, isWithinSendingHours } from "@/lib/security";
 import {
   generateRestaurantMockupHtml,
   type RestaurantProspect,
@@ -36,6 +36,8 @@ interface Prospect {
   reviews?: Array<{ author: string; rating: number; text: string; timeAgo: string }> | null;
   about_scraped?: string | null;
   website_photos?: string[] | null;
+  site_quality?: "none" | "poor" | "average" | "good" | null;
+  site_audit_issues?: string[] | null;
 }
 
 interface PersonalizedContent {
@@ -165,6 +167,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     ],
     cuisineType: "cuisine française traditionnelle",
     vibe: "classic",
+    auditTeaser: "notamment sur la visibilité dans les recherches Google et l'expérience mobile",
     talkingPoints: [
       "Site vitrine personnalisé avec votre identité",
       "Module de réservation en ligne intégré (sans commission)",
@@ -184,6 +187,28 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     ? "https://openrouter.ai/api/v1/chat/completions"
     : "https://api.anthropic.com/v1/messages";
 
+  // Traduction lisible des issues d'audit pour Claude
+  const auditIssuesText = (prospect.site_audit_issues || [])
+    .map((key) => {
+      const map: Record<string, string> = {
+        no_viewport_mobile: "pas adapté au mobile (viewport manquant)",
+        no_https: "pas en HTTPS",
+        no_meta_description: "pas de meta description SEO",
+        no_og_image: "pas d'image Open Graph pour le partage",
+        no_structured_data: "pas de données structurées Schema.org",
+        no_semantic_html: "HTML non sémantique",
+        legacy_css: "CSS legacy (pas de Flexbox/Grid)",
+        no_favicon: "pas de favicon",
+        deprecated_tags: "tags HTML obsolètes (font, center, marquee)",
+        table_layout: "layout en <table> (très vieille école)",
+        too_many_inline_styles: "trop de styles inline",
+        deprecated_plugins: "Flash ou ActiveX détectés",
+        unreachable: "site inaccessible",
+      };
+      return map[key] || key;
+    })
+    .join(", ");
+
   const infoLines = [
     `Nom de l'établissement : ${prospect.name}`,
     prospect.city ? `Ville : ${prospect.city}` : "",
@@ -191,6 +216,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     prospect.google_rating ? `Note Google : ${prospect.google_rating}/5 (${prospect.google_reviews_count || 0} avis)` : "",
     prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
     prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
+    prospect.site_quality ? `Qualité site actuel : ${prospect.site_quality}${auditIssuesText ? ` — problèmes détectés : ${auditIssuesText}` : ""}` : "",
     prospect.about_scraped ? `Texte de leur site (à propos / notre histoire) :\n"""\n${prospect.about_scraped.slice(0, 2000)}\n"""` : "",
     prospect.reviews && prospect.reviews.length > 0
       ? `Avis Google RÉELS :\n${prospect.reviews.slice(0, 3).map((r) => `- ${r.rating}★ par ${r.author} : "${r.text.slice(0, 200)}"`).join("\n")}`
@@ -236,9 +262,10 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - 'sunny' : GLACIERS, bars de plage, salons de thé ensoleillés, crêpes sucrées festives, food trucks estivaux → palette orange/ambre (ambiance été)
     IMPORTANT : déduis le vibe depuis le NOM et surtout le TEXTE À PROPOS si disponible (si le texte parle de 'famille', 'depuis 1920', 'tradition' → rustic. Si 'création', 'nouveau chef', 'concept' → modern. Si 'mer', 'poisson', 'port' → coastal. Si 'glace', 'été', 'ensoleillé' → sunny).",
   "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 599€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
+  "auditTeaser": "SI le prospect a un site 'poor' ou 'average' (donc un site qui existe mais qui peut être amélioré) : UNE SEULE phrase courte (max 15 mots), MYSTÉRIEUSE, qui évoque VAGUEMENT 1-2 axes d'amélioration sans tout révéler. Ex: 'notamment sur votre visibilité dans les recherches Google locales et l'affichage sur mobile' ou 'notamment sur la structure SEO et l'expérience des visiteurs mobiles'. Ne JAMAIS lister tous les problèmes, rester dans le teaser. Si le prospect n'a pas de site (site_quality='none'), retourne une chaîne vide ''.",
   "emailSubject": "objet email, 50 caractères max, personnalisé avec nom établissement",
   "emailOpening": "salutation (Bonjour,)",
-  "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté (réservation si resto, vitrine produits si boulangerie, etc.). Mentionne 1 détail RÉEL tiré des infos (ville, note Google>4, citation d'un avis, etc.)."
+  "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté. Mentionne 1 détail RÉEL tiré des infos (ville, note Google>4, citation d'un avis, etc.). Si SITE EXISTANT AVEC PROBLÈMES, ajoute qu'on a audité leur présence en ligne sans détailler tout."
 }
 
 Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
@@ -326,6 +353,7 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
       cuisineType: String(parsed.cuisineType || fallback.cuisineType).slice(0, 80),
       vibe,
       talkingPoints,
+      auditTeaser: String(parsed.auditTeaser || "").slice(0, 200),
       emailSubject: String(parsed.emailSubject || fallback.emailSubject).slice(0, 100),
       emailOpening: String(parsed.emailOpening || fallback.emailOpening).slice(0, 50),
       emailPitch: String(parsed.emailPitch || fallback.emailPitch).slice(0, 500),
@@ -686,9 +714,25 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
 }
 
 function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
+  // Bloc "audit mystérieux" uniquement si le site existe ET qualité poor/average
+  const hasOutdatedSite = prospect.website
+    && (prospect.site_quality === "poor" || prospect.site_quality === "average")
+    && content.auditTeaser && content.auditTeaser.trim().length > 0;
+
+  const auditBlock = hasOutdatedSite
+    ? `
+  <div style="background:linear-gradient(135deg,#fff4e6,#fef3c7);border:1px solid #fbbf24;border-radius:6px;padding:22px 24px;margin:24px 0">
+    <p style="font-size:11px;color:#92400e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:700">🔍 Audit de votre présence en ligne</p>
+    <p style="font-size:14px;color:#78350f;margin:0 0 10px;line-height:1.6">J'ai jeté un œil à votre site actuel et identifié quelques opportunités d'amélioration, <strong>${escape(content.auditTeaser || "")}</strong>.</p>
+    <p style="font-size:13px;color:#92400e;margin:0;font-style:italic">Je ne détaille pas tout ici par souci de clarté — j'ai directement appliqué plusieurs de ces axes dans la maquette ci-dessous. Vous verrez la différence.</p>
+  </div>`
+    : "";
+
   return `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#1a1310;line-height:1.6;background:#fdfaf5">
   <p style="font-size:15px;margin-bottom:16px">${escape(content.emailOpening)}</p>
   <p style="font-size:15px;margin-bottom:20px">${escape(content.emailPitch)}</p>
+
+  ${auditBlock}
 
   <div style="background:#fff;border:1px solid #e8dfd0;padding:28px;margin:24px 0;border-radius:4px;text-align:center">
     <p style="font-size:12px;color:#8b7e6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre maquette</p>
@@ -751,6 +795,18 @@ export async function POST(req: NextRequest) {
   const batch_size = Math.max(1, Math.min(50, Number.isFinite(Number(raw.batch_size)) ? Number(raw.batch_size) : 5));
   const dry_run = Boolean(raw.dry_run);
 
+  // COUVRE-FEU : pas d'envoi d'email entre 19h et 9h (heure Paris)
+  // Sauf override explicite (prospect_id = envoi ciblé manuel par admin) ou dry_run
+  const override = Boolean(raw.force) || prospect_id !== null || dry_run;
+  if (!override && !isWithinSendingHours(9, 19)) {
+    return NextResponse.json({
+      success: true,
+      processed: 0,
+      skipped_curfew: true,
+      message: "Envoi bloqué — hors plage horaire (9h-19h heure Paris)",
+    });
+  }
+
   const supabase = getSupabaseAdmin();
   let prospects: Prospect[] = [];
 
@@ -780,6 +836,18 @@ export async function POST(req: NextRequest) {
   for (const p of prospects) {
     if (!p.email) {
       results.push({ id: p.id, name: p.name, status: "no_email" });
+      continue;
+    }
+
+    // SKIP si le prospect a déjà un site "good" (conversion quasi nulle).
+    // On marque en status='error' + raison claire pour qu'il n'apparaisse plus
+    // dans les prochains runs, sans changer le schéma DB.
+    if (p.site_quality === "good") {
+      await supabase
+        .from("prospects")
+        .update({ status: "error", error: "skipped: modern site already live" })
+        .eq("id", p.id);
+      results.push({ id: p.id, name: p.name, status: "skipped_good_site" });
       continue;
     }
 

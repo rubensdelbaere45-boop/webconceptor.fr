@@ -301,6 +301,106 @@ function extractTopReviews(place: GooglePlace): StoredReview[] {
     }));
 }
 
+/* ══════════════════════════════════════════
+   AUDIT DU SITE WEB — détecte les sites vieillis
+   ══════════════════════════════════════════ */
+
+export type SiteQuality = "none" | "poor" | "average" | "good";
+
+export interface SiteAudit {
+  score: number; // 0-100
+  quality: SiteQuality;
+  issues: string[]; // keys seulement, résolues en phrases par Claude
+}
+
+async function auditWebsite(website: string): Promise<SiteAudit | null> {
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return null;
+    const base = new URL(website);
+    const html = await fetchUrl(base.origin, 8000);
+    if (!html) return { score: 20, quality: "poor", issues: ["unreachable"] };
+
+    let score = 50; // baseline
+    const issues: string[] = [];
+
+    // HTTPS (technique)
+    if (base.protocol !== "https:") { score -= 15; issues.push("no_https"); }
+
+    // Viewport mobile (critique !)
+    if (/<meta[^>]+name=["']viewport["']/i.test(html)) score += 15;
+    else { score -= 25; issues.push("no_viewport_mobile"); }
+
+    // Meta description (SEO)
+    if (/<meta[^>]+name=["']description["']/i.test(html)) score += 10;
+    else issues.push("no_meta_description");
+
+    // Open Graph (partage réseaux sociaux)
+    if (/<meta[^>]+property=["']og:image["']/i.test(html)) score += 8;
+    else issues.push("no_og_image");
+
+    if (/<meta[^>]+property=["']og:title["']/i.test(html)) score += 4;
+
+    // Structured data Schema.org (SEO avancé)
+    if (/<script[^>]+type=["']application\/ld\+json["']/i.test(html)) score += 10;
+    else issues.push("no_structured_data");
+
+    // Semantic HTML (moderne)
+    if (/<(header|main|footer|article|section|nav)[\s>]/i.test(html)) score += 5;
+    else issues.push("no_semantic_html");
+
+    // Modern CSS (grid/flex)
+    if (/display\s*:\s*(grid|flex)/i.test(html) || /grid-template|flex-direction/i.test(html)) score += 5;
+    else issues.push("legacy_css");
+
+    // Favicon (détail pro)
+    if (/<link[^>]+rel=["'](?:shortcut )?icon["']/i.test(html)) score += 3;
+    else issues.push("no_favicon");
+
+    // ANTI-SIGNAUX (vieux site)
+    if (/<\b(font|marquee|center|blink|basefont)\b/i.test(html)) {
+      score -= 25;
+      issues.push("deprecated_tags");
+    }
+
+    // Tables pour layout (très vieux)
+    const tablesCount = (html.match(/<table/gi) || []).length;
+    if (tablesCount > 5) { score -= 15; issues.push("table_layout"); }
+
+    // Inline styles massifs (généré par éditeur vieux)
+    const inlineStyleCount = (html.match(/style=/gi) || []).length;
+    if (inlineStyleCount > 80) { score -= 10; issues.push("too_many_inline_styles"); }
+
+    // Flash / Java / ActiveX
+    if (/<\b(object|embed|applet)[^>]+(flash|shockwave|activex)/i.test(html)) {
+      score -= 30;
+      issues.push("deprecated_plugins");
+    }
+
+    // Google Fonts / fonts modernes (signe moderne)
+    if (/fonts\.googleapis\.com|fonts\.bunny\.net/i.test(html)) score += 5;
+
+    // jQuery seul (signe pas moderne, ok pour petit +/-) — ignorable
+
+    // Framework moderne ?
+    if (/__next|nextjs|__nuxt|gatsby|astro|sveltekit|webflow/i.test(html)) score += 10;
+
+    // Responsive images (picture, srcset)
+    if (/<picture|srcset=/i.test(html)) score += 5;
+
+    // Clamp
+    score = Math.max(0, Math.min(100, score));
+
+    let quality: SiteQuality;
+    if (score < 40) quality = "poor";
+    else if (score < 70) quality = "average";
+    else quality = "good";
+
+    return { score, quality, issues };
+  } catch {
+    return null;
+  }
+}
+
 // Scrape les photos du site : og:image + premières images grandes trouvées
 async function scrapeWebsitePhotos(website: string): Promise<string[]> {
   try {
@@ -455,7 +555,12 @@ export async function POST(req: NextRequest) {
   // Only epicerie triggers the 350km exclusion (father's Proxi competition zone)
   const applyDistanceFilter = businessType === "epicerie";
 
-  let stats = { found: 0, inserted: 0, skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0, withEmail: 0 };
+  let stats = {
+    found: 0, inserted: 0,
+    skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0,
+    withEmail: 0,
+    noSite: 0, poorSite: 0, averageSite: 0, goodSite: 0,
+  };
 
   try {
     const places = await searchProxiStores(query, googleKey);
@@ -499,6 +604,7 @@ export async function POST(req: NextRequest) {
       let scrapedMenu: ScrapedMenuItem[] | null = null;
       let aboutScraped: string | null = null;
       let websitePhotos: string[] = [];
+      let siteAudit: SiteAudit | null = null;
       if (place.websiteUri) {
         email = await findEmailOnWebsite(place.websiteUri);
         if (email) stats.withEmail++;
@@ -513,7 +619,18 @@ export async function POST(req: NextRequest) {
 
         // Scrape leurs vraies photos (og:image + img tags)
         websitePhotos = await scrapeWebsitePhotos(place.websiteUri);
+
+        // AUDIT du site existant → détecte sites vieillis / non-optimisés
+        siteAudit = await auditWebsite(place.websiteUri);
       }
+      // Pas de site = opportunité max (site_quality = "none")
+      const siteQuality: SiteQuality = place.websiteUri
+        ? (siteAudit?.quality || "poor")
+        : "none";
+      if (siteQuality === "none") stats.noSite++;
+      else if (siteQuality === "poor") stats.poorSite++;
+      else if (siteQuality === "average") stats.averageSite++;
+      else if (siteQuality === "good") stats.goodSite++;
 
       // Extract top Google reviews
       const topReviews = extractTopReviews(place);
@@ -546,6 +663,9 @@ export async function POST(req: NextRequest) {
         reviews: topReviews.length ? topReviews : null,
         about_scraped: aboutScraped,
         website_photos: websitePhotos.length ? websitePhotos : null,
+        site_quality: siteQuality,
+        site_audit_score: siteAudit?.score ?? null,
+        site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
         status: email ? "found" : "no_email",
       });
 
