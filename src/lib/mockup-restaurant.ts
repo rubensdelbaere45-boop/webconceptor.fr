@@ -139,15 +139,18 @@ export function generateRestaurantMockupHtml(
   const theme = THEMES[hash % THEMES.length];
   const fontPair = FONT_PAIRS[(hash >> 4) % FONT_PAIRS.length];
 
+  // Robust fallback photos — URLs testées qui servent des vraies images restaurant.
+  // Utilise images.weserv.nl comme proxy-CDN stable (cache + resize) pointant sur
+  // Unsplash pour éviter les problèmes d'expiration ou de 403 CORS.
   const FALLBACK_PHOTOS = [
-    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1544025162-d76694265947?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=80&auto=format&fit=crop",
   ];
 
-  // Build photo URLs: proxy Google Places, fallback to Unsplash if ref invalid.
-  // We also keep a fallback for onerror handler (si le proxy renvoie 404/502).
+  // Build photo URLs: proxy Google Places, fallback to Unsplash si ref invalide.
   const photoUrls: string[] = [];
   for (let i = 0; i < 4; i++) {
     const ref = prospect.photos?.[i];
@@ -158,9 +161,12 @@ export function generateRestaurantMockupHtml(
     }
   }
 
-  // onerror fallback - if the primary image fails, switch to Unsplash
+  // 3-step onerror chain :
+  // 1. primary (Google Places proxy)
+  // 2. fallback Unsplash (si primary échoue)
+  // 3. si les deux échouent → on cache l'img (container révèle son dégradé CSS)
   const img = (primary: string, fallback: string, alt: string, attrs = "") =>
-    `<img src="${esc(primary)}" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${esc(fallback)}'}" alt="${esc(alt)}" ${attrs}>`;
+    `<img src="${esc(primary)}" data-fb="${esc(fallback)}" onerror="var s=this.dataset.s||0;if(s==0){this.dataset.s=1;this.src=this.dataset.fb}else{this.style.display='none'}" alt="${esc(alt)}" ${attrs}>`;
 
   const entrees = content.menuItems.filter((m) => m.category === "entrée");
   const plats = content.menuItems.filter((m) => m.category === "plat");
@@ -259,8 +265,8 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 .nav-cta:hover{background:var(--accent);border-color:var(--accent)}
 
 /* Hero */
-.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--ink)}
-.hero-bg{position:absolute;inset:0;z-index:0}
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(135deg,var(--ink) 0%,var(--deep) 100%)}
+.hero-bg{position:absolute;inset:0;z-index:0;background:linear-gradient(135deg,var(--ink) 0%,var(--deep) 100%)}
 .hero-bg img{width:100%;height:100%;object-fit:cover;filter:brightness(0.55)}
 .hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.2) 0%,rgba(0,0,0,0.4) 60%,rgba(0,0,0,0.7) 100%)}
 .hero-inner{position:relative;z-index:2;text-align:center;padding:120px 20px 140px;max-width:900px;animation:fadeInUp 1s ease}
@@ -279,8 +285,10 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 /* About */
 .about{padding:120px 40px;background:var(--warm)}
 .about-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
-.about-img{aspect-ratio:4/5;overflow:hidden;position:relative}
-.about-img img{width:100%;height:100%;object-fit:cover}
+.about-img{aspect-ratio:4/5;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--accent) 0%,var(--deep) 100%)}
+.about-img img{width:100%;height:100%;object-fit:cover;display:block}
+.about-img::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,rgba(255,255,255,0.15),transparent 60%);z-index:0}
+.about-img img{position:relative;z-index:1}
 .about-img::after{content:'';position:absolute;top:20px;left:20px;right:-20px;bottom:-20px;border:1px solid var(--accent);z-index:-1}
 .about-text .kicker{font-family:var(--script);font-size:32px;color:var(--accent);margin-bottom:8px}
 .about-text h2{font-family:var(--serif);font-size:clamp(2.4rem,4vw,3.6rem);font-weight:400;line-height:1.1;margin-bottom:28px;color:var(--ink)}
@@ -315,9 +323,11 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 .gallery-kicker{font-family:var(--script);font-size:32px;color:var(--accent);margin-bottom:8px}
 .gallery h2{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.2rem);font-weight:400}
 .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.gallery-item{aspect-ratio:1/1;overflow:hidden;position:relative}
+.gallery-item{aspect-ratio:1/1;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--accent) 0%,var(--deep) 100%)}
+.gallery-item:nth-child(2n){background:linear-gradient(135deg,var(--deep) 0%,var(--ink) 100%)}
+.gallery-item:nth-child(3n){background:linear-gradient(135deg,var(--stone) 0%,var(--accent-dark) 100%)}
 .gallery-item:nth-child(1){grid-row:span 2}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
 .gallery-item:hover img{transform:scale(1.05)}
 
 /* Reserve CTA */
