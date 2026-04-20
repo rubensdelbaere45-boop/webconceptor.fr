@@ -716,6 +716,7 @@ export async function POST(req: NextRequest) {
       .select("*")
       .eq("status", "found")
       .not("email", "is", null)
+      .order("created_at", { ascending: true }) // oldest first → pas de prospect oublié
       .limit(batch_size);
     if (data) prospects = data as Prospect[];
   }
