@@ -172,7 +172,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       "Site vitrine personnalisé avec votre identité",
       "Module de réservation en ligne intégré (sans commission)",
       "Espace admin pour gérer la carte en 2 minutes",
-      "Livraison en 5 jours pour 599 € HT",
+      "599 € TTC ou 3× sans frais (Klarna)",
       "Option Sérénité 50 €/mois : mises à jour illimitées",
     ],
     emailSubject: `Maquette de votre site pour ${prospect.name}`,
@@ -755,7 +755,7 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
     <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque réservation vous arrive par email + notification. Vous confirmez d'un clic. Un tableau de bord privé vous permet de voir vos réservations à venir, modifier la carte en 2 minutes, et suivre la fréquentation.</p>
   </div>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:16px">Tarif clair : <strong>599 € HT</strong> pour la mise en ligne complète (livraison 5 jours). Option <strong>Sérénité 50 €/mois</strong> incluant hébergement, mises à jour de la carte, modifications illimitées.</p>
+  <p style="font-size:14px;color:#4a4340;margin-bottom:16px">Tarif clair : <strong>599 € TTC</strong> pour la mise en ligne complète (livraison 5 jours) — ou <strong style="color:#c19a56">3× sans frais</strong> via Klarna (200 €/mois). Option <strong>Sérénité 50 €/mois</strong> incluant hébergement, mises à jour de la carte, modifications illimitées.</p>
 
   <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Répondez simplement à cet email si vous souhaitez discuter ou modifier quelque chose sur la maquette.</p>
 

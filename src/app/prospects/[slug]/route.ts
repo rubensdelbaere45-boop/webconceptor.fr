@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram } from "@/lib/security";
+import { generateCallScript } from "@/lib/call-script";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -37,7 +38,7 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website")
+    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -62,43 +63,86 @@ export async function GET(
     .then(() => {});
 
   // Notify Telegram SEULEMENT à la 1ère ouverture (hot lead) — riche notif
+  // avec SCRIPT D'APPEL personnalisé généré par Claude Haiku en parallèle
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (isFirstOpen && token && chatId) {
-    const phoneDisplay = data.phone || "";
-    const phoneLink = phoneDisplay ? phoneToTelLink(phoneDisplay) : "";
-    const isResto = data.business_type === "restaurant";
-    const typeEmoji = isResto ? "🍽️" : "🛒";
-    const typeLabel = isResto ? "Restaurant" : "Commerçant";
+    // Pas bloquant pour la réponse HTML : on lance l'async et on ne l'attend pas
+    (async () => {
+      try {
+        const phoneDisplay = data.phone || "";
+        const phoneLink = phoneDisplay ? phoneToTelLink(phoneDisplay) : "";
+        const isResto = data.business_type === "restaurant";
+        const typeEmoji = isResto ? "🍽️" : "🛒";
+        const typeLabel = isResto ? "Restaurant" : "Commerçant";
 
-    const parisTime = new Date().toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
+        const parisTime = new Date().toLocaleTimeString("fr-FR", {
+          timeZone: "Europe/Paris",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
 
-    const phoneLine = phoneDisplay
-      ? `📞 <a href="tel:${escapeTelegram(phoneLink)}"><b>${escapeTelegram(phoneDisplay)}</b></a>\n<i>(appelle maintenant, la maquette est ouverte)</i>`
-      : `📞 <i>Pas de numéro disponible</i>`;
+        // Génère le script d'appel via Claude (1-3s typiquement)
+        const script = await generateCallScript({
+          prospectName: data.name,
+          city: data.city,
+          businessType: data.business_type,
+          googleRating: data.google_rating,
+          googleReviewsCount: data.google_reviews_count,
+          siteQuality: data.site_quality,
+          address: data.address,
+        });
 
-    const message =
-      `🔥 <b>HOT LEAD — ${typeLabel} ouvre sa maquette !</b>\n\n` +
-      `<b>${typeEmoji} ${escapeTelegram(data.name)}</b>\n` +
-      `📍 ${escapeTelegram(data.address || data.city || "—")}\n` +
-      phoneLine + "\n" +
-      (data.email ? `✉️ ${escapeTelegram(data.email)}\n` : "") +
-      (data.google_rating ? `⭐ ${data.google_rating}/5 (${data.google_reviews_count || 0} avis)\n` : "") +
-      `⏰ Ouverte à ${escapeTelegram(parisTime)}\n\n` +
-      `<b>💡 Conseil :</b> Rappelle dans les 5 prochaines minutes, pendant qu'il regarde encore la maquette.\n\n` +
-      `🎯 <a href="https://webconceptor.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
-      (data.website ? `\n🌐 <a href="${escapeTelegram(data.website)}">Son site actuel</a>` : "");
+        const phoneLine = phoneDisplay
+          ? `📞 <a href="tel:${escapeTelegram(phoneLink)}"><b>${escapeTelegram(phoneDisplay)}</b></a>\n<i>(appelle maintenant, la maquette est ouverte)</i>`
+          : `📞 <i>Pas de numéro disponible</i>`;
 
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    }).catch(() => {});
+        const hooksBlock = script.hooks.slice(0, 3).map((h, i) => `${i + 1}. ${escapeTelegram(h)}`).join("\n");
+        const objectionsBlock = script.objectionHandlers.slice(0, 3).map((o) => `• ${escapeTelegram(o)}`).join("\n");
+
+        const message =
+          `🔥 <b>HOT LEAD — ${typeLabel} ouvre sa maquette !</b>\n\n` +
+          `<b>${typeEmoji} ${escapeTelegram(data.name)}</b>\n` +
+          `📍 ${escapeTelegram(data.address || data.city || "—")}\n` +
+          phoneLine + "\n" +
+          (data.email ? `✉️ ${escapeTelegram(data.email)}\n` : "") +
+          (data.google_rating ? `⭐ ${data.google_rating}/5 (${data.google_reviews_count || 0} avis)\n` : "") +
+          `⏰ Ouverte à ${escapeTelegram(parisTime)}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `<b>🎬 SCRIPT D'APPEL (lis-le direct)</b>\n\n` +
+          `<i>« ${escapeTelegram(script.opening)} »</i>\n\n` +
+          `<b>🎯 Si hésitation :</b>\n${hooksBlock}\n\n` +
+          `<b>🛡 Objections :</b>\n${objectionsBlock}\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `<b>💡 Conseil :</b> Rappelle dans les 5 minutes.\n\n` +
+          `🎯 <a href="https://webconceptor.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
+          (data.website ? `\n🌐 <a href="${escapeTelegram(data.website)}">Son site actuel</a>` : "");
+
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
+          }),
+        });
+      } catch {
+        // Fallback : envoie au moins la notif de base sans le script si Claude foire
+        const simpleMsg = `🔥 <b>HOT LEAD</b> · ${escapeTelegram(data.name)} vient d'ouvrir sa maquette. Tél : ${escapeTelegram(data.phone || "?")}`;
+        fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: simpleMsg,
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
+          }),
+        }).catch(() => {});
+      }
+    })();
   }
 
   return new NextResponse(data.mockup_html, {

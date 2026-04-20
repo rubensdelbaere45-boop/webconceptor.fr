@@ -142,7 +142,13 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
+      // Méthodes de paiement :
+      // - 'card' : carte bancaire classique (Visa/MC/Amex)
+      // - 'klarna' : Paiement en 3× OU 4× sans frais (client paye 200€/mois,
+      //   tu encaisses 599€ immédiatement, Klarna prend le risque)
+      // - 'paypal' : au cas où certains préfèrent
+      // Si Klarna pas encore activé dans le dashboard Stripe, ignoré silencieusement
+      payment_method_types: ["card", "klarna", "paypal"],
       line_items: lineItems,
       customer_email: buyerInfo.email,
       success_url: `${origin}/code/success?c=${code}&s={CHECKOUT_SESSION_ID}`,

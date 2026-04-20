@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       (prospect.city ? `📍 ${prospect.city}\n` : "") +
       (prospect.email ? `✉️ ${prospect.email}\n` : "") +
       `\n<b>Code :</b> <code>${code}</code>\n` +
-      `<b>Prix :</b> 599 € HT\n\n` +
+      `<b>Prix :</b> 599 € TTC (ou 3× sans frais)\n\n` +
       `<a href="https://webconceptor.fr/code?c=${code}">Lien direct /code</a>`;
     fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
       method: "POST",

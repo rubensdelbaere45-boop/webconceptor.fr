@@ -311,7 +311,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Design premium, livraison en 5 jours. <strong>À partir de 599 € TTC</strong>.<br />
+            Design premium, livraison en 5 jours. <strong>À partir de 599 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
             <span className="text-[#a3a3a3] text-base">Hébergement &amp; maintenance en option — 50 €/mois.</span>
           </motion.p>
 
