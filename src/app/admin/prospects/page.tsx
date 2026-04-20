@@ -295,6 +295,45 @@ export default function AdminProspectsPage() {
     setLoading(false);
   };
 
+  const handleCallScript = async (p: Prospect) => {
+    setLoading(true);
+    addLog(`Génération script d'appel pour ${p.name}...`);
+    try {
+      const res = await fetch("/api/prospect/call-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addLog(`❌ ${data.error || "Erreur"}`);
+        alert(`Erreur : ${data.error || "inconnue"}`);
+        return;
+      }
+      const s = data.script;
+      const fullScript =
+        `🎬 SCRIPT D'APPEL — ${p.name}\n` +
+        (p.phone ? `📞 ${p.phone}\n` : "") +
+        `\n━━━━━━━━━━━━━━━━━━━━\n` +
+        `OUVERTURE (lis mot à mot) :\n\n` +
+        `« ${s.opening} »\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `SI HÉSITATION :\n\n` +
+        s.hooks.map((h: string, i: number) => `${i + 1}. ${h}`).join("\n") +
+        `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
+        `OBJECTIONS :\n\n` +
+        s.objectionHandlers.map((o: string) => `• ${o}`).join("\n") +
+        `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
+        `Copié dans le presse-papier.`;
+      navigator.clipboard?.writeText(fullScript).catch(() => {});
+      alert(fullScript);
+      addLog(`🎬 Script généré pour ${p.name}`);
+    } catch (err) {
+      addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
+    }
+    setLoading(false);
+  };
+
   const handleSendCodeEmail = async (p: Prospect) => {
     const action = p.project_code ? "Renvoyer" : "Générer et envoyer";
     if (!p.email) {
@@ -719,6 +758,21 @@ export default function AdminProspectsPage() {
                           {dryRun ? "Générer" : "Envoyer"}
                         </button>
                       )}
+                      {/* Script d'appel — dès qu'une maquette existe + tél disponible */}
+                      {p.phone && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
+                        <button
+                          onClick={() => handleCallScript(p)}
+                          disabled={loading}
+                          className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition disabled:opacity-50 ${
+                            p.status === "opened" || p.status === "replied"
+                              ? "bg-red-100 text-red-700 border border-red-300 hover:bg-red-200"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                          title="Génère un script d'appel personnalisé IA pour ce prospect"
+                        >
+                          🎬 Script
+                        </button>
+                      )}
                       {/* Export HTML — disponible dès qu'une maquette existe */}
                       {["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
                         <button
@@ -727,7 +781,7 @@ export default function AdminProspectsPage() {
                           className="px-2.5 py-1.5 text-[11px] font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
                           title="Télécharger le HTML de la maquette"
                         >
-                          📦 Exporter
+                          📦
                         </button>
                       )}
                       {/* Générer / afficher code PIN — disponible dès qu'une maquette existe */}
