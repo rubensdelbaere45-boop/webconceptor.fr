@@ -18,20 +18,36 @@ export interface RestaurantProspect {
   google_reviews_count?: number;
   photos?: string[];
   hours?: string;
+  // Photos scrapées du site actuel du prospect (URLs directes externes)
+  website_photos?: string[];
 }
+
+export interface RestaurantReview {
+  author: string;
+  rating: number;
+  text: string;
+  timeAgo: string;
+}
+
+export type RestaurantVibe = "classic" | "rustic" | "modern" | "coastal" | "sunny";
 
 export interface RestaurantContent {
   heroTitle: string;
   heroSubtitle: string;
   aboutText: string;
-  // category can be anything now : "entrée", "plat", "dessert", "pains",
-  // "viennoiseries", "pâtisseries", "soins", "glaces", "crêpes salées", etc.
   menuItems: Array<{ name: string; description: string; price: string; category: string }>;
   cuisineType: string;
   talkingPoints: string[];
   emailSubject: string;
   emailOpening: string;
   emailPitch: string;
+  // Vibe choisi par Claude selon le caractère du business
+  vibe?: RestaurantVibe;
+  reviews?: RestaurantReview[];
+}
+
+export interface RestaurantProspectExtended extends RestaurantProspect {
+  reviews?: RestaurantReview[] | null;
 }
 
 function esc(s: string | null | undefined): string {
@@ -59,15 +75,34 @@ interface Theme {
 }
 
 const THEMES: Theme[] = [
-  // 1 — Gold & Wine (brasserie classique)
+  // 1 — Gold & Wine (brasserie classique) → vibe: classic
   { id: "gold-wine", ink: "#1a1310", accent: "#c19a56", accentDark: "#9d7a3e", deep: "#6b1f2a", cream: "#f9f5ef", warm: "#fdfaf5", stone: "#8b7e6e", shadow: "rgba(26,19,16,0.88)" },
-  // 2 — Olive & Sand (méditerranéen / bistro terroir)
+  // 2 — Olive & Sand (terroir, rustique, boulangerie traditionnelle, vieilles maisons) → vibe: rustic
   { id: "olive-sand", ink: "#212522", accent: "#6b8c3e", accentDark: "#516a2f", deep: "#3d4a2a", cream: "#f5f2e8", warm: "#fbf8ee", stone: "#7a8274", shadow: "rgba(33,37,34,0.88)" },
-  // 3 — Teal & Copper (coastal / fruits de mer / moderne)
+  // 3 — Teal & Copper (coastal, fruits de mer, crêperies Bretagne) → vibe: coastal
   { id: "teal-copper", ink: "#16202a", accent: "#c46b3f", accentDark: "#9e5530", deep: "#1f4b54", cream: "#f3f1ed", warm: "#fafaf6", stone: "#6c7a85", shadow: "rgba(22,32,42,0.88)" },
-  // 4 — Charcoal & Rose (chic urbain / gastro contemporain)
+  // 4 — Charcoal & Rose (chic urbain, gastro contemporain, pâtisseries modernes) → vibe: modern
   { id: "charcoal-rose", ink: "#181818", accent: "#b87f7a", accentDark: "#8f615d", deep: "#3d2226", cream: "#f4efed", warm: "#faf6f4", stone: "#767170", shadow: "rgba(24,24,24,0.88)" },
+  // 5 — Sunny (glaciers, bars d'été, salons de thé ensoleillés) → vibe: sunny
+  { id: "sunny", ink: "#2d2417", accent: "#f59e0b", accentDark: "#c17f0a", deep: "#b45309", cream: "#fff7ed", warm: "#fffbf2", stone: "#8c7a5c", shadow: "rgba(45,36,23,0.82)" },
 ];
+
+// Mapping vibe → theme + fonts. Utilisé quand Claude donne un vibe.
+const VIBE_TO_THEME: Record<RestaurantVibe, string> = {
+  classic: "gold-wine",      // brasseries, gastro française traditionnelle
+  rustic: "olive-sand",      // vieilles maisons, boulangerie artisanale, bistrots terroir
+  coastal: "teal-copper",    // fruits de mer, crêperies Bretagne, Nice
+  modern: "charcoal-rose",   // gastro contemporaine, pâtisserie haute couture, urbain
+  sunny: "sunny",            // glaciers, bar plage, salons de thé ensoleillés
+};
+
+const VIBE_TO_FONT_INDEX: Record<RestaurantVibe, number> = {
+  classic: 0,   // Cormorant Garamond + Inter + Great Vibes (timeless)
+  rustic: 3,    // Libre Caslon + Lato + Petit Formal Script (heritage)
+  coastal: 1,   // Playfair Display + Montserrat + Dancing Script
+  modern: 2,    // EB Garamond + Work Sans + Pinyon Script (minimal)
+  sunny: 1,     // Playfair Display + Montserrat + Dancing Script (festif)
+};
 
 /* ══════════════════════════════════════════
    4 paires de polices (Google Fonts)
@@ -136,10 +171,29 @@ export function generateRestaurantMockupHtml(
   content: RestaurantContent,
   origin: string
 ): string {
-  // Pick theme + fonts deterministically (same prospect = same design every time)
+  // 1) Si Claude a choisi un vibe → thème + fonts MAPPÉS pour cohérence
+  // 2) Sinon → choix déterministe par hash (5 thèmes × 4 polices = 20 combos)
   const hash = hashString(prospect.slug || prospect.id);
-  const theme = THEMES[hash % THEMES.length];
-  const fontPair = FONT_PAIRS[(hash >> 4) % FONT_PAIRS.length];
+  let theme = THEMES[hash % THEMES.length];
+  let fontPair = FONT_PAIRS[(hash >> 4) % FONT_PAIRS.length];
+  if (content.vibe && VIBE_TO_THEME[content.vibe]) {
+    const themeId = VIBE_TO_THEME[content.vibe];
+    const fontIdx = VIBE_TO_FONT_INDEX[content.vibe];
+    const pickedTheme = THEMES.find((t) => t.id === themeId);
+    if (pickedTheme) theme = pickedTheme;
+    if (FONT_PAIRS[fontIdx]) fontPair = FONT_PAIRS[fontIdx];
+  }
+
+  // Variations de LAYOUT déterministes par hash — chaque prospect a son propre layout.
+  // Hero alignment : 3 variantes (centered, left, right)
+  const heroAlign: "center" | "left" | "right" =
+    ["center", "left", "right"][(hash >> 8) % 3] as "center" | "left" | "right";
+  // About image side : gauche ou droite
+  const aboutImageSide: "left" | "right" = (hash >> 12) % 2 === 0 ? "left" : "right";
+  // Gallery columns : 3, 4 ou 5
+  const galleryCols: number = [3, 4, 5][(hash >> 16) % 3];
+  // Menu columns : 1 ou 2
+  const menuCols: number = (hash >> 20) % 2 === 0 ? 1 : 2;
 
   // Robust fallback photos — URLs testées qui servent des vraies images restaurant.
   // Utilise images.weserv.nl comme proxy-CDN stable (cache + resize) pointant sur
@@ -152,15 +206,27 @@ export function generateRestaurantMockupHtml(
     "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=80&auto=format&fit=crop",
   ];
 
-  // Build photo URLs: proxy Google Places, fallback to Unsplash si ref invalide.
+  // Stratégie photos (priorité) :
+  // 1. Photos scrapées du site actuel du prospect (les VRAIES, reconnaissables)
+  // 2. Photos Google Places (via notre proxy pour cacher la clé)
+  // 3. Fallback Unsplash thématique
   const photoUrls: string[] = [];
-  for (let i = 0; i < 4; i++) {
-    const ref = prospect.photos?.[i];
-    if (ref && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(ref)) {
-      photoUrls.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
-    } else {
-      photoUrls.push(FALLBACK_PHOTOS[i]);
+  const websitePhotosArr = Array.isArray(prospect.website_photos) ? prospect.website_photos : [];
+  const googlePhotosArr = Array.isArray(prospect.photos) ? prospect.photos : [];
+
+  // On récupère d'abord toutes les sources disponibles
+  const allSources: string[] = [];
+  for (const wp of websitePhotosArr) {
+    if (typeof wp === "string" && /^https?:\/\//.test(wp)) allSources.push(wp);
+  }
+  for (const ref of googlePhotosArr) {
+    if (typeof ref === "string" && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(ref)) {
+      allSources.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
     }
+  }
+
+  for (let i = 0; i < 5; i++) {
+    photoUrls.push(allSources[i] || FALLBACK_PHOTOS[i % FALLBACK_PHOTOS.length]);
   }
 
   // 3-step onerror chain :
@@ -294,7 +360,9 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 .hero-bg{position:absolute;inset:0;z-index:0;background:linear-gradient(135deg,var(--ink) 0%,var(--deep) 100%)}
 .hero-bg img{width:100%;height:100%;object-fit:cover;filter:brightness(0.55)}
 .hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.2) 0%,rgba(0,0,0,0.4) 60%,rgba(0,0,0,0.7) 100%)}
-.hero-inner{position:relative;z-index:2;text-align:center;padding:120px 20px 140px;max-width:900px;animation:fadeInUp 1s ease}
+.hero-inner{position:relative;z-index:2;text-align:${heroAlign === "center" ? "center" : heroAlign};padding:120px 40px 140px;${heroAlign !== "center" ? "max-width:1200px;width:100%;" : "max-width:900px;"}animation:fadeInUp 1s ease}
+${heroAlign === "left" ? `.hero-inner > *{max-width:620px;margin-left:0}.hero-ctas{justify-content:flex-start}` : ""}
+${heroAlign === "right" ? `.hero-inner > *{max-width:620px;margin-left:auto;margin-right:0;text-align:right}.hero-ctas{justify-content:flex-end}.hero-rating{float:right;clear:both}` : ""}
 .hero-kicker{font-family:var(--script);font-size:42px;color:var(--accent);margin-bottom:8px}
 .hero h1{font-family:var(--serif);font-size:clamp(3rem,7vw,6rem);font-weight:400;line-height:0.95;letter-spacing:-0.01em;color:#fff;margin-bottom:32px}
 .hero h1 em{font-style:italic;color:var(--accent)}
@@ -309,7 +377,8 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 
 /* About */
 .about{padding:120px 40px;background:var(--warm)}
-.about-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.about-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center${aboutImageSide === "right" ? ";direction:rtl" : ""}}
+.about-inner > *{direction:ltr}
 .about-img{aspect-ratio:4/5;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--accent) 0%,var(--deep) 100%)}
 .about-img img{width:100%;height:100%;object-fit:cover;display:block}
 .about-img::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,rgba(255,255,255,0.15),transparent 60%);z-index:0}
@@ -336,6 +405,11 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 .menu-item:last-child{border-bottom:none}
 .menu-item-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
 .menu-item-head h4{font-family:var(--serif);font-size:22px;font-weight:500;color:#fff;white-space:nowrap}
+${menuCols === 2 ? `
+.menu-inner{max-width:1200px}
+.menu-section{display:grid;grid-template-columns:1fr 1fr;column-gap:64px;row-gap:0}
+.menu-section .menu-section-title{grid-column:1 / -1}
+` : ""}
 .menu-item-head .dots{flex:1;border-bottom:1px dotted rgba(255,255,255,0.2);margin-bottom:4px}
 .menu-item-head .price{font-family:var(--serif);font-size:20px;color:var(--accent);font-weight:500;font-style:italic}
 .menu-item p{font-size:14px;color:rgba(249,245,239,0.7);line-height:1.6;font-weight:300}
@@ -347,13 +421,33 @@ nav{position:sticky;top:0;z-index:100;height:84px;padding:0 48px;display:flex;al
 .gallery-header{text-align:center;margin-bottom:64px}
 .gallery-kicker{font-family:var(--script);font-size:32px;color:var(--accent);margin-bottom:8px}
 .gallery h2{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.2rem);font-weight:400}
-.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gallery-grid{display:grid;grid-template-columns:repeat(${galleryCols},1fr);gap:8px}
 .gallery-item{aspect-ratio:1/1;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--accent) 0%,var(--deep) 100%)}
 .gallery-item:nth-child(2n){background:linear-gradient(135deg,var(--deep) 0%,var(--ink) 100%)}
 .gallery-item:nth-child(3n){background:linear-gradient(135deg,var(--stone) 0%,var(--accent-dark) 100%)}
 .gallery-item:nth-child(1){grid-row:span 2}
 .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
 .gallery-item:hover img{transform:scale(1.05)}
+
+/* Reviews section — authentic Google reviews */
+.reviews{padding:120px 40px;background:var(--cream);position:relative}
+.reviews-inner{max-width:1200px;margin:0 auto}
+.reviews-header{text-align:center;margin-bottom:60px}
+.reviews-kicker{font-family:var(--script);font-size:36px;color:var(--accent);margin-bottom:8px}
+.reviews h2{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.2rem);font-weight:400;color:var(--ink);margin-bottom:20px}
+.reviews-rating-global{font-size:15px;color:var(--stone);margin-top:16px}
+.reviews-rating-global .stars{color:var(--accent);letter-spacing:2px;margin-right:8px}
+.reviews-rating-global strong{color:var(--ink);font-weight:600;margin-right:6px}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.review-card{background:#fff;padding:32px 28px;border-radius:6px;border:1px solid rgba(0,0,0,0.04);box-shadow:0 1px 3px rgba(0,0,0,0.02);position:relative;transition:transform 0.3s ease,box-shadow 0.3s ease}
+.review-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
+.review-card::before{content:'"';position:absolute;top:-10px;left:20px;font-family:var(--serif);font-size:80px;color:var(--accent);opacity:0.25;line-height:1;font-weight:700}
+.review-stars{color:var(--accent);letter-spacing:3px;font-size:16px;margin-bottom:16px;position:relative;z-index:1}
+.review-text{font-family:var(--serif);font-size:16px;line-height:1.65;color:var(--ink);font-style:italic;margin-bottom:20px;font-weight:400;min-height:100px;position:relative;z-index:1}
+.review-author{display:flex;align-items:center;gap:12px;padding-top:20px;border-top:1px solid rgba(0,0,0,0.06)}
+.review-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:18px;font-weight:600;flex-shrink:0}
+.review-name{font-size:14px;font-weight:600;color:var(--ink);margin:0}
+.review-time{font-size:12px;color:var(--stone);margin:2px 0 0}
 
 /* Reserve CTA */
 .reserve-cta{padding:140px 40px;background:var(--deep);color:#fff;text-align:center;position:relative;overflow:hidden}
@@ -466,6 +560,10 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
   .gallery{padding:80px 20px}
   .gallery-grid{grid-template-columns:repeat(2,1fr)}
   .gallery-item:nth-child(1){grid-row:auto}
+  .reviews{padding:80px 20px}
+  .reviews-grid{grid-template-columns:1fr;gap:16px}
+  .review-card{padding:24px 20px}
+  .review-text{min-height:auto}
   .reserve-cta{padding:100px 20px}
   .info{padding:80px 20px}
   .info-inner{grid-template-columns:1fr;gap:32px}
@@ -566,6 +664,34 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
     </div>
   </div>
 </section>
+
+${
+  (content.reviews && content.reviews.length > 0)
+    ? `<section class="reviews">
+  <div class="reviews-inner">
+    <div class="reviews-header">
+      <div class="reviews-kicker">Avis clients</div>
+      <h2>Ce qu'ils en disent</h2>
+      ${prospect.google_rating ? `<p class="reviews-rating-global"><span class="stars">${"★".repeat(Math.round(prospect.google_rating))}</span> <strong>${prospect.google_rating.toFixed(1)}/5</strong> · ${prospect.google_reviews_count || 0} avis Google</p>` : ""}
+    </div>
+    <div class="reviews-grid">
+      ${content.reviews.slice(0, 3).map((r) => `
+      <div class="review-card">
+        <div class="review-stars">${"★".repeat(Math.max(1, Math.min(5, r.rating)))}</div>
+        <p class="review-text">&laquo;&nbsp;${esc(r.text)}&nbsp;&raquo;</p>
+        <div class="review-author">
+          <div class="review-avatar">${esc(r.author.slice(0, 1).toUpperCase())}</div>
+          <div>
+            <p class="review-name">${esc(r.author)}</p>
+            ${r.timeAgo ? `<p class="review-time">${esc(r.timeAgo)}</p>` : ""}
+          </div>
+        </div>
+      </div>`).join("")}
+    </div>
+  </div>
+</section>`
+    : ""
+}
 
 <section class="reserve-cta">
   <div class="reserve-cta-inner">

@@ -32,7 +32,10 @@ interface Prospect {
   photos?: string[];
   hours?: string;
   business_type?: string;
-  menu_items?: Array<{ category: "entrée" | "plat" | "dessert"; name: string; description: string; price: string }> | null;
+  menu_items?: Array<{ category: string; name: string; description: string; price: string }> | null;
+  reviews?: Array<{ author: string; rating: number; text: string; timeAgo: string }> | null;
+  about_scraped?: string | null;
+  website_photos?: string[] | null;
 }
 
 interface PersonalizedContent {
@@ -161,6 +164,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       { category: "dessert", name: "Café gourmand", description: "Expresso, mignardises du jour", price: "9€" },
     ],
     cuisineType: "cuisine française traditionnelle",
+    vibe: "classic",
     talkingPoints: [
       "Site vitrine personnalisé avec votre identité",
       "Module de réservation en ligne intégré (sans commission)",
@@ -181,12 +185,16 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     : "https://api.anthropic.com/v1/messages";
 
   const infoLines = [
-    `Nom du restaurant : ${prospect.name}`,
+    `Nom de l'établissement : ${prospect.name}`,
     prospect.city ? `Ville : ${prospect.city}` : "",
     prospect.address ? `Adresse : ${prospect.address}` : "",
     prospect.google_rating ? `Note Google : ${prospect.google_rating}/5 (${prospect.google_reviews_count || 0} avis)` : "",
     prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
     prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
+    prospect.about_scraped ? `Texte de leur site (à propos / notre histoire) :\n"""\n${prospect.about_scraped.slice(0, 2000)}\n"""` : "",
+    prospect.reviews && prospect.reviews.length > 0
+      ? `Avis Google RÉELS :\n${prospect.reviews.slice(0, 3).map((r) => `- ${r.rating}★ par ${r.author} : "${r.text.slice(0, 200)}"`).join("\n")}`
+      : "",
   ].filter(Boolean).join("\n");
 
   // If we already have a scraped real menu, we don't need Claude to invent dishes
@@ -220,10 +228,17 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du produit", "description": "5-10 mots sur les ingrédients/particularités", "price": "X,XX€" ou "XX€" }. Prix réalistes selon le type.`
   }
   "cuisineType": "type d'établissement en 3-6 mots (ex: 'brasserie française', 'boulangerie artisanale', 'pâtisserie fine', 'glacier artisanal', 'pizzeria napolitaine')",
+  "vibe": "UN SEUL parmi ces 5, choisi selon le CARACTÈRE de l'établissement :
+    - 'classic' : brasseries classiques, gastro française traditionnelle, bistros élégants → palette or/bordeaux + Cormorant Garamond
+    - 'rustic' : VIEILLES MAISONS (famille depuis X générations, adresses 'fondée en 18XX', boulangeries artisanales terroir) → palette olive/sable + Libre Caslon (police héritage)
+    - 'coastal' : fruits de mer, crêperies Bretagne, adresses méditerranéennes, Nice, côte → palette bleu canard/cuivre
+    - 'modern' : gastronomie contemporaine, pâtisseries haute couture, urbain trendy, chef qui fait du moléculaire → palette anthracite/rose
+    - 'sunny' : GLACIERS, bars de plage, salons de thé ensoleillés, crêpes sucrées festives, food trucks estivaux → palette orange/ambre (ambiance été)
+    IMPORTANT : déduis le vibe depuis le NOM et surtout le TEXTE À PROPOS si disponible (si le texte parle de 'famille', 'depuis 1920', 'tradition' → rustic. Si 'création', 'nouveau chef', 'concept' → modern. Si 'mer', 'poisson', 'port' → coastal. Si 'glace', 'été', 'ensoleillé' → sunny).",
   "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 599€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
   "emailSubject": "objet email, 50 caractères max, personnalisé avec nom établissement",
   "emailOpening": "salutation (Bonjour,)",
-  "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté (réservation si resto, vitrine produits si boulangerie, etc.). Mentionne 1 détail réel (ville, note Google>4, etc.) si disponible."
+  "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté (réservation si resto, vitrine produits si boulangerie, etc.). Mentionne 1 détail RÉEL tiré des infos (ville, note Google>4, citation d'un avis, etc.)."
 }
 
 Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
@@ -297,12 +312,19 @@ Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le 
       if (tp.length >= 2) talkingPoints = tp;
     }
 
+    // Valide le vibe
+    const allowedVibes = ["classic", "rustic", "modern", "coastal", "sunny"];
+    const vibe = typeof parsed.vibe === "string" && allowedVibes.includes(parsed.vibe)
+      ? (parsed.vibe as "classic" | "rustic" | "modern" | "coastal" | "sunny")
+      : "classic";
+
     return {
       heroTitle: String(parsed.heroTitle || fallback.heroTitle).slice(0, 100),
       heroSubtitle: String(parsed.heroSubtitle || fallback.heroSubtitle).slice(0, 200),
       aboutText: String(parsed.aboutText || fallback.aboutText).slice(0, 500),
       menuItems,
       cuisineType: String(parsed.cuisineType || fallback.cuisineType).slice(0, 80),
+      vibe,
       talkingPoints,
       emailSubject: String(parsed.emailSubject || fallback.emailSubject).slice(0, 100),
       emailOpening: String(parsed.emailOpening || fallback.emailOpening).slice(0, 50),
@@ -778,8 +800,14 @@ export async function POST(req: NextRequest) {
           website: p.website, email: p.email,
           google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
           photos: p.photos, hours: p.hours,
+          website_photos: p.website_photos || undefined,
         };
-        html = generateRestaurantMockupHtml(restoProspect, restoContent, origin);
+        // Ajoute les Google reviews au content pour affichage dans la maquette
+        const contentWithReviews = {
+          ...restoContent,
+          reviews: p.reviews || undefined,
+        };
+        html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
         emailBody = buildRestaurantEmailBody(p, restoContent, mockupUrl);
         emailSubject = restoContent.emailSubject;
       } else {

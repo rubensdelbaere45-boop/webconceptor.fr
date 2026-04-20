@@ -60,6 +60,22 @@ interface GooglePlace {
   regularOpeningHours?: { weekdayDescriptions?: string[] };
   photos?: Array<{ name: string }>;
   addressComponents?: Array<{ longText?: string; types?: string[] }>;
+  reviews?: Array<{
+    name?: string;
+    rating?: number;
+    text?: { text?: string; languageCode?: string };
+    originalText?: { text?: string; languageCode?: string };
+    authorAttribution?: { displayName?: string; uri?: string; photoUri?: string };
+    relativePublishTimeDescription?: string;
+    publishTime?: string;
+  }>;
+}
+
+export interface StoredReview {
+  author: string;
+  rating: number;
+  text: string;
+  timeAgo: string;
 }
 
 async function searchProxiStores(query: string, apiKey: string): Promise<GooglePlace[]> {
@@ -81,6 +97,7 @@ async function searchProxiStores(query: string, apiKey: string): Promise<GoogleP
         "places.regularOpeningHours",
         "places.photos",
         "places.addressComponents",
+        "places.reviews",
       ].join(","),
     },
     body: JSON.stringify({
@@ -269,6 +286,98 @@ Règles STRICTES :
   }
 }
 
+// Extrait les reviews Google Places au format propre (3 meilleures avec note ≥ 4)
+function extractTopReviews(place: GooglePlace): StoredReview[] {
+  if (!place.reviews || place.reviews.length === 0) return [];
+  return place.reviews
+    .filter((r) => typeof r.rating === "number" && r.rating >= 4 && r.text?.text)
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .slice(0, 3)
+    .map((r) => ({
+      author: (r.authorAttribution?.displayName || "Client").split(" ")[0].slice(0, 40), // prénom uniquement
+      rating: Math.round(r.rating || 5),
+      text: (r.text?.text || "").slice(0, 240), // ~240 chars = 3-4 lignes
+      timeAgo: (r.relativePublishTimeDescription || "").slice(0, 30),
+    }));
+}
+
+// Scrape les photos du site : og:image + premières images grandes trouvées
+async function scrapeWebsitePhotos(website: string): Promise<string[]> {
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return [];
+    const base = new URL(website);
+    const html = await fetchUrl(base.origin, 8000);
+    if (!html) return [];
+
+    const urls: string[] = [];
+    const seen = new Set<string>();
+
+    const addUrl = (raw: string) => {
+      if (!raw || raw.length > 500) return;
+      let url: URL;
+      try {
+        url = new URL(raw, base.origin);
+      } catch { return; }
+      if (url.protocol !== "http:" && url.protocol !== "https:") return;
+      // Filtrer icônes / logos / svg / thumbnails
+      const path = url.pathname.toLowerCase();
+      if (/\.(svg|ico|gif)$/.test(path)) return;
+      if (/(logo|icon|favicon|sprite|avatar|loader|spinner)/.test(path)) return;
+      if (/\d{1,3}x\d{1,3}/.test(path)) return; // "150x150.jpg" thumbnails
+      const full = url.toString();
+      if (seen.has(full)) return;
+      seen.add(full);
+      urls.push(full);
+    };
+
+    // og:image / twitter:image (LA photo principale du site)
+    const ogMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+    if (ogMatch) addUrl(ogMatch[1]);
+
+    const twMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+    if (twMatch) addUrl(twMatch[1]);
+
+    // Balises <img> avec src réels (pas dans des attributs data-src lazy)
+    const imgRegex = /<img[^>]+src=["']([^"']+\.(?:jpg|jpeg|png|webp))["']/gi;
+    let m: RegExpExecArray | null;
+    while ((m = imgRegex.exec(html)) !== null && urls.length < 6) {
+      addUrl(m[1]);
+    }
+
+    return urls.slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
+// Scrape l'"à propos" / "notre histoire" — utile pour détecter si c'est une vieille maison
+async function scrapeAboutText(website: string): Promise<string | null> {
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return null;
+    const base = new URL(website);
+    const paths = ["/a-propos", "/apropos", "/about", "/about-us", "/notre-histoire", "/histoire", "/notre-equipe", "/qui-sommes-nous"];
+    for (const path of paths) {
+      const url = base.origin + path;
+      if (isPrivateOrUnsafeUrl(url)) continue;
+      const html = await fetchUrl(url, 6000);
+      if (!html) continue;
+      const text = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (text.length >= 200) return text.slice(0, 4000);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function findEmailOnWebsite(website: string): Promise<string | null> {
   try {
     // SSRF : even though URLs come from Google Places, a compromised/malicious
@@ -388,15 +497,26 @@ export async function POST(req: NextRequest) {
       // Try scraping email from website (non-blocking)
       let email: string | null = null;
       let scrapedMenu: ScrapedMenuItem[] | null = null;
+      let aboutScraped: string | null = null;
+      let websitePhotos: string[] = [];
       if (place.websiteUri) {
         email = await findEmailOnWebsite(place.websiteUri);
         if (email) stats.withEmail++;
 
-        // For restaurants: try to scrape the REAL menu
+        // For restaurants/food: try to scrape the REAL menu
         if (businessType === "restaurant") {
           scrapedMenu = await scrapeRestaurantMenu(place.websiteUri);
         }
+
+        // Scrape "about" page to détecter si c'est une vieille maison / famille
+        aboutScraped = await scrapeAboutText(place.websiteUri);
+
+        // Scrape leurs vraies photos (og:image + img tags)
+        websitePhotos = await scrapeWebsitePhotos(place.websiteUri);
       }
+
+      // Extract top Google reviews
+      const topReviews = extractTopReviews(place);
 
       // Store Google photo references only (NO API key in DB) — served via /api/prospect/photo proxy
       const photos = (place.photos || [])
@@ -423,6 +543,9 @@ export async function POST(req: NextRequest) {
         hours: place.regularOpeningHours?.weekdayDescriptions?.join(" | ") || "",
         business_type: businessType,
         menu_items: scrapedMenu && scrapedMenu.length >= 4 ? scrapedMenu : null,
+        reviews: topReviews.length ? topReviews : null,
+        about_scraped: aboutScraped,
+        website_photos: websitePhotos.length ? websitePhotos : null,
         status: email ? "found" : "no_email",
       });
 

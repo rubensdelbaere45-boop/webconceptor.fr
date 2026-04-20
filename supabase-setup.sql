@@ -137,6 +137,9 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS menu_items JSONB;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS project_code VARCHAR(6);
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS sms_reminder_sent_at TIMESTAMPTZ;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS reviews JSONB;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS about_scraped TEXT;
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS website_photos TEXT[];
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
 CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);
 CREATE INDEX IF NOT EXISTS idx_prospects_sms_reminder ON public.prospects(sms_reminder_sent_at);
