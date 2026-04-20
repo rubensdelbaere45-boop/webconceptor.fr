@@ -640,7 +640,7 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
     <p style="font-size:14px;color:#0a0a0a;margin-bottom:10px;font-weight:600">Une question ? Contactez-moi directement :</p>
     <p style="font-size:14px;color:#525252;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
     <p style="font-size:14px;color:#525252;margin-bottom:10px">📞 <a href="tel:+33635592471" style="color:#0066ff;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
-    <p style="font-size:13px;color:#737373;margin:0;font-style:italic">Merci de vous présenter avec le nom de votre commerce (<strong style="color:#0a0a0a">${escape(prospect.name)}</strong>) pour que je retrouve votre dossier rapidement.</p>
+    <p style="font-size:13px;color:#737373;margin:0;font-style:italic">Merci de signaler à l&rsquo;opérateur votre nom, prénom et le nom de votre enseigne (<strong style="color:#0a0a0a">${escape(prospect.name)}</strong>) afin que votre dossier soit retrouvé rapidement.</p>
   </div>
 
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
@@ -687,7 +687,7 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
     <p style="font-size:14px;color:#1a1310;margin-bottom:12px;font-weight:600">Une question ? Contactez-moi directement :</p>
     <p style="font-size:14px;color:#4a4340;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#c19a56;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
     <p style="font-size:14px;color:#4a4340;margin-bottom:12px">📞 <a href="tel:+33635592471" style="color:#c19a56;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
-    <p style="font-size:13px;color:#8b7e6e;margin:0;font-style:italic">Merci de vous présenter avec le nom de votre restaurant (<strong style="color:#1a1310">${escape(prospect.name)}</strong>) pour que je retrouve votre dossier rapidement.</p>
+    <p style="font-size:13px;color:#8b7e6e;margin:0;font-style:italic">Merci de signaler à l&rsquo;opérateur votre nom, prénom et le nom de votre enseigne (<strong style="color:#1a1310">${escape(prospect.name)}</strong>) afin que votre dossier soit retrouvé rapidement.</p>
   </div>
 
   <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#8b7e6e">
