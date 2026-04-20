@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isPrivateOrUnsafeUrl, rateLimit, getClientIp } from "@/lib/security";
+import { isPrivateOrUnsafeUrl, rateLimit, getClientIp, safeFetch } from "@/lib/security";
 
 interface AuditResult {
   performance: number;
@@ -64,12 +64,13 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  // Pre-check: is the site reachable at all?
+  // Pre-check: is the site reachable at all? Uses safeFetch which re-validates
+  // each redirect hop against the SSRF blocklist.
   try {
-    const head = await fetch(targetUrl, {
+    const head = await safeFetch(targetUrl, {
       method: "HEAD",
-      redirect: "follow",
-      signal: AbortSignal.timeout(10000),
+      timeoutMs: 10000,
+      maxRedirects: 5,
     });
     if (!head.ok && head.status !== 405) {
       return NextResponse.json({
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
   } catch {
-    // HEAD may not be supported, continue anyway to PageSpeed
+    // HEAD may not be supported or redirected somewhere blocked → continue to PageSpeed
   }
 
   // Build PageSpeed API URL with optional key (more reliable with key, falls back to free tier)

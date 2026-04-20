@@ -32,13 +32,23 @@ export async function GET(req: NextRequest) {
     }
 
     const buffer = await res.arrayBuffer();
-    const contentType = res.headers.get("content-type") || "image/jpeg";
+    // Only serve if the response is actually an image. Prevents an attacker-
+    // controlled photo name from tricking us into proxying non-image content.
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) {
+      return new NextResponse("Not an image", { status: 415 });
+    }
+    // Cap at 5 MB to avoid OOM
+    if (buffer.byteLength > 5 * 1024 * 1024) {
+      return new NextResponse("Image too large", { status: 413 });
+    }
 
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400, s-maxage=604800, immutable",
         "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'",
       },
     });
   } catch {

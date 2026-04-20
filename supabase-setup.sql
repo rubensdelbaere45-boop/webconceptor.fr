@@ -24,14 +24,16 @@ CREATE TABLE IF NOT EXISTS public.projects (
 -- Enable RLS
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
--- Policy: anyone can read a project by code (for code validation)
-CREATE POLICY "Anyone can read projects by code"
-  ON public.projects FOR SELECT
-  USING (true);
-
--- Policy: only service role can insert/update (admin via API)
-CREATE POLICY "Service role can manage projects"
+-- Only service role (used by our API) can manage projects.
+-- Anon/authed users have NO direct access — all reads go through our
+-- /api/projects?code=XXX endpoint which uses the service role key.
+-- This prevents the anon key from exposing client_email, contract_text,
+-- stripe_payment_link, buyer_info if it ever leaks.
+DROP POLICY IF EXISTS "Anyone can read projects by code" ON public.projects;
+DROP POLICY IF EXISTS "Service role can manage projects" ON public.projects;
+CREATE POLICY "Service role only"
   ON public.projects FOR ALL
+  TO service_role
   USING (true)
   WITH CHECK (true);
 
@@ -60,14 +62,14 @@ CREATE TABLE IF NOT EXISTS public.demandes (
 
 ALTER TABLE public.demandes ENABLE ROW LEVEL SECURITY;
 
--- Anyone can insert (public form)
-CREATE POLICY "Anyone can insert demandes"
-  ON public.demandes FOR INSERT
-  WITH CHECK (true);
-
--- Only service role can read/update (admin via API)
-CREATE POLICY "Service role can manage demandes"
+-- Only service role (our API) can read/write demandes. The public form
+-- posts to /api/demandes which uses the service role key — no direct DB
+-- access from the browser. This protects PII (email, telephone, details).
+DROP POLICY IF EXISTS "Anyone can insert demandes" ON public.demandes;
+DROP POLICY IF EXISTS "Service role can manage demandes" ON public.demandes;
+CREATE POLICY "Service role only demandes"
   ON public.demandes FOR ALL
+  TO service_role
   USING (true)
   WITH CHECK (true);
 
@@ -114,14 +116,17 @@ CREATE TABLE IF NOT EXISTS public.prospects (
 
 ALTER TABLE public.prospects ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Service role can manage prospects"
+-- Only service role (our API) can manage prospects.
+-- Mockups at /prospects/[slug] are served via our API using service role key,
+-- so direct DB SELECT is not needed. Keeping this locked protects prospect
+-- emails + phone numbers (PII) from leaking if anon key is exposed.
+DROP POLICY IF EXISTS "Service role can manage prospects" ON public.prospects;
+DROP POLICY IF EXISTS "Anyone can read prospects by slug" ON public.prospects;
+CREATE POLICY "Service role only prospects"
   ON public.prospects FOR ALL
+  TO service_role
   USING (true)
   WITH CHECK (true);
-
-CREATE POLICY "Anyone can read prospects by slug"
-  ON public.prospects FOR SELECT
-  USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_prospects_status ON public.prospects(status);
 CREATE INDEX IF NOT EXISTS idx_prospects_slug ON public.prospects(slug);

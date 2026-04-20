@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { safeCompare } from "@/lib/security";
 
 // Use service role key for admin operations
 function getSupabaseAdmin() {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key");
 
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

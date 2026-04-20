@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isPrivateOrUnsafeUrl } from "@/lib/security";
+import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    CONFIG
@@ -118,13 +118,16 @@ const BAD_DOMAINS = /(wix|wixstatic|sentry|example|test|placeholder|noreply|no-r
 
 async function fetchUrl(url: string, timeout = 8000): Promise<string | null> {
   try {
-    const res = await fetch(url, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(timeout),
+    // safeFetch rejects redirects that point at internal/private addresses.
+    const res = await safeFetch(url, {
+      timeoutMs: timeout,
+      maxRedirects: 5,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorBot/1.0)" },
     });
     if (!res.ok) return null;
-    return await res.text();
+    // Cap response size to avoid a malicious site OOMing the server (10 MB max)
+    const text = await res.text();
+    return text.slice(0, 10 * 1024 * 1024);
   } catch {
     return null;
   }
@@ -178,7 +181,7 @@ async function findEmailOnWebsite(website: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key");
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { rateLimit, getClientIp } from "@/lib/security";
+import { rateLimit, getClientIp, safeCompare } from "@/lib/security";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  if (adminKey && adminKey !== process.env.ADMIN_SECRET_KEY) {
+  if (adminKey && !safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 

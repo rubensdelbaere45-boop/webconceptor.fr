@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { escapeTelegram } from "@/lib/security";
+import { escapeTelegram, safeCompare } from "@/lib/security";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -478,7 +478,7 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
 
 export async function POST(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key");
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 

@@ -2,6 +2,72 @@
    Security helpers — shared across API routes
    ══════════════════════════════════════════ */
 
+import { timingSafeEqual } from "node:crypto";
+
+/**
+ * Constant-time string comparison. Always runs through the full buffer length
+ * so attacker can't infer the secret byte-by-byte from response latency.
+ *
+ * Returns false if either string is empty, too long (10KB cap), or differs in length.
+ */
+export function safeCompare(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  if (a.length > 10240 || b.length > 10240) return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  try {
+    return timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch a URL while blocking SSRF via redirects.
+ *
+ * Problem : even if we validate the initial hostname, an attacker can put a
+ * public URL that 302-redirects to http://169.254.169.254 (AWS metadata).
+ * `redirect: "follow"` would blindly follow, exposing internal responses.
+ *
+ * Solution : set `redirect: "manual"`, inspect Location, re-check with
+ * isPrivateOrUnsafeUrl(), and follow up to N hops.
+ */
+export async function safeFetch(
+  initialUrl: string,
+  init: RequestInit & { maxRedirects?: number; timeoutMs?: number } = {}
+): Promise<Response> {
+  const { maxRedirects = 5, timeoutMs = 10000, ...rest } = init;
+
+  if (isPrivateOrUnsafeUrl(initialUrl)) {
+    throw new Error(`Blocked: target is private or unsafe (${initialUrl})`);
+  }
+
+  let currentUrl = initialUrl;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const res = await fetch(currentUrl, {
+      ...rest,
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    // Not a redirect → return as-is
+    if (res.status < 300 || res.status >= 400) return res;
+
+    const location = res.headers.get("location");
+    if (!location) return res;
+
+    // Resolve relative redirects against current URL
+    const next = new URL(location, currentUrl).toString();
+    if (isPrivateOrUnsafeUrl(next)) {
+      throw new Error(`Blocked redirect to private/unsafe target: ${next}`);
+    }
+    currentUrl = next;
+  }
+
+  throw new Error(`Too many redirects (${maxRedirects}) from ${initialUrl}`);
+}
+
 /**
  * Escape a string for safe inclusion in Telegram messages with parse_mode="HTML".
  * Telegram HTML mode supports only: <b>, <i>, <u>, <s>, <a>, <code>, <pre>.
