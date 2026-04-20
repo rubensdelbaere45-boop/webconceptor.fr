@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, getClientIp } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    TLD base prices (EUR TTC, from IONOS tariffs)
@@ -130,10 +131,26 @@ async function checkAvailability(name: string, tld: string): Promise<boolean> {
    ══════════════════════════════════════════ */
 
 export async function POST(req: NextRequest) {
-  const { fullDomain } = await req.json();
+  // 60 checks/min/IP — user types many possibilities during /code flow
+  const ip = getClientIp(req.headers);
+  const rl = rateLimit(`domain:${ip}`, 60, 60);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Trop de requetes. Reessayez dans ${rl.retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
 
-  if (!fullDomain || typeof fullDomain !== "string") {
-    return NextResponse.json({ error: "Domaine manquant" }, { status: 400 });
+  let body: { fullDomain?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Requete invalide" }, { status: 400 });
+  }
+  const { fullDomain } = body;
+
+  if (!fullDomain || typeof fullDomain !== "string" || fullDomain.length > 253) {
+    return NextResponse.json({ error: "Domaine manquant ou invalide" }, { status: 400 });
   }
 
   const cleaned = fullDomain.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "");

@@ -311,8 +311,8 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Design premium, livraison en 5 jours. 599 € tout compris.<br />
-            <span className="text-[#a3a3a3] text-base">Nous créons votre site ou nous améliorons l&apos;existant.</span>
+            Design premium, livraison en 5 jours. <strong>À partir de 599 € HT</strong>.<br />
+            <span className="text-[#a3a3a3] text-base">Hébergement &amp; maintenance en option — 50 €/mois.</span>
           </motion.p>
 
           {/* CTAs */}

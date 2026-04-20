@@ -76,3 +76,53 @@ CREATE INDEX IF NOT EXISTS idx_demandes_created ON public.demandes(created_at DE
 -- Colonnes audit (à exécuter si la table existe déjà)
 ALTER TABLE public.demandes ADD COLUMN IF NOT EXISTS site_url TEXT;
 ALTER TABLE public.demandes ADD COLUMN IF NOT EXISTS audit_results TEXT;
+
+-- ============================================
+-- Table prospects (automatisation prospection)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.prospects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  google_place_id TEXT UNIQUE,
+  name TEXT NOT NULL,
+  address TEXT,
+  city TEXT,
+  postal_code TEXT,
+  lat DECIMAL,
+  lng DECIMAL,
+  distance_km INTEGER,
+  phone TEXT,
+  website TEXT,
+  email TEXT,
+  google_rating DECIMAL,
+  google_reviews_count INTEGER,
+  photos TEXT[],
+  hours TEXT,
+  mockup_html TEXT,
+  email_subject TEXT,
+  email_body TEXT,
+  status TEXT DEFAULT 'found' CHECK (status IN ('found', 'no_email', 'ready', 'sent', 'opened', 'replied', 'converted', 'error')),
+  sent_at TIMESTAMPTZ,
+  opened_at TIMESTAMPTZ,
+  replied_at TIMESTAMPTZ,
+  error TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.prospects ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role can manage prospects"
+  ON public.prospects FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Anyone can read prospects by slug"
+  ON public.prospects FOR SELECT
+  USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_prospects_status ON public.prospects(status);
+CREATE INDEX IF NOT EXISTS idx_prospects_slug ON public.prospects(slug);
+CREATE INDEX IF NOT EXISTS idx_prospects_email ON public.prospects(email);

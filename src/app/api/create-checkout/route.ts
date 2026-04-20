@@ -19,21 +19,46 @@ function getSupabaseAdmin() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const {
-      code,
-      domain,
-      domainPriceCents,
-      wantsSerenite,
-      buyerInfo,
-    } = body;
+    let raw: Record<string, unknown>;
+    try {
+      raw = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Requete invalide" }, { status: 400 });
+    }
+
+    const str = (v: unknown, max = 450): string => String(v ?? "").slice(0, max);
+
+    const code = str(raw.code, 6);
+    const domain = str(raw.domain, 253).toLowerCase();
+    const domainPriceCents = typeof raw.domainPriceCents === "number" ? raw.domainPriceCents : NaN;
+    const wantsSerenite = Boolean(raw.wantsSerenite);
+    const rawBuyer = (raw.buyerInfo ?? {}) as Record<string, unknown>;
 
     // Validate
-    if (!code || !domain || typeof domainPriceCents !== "number" || !buyerInfo) {
-      return NextResponse.json({ error: "Donnees manquantes" }, { status: 400 });
+    if (!code || code.length !== 6) {
+      return NextResponse.json({ error: "Code invalide" }, { status: 400 });
     }
+    if (!domain || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {
+      return NextResponse.json({ error: "Domaine invalide" }, { status: 400 });
+    }
+    if (!Number.isFinite(domainPriceCents) || domainPriceCents < 0 || domainPriceCents > 50000) {
+      return NextResponse.json({ error: "Prix domaine invalide" }, { status: 400 });
+    }
+
+    const buyerInfo = {
+      nom: str(rawBuyer.nom, 200),
+      adresse: str(rawBuyer.adresse, 200),
+      ville: str(rawBuyer.ville, 100),
+      cp: str(rawBuyer.cp, 20),
+      telephone: str(rawBuyer.telephone, 30),
+      email: str(rawBuyer.email, 200),
+    };
+
     if (!buyerInfo.nom || !buyerInfo.adresse || !buyerInfo.ville || !buyerInfo.cp || !buyerInfo.email) {
       return NextResponse.json({ error: "Coordonnees acheteur incompletes" }, { status: 400 });
+    }
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(buyerInfo.email)) {
+      return NextResponse.json({ error: "Email acheteur invalide" }, { status: 400 });
     }
 
     // Load project
@@ -63,8 +88,16 @@ export async function POST(req: NextRequest) {
       })
       .eq("code", code);
 
-    // Determine origin for success/cancel URLs
-    const origin = req.headers.get("origin") || "https://webconceptor.fr";
+    // Determine origin for success/cancel URLs — allow-list known origins,
+    // otherwise fall back to prod. Prevents an attacker from crafting a checkout
+    // that sends Stripe success redirect to a malicious site.
+    const ALLOWED_ORIGINS = new Set([
+      "https://webconceptor.fr",
+      "https://www.webconceptor.fr",
+      "http://localhost:3000",
+    ]);
+    const reqOrigin = req.headers.get("origin") || "";
+    const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
 
     // Build line items (inferred type from usage)
     type LineItem = NonNullable<NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]>["line_items"]>[number];
@@ -137,7 +170,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Log full error server-side, return generic message to client (don't leak Stripe keys/IDs)
+    console.error("[create-checkout] error:", err);
+    return NextResponse.json({ error: "Impossible de creer la session de paiement." }, { status: 500 });
   }
 }

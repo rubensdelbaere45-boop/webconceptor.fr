@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { escapeTelegram } from "@/lib/security";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2026-03-25.dahlia",
@@ -114,6 +115,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    // Idempotency : Stripe can replay this event. Only process on the FIRST transition
+    // sent/viewed -> paid. If the project is already "paid" or beyond, skip side-effects.
+    const { data: current } = await supabase
+      .from("projects")
+      .select("id, status")
+      .eq("code", code)
+      .single();
+
+    if (!current) {
+      return NextResponse.json({ received: true });
+    }
+
+    if (current.status === "paid" || current.status === "completed") {
+      // Already processed — acknowledge and skip notifications.
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     // Update project status
     await supabase
       .from("projects")
@@ -137,25 +155,25 @@ export async function POST(req: NextRequest) {
       const domain = metadata.domain || "non specifie";
       const hasSerenite = metadata.has_serenite === "true";
 
-      // Telegram
+      // Telegram (parse_mode=HTML requires user-supplied strings to be escaped)
       const telegramMsg = `
 💰 <b>NOUVEAU PAIEMENT WebConceptor</b>
 
-<b>Client :</b> ${buyerName}
-<b>Email :</b> ${buyerEmail}
-<b>Telephone :</b> ${metadata.buyer_tel || "—"}
+<b>Client :</b> ${escapeTelegram(buyerName)}
+<b>Email :</b> ${escapeTelegram(buyerEmail)}
+<b>Telephone :</b> ${escapeTelegram(metadata.buyer_tel || "—")}
 
-<b>Projet :</b> ${project.title}
-<b>Code :</b> ${code}
+<b>Projet :</b> ${escapeTelegram(project.title)}
+<b>Code :</b> ${escapeTelegram(code)}
 
-<b>Domaine :</b> ${domain}
+<b>Domaine :</b> ${escapeTelegram(domain)}
 <b>Formule Serenite :</b> ${hasSerenite ? "✅ OUI (50€/mois)" : "❌ Non"}
 
 <b>TOTAL PAYE :</b> ${amountPaid} €
 
 <b>Adresse acheteur :</b>
-${metadata.buyer_adresse || "—"}
-${metadata.buyer_cp || ""} ${metadata.buyer_ville || ""}
+${escapeTelegram(metadata.buyer_adresse || "—")}
+${escapeTelegram(metadata.buyer_cp || "")} ${escapeTelegram(metadata.buyer_ville || "")}
 
 📋 <b>A FAIRE :</b>
 1. Acheter le domaine sur IONOS au nom de l'acheteur

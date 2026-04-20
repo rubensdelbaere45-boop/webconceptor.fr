@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
   }).select().single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[projects] insert error:", error);
+    return NextResponse.json({ error: "Impossible de creer le projet" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });
