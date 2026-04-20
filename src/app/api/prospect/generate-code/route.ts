@@ -150,6 +150,7 @@ export async function POST(req: NextRequest) {
         text: msg,
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        disable_notification: true,
       }),
     }).catch(() => { /* silent */ });
   }

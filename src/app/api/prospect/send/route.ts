@@ -672,7 +672,9 @@ async function notifyTelegram(message: string) {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML", disable_web_page_preview: true }),
+      // disable_notification: true → arrive en silencieux sur l'iPhone
+      // (HOT LEAD et paiement Stripe restent avec son).
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML", disable_web_page_preview: true, disable_notification: true }),
     });
   } catch { /* silent */ }
 }
