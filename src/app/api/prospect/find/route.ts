@@ -540,9 +540,16 @@ export async function POST(req: NextRequest) {
     ? rawBody.query.trim().slice(0, 200)
     : "Proxi épicerie France";
 
-  // business_type : 'epicerie' (default, excludes 350km around Aubenton) | 'restaurant' (no filter)
+  // business_type : whitelist de types métier pour filtres admin + templates adaptés
+  // - 'epicerie'   : Proxi et autres épiceries (seul type qui a filtre 350km Aubenton)
+  // - 'restaurant' : resto/brasserie/bistrot/pizzeria/crêperie
+  // - 'boulangerie': boulangeries + viennoiseries
+  // - 'patisserie' : pâtissiers + chocolatiers
+  // - 'cafe'       : cafés + salons de thé
+  // - 'glacier'    : glaciers + bars d'été
+  const ALLOWED_TYPES = ["epicerie", "restaurant", "boulangerie", "patisserie", "cafe", "glacier"];
   const businessType: string = typeof rawBody.business_type === "string"
-    && ["epicerie", "restaurant"].includes(rawBody.business_type)
+    && ALLOWED_TYPES.includes(rawBody.business_type)
     ? rawBody.business_type
     : "epicerie";
 
@@ -609,8 +616,8 @@ export async function POST(req: NextRequest) {
         email = await findEmailOnWebsite(place.websiteUri);
         if (email) stats.withEmail++;
 
-        // For restaurants/food: try to scrape the REAL menu
-        if (businessType === "restaurant") {
+        // Pour tous les types food (sauf épicerie) : tente de scraper le vrai menu/carte
+        if (businessType !== "epicerie") {
           scrapedMenu = await scrapeRestaurantMenu(place.websiteUri);
         }
 

@@ -855,7 +855,9 @@ export async function POST(req: NextRequest) {
 
     try {
       // Branch by business_type
-      const isRestaurant = p.business_type === "restaurant";
+      // Template restaurant pour tout type food (resto, boulangerie, pâtisserie, café, glacier)
+      // Template épicerie uniquement pour les Proxi / commerces de proximité
+      const isRestaurant = p.business_type !== "epicerie";
       const mockupUrl = `${origin}/prospects/${p.slug}`;
 
       let html: string;

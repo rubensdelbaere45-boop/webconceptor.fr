@@ -42,7 +42,7 @@ export default function AdminProspectsPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("Proxi épicerie France");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "restaurant" | "epicerie">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "restaurant" | "epicerie" | "boulangerie" | "patisserie" | "cafe" | "glacier">("all");
   const [searchText, setSearchText] = useState("");
   const [batchSize, setBatchSize] = useState(5);
   const [dryRun, setDryRun] = useState(true);
@@ -637,12 +637,16 @@ export default function AdminProspectsPage() {
           <span className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 mr-2">Type :</span>
           {[
             { value: "all", label: "Tous", emoji: "" },
-            { value: "restaurant", label: "Restaurateurs", emoji: "🍽️" },
+            { value: "restaurant", label: "Restaurants", emoji: "🍽️" },
+            { value: "boulangerie", label: "Boulangeries", emoji: "🥐" },
+            { value: "patisserie", label: "Pâtisseries", emoji: "🧁" },
+            { value: "cafe", label: "Cafés / Salons de thé", emoji: "☕" },
+            { value: "glacier", label: "Glaciers", emoji: "🍦" },
             { value: "epicerie", label: "Épiceries (Proxi)", emoji: "🛒" },
           ].map((t) => (
             <button
               key={t.value}
-              onClick={() => setTypeFilter(t.value as "all" | "restaurant" | "epicerie")}
+              onClick={() => setTypeFilter(t.value as typeof typeFilter)}
               className={`px-4 py-1.5 rounded-full text-[12px] font-semibold transition ${
                 typeFilter === t.value
                   ? "bg-[#0066ff] text-white shadow-sm"
@@ -705,11 +709,16 @@ export default function AdminProspectsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14px] font-semibold truncate">{p.name}</p>
-                        {p.business_type === "restaurant" ? (
-                          <span className="text-[11px]">🍽️</span>
-                        ) : p.business_type === "epicerie" ? (
-                          <span className="text-[11px]">🛒</span>
-                        ) : null}
+                        <span className="text-[11px]">
+                          {{
+                            restaurant: "🍽️",
+                            boulangerie: "🥐",
+                            patisserie: "🧁",
+                            cafe: "☕",
+                            glacier: "🍦",
+                            epicerie: "🛒",
+                          }[p.business_type || "epicerie"] || "•"}
+                        </span>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colorClass}`}>
                           {p.status}
                         </span>
