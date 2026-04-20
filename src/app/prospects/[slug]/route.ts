@@ -11,9 +11,18 @@ function getSupabaseAdmin() {
 
 /* ══════════════════════════════════════════
    GET /prospects/[slug]
-   Sert le HTML de la maquette stocke dans la DB.
-   Lien permanent tant que le prospect existe.
+   Sert le HTML de la maquette stocké dans la DB + log ouverture +
+   notif Telegram "HOT LEAD" (1ère ouverture uniquement).
    ══════════════════════════════════════════ */
+
+// Normalise un numéro français pour le lien tel: (garde seulement digits + préfixe +33)
+function phoneToTelLink(raw: string): string {
+  const digits = raw.replace(/[^0-9+]/g, "");
+  if (!digits) return "";
+  // 06/07 → +336/+337
+  if (/^0[1-9]/.test(digits)) return "+33" + digits.slice(1);
+  return digits;
+}
 
 export async function GET(
   _req: NextRequest,
@@ -28,7 +37,7 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("mockup_html, name, id")
+    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -39,7 +48,9 @@ export async function GET(
     );
   }
 
-  // Log the view (non-blocking)
+  const isFirstOpen = !data.opened_at;
+
+  // Log the view (non-blocking). is(opened_at, null) garantit un seul trigger.
   supabase
     .from("prospects")
     .update({
@@ -50,16 +61,40 @@ export async function GET(
     .is("opened_at", null)
     .then(() => {});
 
-  // Notify Telegram if first open (non-blocking)
+  // Notify Telegram SEULEMENT à la 1ère ouverture (hot lead) — riche notif
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (token && chatId) {
+  if (isFirstOpen && token && chatId) {
+    const phoneDisplay = data.phone || "";
+    const phoneLink = phoneDisplay ? phoneToTelLink(phoneDisplay) : "";
+    const isResto = data.business_type === "restaurant";
+    const typeEmoji = isResto ? "🍽️" : "🛒";
+    const typeLabel = isResto ? "Restaurant" : "Commerçant";
+
+    const parisTime = new Date().toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
+
+    const phoneLine = phoneDisplay
+      ? `📞 <a href="tel:${escapeTelegram(phoneLink)}"><b>${escapeTelegram(phoneDisplay)}</b></a>\n<i>(appelle maintenant, la maquette est ouverte)</i>`
+      : `📞 <i>Pas de numéro disponible</i>`;
+
+    const message =
+      `🔥 <b>HOT LEAD — ${typeLabel} ouvre sa maquette !</b>\n\n` +
+      `<b>${typeEmoji} ${escapeTelegram(data.name)}</b>\n` +
+      `📍 ${escapeTelegram(data.address || data.city || "—")}\n` +
+      phoneLine + "\n" +
+      (data.email ? `✉️ ${escapeTelegram(data.email)}\n` : "") +
+      (data.google_rating ? `⭐ ${data.google_rating}/5 (${data.google_reviews_count || 0} avis)\n` : "") +
+      `⏰ Ouverte à ${escapeTelegram(parisTime)}\n\n` +
+      `<b>💡 Conseil :</b> Rappelle dans les 5 prochaines minutes, pendant qu'il regarde encore la maquette.\n\n` +
+      `🎯 <a href="https://webconceptor.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
+      (data.website ? `\n🌐 <a href="${escapeTelegram(data.website)}">Son site actuel</a>` : "");
+
     fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: `👀 <b>${escapeTelegram(data.name)}</b> vient d'ouvrir sa maquette.`,
+        text: message,
         parse_mode: "HTML",
         disable_web_page_preview: true,
       }),
