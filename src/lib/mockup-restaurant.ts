@@ -1170,9 +1170,9 @@ ${
           <ul>
             <li>Livraison en 7 jours</li>
             <li>Votre nom de domaine <strong>.fr .com</strong> etc.</li>
-            <li>Hébergement inclus à vie</li>
-            <li>Emails pros (contact@votresite.fr)</li>
+            <li>Hébergement inclus (tant que l'abonnement est actif)</li>
             <li><strong>Modifications illimitées</strong></li>
+            <li>Sauvegardes automatiques + monitoring</li>
           </ul>
         </div>
       </div>

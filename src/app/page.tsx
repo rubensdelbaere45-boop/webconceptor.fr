@@ -320,7 +320,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.6, ease }}
-            className="flex flex-col sm:flex-row gap-3 justify-center mb-16"
+            className="flex flex-col sm:flex-row gap-3 justify-center mb-6"
           >
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
               <Link href="/demande" className="px-7 py-3.5 bg-[#0a0a0a] text-white text-[15px] font-medium rounded-full hover:bg-[#262626] transition-colors inline-flex items-center gap-2 shadow-lg shadow-black/10">
@@ -331,6 +331,44 @@ export default function Home() {
             <a href="#realisations" className="px-7 py-3.5 bg-white border border-[#e5e5e5] text-[#525252] text-[15px] font-medium rounded-full hover:border-[#0a0a0a] hover:text-[#0a0a0a] transition-all inline-flex items-center justify-center">
               Voir nos réalisations
             </a>
+          </motion.div>
+
+          {/* Trust badges — moyens de paiement acceptés */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1, duration: 0.6 }}
+            className="flex flex-col items-center gap-3 mb-16"
+          >
+            <p className="text-[11px] text-[#a3a3a3] uppercase tracking-[0.2em]">Paiement sécurisé</p>
+            <div className="flex items-center justify-center gap-5 flex-wrap">
+              {/* Logo Klarna — 3x sans frais */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-[#FFA8CD] rounded-md" title="Paiement en 3 fois sans frais via Klarna">
+                <svg viewBox="0 0 452 100" xmlns="http://www.w3.org/2000/svg" className="h-5 w-auto" aria-label="Klarna">
+                  <path fill="#17120F" d="M80 0H0v100h80V0zm53 0v100h50V0h-50zm128 0v100h50V0h-50zm73 27c-12.7 0-23 10.3-23 23s10.3 23 23 23 23-10.3 23-23-10.3-23-23-23zm85 0c-12.7 0-23 10.3-23 23s10.3 23 23 23 23-10.3 23-23-10.3-23-23-23z"/>
+                </svg>
+                <span className="text-[11px] font-bold text-[#17120F]">3× sans frais</span>
+              </div>
+              {/* Logo Stripe */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-[#635BFF] rounded-md" title="Paiements sécurisés par Stripe (Netflix, Shopify, Zoom)">
+                <svg viewBox="0 0 60 25" xmlns="http://www.w3.org/2000/svg" className="h-4 w-auto" aria-label="Stripe">
+                  <path fill="#fff" d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.63l.21 1.05a4.7 4.7 0 0 1 3.26-1.24c2.92 0 5.67 2.63 5.67 7.34 0 5.13-2.72 7.59-5.73 7.59zM40 9.08c-.95 0-1.54.35-1.97.84l.02 6.12c.4.44.98.78 1.95.78 1.54 0 2.57-1.68 2.57-3.9 0-2.14-1.05-3.84-2.57-3.84zM32.57 5.38l-4.13.88v-3.38l4.13-.87v3.37zm0 1.25v13.35h-4.13V6.63h4.13zM22.37 7.15v12.58h-4.1v-12h-2.46l-.01-3.54h2.46c0-1.28.66-3.55 4.45-3.55 1.67 0 2.85.4 3.35.63v3.58c-.52-.23-1.46-.5-2.25-.5-.8 0-1.44.2-1.44 1.1v1.72h3.69v3.54h-3.69zM12.16 8.7c-.87-.2-3.3-.72-3.3 1.19v9.84H4.74V5.57h3.5l.12 1.16c.86-1.57 2.62-1.35 3.8-1.35v3.32zM0 0h4.12v19.73H0V0z"/>
+                </svg>
+              </div>
+              {/* Badge cartes */}
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#e5e5e5] rounded-md">
+                <svg viewBox="0 0 48 32" className="h-4 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
+                  <rect width="48" height="32" rx="4" fill="#1A1F71"/>
+                  <path fill="#fff" d="M20.72 21.3l1.88-10.63h3l-1.88 10.63h-3zm13.8-10.36c-.6-.23-1.52-.48-2.68-.48-2.96 0-5.04 1.5-5.06 3.66-.02 1.6 1.5 2.48 2.64 3.02 1.17.54 1.57.9 1.56 1.38-.01.75-.94 1.1-1.8 1.1-1.2 0-1.84-.18-2.82-.6l-.38-.17-.42 2.45c.7.3 1.98.57 3.3.58 3.14 0 5.18-1.48 5.2-3.78.03-1.26-.79-2.22-2.54-3.01-1.06-.52-1.7-.86-1.7-1.38 0-.46.55-.96 1.74-.96 1 0 1.7.2 2.26.42l.27.13.4-2.36zm7.3-.27h-2.3c-.72 0-1.26.2-1.57.93l-4.44 9.7h3.14l.63-1.68h3.84l.36 1.68H44l-2.18-10.63zm-3.67 6.93c.24-.6 1.18-2.98 1.18-2.98-.02.03.25-.62.4-1.02l.2 1 .7 3H38.15zM18.2 10.67l-2.94 7.3-.32-1.46c-.55-1.68-2.28-3.5-4.22-4.4l2.67 8.19h3.18l4.72-9.63H18.2z"/>
+                </svg>
+                <svg viewBox="0 0 48 32" className="h-4 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
+                  <rect width="48" height="32" rx="4" fill="#fff" stroke="#e5e5e5"/>
+                  <circle cx="19" cy="16" r="8" fill="#EB001B"/>
+                  <circle cx="29" cy="16" r="8" fill="#F79E1B"/>
+                  <path fill="#FF5F00" d="M24 10a8 8 0 0 1 0 12 8 8 0 0 1 0-12z"/>
+                </svg>
+              </div>
+            </div>
           </motion.div>
 
           {/* Animated stats */}

@@ -787,6 +787,16 @@ export default function AdminProspectsPage() {
                           {dryRun ? "Générer" : "Envoyer"}
                         </button>
                       )}
+                      {/* Appeler directement — link tel: lance FaceTime / Continuity sur Mac */}
+                      {p.phone && (
+                        <a
+                          href={`tel:${p.phone.replace(/[^0-9+]/g, "")}`}
+                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-flex items-center gap-1"
+                          title={`Appeler ${p.phone} (FaceTime/Continuity)`}
+                        >
+                          📞 Appeler
+                        </a>
+                      )}
                       {/* Script d'appel — dès qu'une maquette existe + tél disponible */}
                       {p.phone && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
                         <button

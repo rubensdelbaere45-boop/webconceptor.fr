@@ -145,7 +145,8 @@ function buildCodeEmailHtml(opts: {
           <li>Enregistrement du nom de domaine</li>
           <li>Configuration DNS complète</li>
           <li>Déploiement + mise en ligne sur votre domaine</li>
-          <li>Hébergement et emails inclus à vie (50 €/mois)</li>
+          <li>Hébergement inclus tant que l'abonnement Sérénité est actif (50 €/mois)</li>
+          <li>Modifications illimitées + sauvegardes automatiques</li>
         </ul>
       </div>
     </div>

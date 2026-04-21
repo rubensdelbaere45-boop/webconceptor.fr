@@ -25,8 +25,33 @@ function phoneToTelLink(raw: string): string {
   return digits;
 }
 
+// Détecte les bots (Gmail link preview, antispam scanners, crawlers, Brevo,
+// Outlook SafeLinks, etc.) qui ouvrent la maquette AUTOMATIQUEMENT dès la
+// réception du mail. Sans ce filtre, on reçoit des faux HOT LEAD pour rien.
+function isBotUserAgent(ua: string): boolean {
+  if (!ua || ua.trim().length === 0) return true; // pas d'UA = bot
+  const lower = ua.toLowerCase();
+  const botSignatures = [
+    "bot", "crawl", "spider", "scrape", "fetch", "curl", "wget", "python",
+    "java/", "httpclient", "okhttp", "headless", "phantom", "selenium",
+    "puppeteer", "playwright",
+    // Mail preview / antispam / link scanners
+    "google-image", "googlebot", "gmail", "googlewebpreview", "googleother",
+    "outlook", "office365", "microsoft-webscraper", "safelinks", "defender",
+    "symantec", "mimecast", "proofpoint", "barracuda", "trendmicro",
+    "brevo", "sendinblue", "sendgrid", "mailgun", "mandrill", "postmark",
+    "messagelabs", "forcepoint", "urldefense", "tineye",
+    // Preview services
+    "slackbot", "twitterbot", "facebookexternalhit", "linkedinbot",
+    "whatsapp", "telegrambot", "discordbot",
+    // Uptime monitors
+    "uptime", "pingdom", "statuscake", "monitis", "newrelic",
+  ];
+  return botSignatures.some((sig) => lower.includes(sig));
+}
+
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
@@ -49,21 +74,29 @@ export async function GET(
     );
   }
 
-  const isFirstOpen = !data.opened_at;
+  // Détection des bots : on SERT toujours la maquette, mais on ne compte pas
+  // l'ouverture et on ne notifie pas → plus de faux HOT LEAD.
+  const userAgent = req.headers.get("user-agent") || "";
+  const isBot = isBotUserAgent(userAgent);
+  const isFirstOpen = !data.opened_at && !isBot;
 
   // Log the view (non-blocking). is(opened_at, null) garantit un seul trigger.
-  supabase
-    .from("prospects")
-    .update({
-      opened_at: new Date().toISOString(),
-      status: "opened",
-    })
-    .eq("id", data.id)
-    .is("opened_at", null)
-    .then(() => {});
+  // Si bot → on ne met pas à jour opened_at (comme ça la première vraie
+  // ouverture par un humain déclenchera bien la notif HOT LEAD).
+  if (!isBot) {
+    supabase
+      .from("prospects")
+      .update({
+        opened_at: new Date().toISOString(),
+        status: "opened",
+      })
+      .eq("id", data.id)
+      .is("opened_at", null)
+      .then(() => {});
+  }
 
-  // Notify Telegram SEULEMENT à la 1ère ouverture (hot lead) — riche notif
-  // avec SCRIPT D'APPEL personnalisé généré par Claude Haiku en parallèle
+  // Notify Telegram SEULEMENT à la 1ère ouverture PAR UN HUMAIN (hot lead) —
+  // riche notif avec SCRIPT D'APPEL personnalisé généré par Claude Haiku.
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (isFirstOpen && token && chatId) {
