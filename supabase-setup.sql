@@ -149,6 +149,10 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS demo_sms_count INTEGER NOT
 -- On envoie un mail à TOUS ces emails en parallèle pour maximiser les chances
 -- que le vrai décideur lise le pitch.
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS additional_emails TEXT[];
+-- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
+-- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
+-- au lieu de proposer un style opposé qui le fait fuir.
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_style_dna JSONB;
 CREATE INDEX IF NOT EXISTS idx_prospects_site_quality ON public.prospects(site_quality);
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
 CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);

@@ -467,6 +467,91 @@ async function scrapeWebsitePhotos(website: string): Promise<string[]> {
   }
 }
 
+/**
+ * Extrait l'ADN visuel du site actuel du prospect pour que la nouvelle maquette
+ * s'inspire du MÊME univers (couleurs, ambiance) au lieu de proposer l'opposé.
+ * Rubens : "si leur site a un style plage/décalé, il faut pas que tu fasses un truc opposé".
+ */
+interface SiteStyleDNA {
+  dominantColors: string[];   // hex, triés par fréquence
+  fontFamilies: string[];     // polices détectées
+  keywords: string[];         // mots-clés ambiance (ex: "cosy", "traditionnel", "moderne")
+}
+
+async function extractSiteStyleDNA(website: string): Promise<SiteStyleDNA | null> {
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return null;
+    const base = new URL(website);
+    const html = await fetchUrl(base.origin, 8000);
+    if (!html) return null;
+
+    // 1. Couleurs : cherche hex (#RRGGBB, #RGB), rgb(), rgba() dans le HTML/CSS inline
+    const colorCounts = new Map<string, number>();
+    const hexMatches = html.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/gi) || [];
+    for (const c of hexMatches) {
+      let normalized = c.toLowerCase();
+      // Étendre les couleurs en 3 chiffres à 6 (ex: #fff → #ffffff)
+      if (normalized.length === 4) normalized = "#" + normalized.slice(1).split("").map((x) => x + x).join("");
+      // Ignorer le blanc/noir pur (trop génériques, dans les resets CSS)
+      if (/^#(fff|000|ffffff|000000)$/i.test(normalized)) continue;
+      // Ignorer les couleurs très claires / très foncées (probablement fonds/textes utilitaires)
+      const r = parseInt(normalized.slice(1, 3), 16);
+      const g = parseInt(normalized.slice(3, 5), 16);
+      const b = parseInt(normalized.slice(5, 7), 16);
+      const avg = (r + g + b) / 3;
+      if (avg > 245 || avg < 15) continue;
+      colorCounts.set(normalized, (colorCounts.get(normalized) || 0) + 1);
+    }
+    const dominantColors = Array.from(colorCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([hex]) => hex);
+
+    // 2. Polices : cherche font-family:... et <link google fonts>
+    const fontCounts = new Map<string, number>();
+    const fontMatches = html.match(/font-family\s*:\s*["']?([A-Za-z0-9\s\-]+)/gi) || [];
+    for (const m of fontMatches) {
+      const name = m.replace(/font-family\s*:\s*["']?/i, "").trim().split(/,|"|'/)[0].trim();
+      if (name.length > 2 && name.length < 40 && !/^(sans-serif|serif|monospace|arial|helvetica|verdana|tahoma|georgia|times|courier)$/i.test(name)) {
+        fontCounts.set(name, (fontCounts.get(name) || 0) + 1);
+      }
+    }
+    const fontFamilies = Array.from(fontCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name]) => name);
+
+    // 3. Mots-clés ambiance : on cherche dans tout le texte du HTML les indices
+    const text = html.replace(/<[^>]+>/g, " ").toLowerCase();
+    const keywords: string[] = [];
+    const keywordPatterns: Array<[RegExp, string]> = [
+      [/\btradition(nel|nels|nelle|nelles)?\b/, "traditionnel"],
+      [/\bfamil(le|iale|ial)\b/, "familial"],
+      [/\bdepuis\s+1[89]\d{2}\b/, "historique"],
+      [/\bauthenti(que|ques)\b/, "authentique"],
+      [/\bgastronomi(que|ques|e)\b/, "gastronomique"],
+      [/\bbistronomi(que|ques|e)\b/, "bistronomique"],
+      [/\bartisan(al|ale|aux|ales)?\b/, "artisanal"],
+      [/\b(moderne|contemporai(n|ne|ns))\b/, "moderne"],
+      [/\b(cosy|cozy|chaleureu(x|se))\b/, "cosy"],
+      [/\b(élégan(t|te|ts|tes)|raffin(é|ée|és|ées))\b/, "élégant"],
+      [/\b(plage|bord\s+de\s+mer|maritime|océan)\b/, "maritime"],
+      [/\b(terroir|local|région(al|ale))\b/, "terroir"],
+      [/\b(bio|organic)\b/, "bio"],
+      [/\b(jeun(e|es)|branché(e|s)?|hipster|trendy)\b/, "jeune"],
+      [/\b(festif|festive|ambiance|fête|soirée(s)?)\b/, "festif"],
+    ];
+    for (const [pattern, label] of keywordPatterns) {
+      if (pattern.test(text)) keywords.push(label);
+    }
+
+    if (dominantColors.length === 0 && fontFamilies.length === 0 && keywords.length === 0) return null;
+    return { dominantColors, fontFamilies, keywords };
+  } catch {
+    return null;
+  }
+}
+
 // Scrape l'"à propos" / "notre histoire" — utile pour détecter si c'est une vieille maison
 async function scrapeAboutText(website: string): Promise<string | null> {
   try {
@@ -708,26 +793,26 @@ export async function POST(req: NextRequest) {
       let aboutScraped: string | null = null;
       let websitePhotos: string[] = [];
       let siteAudit: SiteAudit | null = null;
+      let styleDna: SiteStyleDNA | null = null;
       if (place.websiteUri) {
-        // Parallélise les 5 scrapers par place → ~4× plus rapide qu'en séquentiel.
-        // Chaque scraper catch ses propres erreurs et retourne null/[] en cas d'échec.
+        // Parallélise les 6 scrapers par place → ~5× plus rapide qu'en séquentiel.
         const shouldScrapeMenu = businessType !== "epicerie";
         const results = await Promise.allSettled([
-          findEmailsOnWebsite(place.websiteUri),  // ← pluriel : retourne jusqu'à 3 emails triés par priorité
+          findEmailsOnWebsite(place.websiteUri),
           shouldScrapeMenu ? scrapeRestaurantMenu(place.websiteUri) : Promise.resolve(null),
           scrapeAboutText(place.websiteUri),
           scrapeWebsitePhotos(place.websiteUri),
           auditWebsite(place.websiteUri),
+          extractSiteStyleDNA(place.websiteUri),  // ← NEW : couleurs, polices, ambiance du site actuel
         ]);
         const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
-        // Le premier email (personnel patron > nominatif pro > générique) est l'email "principal"
         email = allEmails[0] || null;
-        // Les 2 emails suivants sont stockés comme emails additionnels pour envoi en parallèle
         additionalEmails = allEmails.slice(1);
         scrapedMenu = results[1].status === "fulfilled" ? (results[1].value as ScrapedMenuItem[] | null) : null;
         aboutScraped = results[2].status === "fulfilled" ? (results[2].value as string | null) : null;
         websitePhotos = results[3].status === "fulfilled" ? (results[3].value as string[]) : [];
         siteAudit = results[4].status === "fulfilled" ? (results[4].value as SiteAudit | null) : null;
+        styleDna = results[5].status === "fulfilled" ? (results[5].value as SiteStyleDNA | null) : null;
         if (email) stats.withEmail++;
       }
       // Pas de site = opportunité max (site_quality = "none")
@@ -774,6 +859,7 @@ export async function POST(req: NextRequest) {
         site_quality: siteQuality,
         site_audit_score: siteAudit?.score ?? null,
         site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
+        site_style_dna: styleDna || null,
         status: email ? "found" : "no_email",
       });
 

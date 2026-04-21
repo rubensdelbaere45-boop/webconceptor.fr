@@ -39,6 +39,11 @@ interface Prospect {
   website_photos?: string[] | null;
   site_quality?: "none" | "poor" | "average" | "good" | null;
   site_audit_issues?: string[] | null;
+  site_style_dna?: {
+    dominantColors?: string[];
+    fontFamilies?: string[];
+    keywords?: string[];
+  } | null;
 }
 
 interface PersonalizedContent {
@@ -218,6 +223,22 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     })
     .join(", ");
 
+  // ADN VISUEL DU SITE ACTUEL — pour que la maquette reste dans le même univers
+  // (un resto "plage décalé" ne doit pas recevoir une maquette "gastronomique chic")
+  const styleLines: string[] = [];
+  if (prospect.site_style_dna) {
+    const dna = prospect.site_style_dna;
+    if (dna.dominantColors && dna.dominantColors.length > 0) {
+      styleLines.push(`Couleurs dominantes de leur site actuel : ${dna.dominantColors.slice(0, 5).join(", ")}`);
+    }
+    if (dna.keywords && dna.keywords.length > 0) {
+      styleLines.push(`Ambiance détectée sur leur site : ${dna.keywords.join(", ")}`);
+    }
+    if (dna.fontFamilies && dna.fontFamilies.length > 0) {
+      styleLines.push(`Polices utilisées : ${dna.fontFamilies.slice(0, 2).join(", ")}`);
+    }
+  }
+
   const infoLines = [
     `Nom de l'établissement : ${prospect.name}`,
     prospect.city ? `Ville : ${prospect.city}` : "",
@@ -226,6 +247,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
     prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
     prospect.site_quality ? `Qualité site actuel : ${prospect.site_quality}${auditIssuesText ? ` — problèmes détectés : ${auditIssuesText}` : ""}` : "",
+    ...styleLines,
     prospect.about_scraped ? `Texte de leur site (à propos / notre histoire) :\n"""\n${prospect.about_scraped.slice(0, 2000)}\n"""` : "",
     prospect.reviews && prospect.reviews.length > 0
       ? `Avis Google RÉELS :\n${prospect.reviews.slice(0, 3).map((r) => `- ${r.rating}★ par ${r.author} : "${r.text.slice(0, 200)}"`).join("\n")}`
@@ -286,7 +308,13 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - 'coastal' : fruits de mer, crêperies Bretagne, adresses méditerranéennes, Nice, côte → palette bleu canard/cuivre
     - 'modern' : gastronomie contemporaine, pâtisseries haute couture, urbain trendy, chef qui fait du moléculaire → palette anthracite/rose
     - 'sunny' : GLACIERS, bars de plage, salons de thé ensoleillés, crêpes sucrées festives, food trucks estivaux → palette orange/ambre (ambiance été)
-    IMPORTANT : déduis le vibe depuis le NOM et surtout le TEXTE À PROPOS si disponible (si le texte parle de 'famille', 'depuis 1920', 'tradition' → rustic. Si 'création', 'nouveau chef', 'concept' → modern. Si 'mer', 'poisson', 'port' → coastal. Si 'glace', 'été', 'ensoleillé' → sunny).",
+
+    🎯 RÈGLE CRITIQUE — MATCHER LE STYLE EXISTANT : si 'Ambiance détectée sur leur site' est fournie plus haut, tu DOIS choisir le vibe qui se rapproche LE PLUS de leur univers actuel. Exemples :
+    - Site actuel avec ambiance 'maritime', 'plage', 'ensoleillé' → JAMAIS 'classic' ou 'rustic'. Soit 'coastal' soit 'sunny'.
+    - Site actuel 'traditionnel', 'familial', 'historique', 'terroir' → 'rustic' uniquement.
+    - Site actuel 'moderne', 'jeune', 'branché', 'festif' → 'modern' ou 'sunny'.
+    - Site actuel 'élégant', 'raffiné', 'gastronomique' → 'classic'.
+    Le prospect doit se dire 'c'est MON établissement' en voyant la maquette, pas 'ça ne me ressemble pas'. Les couleurs dominantes (si fournies) doivent t'aider à confirmer ton choix de vibe.",
   "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 599€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
   "auditTeaser": "SI le prospect a un site 'poor' ou 'average' (donc un site qui existe mais qui peut être amélioré) : UNE SEULE phrase courte (max 15 mots), MYSTÉRIEUSE, qui évoque VAGUEMENT 1-2 axes d'amélioration sans tout révéler. Ex: 'notamment sur votre visibilité dans les recherches Google locales et l'affichage sur mobile' ou 'notamment sur la structure SEO et l'expérience des visiteurs mobiles'. Ne JAMAIS lister tous les problèmes, rester dans le teaser. Si le prospect n'a pas de site (site_quality='none'), retourne une chaîne vide ''.",
   "emailSubject": "objet email, 50 caractères max, personnalisé avec nom établissement",
@@ -294,19 +322,22 @@ Génère un objet JSON avec ces clés EXACTEMENT :
   "emailPitch": "1-2 phrases cordiales : maquette préparée avec système adapté. Mentionne 1 détail RÉEL tiré des infos (ville, note Google>4, citation d'un avis, etc.). Si SITE EXISTANT AVEC PROBLÈMES, ajoute qu'on a audité leur présence en ligne sans détailler tout."
 }
 
-Ton : professionnel, élégant, francophone France. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
+Ton : COPYWRITER SENIOR ÉLÉGANT. Chaque mot compte. Phrases courtes, percutantes, avec une vraie plume française. Évite les clichés ('passion', 'savoir-faire' sans contexte). Préfère la SPÉCIFICITÉ à la généralité. Si tu ne sais pas → reste vague plutôt qu'inventer. Le prospect doit lire ta maquette et se dire 'c'est EXACTEMENT MON ÉTABLISSEMENT'. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
 
   try {
+    // Claude Sonnet 4.6 (meilleur modèle disponible) — pour que la maquette soit
+    // un vrai travail de copywriter senior, pas du texte générique. La qualité
+    // du texte = le facteur n°1 de conversion.
     const body = isOpenRouter
       ? {
-          model: "anthropic/claude-haiku-4.5",
+          model: "anthropic/claude-sonnet-4.6",
           messages: [{ role: "user", content: prompt }],
-          max_tokens: 1500,
+          max_tokens: 2000,
           response_format: { type: "json_object" },
         }
       : {
-          model: "claude-haiku-4-5",
-          max_tokens: 1500,
+          model: "claude-sonnet-4-6",
+          max_tokens: 2000,
           messages: [{ role: "user", content: prompt }],
         };
 
