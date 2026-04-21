@@ -459,6 +459,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pm-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;color:var(--ink);transition:all 0.2s;z-index:2;border:none;cursor:pointer}
 .pm-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .pm-header{padding:44px 48px 24px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.08)}
+.pm-trust-row{display:flex;justify-content:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+.pm-trust-item{font-size:11px;color:var(--stone);letter-spacing:0.02em;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(0,0,0,0.04);border-radius:100px}
+@media(max-width:560px){.pm-trust-row{gap:6px}.pm-trust-item{font-size:10px;padding:5px 8px}}
 .pm-kicker{font-family:var(--script);font-size:26px;color:var(--accent);margin-bottom:4px}
 .pm-header h3{font-family:var(--serif);font-size:30px;font-weight:500;color:var(--ink)}
 .pm-header p{font-size:13px;color:var(--stone);margin-top:8px}
@@ -468,6 +471,76 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* Plan cards */
 .pm-plans{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
 .pm-plan{border:1.5px solid rgba(0,0,0,0.08);border-radius:4px;padding:20px 16px;cursor:pointer;transition:all 0.2s;background:#fff;position:relative}
+.pm-reassurance{margin-top:28px;padding:20px;background:linear-gradient(135deg,rgba(22,163,74,0.05),rgba(193,154,86,0.05));border-radius:8px;border:1px solid rgba(22,163,74,0.15)}
+.pm-reassurance-item{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px dashed rgba(0,0,0,0.08)}
+.pm-reassurance-item:last-child{border-bottom:none}
+.pm-reassurance-item strong{font-size:13px;color:var(--ink);font-weight:600}
+.pm-reassurance-item span{font-size:12px;color:var(--stone);line-height:1.5}
+
+/* ───────────────────────────────────────── */
+/* Chat widget (assistant IA) — bulle flottante */
+/* ───────────────────────────────────────── */
+.wc-chat-btn{position:fixed;bottom:100px;right:20px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--deep));color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9997;box-shadow:0 10px 30px rgba(0,0,0,0.2);transition:transform 0.2s;font-size:28px}
+.wc-chat-btn:hover{transform:scale(1.08)}
+.wc-chat-btn::after{content:'';position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:#10b981;border:2px solid #fff;border-radius:50%;animation:wcPulse 2s ease-in-out infinite}
+@keyframes wcPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.7}}
+.wc-chat-panel{position:fixed;bottom:20px;right:20px;width:calc(100vw - 40px);max-width:400px;height:calc(100vh - 40px);max-height:600px;background:#fff;border-radius:20px;box-shadow:0 25px 60px rgba(0,0,0,0.3);z-index:9999;display:none;flex-direction:column;overflow:hidden;border:1px solid rgba(0,0,0,0.08)}
+.wc-chat-panel.open{display:flex;animation:wcChatSlide 0.3s ease}
+@keyframes wcChatSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.wc-chat-header{background:linear-gradient(135deg,var(--ink),var(--accent));color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.wc-chat-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.wc-chat-title{flex:1;min-width:0}
+.wc-chat-title-name{font-size:14px;font-weight:700;letter-spacing:-0.01em}
+.wc-chat-title-sub{font-size:11px;opacity:0.85;display:flex;align-items:center;gap:4px}
+.wc-chat-title-sub::before{content:'';width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;animation:wcPulse 2s ease-in-out infinite}
+.wc-chat-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+.wc-chat-close:hover{background:rgba(255,255,255,0.3)}
+.wc-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:#f9fafb}
+.wc-chat-msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap}
+.wc-chat-msg.bot{background:#fff;color:var(--ink);align-self:flex-start;border:1px solid rgba(0,0,0,0.06);border-bottom-left-radius:4px}
+.wc-chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.wc-chat-typing{align-self:flex-start;padding:12px 16px;display:flex;gap:4px}
+.wc-chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--stone);animation:wcDot 1.4s infinite}
+.wc-chat-typing span:nth-child(2){animation-delay:0.2s}
+.wc-chat-typing span:nth-child(3){animation-delay:0.4s}
+@keyframes wcDot{0%,60%,100%{opacity:0.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+.wc-chat-input-row{padding:12px 14px;border-top:1px solid rgba(0,0,0,0.08);background:#fff;display:flex;gap:8px;align-items:center}
+.wc-chat-input{flex:1;border:1px solid rgba(0,0,0,0.12);border-radius:100px;padding:10px 16px;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.wc-chat-input:focus{border-color:var(--accent)}
+.wc-chat-send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background 0.15s}
+.wc-chat-send:hover{background:var(--deep)}
+.wc-chat-send:disabled{background:rgba(0,0,0,0.2);cursor:not-allowed}
+.wc-chat-escalate{margin-top:8px;padding:8px 12px;background:var(--cream);border:1px dashed var(--accent);border-radius:10px;font-size:12px;color:var(--ink);text-align:center;cursor:pointer}
+.wc-chat-escalate:hover{background:var(--accent);color:#fff}
+
+/* Modal demande de modification */
+.wc-msg-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
+.wc-msg-overlay.open{display:flex;animation:bkFadeIn 0.25s ease}
+.wc-msg-box{background:#fff;max-width:480px;width:100%;border-radius:12px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,0.4);animation:bkSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)}
+.wc-msg-box h4{font-family:var(--serif);font-size:24px;color:var(--ink);margin-bottom:4px;font-weight:500}
+.wc-msg-box > p{font-size:13px;color:var(--stone);margin-bottom:20px;line-height:1.5}
+.wc-msg-field{margin-bottom:14px}
+.wc-msg-field label{display:block;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--stone);margin-bottom:6px}
+.wc-msg-field input,.wc-msg-field textarea{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:6px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:border-color 0.15s}
+.wc-msg-field input:focus,.wc-msg-field textarea:focus{border-color:var(--accent)}
+.wc-msg-field textarea{resize:vertical;min-height:100px}
+.wc-msg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wc-msg-actions{display:flex;gap:10px;margin-top:18px}
+.wc-msg-btn{flex:1;padding:11px 18px;border-radius:6px;border:none;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.15s}
+.wc-msg-btn-cancel{background:transparent;color:var(--stone);border:1px solid rgba(0,0,0,0.15)}
+.wc-msg-btn-cancel:hover{color:var(--ink)}
+.wc-msg-btn-send{background:var(--ink);color:#fff}
+.wc-msg-btn-send:hover{background:var(--accent)}
+.wc-msg-btn-send:disabled{background:rgba(0,0,0,0.2);cursor:not-allowed}
+.wc-msg-success{text-align:center;padding:12px;background:#d1fae5;border-radius:6px;color:#065f46;font-size:13px;font-weight:500;margin-top:12px;display:none}
+.wc-msg-success.visible{display:block}
+
+@media(max-width:520px){
+  .wc-chat-btn{bottom:90px;right:14px;width:52px;height:52px;font-size:24px}
+  .wc-chat-panel{bottom:14px;right:14px;width:calc(100vw - 28px)}
+  .wc-msg-box{padding:22px;border-radius:10px}
+  .wc-msg-row{grid-template-columns:1fr}
+}
 .pm-plan:hover{border-color:var(--accent)}
 .pm-plan.selected{border-color:var(--accent);background:var(--cream);box-shadow:0 4px 16px rgba(0,0,0,0.05)}
 .pm-plan.recommended::before{content:'RECOMMANDÉ';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:9px;font-weight:800;letter-spacing:0.18em;padding:3px 10px;border-radius:100px}
@@ -1129,9 +1202,61 @@ ${
   </div>
 </div>
 
-<!-- Sticky CTA Bar — 'Obtenir ce site' -->
+<!-- Chat widget flottant IA -->
+<button class="wc-chat-btn" id="wc-chat-btn" onclick="wcChatToggle()" aria-label="Discuter avec l'assistant">💬</button>
+
+<div class="wc-chat-panel" id="wc-chat-panel">
+  <div class="wc-chat-header">
+    <div class="wc-chat-avatar">🤝</div>
+    <div class="wc-chat-title">
+      <div class="wc-chat-title-name">Assistant WebConceptor</div>
+      <div class="wc-chat-title-sub">En ligne · Répond en quelques secondes</div>
+    </div>
+    <button class="wc-chat-close" onclick="wcChatToggle()">✕</button>
+  </div>
+  <div class="wc-chat-messages" id="wc-chat-messages">
+    <div class="wc-chat-msg bot">Bonjour ! Je suis l'assistant de Tom Bauer, fondateur de WebConceptor. Cette maquette a été préparée spécialement pour <strong>${esc(prospect.name)}</strong>. Je suis là pour répondre à toutes vos questions — prix, délais, modifications, tout ce que vous voulez. Comment puis-je vous aider ?</div>
+  </div>
+  <div class="wc-chat-input-row">
+    <input type="text" class="wc-chat-input" id="wc-chat-input" placeholder="Posez votre question..." onkeypress="if(event.key==='Enter')wcChatSend()" maxlength="500">
+    <button class="wc-chat-send" id="wc-chat-send" onclick="wcChatSend()">→</button>
+  </div>
+</div>
+
+<!-- Modal "Demander une modification" -->
+<div class="wc-msg-overlay" id="wc-msg-overlay" onclick="if(event.target===this)wcMsgClose()">
+  <div class="wc-msg-box">
+    <h4>💬 Demander une modification</h4>
+    <p>Dites-nous ce que vous voulez changer (photos, textes, couleurs, sections…). Tom reçoit votre message directement et vous répond sous 24 h.</p>
+    <div class="wc-msg-row">
+      <div class="wc-msg-field">
+        <label for="wc-msg-name">Votre nom</label>
+        <input type="text" id="wc-msg-name" maxlength="80" placeholder="Jean Dupont" required>
+      </div>
+      <div class="wc-msg-field">
+        <label for="wc-msg-phone">Téléphone (optionnel)</label>
+        <input type="tel" id="wc-msg-phone" maxlength="30" placeholder="06 XX XX XX XX">
+      </div>
+    </div>
+    <div class="wc-msg-field">
+      <label for="wc-msg-email">Email</label>
+      <input type="email" id="wc-msg-email" maxlength="200" placeholder="jean@exemple.fr">
+    </div>
+    <div class="wc-msg-field">
+      <label for="wc-msg-text">Votre demande</label>
+      <textarea id="wc-msg-text" maxlength="1500" placeholder="Ex: J'aimerais remplacer la photo du hero par une photo de notre terrasse, et ajouter une section 'Menu du jour'..." required></textarea>
+    </div>
+    <div class="wc-msg-actions">
+      <button class="wc-msg-btn wc-msg-btn-cancel" onclick="wcMsgClose()">Annuler</button>
+      <button class="wc-msg-btn wc-msg-btn-send" id="wc-msg-send" onclick="wcMsgSubmit()">Envoyer ma demande →</button>
+    </div>
+    <div class="wc-msg-success" id="wc-msg-success">✅ Message envoyé ! Tom vous répond sous 24 h.</div>
+  </div>
+</div>
+
+<!-- Sticky CTA Bar — 'Obtenir ce site' avec urgence -->
 <div class="wc-cta-bar">
-  <span class="wc-cta-bar-text">Ce site vous plaît ? <strong>Obtenez-le pour 599 € TTC</strong></span>
+  <span class="wc-cta-bar-text">🔥 <strong>Offre de lancement : 599 € TTC</strong> — livraison 5 jours, paiement sécurisé Stripe</span>
   <button class="wc-cta-bar-btn" onclick="pmOpen()">J'achète ce site →</button>
 </div>
 
@@ -1145,35 +1270,54 @@ ${
     <div class="pm-header">
       <div class="pm-kicker">Votre site web</div>
       <h3>${esc(prospect.name)}</h3>
-      <p>Commande en 2 minutes, livraison en 5 à 7 jours</p>
+      <p>Commande en 2 minutes, livraison sous 5 à 7 jours</p>
+      <div class="pm-trust-row">
+        <span class="pm-trust-item">🛡 Satisfait ou remboursé 14 jours</span>
+        <span class="pm-trust-item">🔒 Paiement sécurisé Stripe</span>
+        <span class="pm-trust-item">⚡ Livré en 5 jours ouvrés</span>
+      </div>
     </div>
 
     <div class="pm-body">
       <span class="pm-label">Choisissez votre formule</span>
       <div class="pm-plans">
-        <div class="pm-plan selected" data-plan="simple" onclick="pmSelectPlan('simple')">
+        <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">Simple</div>
-          <div class="pm-plan-price">599 €</div>
-          <div class="pm-plan-price-sub">Paiement unique TTC · 3× sans frais dispo</div>
+          <div class="pm-plan-price">599 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price-sub">ou 3× sans frais (3 × 199,67 €)</div>
           <ul>
-            <li>Livraison en 5 jours</li>
-            <li>Design premium responsive</li>
-            <li>Module réservation intégré</li>
-            <li>URL provisoire WebConceptor</li>
-            <li>2 rounds de modifications</li>
+            <li>✓ Livraison sous 5 jours</li>
+            <li>✓ Design premium responsive</li>
+            <li>✓ Module réservation intégré <strong>(0 commission)</strong></li>
+            <li>✓ URL provisoire WebConceptor</li>
+            <li>✓ 2 rounds de modifications</li>
           </ul>
         </div>
-        <div class="pm-plan recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
+        <div class="pm-plan selected recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
           <div class="pm-plan-title">Sérénité</div>
-          <div class="pm-plan-price">599 € + 50 €/mois</div>
-          <div class="pm-plan-price-sub">+ prix du nom de domaine (~10-60 €/an)</div>
+          <div class="pm-plan-price">599 € <span style="font-size:13px;opacity:0.6">+ 50 €/mois</span></div>
+          <div class="pm-plan-price-sub">Tout inclus, zéro prise de tête</div>
           <ul>
-            <li>Livraison en 7 jours</li>
-            <li>Votre nom de domaine <strong>.fr .com</strong> etc.</li>
-            <li>Hébergement inclus (tant que l'abonnement est actif)</li>
-            <li><strong>Modifications illimitées</strong></li>
-            <li>Sauvegardes automatiques + monitoring</li>
+            <li>✓ <strong>Votre nom de domaine</strong> (.fr, .com, .eu…)</li>
+            <li>✓ Hébergement + sauvegardes automatiques</li>
+            <li>✓ <strong>Modifications illimitées</strong> (nouvelles photos, carte, promos)</li>
+            <li>✓ Support prioritaire sous 24 h</li>
+            <li>✓ Monitoring 24/7 (on vous alerte si souci)</li>
           </ul>
+        </div>
+      </div>
+      <div class="pm-reassurance">
+        <div class="pm-reassurance-item">
+          <strong>🛡 Satisfait ou remboursé 14 jours</strong>
+          <span>Si la maquette finale ne vous convient pas, on vous rembourse intégralement — aucun justificatif demandé.</span>
+        </div>
+        <div class="pm-reassurance-item">
+          <strong>⚡ Mise en ligne rapide</strong>
+          <span>Votre site est prêt sous 5 à 7 jours ouvrés après validation de vos préférences (photos, textes, couleurs).</span>
+        </div>
+        <div class="pm-reassurance-item">
+          <strong>🔒 100 % propriétaire du site</strong>
+          <span>Vous gardez le code source. Aucun abonnement forcé : payez une fois, c'est à vous à vie.</span>
         </div>
       </div>
 
@@ -1694,6 +1838,144 @@ if (domainTldSelect) domainTldSelect.addEventListener("change", pmCheckDomain);
 pmUpdateSubmit();
 
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { pmClose(); bkClose(); } });
+
+// ─── Chat widget (assistant IA) ─────────────────────
+const WC_CHAT = {
+  slug: ${JSON.stringify(prospect.slug)},
+  history: [],
+  sending: false,
+};
+
+function wcChatToggle() {
+  const panel = document.getElementById("wc-chat-panel");
+  const btn = document.getElementById("wc-chat-btn");
+  if (panel.classList.contains("open")) {
+    panel.classList.remove("open");
+    btn.style.display = "flex";
+  } else {
+    panel.classList.add("open");
+    btn.style.display = "none";
+    setTimeout(() => document.getElementById("wc-chat-input")?.focus(), 300);
+  }
+}
+
+function wcChatAppendMsg(role, text, withEscalate) {
+  const container = document.getElementById("wc-chat-messages");
+  const div = document.createElement("div");
+  div.className = "wc-chat-msg " + (role === "user" ? "user" : "bot");
+  div.textContent = text;
+  container.appendChild(div);
+  if (withEscalate) {
+    const esc = document.createElement("div");
+    esc.className = "wc-chat-escalate";
+    esc.textContent = "💬 Demander directement à Tom →";
+    esc.onclick = () => { wcChatToggle(); wcMsgOpen(); };
+    container.appendChild(esc);
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+function wcChatShowTyping() {
+  const container = document.getElementById("wc-chat-messages");
+  const el = document.createElement("div");
+  el.className = "wc-chat-typing";
+  el.id = "wc-chat-typing-indicator";
+  el.innerHTML = "<span></span><span></span><span></span>";
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+function wcChatHideTyping() {
+  document.getElementById("wc-chat-typing-indicator")?.remove();
+}
+
+async function wcChatSend() {
+  if (WC_CHAT.sending) return;
+  const input = document.getElementById("wc-chat-input");
+  const sendBtn = document.getElementById("wc-chat-send");
+  const msg = (input.value || "").trim();
+  if (!msg) return;
+  input.value = "";
+  wcChatAppendMsg("user", msg);
+  WC_CHAT.history.push({ role: "user", content: msg });
+  WC_CHAT.sending = true;
+  sendBtn.disabled = true;
+  wcChatShowTyping();
+  try {
+    const res = await fetch("/api/prospect/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prospect_slug: WC_CHAT.slug,
+        message: msg,
+        history: WC_CHAT.history.slice(0, -1),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    wcChatHideTyping();
+    if (!res.ok || !data.reply) {
+      wcChatAppendMsg("bot", "Désolé, petit souci. Vous pouvez écrire directement à Tom via le bouton ci-dessous.", true);
+    } else {
+      wcChatAppendMsg("bot", data.reply, data.shouldEscalate === true);
+      WC_CHAT.history.push({ role: "assistant", content: data.reply });
+    }
+  } catch {
+    wcChatHideTyping();
+    wcChatAppendMsg("bot", "Problème de connexion. Réessayez ou cliquez ci-dessous pour contacter Tom directement.", true);
+  }
+  WC_CHAT.sending = false;
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// ─── Modal "Demander une modification" ─────────────
+function wcMsgOpen() {
+  document.getElementById("wc-msg-overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.getElementById("wc-msg-name")?.focus(), 200);
+}
+function wcMsgClose() {
+  document.getElementById("wc-msg-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+  document.getElementById("wc-msg-success").classList.remove("visible");
+}
+
+async function wcMsgSubmit() {
+  const name = (document.getElementById("wc-msg-name")?.value || "").trim();
+  const email = (document.getElementById("wc-msg-email")?.value || "").trim();
+  const phone = (document.getElementById("wc-msg-phone")?.value || "").trim();
+  const text = (document.getElementById("wc-msg-text")?.value || "").trim();
+  if (name.length < 2 || text.length < 5) {
+    alert("Merci de renseigner votre nom et votre demande.");
+    return;
+  }
+  const btn = document.getElementById("wc-msg-send");
+  btn.disabled = true;
+  btn.textContent = "Envoi…";
+  try {
+    const res = await fetch("/api/prospect/message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prospect_slug: WC_CHAT.slug,
+        name, email, phone, message: text,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.error || "Erreur lors de l'envoi. Réessayez.");
+      btn.disabled = false;
+      btn.textContent = "Envoyer ma demande →";
+      return;
+    }
+    document.getElementById("wc-msg-success").classList.add("visible");
+    document.getElementById("wc-msg-text").value = "";
+    setTimeout(() => { wcMsgClose(); btn.disabled = false; btn.textContent = "Envoyer ma demande →"; }, 2500);
+  } catch {
+    alert("Problème réseau. Réessayez.");
+    btn.disabled = false;
+    btn.textContent = "Envoyer ma demande →";
+  }
+}
 </script>
 
 </body>

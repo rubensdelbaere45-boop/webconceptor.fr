@@ -149,6 +149,10 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS demo_sms_count INTEGER NOT
 -- On envoie un mail à TOUS ces emails en parallèle pour maximiser les chances
 -- que le vrai décideur lise le pitch.
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS additional_emails TEXT[];
+-- Horodatage de la relance email (J+2 après ouverture maquette)
+-- Idempotence : 1 seule relance par prospect.
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS email_reminder_sent_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_prospects_email_reminder ON public.prospects(email_reminder_sent_at);
 -- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
 -- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
 -- au lieu de proposer un style opposé qui le fait fuir.

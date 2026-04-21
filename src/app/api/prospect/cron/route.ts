@@ -112,7 +112,29 @@ async function runCron(req: NextRequest) {
       log.push(`[send] EXCEPTION: ${msg}`);
     }
 
-    // ─── Étape 3 : SMS de relance aux prospects ayant ouvert il y a 2+ jours ───
+    // ─── Étape 3 : EMAIL de relance aux prospects ayant ouvert il y a 2+ jours ───
+    log.push(`[email-reminders] Recherche prospects à relancer par email...`);
+    try {
+      const r = await fetch(`${origin}/api/prospect/email-reminders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        signal: AbortSignal.timeout(120000),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok) {
+        log.push(`[email-reminders] ${data.sent || 0}/${data.processed || 0} emails envoyés (${data.errors || 0} erreurs)`);
+      } else {
+        const msg = `email-reminders failed: ${data.error || r.status}`;
+        results.errors.push(msg);
+        log.push(`[email-reminders] ERREUR: ${msg}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      results.errors.push(`email-reminders: ${msg}`);
+      log.push(`[email-reminders] EXCEPTION: ${msg}`);
+    }
+
+    // ─── Étape 4 : SMS de relance (bonus, seulement si crédits SMS dispo) ───
     log.push(`[sms-reminders] Recherche prospects à relancer par SMS...`);
     try {
       const r = await fetch(`${origin}/api/prospect/sms-reminders`, {
