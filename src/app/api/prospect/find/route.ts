@@ -494,46 +494,99 @@ async function scrapeAboutText(website: string): Promise<string | null> {
   }
 }
 
-async function findEmailOnWebsite(website: string): Promise<string | null> {
-  try {
-    // SSRF : even though URLs come from Google Places, a compromised/malicious
-    // place could point websiteUri to an internal metadata endpoint.
-    if (isPrivateOrUnsafeUrl(website)) return null;
+/**
+ * Scrape TOUS les emails trouvés sur le site du prospect.
+ * Retourne un tableau priorisé :
+ *   1. Emails perso potentiels (gmail, outlook, hotmail, yahoo, free, orange, laposte, sfr, wanadoo, icloud, me)
+ *      → souvent le MAIL PERSO DU PATRON, plus efficace pour la conversion
+ *   2. Emails @domaine-du-site (ex: contact@monresto.fr)
+ *      → mail pro de l'entreprise
+ *   3. Autres emails professionnels
+ * Max 3 emails retournés.
+ */
+const PERSONAL_EMAIL_DOMAINS = /@(gmail|outlook|hotmail|yahoo|live|free|orange|laposte|sfr|wanadoo|bbox|numericable|neuf|icloud|me|aol|protonmail|proton)\./i;
 
+async function findEmailsOnWebsite(website: string): Promise<string[]> {
+  try {
+    if (isPrivateOrUnsafeUrl(website)) return [];
     const base = new URL(website);
-    const paths = ["", "/contact", "/contact-us", "/contactez-nous", "/nous-contacter", "/mentions-legales", "/legal"];
+    // Étendu : mentions légales, équipe, contact, etc. — le mail du patron est
+    // souvent caché dans /mentions-legales (obligation légale) ou /equipe.
+    const paths = [
+      "",
+      "/contact", "/contact-us", "/contactez-nous", "/nous-contacter",
+      "/mentions-legales", "/mentions", "/legal", "/cgu", "/cgv",
+      "/equipe", "/notre-equipe", "/team", "/a-propos", "/apropos", "/about",
+      "/notre-histoire", "/histoire", "/qui-sommes-nous", "/who-we-are",
+    ];
+
+    const foundEmails = new Map<string, number>(); // email → priorité (plus bas = plus prioritaire)
+    const domainHost = base.hostname.replace(/^www\./, "");
+
+    const scoreEmail = (email: string): number => {
+      const e = email.toLowerCase();
+      // Priorité 0 : mail PERSONNEL (= probablement celui du patron)
+      if (PERSONAL_EMAIL_DOMAINS.test(e)) return 0;
+      // Priorité 1 : mail @domaine-du-site (ex: patron@monresto.fr, nominatif)
+      //             avec un nom devant (pas juste "contact@")
+      if (e.endsWith("@" + domainHost)) {
+        const local = e.split("@")[0];
+        // Nominatif (prenom.nom@, prenom@) > générique (contact@, info@)
+        if (!/^(contact|info|hello|bonjour|reservation|reservations|bookings|commande|commandes|service|services|admin|webmaster|noreply|no-reply|accueil)$/i.test(local)) {
+          return 1;
+        }
+        return 2;
+      }
+      // Priorité 3 : autre mail
+      return 3;
+    };
 
     for (const path of paths) {
       const url = base.origin + path;
-      // Re-check each URL (origin could have changed) — belt and suspenders.
       if (isPrivateOrUnsafeUrl(url)) continue;
       const html = await fetchUrl(url);
       if (!html) continue;
 
-      // Check mailto first (most reliable)
-      const mailtoMatch = html.match(/mailto:([^"'\s?]+)/i);
-      if (mailtoMatch && !BAD_DOMAINS.test(mailtoMatch[1])) {
-        return mailtoMatch[1].toLowerCase().trim();
+      // Extraction mailto: (les plus fiables, souvent mis volontairement)
+      const mailtoMatches = html.matchAll(/mailto:([^"'\s?]+)/gi);
+      for (const m of mailtoMatches) {
+        const email = m[1].toLowerCase().trim();
+        if (!BAD_DOMAINS.test(email) && /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) {
+          const current = foundEmails.get(email);
+          const score = scoreEmail(email);
+          if (current === undefined || score < current) foundEmails.set(email, score);
+        }
       }
 
-      // Then regex for plain text
-      const emails = html.match(EMAIL_REGEX) || [];
-      for (const email of emails) {
-        const e = email.toLowerCase();
-        if (BAD_DOMAINS.test(e)) continue;
-        // Prefer emails matching the domain
-        if (e.endsWith("@" + base.hostname.replace(/^www\./, ""))) return e;
+      // Extraction par regex (plain text)
+      const emailMatches = html.match(EMAIL_REGEX) || [];
+      for (const raw of emailMatches) {
+        const email = raw.toLowerCase().trim();
+        if (!BAD_DOMAINS.test(email)) {
+          const current = foundEmails.get(email);
+          const score = scoreEmail(email);
+          if (current === undefined || score < current) foundEmails.set(email, score);
+        }
       }
-      // Fallback: first non-bad email
-      for (const email of emails) {
-        const e = email.toLowerCase();
-        if (!BAD_DOMAINS.test(e)) return e;
-      }
+
+      // Si on a déjà 3+ emails, pas besoin de continuer à scraper d'autres pages
+      if (foundEmails.size >= 3) break;
     }
-    return null;
+
+    // Tri par priorité (0 = personnel = meilleur) puis limite 3
+    return Array.from(foundEmails.entries())
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, 3)
+      .map(([email]) => email);
   } catch {
-    return null;
+    return [];
   }
+}
+
+// Wrapper retro-compatible pour l'ancien appel findEmailOnWebsite (1 email)
+async function findEmailOnWebsite(website: string): Promise<string | null> {
+  const emails = await findEmailsOnWebsite(website);
+  return emails[0] || null;
 }
 
 /* ══════════════════════════════════════════
@@ -650,6 +703,7 @@ export async function POST(req: NextRequest) {
 
       // Try scraping email from website (non-blocking)
       let email: string | null = null;
+      let additionalEmails: string[] = [];
       let scrapedMenu: ScrapedMenuItem[] | null = null;
       let aboutScraped: string | null = null;
       let websitePhotos: string[] = [];
@@ -659,13 +713,17 @@ export async function POST(req: NextRequest) {
         // Chaque scraper catch ses propres erreurs et retourne null/[] en cas d'échec.
         const shouldScrapeMenu = businessType !== "epicerie";
         const results = await Promise.allSettled([
-          findEmailOnWebsite(place.websiteUri),
+          findEmailsOnWebsite(place.websiteUri),  // ← pluriel : retourne jusqu'à 3 emails triés par priorité
           shouldScrapeMenu ? scrapeRestaurantMenu(place.websiteUri) : Promise.resolve(null),
           scrapeAboutText(place.websiteUri),
           scrapeWebsitePhotos(place.websiteUri),
           auditWebsite(place.websiteUri),
         ]);
-        email = results[0].status === "fulfilled" ? (results[0].value as string | null) : null;
+        const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
+        // Le premier email (personnel patron > nominatif pro > générique) est l'email "principal"
+        email = allEmails[0] || null;
+        // Les 2 emails suivants sont stockés comme emails additionnels pour envoi en parallèle
+        additionalEmails = allEmails.slice(1);
         scrapedMenu = results[1].status === "fulfilled" ? (results[1].value as ScrapedMenuItem[] | null) : null;
         aboutScraped = results[2].status === "fulfilled" ? (results[2].value as string | null) : null;
         websitePhotos = results[3].status === "fulfilled" ? (results[3].value as string[]) : [];
@@ -703,6 +761,7 @@ export async function POST(req: NextRequest) {
         phone: place.nationalPhoneNumber || place.internationalPhoneNumber || "",
         website: place.websiteUri || "",
         email: email || null,
+        additional_emails: additionalEmails.length ? additionalEmails : null,
         google_rating: place.rating || null,
         google_reviews_count: place.userRatingCount || null,
         photos: photos.length ? photos : null,

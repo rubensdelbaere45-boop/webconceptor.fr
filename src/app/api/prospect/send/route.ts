@@ -27,6 +27,7 @@ interface Prospect {
   phone?: string;
   website?: string;
   email?: string;
+  additional_emails?: string[] | null;
   google_rating?: number;
   google_reviews_count?: number;
   photos?: string[];
@@ -969,14 +970,48 @@ async function handleSend(req: NextRequest) {
         .eq("id", p.id);
 
       if (!dry_run) {
-        const ok = await sendEmail(p.email, p.name, emailSubject, emailBody);
-        if (!ok) {
+        // ═══════════════════════════════════════════════════════════
+        // ENVOI MULTI-ADRESSES
+        // On envoie à l'email principal ET à 1 email additionnel (si différent)
+        // → maximise les chances que le DÉCIDEUR lise le pitch (souvent le
+        // mail perso du patron est plus regardé que le contact@entreprise).
+        // Cap à 2 emails max pour ne pas exploser le budget Brevo (4775 crédits).
+        // ═══════════════════════════════════════════════════════════
+        const targetEmails: string[] = [p.email.toLowerCase()];
+        if (Array.isArray(p.additional_emails)) {
+          for (const extra of p.additional_emails) {
+            if (typeof extra === "string" && extra.toLowerCase() !== p.email.toLowerCase() && targetEmails.length < 2) {
+              targetEmails.push(extra.toLowerCase());
+            }
+          }
+        }
+
+        // Envoi en parallèle aux 1 ou 2 destinataires
+        const sendResults = await Promise.all(
+          targetEmails.map((addr) => sendEmail(addr, p.name, emailSubject, emailBody))
+        );
+        const successCount = sendResults.filter(Boolean).length;
+
+        if (successCount === 0) {
+          // Aucun des 2 mails n'est parti → vrai échec
           await supabase
             .from("prospects")
             .update({ status: "error", error: "Brevo send failed" })
             .eq("id", p.id);
           results.push({ id: p.id, name: p.name, status: "error", error: "Brevo failed" });
           continue;
+        }
+
+        // Au moins 1 sur 2 parti → on considère le prospect comme contacté.
+        // Log dans les notes quels emails ont reçu / échoué pour debug.
+        if (targetEmails.length > 1) {
+          const reports = targetEmails.map((addr, i) => `${sendResults[i] ? "✅" : "❌"} ${addr}`).join(", ");
+          await supabase
+            .from("prospects")
+            .update({
+              notes: `[${new Date().toISOString().slice(0, 16).replace("T", " ")}] 📧 Emails envoyés: ${reports}`,
+            })
+            .eq("id", p.id);
         }
 
         // Badge "PAS DE SITE" — les prospects sans site convertissent mieux
