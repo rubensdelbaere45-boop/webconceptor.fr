@@ -803,6 +803,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
+  // Garde de sécurité ultime : toute exception inattendue renvoie 200 avec l'erreur
+  // en body, pour que n8n ne plante JAMAIS son workflow à cause de /api/prospect/send.
+  try {
+    return await handleSend(req);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    return NextResponse.json({ success: false, error: msg, processed: 0, results: [] }, { status: 200 });
+  }
+}
+
+async function handleSend(req: NextRequest) {
   const raw = await req.json().catch(() => ({}));
 
   // Validate + clamp inputs
@@ -869,7 +880,23 @@ export async function POST(req: NextRequest) {
   const origin = "https://webconceptor.fr";
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
 
+  // Hard deadline — Render free tier coupe à ~100 s. On s'arrête à 80 s pour
+  // garantir une réponse 200 propre plutôt qu'un 502 qui tuerait le workflow n8n.
+  // On traite autant de prospects que possible dans ce budget, les autres
+  // resteront 'found' en DB et seront pris au prochain run.
+  const SEND_DEADLINE_MS = 80_000;
+  const sendStartedAt = Date.now();
+  const sendTimeLeft = () => SEND_DEADLINE_MS - (Date.now() - sendStartedAt);
+  let timedOut = 0;
+
   for (const p of prospects) {
+    // Si on n'a plus assez de temps pour un cycle complet (Claude 10-25s + envoi Brevo + notif) → on arrête
+    if (sendTimeLeft() < 12_000) {
+      timedOut++;
+      results.push({ id: p.id, name: p.name, status: "deferred_timeout" });
+      continue;
+    }
+
     if (!p.email) {
       results.push({ id: p.id, name: p.name, status: "no_email" });
       continue;
@@ -994,6 +1021,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     success: true,
     processed: results.length,
+    timed_out: timedOut,
+    elapsed_ms: Date.now() - sendStartedAt,
     results,
   });
 }
