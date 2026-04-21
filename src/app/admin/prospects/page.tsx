@@ -22,7 +22,27 @@ interface Prospect {
   created_at: string;
   project_code?: string | null;
   business_type?: string | null;
+  site_quality?: "none" | "poor" | "average" | "good" | null;
+  site_audit_score?: number | null;
+  site_audit_issues?: string[] | null;
 }
+
+// Traduction lisible des issues d'audit (même map que dans /api/prospect/send)
+const AUDIT_ISSUE_LABELS: Record<string, string> = {
+  no_viewport_mobile: "Site pas adapté au mobile (balise viewport manquante)",
+  no_https: "Site pas en HTTPS (alerte sécurité dans les navigateurs)",
+  no_meta_description: "Pas de meta description (mauvais référencement Google)",
+  no_og_image: "Pas d'image Open Graph (lien moche quand partagé sur WhatsApp/Facebook)",
+  no_structured_data: "Pas de données structurées Schema.org (moins bien référencé)",
+  no_semantic_html: "HTML non sémantique (structure ancienne)",
+  legacy_css: "CSS ancien (pas de Flexbox/Grid modernes)",
+  no_favicon: "Pas de favicon (onglet navigateur sans icône)",
+  deprecated_tags: "Tags HTML obsolètes (font, center, marquee) — site ancien",
+  table_layout: "Layout en <table> (code des années 2000, non responsive)",
+  too_many_inline_styles: "Trop de styles inline (généré par un vieil éditeur WYSIWYG)",
+  deprecated_plugins: "Flash ou ActiveX détectés (obsolète, ne fonctionne plus)",
+  unreachable: "Site injoignable lors de l'audit",
+};
 
 const statusColors: Record<string, string> = {
   found: "bg-blue-100 text-blue-700",
@@ -311,12 +331,49 @@ export default function AdminProspectsPage() {
         return;
       }
       const s = data.script;
+
+      // Bloc audit : les points concrets à sortir pendant l'appel pour montrer
+      // qu'on a regardé son site avant (ou que le prospect n'a pas de site du tout).
+      let auditBlock = "";
+      if (p.site_quality === "none") {
+        auditBlock =
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `🆕 CE PROSPECT N'A PAS DE SITE\n\n` +
+          `Argument clé : aujourd'hui, un commerce sans site, c'est 3 clients\n` +
+          `sur 4 qui cherchent sur Google ne vous trouvent pas. Notre maquette\n` +
+          `répond à ce besoin pile — visibilité, réservations, crédibilité.\n\n`;
+      } else if (p.site_audit_issues && p.site_audit_issues.length > 0) {
+        const issueLines = p.site_audit_issues
+          .map((key) => `• ${AUDIT_ISSUE_LABELS[key] || key}`)
+          .slice(0, 8)
+          .join("\n");
+        const scoreLine = p.site_audit_score != null ? ` (score audit : ${p.site_audit_score}/100)` : "";
+        auditBlock =
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `🔍 POINTS D'AMÉLIORATION DE SON SITE ACTUEL${scoreLine}\n` +
+          `(à ressortir si la personne dit "j'ai déjà un site")\n\n` +
+          issueLines +
+          `\n\nSon site actuel : ${p.website || "—"}\n\n`;
+      }
+
+      // Discovery questions : à poser pendant l'appel après l'ouverture
+      const discoveryBlock = Array.isArray(s.discoveryQuestions) && s.discoveryQuestions.length > 0
+        ? `━━━━━━━━━━━━━━━━━━━━\n` +
+          `❓ QUESTIONS À POSER PENDANT L'APPEL\n\n` +
+          s.discoveryQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join("\n") +
+          `\n\n`
+        : "";
+
       const fullScript =
         `🎬 SCRIPT D'APPEL — ${p.name}\n` +
         (p.phone ? `📞 ${p.phone}\n` : "") +
+        (p.city ? `📍 ${p.city}\n` : "") +
+        (p.google_rating ? `⭐ ${p.google_rating}/5 (${p.google_reviews_count || 0} avis)\n` : "") +
         `\n━━━━━━━━━━━━━━━━━━━━\n` +
         `OUVERTURE (lis mot à mot) :\n\n` +
         `« ${s.opening} »\n\n` +
+        auditBlock +
+        discoveryBlock +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `SI HÉSITATION :\n\n` +
         s.hooks.map((h: string, i: number) => `${i + 1}. ${h}`).join("\n") +
@@ -324,7 +381,7 @@ export default function AdminProspectsPage() {
         `OBJECTIONS :\n\n` +
         s.objectionHandlers.map((o: string) => `• ${o}`).join("\n") +
         `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
-        `Copié dans le presse-papier.`;
+        `✅ Copié dans le presse-papier.`;
       navigator.clipboard?.writeText(fullScript).catch(() => {});
       alert(fullScript);
       addLog(`🎬 Script généré pour ${p.name}`);
