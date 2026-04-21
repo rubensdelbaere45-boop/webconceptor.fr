@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
+import { searchPagesJaunes } from "@/lib/sources/pages-jaunes";
 
 /* ══════════════════════════════════════════
    CONFIG
@@ -733,6 +734,8 @@ export async function POST(req: NextRequest) {
     withEmail: 0,
     noSite: 0, poorSite: 0, averageSite: 0, goodSite: 0,
     timedOut: 0, // places ignorées parce qu'on a dépassé le budget temps
+    // Source Pages Jaunes (2ème source de prospects en plus de Google Places)
+    pjFound: 0, pjInserted: 0, pjSkippedDuplicate: 0, pjWithEmail: 0,
   };
 
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
@@ -866,6 +869,116 @@ export async function POST(req: NextRequest) {
       stats.inserted++;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // SOURCE 2 : Pages Jaunes (scraping HTML public)
+    // Complément à Google Places : les commerces qui ne sont pas bien
+    // référencés sur Google mais présents dans Pages Jaunes.
+    // ═══════════════════════════════════════════════════════════════
+    const pjLocation = typeof rawBody.location === "string" && rawBody.location.trim()
+      ? rawBody.location.trim().slice(0, 60)
+      : extractLocationFromQuery(query);
+    const pjActivity = typeof rawBody.pj_activity === "string" && rawBody.pj_activity.trim()
+      ? rawBody.pj_activity.trim().slice(0, 60)
+      : defaultPagesJaunesActivity(businessType);
+
+    if (pjLocation && pjActivity && timeLeft() > 20_000) {
+      try {
+        const pjResults = await searchPagesJaunes(pjActivity, pjLocation);
+        stats.pjFound = pjResults.length;
+
+        for (const p of pjResults) {
+          if (timeLeft() < 8_000) {
+            stats.timedOut += pjResults.length - stats.pjInserted;
+            break;
+          }
+          if (!p.name || p.name.length < 2) continue;
+
+          // Dédup : check par tél d'abord (le + fiable), puis par name+postal
+          let existing: { id: string } | null = null;
+          if (p.phone && p.phone.length >= 8) {
+            const { data } = await supabase
+              .from("prospects")
+              .select("id")
+              .eq("phone", p.phone)
+              .maybeSingle();
+            existing = data;
+          }
+          if (!existing && p.postalCode) {
+            const { data } = await supabase
+              .from("prospects")
+              .select("id")
+              .eq("name", p.name)
+              .eq("postal_code", p.postalCode)
+              .maybeSingle();
+            existing = data;
+          }
+          if (existing) { stats.pjSkippedDuplicate++; continue; }
+
+          const slug = slugify(`${p.name}-${p.city || pjLocation}-pj-${Math.random().toString(36).slice(2, 10)}`);
+
+          // Scrape email + audit si site web trouvé
+          let email: string | null = null;
+          let additionalEmails: string[] = [];
+          let siteAudit: SiteAudit | null = null;
+          let websitePhotos: string[] = [];
+          if (p.website) {
+            try {
+              const results = await Promise.allSettled([
+                findEmailsOnWebsite(p.website),
+                scrapeWebsitePhotos(p.website),
+                auditWebsite(p.website),
+              ]);
+              const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
+              email = allEmails[0] || null;
+              additionalEmails = allEmails.slice(1);
+              websitePhotos = results[1].status === "fulfilled" ? (results[1].value as string[]) : [];
+              siteAudit = results[2].status === "fulfilled" ? (results[2].value as SiteAudit | null) : null;
+              if (email) stats.pjWithEmail++;
+            } catch { /* silent */ }
+          }
+
+          const siteQuality: SiteQuality = p.website
+            ? (siteAudit?.quality || "poor")
+            : "none";
+          if (siteQuality === "none") stats.noSite++;
+          else if (siteQuality === "poor") stats.poorSite++;
+          else if (siteQuality === "average") stats.averageSite++;
+          else if (siteQuality === "good") stats.goodSite++;
+
+          // google_place_id = synthétique "pj_{hash}" pour ne pas entrer en conflit
+          const syntheticId = `pj_${Buffer.from(p.name + p.postalCode).toString("base64").slice(0, 30)}`;
+
+          await supabase.from("prospects").insert({
+            slug,
+            google_place_id: syntheticId,
+            name: p.name,
+            address: p.address || "",
+            city: p.city || pjLocation,
+            postal_code: p.postalCode || "",
+            lat: null,
+            lng: null,
+            distance_km: null,
+            phone: p.phone || "",
+            website: p.website || "",
+            email: email || null,
+            additional_emails: additionalEmails.length ? additionalEmails : null,
+            google_rating: null,
+            google_reviews_count: null,
+            photos: null,
+            hours: "",
+            business_type: businessType,
+            website_photos: websitePhotos.length ? websitePhotos : null,
+            site_quality: siteQuality,
+            site_audit_score: siteAudit?.score ?? null,
+            site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
+            status: email ? "found" : "no_email",
+          });
+
+          stats.pjInserted++;
+        }
+      } catch { /* silent : Pages Jaunes en bonus, ne doit jamais bloquer */ }
+    }
+
     return NextResponse.json({ success: true, stats });
   } catch (err) {
     // N'ÉCHOUE JAMAIS pour n8n — on renvoie 200 avec l'erreur dans le body.
@@ -873,4 +986,49 @@ export async function POST(req: NextRequest) {
     const msg = err instanceof Error ? err.message : "Erreur";
     return NextResponse.json({ success: false, error: msg, stats }, { status: 200 });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Utilitaires Pages Jaunes
+// ═══════════════════════════════════════════════════════════════
+
+/** Déduit la ville à partir d'un query type "restaurant italien Toulouse" */
+function extractLocationFromQuery(query: string): string {
+  const CITIES = [
+    "Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Montpellier",
+    "Strasbourg", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne",
+    "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand",
+    "Aix-en-Provence", "Brest", "Limoges", "Tours", "Amiens", "Metz", "Perpignan",
+    "Besançon", "Orléans", "Rouen", "Caen", "Nancy", "Argenteuil", "Montreuil",
+    "Roubaix", "Tourcoing", "Nanterre", "Vitry-sur-Seine", "Avignon", "Créteil",
+    "Poitiers", "La Rochelle", "Pau", "Calais", "Cannes", "Antibes", "Béziers",
+  ];
+  const lower = query.toLowerCase();
+  for (const city of CITIES) {
+    if (lower.includes(city.toLowerCase())) return city;
+  }
+  return "";
+}
+
+/** Retourne le terme à rechercher dans Pages Jaunes selon le business_type */
+function defaultPagesJaunesActivity(businessType: string): string {
+  const map: Record<string, string> = {
+    restaurant: "Restaurants",
+    boulangerie: "Boulangeries-patisseries",
+    patisserie: "Patisseries",
+    cafe: "Cafes-bars",
+    glacier: "Glaciers",
+    coiffeur: "Coiffeurs",
+    institut: "Instituts de beaute",
+    plombier: "Plombiers",
+    electricien: "Electriciens",
+    garage: "Garages automobiles",
+    dentiste: "Dentistes",
+    osteo: "Osteopathes",
+    salle_sport: "Salles de sport",
+    fleuriste: "Fleuristes",
+    auto_ecole: "Auto-ecoles",
+    epicerie: "Epiceries",
+  };
+  return map[businessType] || "";
 }
