@@ -94,6 +94,28 @@ export default function AdminProspectsPage() {
   const [biometricPrompting, setBiometricPrompting] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
 
+  // State du panneau flottant du script d'appel — reste ouvert pendant que Rubens appelle
+  interface ScriptData {
+    opening: string;
+    discoveryQuestions: string[];
+    hooks: string[];
+    objectionHandlers: string[];
+  }
+  interface ScriptAuditData {
+    site_quality?: string | null;
+    site_audit_score?: number | null;
+    site_audit_issues?: string[] | null;
+    website?: string | null;
+  }
+  const [scriptPanel, setScriptPanel] = useState<{
+    open: boolean;
+    prospect: Prospect | null;
+    script: ScriptData | null;
+    audit: ScriptAuditData | null;
+    loading: boolean;
+    error: string | null;
+  }>({ open: false, prospect: null, script: null, audit: null, loading: false, error: null });
+
   // Autoload : localStorage garde la clé après fermeture du navigateur.
   // Si une credential biométrique a été enregistrée, on la demande en plus.
   useEffect(() => {
@@ -397,7 +419,8 @@ export default function AdminProspectsPage() {
   };
 
   const handleCallScript = async (p: Prospect) => {
-    setLoading(true);
+    // Ouvre le panneau IMMÉDIATEMENT en mode loading pour feedback instantané
+    setScriptPanel({ open: true, prospect: p, script: null, audit: null, loading: true, error: null });
     addLog(`Génération script d'appel pour ${p.name}...`);
     try {
       const res = await fetch("/api/prospect/call-script", {
@@ -407,87 +430,25 @@ export default function AdminProspectsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        setScriptPanel({ open: true, prospect: p, script: null, audit: null, loading: false, error: data.error || "Erreur" });
         addLog(`❌ ${data.error || "Erreur"}`);
-        alert(`Erreur : ${data.error || "inconnue"}`);
         return;
       }
-      const s = data.script;
-
-      // Bloc audit : les points concrets à sortir pendant l'appel pour montrer
-      // qu'on a regardé son site avant. On utilise les données RENVOYÉES par l'API
-      // (qui inclut l'audit à la volée pour les prospects anciens), fallback sur
-      // les données du state local si l'API ne les a pas.
-      const audit = data.audit || {};
-      const auditQuality: string = audit.site_quality ?? p.site_quality ?? null;
-      const auditScore: number | null = audit.site_audit_score ?? p.site_audit_score ?? null;
-      const auditIssues: string[] = Array.isArray(audit.site_audit_issues)
-        ? audit.site_audit_issues
-        : Array.isArray(p.site_audit_issues) ? p.site_audit_issues : [];
-      const websiteUrl: string = audit.website || p.website || "";
-
-      let auditBlock = "";
-      if (auditQuality === "none") {
-        auditBlock =
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `🆕 CE PROSPECT N'A PAS DE SITE\n\n` +
-          `Argument clé : aujourd'hui, un commerce sans site, c'est 3 clients\n` +
-          `sur 4 qui cherchent sur Google ne vous trouvent pas. Notre maquette\n` +
-          `répond à ce besoin pile — visibilité, réservations, crédibilité.\n\n`;
-      } else if (auditIssues.length > 0) {
-        const issueLines = auditIssues
-          .map((key: string) => `• ${AUDIT_ISSUE_LABELS[key] || key}`)
-          .slice(0, 8)
-          .join("\n");
-        const scoreLine = auditScore != null ? ` (score audit : ${auditScore}/100)` : "";
-        auditBlock =
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `🔍 POINTS D'AMÉLIORATION DE SON SITE ACTUEL${scoreLine}\n` +
-          `(à ressortir si la personne dit "j'ai déjà un site")\n\n` +
-          issueLines +
-          `\n\nSon site actuel : ${websiteUrl || "—"}\n\n`;
-      } else if (websiteUrl) {
-        // On a un site mais pas d'issues détectées → son site est correct.
-        auditBlock =
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `ℹ️ SITE ACTUEL : ${websiteUrl}\n` +
-          `(Audit : ${auditQuality || "?"}${auditScore != null ? ` — ${auditScore}/100` : ""})\n` +
-          `Aucun problème technique majeur détecté. Angle de vente : design plus moderne,\n` +
-          `module de réservation sans commission, espace admin simple.\n\n`;
-      }
-
-      // Discovery questions : à poser pendant l'appel après l'ouverture
-      const discoveryBlock = Array.isArray(s.discoveryQuestions) && s.discoveryQuestions.length > 0
-        ? `━━━━━━━━━━━━━━━━━━━━\n` +
-          `❓ QUESTIONS À POSER PENDANT L'APPEL\n\n` +
-          s.discoveryQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join("\n") +
-          `\n\n`
-        : "";
-
-      const fullScript =
-        `🎬 SCRIPT D'APPEL — ${p.name}\n` +
-        (p.phone ? `📞 ${p.phone}\n` : "") +
-        (p.city ? `📍 ${p.city}\n` : "") +
-        (p.google_rating ? `⭐ ${p.google_rating}/5 (${p.google_reviews_count || 0} avis)\n` : "") +
-        `\n━━━━━━━━━━━━━━━━━━━━\n` +
-        `OUVERTURE (lis mot à mot) :\n\n` +
-        `« ${s.opening} »\n\n` +
-        auditBlock +
-        discoveryBlock +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `SI HÉSITATION :\n\n` +
-        s.hooks.map((h: string, i: number) => `${i + 1}. ${h}`).join("\n") +
-        `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
-        `OBJECTIONS :\n\n` +
-        s.objectionHandlers.map((o: string) => `• ${o}`).join("\n") +
-        `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
-        `✅ Copié dans le presse-papier.`;
-      navigator.clipboard?.writeText(fullScript).catch(() => {});
-      alert(fullScript);
-      addLog(`🎬 Script généré pour ${p.name}`);
+      // Met le script dans le panneau flottant (qui reste ouvert jusqu'à fermeture manuelle)
+      setScriptPanel({
+        open: true,
+        prospect: p,
+        script: data.script,
+        audit: data.audit || null,
+        loading: false,
+        error: null,
+      });
+      addLog(`🎬 Script affiché pour ${p.name}`);
     } catch (err) {
-      addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
+      const msg = err instanceof Error ? err.message : "Erreur réseau";
+      setScriptPanel({ open: true, prospect: p, script: null, audit: null, loading: false, error: msg });
+      addLog(`❌ ${msg}`);
     }
-    setLoading(false);
   };
 
   const handleSendCodeEmail = async (p: Prospect) => {
@@ -936,9 +897,14 @@ export default function AdminProspectsPage() {
                             {isHot && <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider px-1.5 py-0.5 bg-red-100 rounded">🔥 Ouvert</span>}
                             {p.google_rating ? <span className="text-[11px] text-gray-500">⭐ {p.google_rating}</span> : null}
                           </div>
-                          <div className="text-[12px] text-gray-500 truncate">
-                            {p.city} · {p.phone}
+                          <div className="text-[12px] text-gray-600 truncate flex items-center gap-2">
+                            <span>{p.city} · {p.phone}</span>
                           </div>
+                          {p.email && (
+                            <div className="text-[12px] text-[#0066ff] font-mono truncate flex items-center gap-1.5 mt-0.5">
+                              <span>✉️ {p.email}</span>
+                            </div>
+                          )}
                         </div>
                         <a
                           href={`tel:${telLink}`}
@@ -1184,6 +1150,184 @@ export default function AdminProspectsPage() {
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          🎬 Panneau flottant SCRIPT D'APPEL
+          — Persistant : reste ouvert pendant que Rubens appelle
+          — Loading instantané dès clic
+          — Se ferme UNIQUEMENT avec le bouton ✕ (pas au clic extérieur)
+          ═══════════════════════════════════════════════════════════════ */}
+      {scriptPanel.open && scriptPanel.prospect && (
+        <div className="fixed bottom-4 right-4 w-[95vw] sm:w-[440px] max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9998] flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="p-4 bg-gradient-to-r from-[#0066ff] via-[#4c1d95] to-[#872175] text-white flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-semibold uppercase tracking-wider opacity-80">🎬 Script d&apos;appel</div>
+              <div className="text-[15px] font-bold truncate">{scriptPanel.prospect.name}</div>
+              <div className="text-[12px] opacity-90 truncate">
+                {scriptPanel.prospect.phone}
+                {scriptPanel.prospect.email ? ` · ${scriptPanel.prospect.email}` : ""}
+              </div>
+            </div>
+            <div className="flex gap-1 flex-shrink-0">
+              {scriptPanel.prospect.email && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(scriptPanel.prospect?.email || "").catch(() => {});
+                    addLog(`📋 Email copié : ${scriptPanel.prospect?.email}`);
+                  }}
+                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-[14px]"
+                  title="Copier l'email"
+                >
+                  📋
+                </button>
+              )}
+              <button
+                onClick={() => setScriptPanel({ ...scriptPanel, open: false })}
+                className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-[16px] font-bold"
+                title="Fermer (manuel uniquement)"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-4 text-[13px] text-gray-800 space-y-4">
+            {scriptPanel.loading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="w-8 h-8 border-4 border-[#0066ff] border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-[13px] text-gray-500">Génération du script + audit du site...</div>
+                <div className="text-[11px] text-gray-400">Ça peut prendre 5-15 secondes</div>
+              </div>
+            )}
+
+            {scriptPanel.error && !scriptPanel.loading && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-[12px]">
+                ❌ {scriptPanel.error}
+              </div>
+            )}
+
+            {scriptPanel.script && !scriptPanel.loading && (
+              <>
+                {/* Infos rapides */}
+                <div className="flex flex-wrap gap-2 pb-3 border-b border-gray-100">
+                  {scriptPanel.prospect.city && (
+                    <span className="px-2 py-1 bg-gray-100 rounded text-[11px]">📍 {scriptPanel.prospect.city}</span>
+                  )}
+                  {scriptPanel.prospect.google_rating && (
+                    <span className="px-2 py-1 bg-amber-50 rounded text-[11px] text-amber-700">⭐ {scriptPanel.prospect.google_rating}/5 ({scriptPanel.prospect.google_reviews_count} avis)</span>
+                  )}
+                  {scriptPanel.audit?.website && (
+                    <a href={scriptPanel.audit.website} target="_blank" rel="noopener noreferrer" className="px-2 py-1 bg-blue-50 rounded text-[11px] text-blue-700 hover:underline">🌐 Son site</a>
+                  )}
+                </div>
+
+                {/* Ouverture */}
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#0066ff] mb-2">🎬 Ouverture (lis mot à mot)</div>
+                  <div className="bg-blue-50 border-l-4 border-[#0066ff] rounded-r-lg p-3 italic text-[13px] leading-relaxed text-[#0a0a0a]">
+                    « {scriptPanel.script.opening} »
+                  </div>
+                </div>
+
+                {/* Audit du site */}
+                {scriptPanel.audit && (
+                  <>
+                    {scriptPanel.audit.site_quality === "none" && (
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-green-700 mb-2">🆕 Prospect sans site</div>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-[12px] leading-relaxed">
+                          <strong>Argument clé :</strong> un commerce sans site, c&apos;est 3 clients sur 4 qui cherchent sur Google et ne vous trouvent pas. Notre maquette répond pile à ce besoin — visibilité, réservations, crédibilité.
+                        </div>
+                      </div>
+                    )}
+                    {Array.isArray(scriptPanel.audit.site_audit_issues) && scriptPanel.audit.site_audit_issues.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-red-700 mb-2">
+                          🔍 Points faibles de son site actuel
+                          {scriptPanel.audit.site_audit_score != null && ` (${scriptPanel.audit.site_audit_score}/100)`}
+                        </div>
+                        <ul className="bg-red-50 border border-red-200 rounded-lg p-3 text-[12px] leading-relaxed space-y-1 list-disc list-inside">
+                          {scriptPanel.audit.site_audit_issues.slice(0, 8).map((key, i) => (
+                            <li key={i}>{AUDIT_ISSUE_LABELS[key] || key}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Questions */}
+                {scriptPanel.script.discoveryQuestions && scriptPanel.script.discoveryQuestions.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-2">❓ Questions à poser</div>
+                    <ol className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-[12px] leading-relaxed space-y-2 list-decimal list-inside">
+                      {scriptPanel.script.discoveryQuestions.map((q, i) => (
+                        <li key={i}>{q}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Hooks */}
+                {scriptPanel.script.hooks && scriptPanel.script.hooks.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-2">🎯 Si hésitation</div>
+                    <ul className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[12px] leading-relaxed space-y-2 list-disc list-inside">
+                      {scriptPanel.script.hooks.map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Objections */}
+                {scriptPanel.script.objectionHandlers && scriptPanel.script.objectionHandlers.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-2">🛡 Objections</div>
+                    <ul className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-[12px] leading-relaxed space-y-2">
+                      {scriptPanel.script.objectionHandlers.map((o, i) => (
+                        <li key={i} className="pb-2 border-b border-gray-200 last:border-0 last:pb-0">{o}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Footer : actions rapides */}
+          {scriptPanel.prospect && (
+            <div className="p-3 border-t border-gray-200 bg-gray-50 flex items-center gap-2">
+              {scriptPanel.prospect.phone && (
+                <a
+                  href={`tel:${scriptPanel.prospect.phone.replace(/[^0-9+]/g, "")}`}
+                  className="flex-1 px-3 py-2 bg-green-600 text-white text-[12px] font-semibold rounded-lg hover:bg-green-700 text-center"
+                >
+                  📞 Appeler
+                </a>
+              )}
+              <button
+                onClick={() => scriptPanel.prospect && handleToggleCalled(scriptPanel.prospect)}
+                className={`flex-1 px-3 py-2 text-[12px] font-semibold rounded-lg ${
+                  wasCalledToday(scriptPanel.prospect.notes)
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {wasCalledToday(scriptPanel.prospect.notes) ? "✅ Appelé" : "⬜ Cocher"}
+              </button>
+              <button
+                onClick={() => scriptPanel.prospect && handleAddNote(scriptPanel.prospect)}
+                className="px-3 py-2 bg-amber-500 text-white text-[12px] font-semibold rounded-lg hover:bg-amber-600"
+              >
+                📝 Note
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
