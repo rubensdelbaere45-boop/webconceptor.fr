@@ -143,6 +143,8 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS website_photos TEXT[];
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_quality TEXT;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_audit_score INTEGER;
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS site_audit_issues TEXT[];
+-- Compteur de SMS démo déjà envoyés pour ce prospect (cap à 3 pour protéger le budget Brevo)
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS demo_sms_count INTEGER NOT NULL DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_prospects_site_quality ON public.prospects(site_quality);
 CREATE INDEX IF NOT EXISTS idx_prospects_business_type ON public.prospects(business_type);
 CREATE INDEX IF NOT EXISTS idx_prospects_project_code ON public.prospects(project_code);

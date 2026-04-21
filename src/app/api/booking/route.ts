@@ -69,17 +69,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "La date doit être dans le futur" }, { status: 400 });
   }
 
-  // Load prospect to link + get restaurant name/contact
+  // Load prospect to link + get restaurant name/contact + demo SMS counter
   const supabase = getSupabaseAdmin();
   const { data: prospect, error: findErr } = await supabase
     .from("prospects")
-    .select("id, name, email, city")
+    .select("id, name, email, city, demo_sms_count")
     .eq("slug", prospect_slug)
     .maybeSingle();
 
   if (findErr || !prospect) {
     return NextResponse.json({ error: "Restaurant introuvable" }, { status: 404 });
   }
+
+  // PROTECTION BUDGET BREVO : max 3 SMS de démo par prospect
+  // (Brevo = 195 crédits SMS restants, cap à 3 par resto = ~65 prospects possibles)
+  const DEMO_SMS_MAX = 3;
+  const currentCount = Number(prospect.demo_sms_count || 0);
+  const smsQuotaReached = currentCount >= DEMO_SMS_MAX;
 
   // Insert booking
   const { data: booking, error: insertErr } = await supabase
@@ -113,9 +119,11 @@ export async function POST(req: NextRequest) {
      ═══════════════════════════════════════════════════ */
 
   const normalizedPhone = normalizeFrenchPhone(customer_phone);
-  let smsStatus: "sent" | "failed" | "skipped" = "skipped";
+  let smsStatus: "sent" | "failed" | "skipped" | "quota_reached" = "skipped";
 
-  if (normalizedPhone && process.env.BREVO_API_KEY) {
+  if (smsQuotaReached) {
+    smsStatus = "quota_reached";
+  } else if (normalizedPhone && process.env.BREVO_API_KEY) {
     const prettyDate = formatFrenchDate(booking_date);
     // SMS limite 160 chars unicode / 306 chars ascii — on reste sous 160 pour rester en 1 SMS (1 crédit Brevo)
     const smsContent =
@@ -138,6 +146,14 @@ export async function POST(req: NextRequest) {
         }),
       });
       smsStatus = smsRes.ok ? "sent" : "failed";
+
+      // Incrémente le compteur UNIQUEMENT si le SMS est parti (pas en cas de failed Brevo)
+      if (smsStatus === "sent") {
+        await supabase
+          .from("prospects")
+          .update({ demo_sms_count: currentCount + 1 })
+          .eq("id", prospect.id);
+      }
     } catch {
       smsStatus = "failed";
     }
@@ -163,7 +179,11 @@ export async function POST(req: NextRequest) {
       `<b>📅 Date :</b> ${escapeTelegram(booking_date)} à ${escapeTelegram(booking_time)}\n` +
       `<b>👥 Convives :</b> ${guests}\n` +
       (notes ? `<b>📝 Note :</b> ${escapeTelegram(notes.slice(0, 200))}\n` : "") +
-      `<b>📲 SMS envoyé :</b> ${smsStatus === "sent" ? "✅ OUI" : smsStatus === "failed" ? "❌ KO" : "—"}\n\n` +
+      `<b>📲 SMS envoyé :</b> ${
+        smsStatus === "sent" ? `✅ OUI (${currentCount + 1}/${DEMO_SMS_MAX})` :
+        smsStatus === "quota_reached" ? `🔒 QUOTA (${currentCount}/${DEMO_SMS_MAX} atteint)` :
+        smsStatus === "failed" ? "❌ KO" : "—"
+      }\n\n` +
       `💡 Le prospect vient de tester le module résa sur sa propre maquette — c'est LE moment de le rappeler dans l'heure pour closer.\n\n` +
       `<a href="${mockupUrl}">→ Voir sa maquette</a>`;
 
@@ -180,13 +200,21 @@ export async function POST(req: NextRequest) {
     }).catch(() => { });
   }
 
+  const message =
+    smsStatus === "sent"
+      ? `Réservation confirmée — vous recevez le SMS de confirmation dans quelques secondes. (${currentCount + 1}/${DEMO_SMS_MAX} SMS de démo utilisés)`
+      : smsStatus === "quota_reached"
+      ? `Réservation enregistrée, mais vous avez déjà utilisé les ${DEMO_SMS_MAX} SMS de démonstration disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : contact@webconceptor.fr`
+      : smsStatus === "failed"
+      ? "Réservation enregistrée, mais nous n'avons pas pu envoyer le SMS de confirmation. Vérifiez que votre numéro est au format français."
+      : "Réservation enregistrée.";
+
   return NextResponse.json({
     success: true,
     booking_id: booking.id,
     sms_status: smsStatus,
-    message: smsStatus === "sent"
-      ? "Réservation confirmée — vous recevez le SMS de confirmation dans quelques secondes."
-      : "Réservation enregistrée.",
+    sms_remaining: Math.max(0, DEMO_SMS_MAX - (smsStatus === "sent" ? currentCount + 1 : currentCount)),
+    message,
   });
 }
 

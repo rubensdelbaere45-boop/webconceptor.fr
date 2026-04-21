@@ -919,10 +919,10 @@ ${
     </div>
 
     <div class="bk-demo-banner">
-      <strong>🧪 Mode démonstration</strong>
+      <strong>🧪 Mode démonstration — 3 SMS de test maximum</strong>
       Testez le module de réservation avec vos vraies coordonnées :
       vous recevrez par SMS le même message de confirmation que vos futurs clients.
-      <div class="bk-demo-sub">Aucune table n'est réellement réservée — c'est juste pour vous montrer que ça fonctionne.</div>
+      <div class="bk-demo-sub">Limite de 3 SMS par établissement (pour protéger notre quota). Aucune table n'est réellement réservée.</div>
     </div>
 
     <div class="bk-body">
@@ -974,7 +974,7 @@ ${
         <div class="bk-field">
           <label for="bk-phone">Téléphone (votre vrai numéro pour recevoir le SMS de démo)</label>
           <input type="tel" id="bk-phone" maxlength="20" placeholder="06 12 34 56 78" autocomplete="tel">
-          <div class="bk-phone-hint">📲 Vous allez recevoir le SMS de confirmation en temps réel — preuve que le système fonctionne.</div>
+          <div class="bk-phone-hint">📲 Vous allez recevoir le SMS de confirmation en temps réel. <strong>3 SMS maximum par établissement.</strong></div>
         </div>
         <div class="bk-field">
           <label for="bk-notes">Demande particulière (optionnel)</label>
@@ -1288,11 +1288,27 @@ async function bkNext() {
         notes: document.getElementById("bk-notes").value.trim(),
       }),
     });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       throw new Error(data.error || "Erreur lors de l'envoi");
     }
     document.getElementById("bk-summary-final").innerHTML = document.getElementById("bk-summary").innerHTML;
+    // Adapte le bloc succès selon le statut SMS renvoyé par l'API
+    const successTitle = document.querySelector(".bk-success h4");
+    const successText = document.querySelector(".bk-success p");
+    if (successTitle && successText) {
+      if (data.sms_status === "quota_reached") {
+        successTitle.textContent = "🔒 Quota SMS démo atteint";
+        successText.innerHTML = "Vous avez déjà utilisé les <strong>3 SMS de démonstration</strong> disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : <strong>contact@webconceptor.fr</strong>";
+      } else if (data.sms_status === "sent") {
+        successTitle.textContent = "📲 SMS envoyé !";
+        const remaining = typeof data.sms_remaining === "number" ? data.sms_remaining : 0;
+        successText.innerHTML = "Vérifiez vos messages : vous recevez le SMS de confirmation que vos futurs clients recevraient après réservation. <strong>C'est exactement ce que vos clients vivront.</strong><br><br><span style='font-size:12px;opacity:0.7'>Il vous reste " + remaining + " SMS de démo pour cet établissement.</span>";
+      } else if (data.sms_status === "failed") {
+        successTitle.textContent = "⚠️ Réservation OK, SMS non envoyé";
+        successText.innerHTML = "Votre réservation est enregistrée, mais nous n'avons pas pu envoyer le SMS de confirmation. Vérifiez que votre numéro est au format français (06, +33…).";
+      }
+    }
     bkGoStep(5);
   } catch (e) {
     err.textContent = e.message || "Erreur lors de l'envoi de la réservation";
