@@ -752,8 +752,14 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
     <li>Vos horaires, adresse et contact</li>
     <li>Un design responsive (PC, tablette, téléphone)</li>
   </ul>
-  <p style="font-size:14px;color:#525252;margin-bottom:12px">Si la maquette vous convient, nous la livrons en 5 jours pour <strong>599&nbsp;€</strong>. Vous pouvez aussi choisir l&rsquo;option <strong>Sérénité</strong> (50&nbsp;€/mois) pour que nous mettions à jour votre site chaque semaine (promos, arrivages, actualités).</p>
-  <p style="font-size:14px;color:#525252;margin-bottom:24px">Répondez simplement à cet email si vous êtes intéressé ou si vous voulez des modifications.</p>
+  <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #0066ff;border-radius:6px;padding:20px 24px;margin:24px 0;text-align:center">
+    <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
+    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">599 € TTC tout compris</p>
+    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 199,67 €</p>
+    <p style="font-size:12px;color:#1e40af;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Site à vous à vie • ✓ Satisfait ou remboursé 14 jours</p>
+  </div>
+
+  <p style="font-size:14px;color:#525252;margin-bottom:24px">Ouvrez la maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions. Si vous voulez modifier un détail (texte, photo, couleurs), cliquez sur <em>"Demander une modification"</em> — je vous réponds dans la journée.</p>
 
   <div style="background:#f8f9fa;border-left:3px solid #0066ff;padding:18px 20px;margin:24px 0;border-radius:6px">
     <p style="font-size:14px;color:#0a0a0a;margin-bottom:10px;font-weight:600">Une question ? Contactez-moi directement :</p>
@@ -814,9 +820,21 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
     <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque réservation vous arrive par email + notification. Vous confirmez d'un clic. Un tableau de bord privé vous permet de voir vos réservations à venir, modifier la carte en 2 minutes, et suivre la fréquentation.</p>
   </div>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:16px">Tarif clair : <strong>599 € TTC</strong> pour la mise en ligne complète (livraison 5 jours) — ou <strong style="color:#c19a56">3× sans frais</strong> via Klarna (200 €/mois). Option <strong>Sérénité 50 €/mois</strong> incluant hébergement, mises à jour de la carte, modifications illimitées.</p>
+  <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
+    <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
+    <p style="font-family:Georgia,serif;font-size:22px;color:#1a1310;margin:0 0 4px;font-weight:600">599 € TTC tout compris</p>
+    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 199,67 €</p>
+    <p style="font-size:12px;color:#92400e;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
+  </div>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Répondez simplement à cet email si vous souhaitez discuter ou modifier quelque chose sur la maquette.</p>
+  <p style="font-size:14px;color:#4a4340;margin-bottom:14px;line-height:1.7"><strong>Concrètement, avec ce site vous gagnez :</strong></p>
+  <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px;line-height:1.8">
+    <li>Des <strong>réservations directes 24/7</strong> (0 commission vs 2,50 € / couvert sur TheFork)</li>
+    <li>Une <strong>première impression pro</strong> sur Google (75 % de vos nouveaux clients vous cherchent en ligne)</li>
+    <li>Un <strong>outil simple</strong> pour mettre à jour votre carte en 2 min depuis votre téléphone</li>
+  </ul>
+
+  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Ouvrez votre maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions instantanément. Si un détail ne vous convient pas (photo, couleur, texte), utilisez le bouton <em>"Demander une modification"</em> — je reçois votre message directement et je vous réponds dans la journée.</p>
 
   <div style="background:#fff;border-left:3px solid #c19a56;padding:20px 24px;margin:24px 0;border-radius:4px">
     <p style="font-size:14px;color:#1a1310;margin-bottom:12px;font-weight:600">Une question ? Contactez-moi directement :</p>
