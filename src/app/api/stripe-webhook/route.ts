@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { escapeTelegram } from "@/lib/security";
+import { buyDomain, type IonosContactInfo } from "@/lib/ionos";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2026-03-25.dahlia",
@@ -188,6 +189,50 @@ export async function POST(req: NextRequest) {
       // Email de confirmation au client (Brevo)
       if (buyerEmail) {
         await sendConfirmationEmail(buyerEmail, buyerName, `Commande ${prospect.name}`, domain);
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // AUTO-ACHAT DU DOMAINE via IONOS API (si Sérénité + domaine)
+      // Sécurité : IONOS_AUTO_BUY=false par défaut → mode dry-run qui loggue
+      // ce qui SERAIT acheté sans débiter la carte IONOS. Passe à "true" quand
+      // tu es sûr que les infos buyer sont bien collectées.
+      // ═══════════════════════════════════════════════════════
+      if (hasSerenite && domain && domain !== "(aucun)") {
+        // Parse "Prénom Nom" du buyer_nom. Fallback : tout en lastName.
+        const nameParts = buyerName.trim().split(/\s+/);
+        const firstName = nameParts.length > 1 ? nameParts[0] : "Prenom";
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : buyerName;
+
+        const contact: IonosContactInfo = {
+          firstName,
+          lastName,
+          email: buyerEmail || "contact@webconceptor.fr",
+          phone: buyerTel || "+33635592471",
+          street: metadata.buyer_adresse || "",
+          city: metadata.buyer_ville || "",
+          postalCode: metadata.buyer_cp || "",
+          country: "FR",
+        };
+
+        const result = await buyDomain(domain, contact);
+
+        if (tgToken && chatId) {
+          const statusLine = result.success
+            ? (result.dryRun
+              ? `🧪 <b>DRY-RUN IONOS</b> — domaine ${escapeTelegram(domain)} DISPO (pas d'achat auto, achète-le manuellement)`
+              : `✅ <b>DOMAINE ACHETÉ</b> — ${escapeTelegram(domain)} (order ${escapeTelegram(result.orderId || "?")})`)
+            : `❌ <b>ACHAT DOMAINE ÉCHOUÉ</b> — ${escapeTelegram(domain)}\nRaison : ${escapeTelegram(result.error || "inconnue")}\n→ Achète-le manuellement sur IONOS`;
+
+          fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `${statusLine}\n\n<b>Client :</b> ${escapeTelegram(buyerName)}\n<b>Email :</b> ${escapeTelegram(buyerEmail)}\n<b>Adresse :</b> ${escapeTelegram(metadata.buyer_adresse || "—")}, ${escapeTelegram(metadata.buyer_cp || "")} ${escapeTelegram(metadata.buyer_ville || "")}`,
+              parse_mode: "HTML",
+            }),
+          }).catch(() => { /* silent */ });
+        }
       }
 
       return NextResponse.json({ received: true, prospect_id: prospectId });
