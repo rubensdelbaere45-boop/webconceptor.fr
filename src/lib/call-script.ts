@@ -3,11 +3,24 @@
    Utilisé au moment où un prospect ouvre sa maquette → envoyé dans la
    notif Telegram HOT LEAD.
 
-   STRATÉGIE : l'appel NE doit PAS closer la vente.
-   Objectif = fixer un RENDEZ-VOUS TÉLÉPHONIQUE de 15-20 min
-   pendant lequel Tom présente la maquette en détail et propose le devis.
-   C'est bien plus facile de dire "oui à un appel de 15 min" que "oui à 599 €".
+   STRATÉGIE : Rubens ET le prospect ont la maquette sous les yeux pendant l'appel.
+   L'appel EST le rendez-vous — pas besoin d'en planifier un autre.
+   But = parler de la maquette directement, discuter des ajustements, proposer
+   un rappel plus tard si besoin (mais UNIQUEMENT téléphonique, PAS de visio).
+   Si le prospect est chaud, on closer tout de suite avec le lien Stripe.
    ══════════════════════════════════════════ */
+
+// Filtre de sécurité : purge toutes les mentions de 'visio' dans ce que Claude
+// peut retourner (au cas où le modèle désobéirait au prompt). Remplace par
+// 'téléphone' / 'au téléphone' selon le contexte.
+function stripVisio(s: string): string {
+  return s
+    .replace(/en\s+visio(conférence|conference)?/gi, "au téléphone")
+    .replace(/rendez-vous\s+visio/gi, "rendez-vous téléphonique")
+    .replace(/rdv\s+visio/gi, "RDV téléphonique")
+    .replace(/visio(conférence|conference)?/gi, "téléphone")
+    .replace(/\bvisio\b/gi, "téléphone");
+}
 
 export interface CallScriptInput {
   prospectName: string;
@@ -29,24 +42,24 @@ export interface CallScript {
 
 const FALLBACK_SCRIPT: CallScript = {
   opening:
-    "Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler au sujet de la maquette de site que je vous ai envoyée ce matin — avez-vous eu le temps d'y jeter un œil ?",
+    "Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler au sujet de la maquette de site que je vous ai envoyée — avez-vous la maquette sous les yeux ou souhaitez-vous que nous regardions ensemble ?",
   discoveryQuestions: [
-    "Qu'avez-vous pensé de la maquette dans l'ensemble ? Quel a été votre premier ressenti ?",
-    "Y a-t-il des éléments que vous aimeriez modifier, enrichir ou voir apparaître différemment ?",
-    "Comment gérez-vous votre présence en ligne aujourd'hui — avez-vous déjà un site, ou seulement une fiche Google / des réseaux sociaux ?",
-    "Quels sont vos objectifs principaux avec ce nouveau site : plus de visibilité, plus de réservations, ou un outil de gestion pour vos équipes ?",
-    "Si on avançait ensemble, quel serait le bon moment pour vous : une mise en ligne d'ici 1 semaine, 1 mois, ou plus tard ?",
+    "Qu'avez-vous pensé de la maquette dans son ensemble ? Quel a été votre premier ressenti ?",
+    "Y a-t-il des éléments visuels que vous aimeriez modifier, enrichir ou voir apparaître différemment ?",
+    "Comment gérez-vous votre présence en ligne aujourd'hui — site, fiche Google, réseaux sociaux ?",
+    "Quels sont vos objectifs principaux avec ce nouveau site : plus de visibilité, plus de réservations, mieux informer vos clients ?",
+    "Si on avançait ensemble, quel serait le bon moment pour vous : mise en ligne d'ici 1 semaine, 1 mois, ou plus tard ?",
   ],
   hooks: [
-    "Je propose qu'on se rappelle 15-20 min au téléphone pour que je vous présente la maquette en détail — ça vous permet de poser toutes vos questions",
-    "L'idée du rendez-vous, c'est de vous montrer concrètement comment le site s'intègrerait à votre activité au quotidien",
-    "Je peux vous rappeler demain 14h ou jeudi 10h — quel créneau vous arrange ?",
+    "Prenons quelques minutes ensemble maintenant pour regarder la maquette en détail, vous me dites ce que vous en pensez",
+    "Si vous préférez qu'on en rediscute à un moment plus calme, je peux vous rappeler demain 14 h ou jeudi 10 h, comme vous voulez",
+    "On peut parcourir la maquette ensemble là tout de suite — vous avez 10 minutes devant vous ?",
   ],
   objectionHandlers: [
-    "« Je dois y réfléchir » → Bien sûr. Justement, le rendez-vous téléphonique sert à ça : je vous détaille tout, vous prenez votre décision après, sans engagement. Demain ou jeudi ?",
-    "« C'est trop cher » → C'est exactement pour ça que je propose qu'on en reparle au calme par téléphone — je vous détaille ce qui est inclus, le paiement en 3 fois sans frais, et vous voyez si ça tient la route pour vous.",
-    "« Envoyez-moi plus d'infos par mail » → Avec plaisir, mais en 15 min au téléphone on gagne une semaine d'échanges — je vous propose demain 14h ?",
-    "« Je veux le prendre maintenant » → Parfait ! Je peux vous envoyer le lien de paiement Stripe immédiatement — en une fois (599 €) ou en 3 fois sans frais via Klarna, comme vous préférez.",
+    "« Je dois y réfléchir » → Bien sûr. Je vous rappelle quand ? Demain matin ou jeudi après-midi vous conviennent ?",
+    "« C'est trop cher » → Je comprends. Pour info c'est 599 € TTC tout compris, ou en 3 fois sans frais via Klarna (3 × 199,67 €). À l'usage vous récupérez ça en quelques mois de réservations.",
+    "« Envoyez-moi plus d'infos par mail » → Je peux bien sûr, mais autant en parler directement maintenant qu'on est tous les deux sur la maquette. Qu'est-ce qui vous manque pour décider ?",
+    "« Je veux le prendre maintenant » → Parfait ! Je vous envoie le lien de paiement Stripe dans la minute — en une fois (599 € TTC) ou en 3 fois sans frais via Klarna, comme vous préférez.",
   ],
 };
 
@@ -72,11 +85,15 @@ export async function generateCallScript(input: CallScriptInput): Promise<CallSc
       : "",
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler un professionnel qui a reçu par email une maquette de site web. L'OBJECTIF PRINCIPAL de l'appel = FIXER UN RENDEZ-VOUS TÉLÉPHONIQUE de 15-20 min durant lequel Tom présentera la maquette en détail et proposera le devis. UNIQUEMENT téléphonique, PAS de visio.
+  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler UN PROFESSIONNEL qui a reçu par email une maquette de site web.
 
-EXCEPTION : si le prospect veut acheter directement pendant l'appel, Tom NE LE REFUSE PAS — il envoie le lien de paiement Stripe tout de suite. La règle = ne jamais bloquer une vente.
+CONTEXTE IMPORTANT : Tom ET le prospect auront la maquette OUVERTE sous les yeux pendant l'appel (l'URL de la maquette a été envoyée par email). Donc l'appel EST le rendez-vous — PAS BESOIN de planifier un autre RDV pour présenter la maquette. On en parle directement là, tout de suite.
 
-Génère un script d'appel orienté "prise de RDV avec fallback vente directe", personnalisé, sobre et professionnel.
+SEULE EXCEPTION : si le prospect dit "je ne peux pas parler maintenant", Tom propose UN RAPPEL TÉLÉPHONIQUE plus tard dans la journée ou le lendemain (demain 14 h ou jeudi 10 h). Jamais de visio, jamais de Zoom, jamais de Google Meet — UNIQUEMENT par téléphone.
+
+Si le prospect veut acheter immédiatement → lien Stripe envoyé tout de suite (en 1× ou 3× Klarna).
+
+Génère un script d'appel direct et conversationnel, personnalisé, sobre et professionnel.
 
 Infos prospect :
 ${infoLines}
@@ -91,17 +108,19 @@ Contexte offre WebConceptor (à mentionner SEULEMENT si le prospect demande) :
 
 RÈGLES IMPÉRATIVES :
 1. VOUVOIEMENT OBLIGATOIRE partout (« vous », « votre établissement », jamais « tu »).
-2. L'ouverture demande s'il A REÇU la maquette — JAMAIS « j'ai vu que vous avez ouvert/regardé/cliqué » (effet surveillance).
-3. OBJECTIF = CALER UN RDV DE 15-20 MIN. Toujours proposer 2 créneaux concrets (« demain 14h ou jeudi 10h ? »).
-4. Ton professionnel, posé, NON pressé. Pas d'urgence artificielle.
-5. Si le prospect veut acheter direct → Tom lui envoie le lien Stripe immédiatement (gérer via un objectionHandler dédié).
+2. L'ouverture demande s'il A REÇU la maquette et s'il peut en parler maintenant — JAMAIS « j'ai vu que vous avez ouvert/regardé/cliqué ».
+3. ❌ INTERDICTION ABSOLUE d'utiliser les mots "visio", "visioconférence", "Zoom", "Google Meet", "Teams", "en ligne" (au sens réunion), "via écran partagé". Tout échange = TÉLÉPHONIQUE uniquement, point. Si tu dis "visio" une seule fois, ton script sera rejeté.
+4. L'appel EST le rendez-vous → on parle de la maquette DIRECTEMENT. Pas de « je propose qu'on programme un créneau pour... ».
+5. Si le prospect ne peut pas parler : propose UN RAPPEL téléphonique (« je peux vous rappeler demain 14 h ? »).
+6. Ton professionnel, posé, NON pressé.
+7. Si le prospect veut acheter direct → lien Stripe immédiat.
 
 Génère un JSON avec EXACTEMENT ces 4 clés :
 {
-  "opening": "Phrase d'ouverture VOUVOYÉE (MAX 35 mots). Format : 'Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler au sujet de la maquette de site que je vous ai envoyée — avez-vous eu le temps d'y jeter un œil ?' — adapte légèrement.",
-  "discoveryQuestions": [5 questions VOUVOYÉES (max 25 mots chacune) à poser pendant l'appel pour qualifier le besoin. Obligatoirement couvrir : (1) ressenti sur la maquette, (2) modifications souhaitées, (3) présence en ligne actuelle, (4) objectifs business du site (visibilité / réservations / autre), (5) timing souhaité pour lancer. Formulation professionnelle, ouverte, pas commerciale.],
-  "hooks": [3 accroches VOUVOYÉES orientées PRISE DE RDV TÉLÉPHONIQUE (max 25 mots chacune). Exemple : 'Je propose qu'on se rappelle 15-20 min au téléphone pour que je vous présente la maquette — demain 14h ou jeudi 10h ?' Chaque hook pousse VERS le RDV téléphonique, pas vers la vente. JAMAIS 'visio'.],
-  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) aux 4 situations : (1) 'Je vais y réfléchir' → rassurer + reproposer RDV téléphonique, (2) 'C'est trop cher' → le RDV téléphonique sert à détailler, 3× sans frais, (3) 'Envoyez-moi un mail avec plus d'infos' → 15 min au téléphone = une semaine gagnée, (4) 'Je veux l'acheter maintenant' → 'Parfait, je vous envoie le lien de paiement Stripe tout de suite, en une fois ou en 3× sans frais via Klarna, comme vous préférez'. Toujours VOUS. JAMAIS 'visio'.]
+  "opening": "Phrase d'ouverture VOUVOYÉE (MAX 40 mots). Format : 'Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler au sujet de la maquette de site que je vous ai envoyée — avez-vous la maquette sous les yeux, ou préférez-vous que je vous la renvoie ?' — adapte légèrement.",
+  "discoveryQuestions": [5 questions VOUVOYÉES (max 25 mots chacune) à poser PENDANT L'APPEL, le prospect ayant la maquette sous les yeux. Obligatoirement couvrir : (1) ressenti sur la maquette, (2) modifications souhaitées (images, couleurs, textes), (3) présence en ligne actuelle, (4) objectifs du site (réservations, visibilité, etc.), (5) timing de lancement. Formulation pro, ouverte, pas commerciale.],
+  "hooks": [3 phrases VOUVOYÉES (max 25 mots chacune) pour avancer la conversation pendant l'appel. Ex : 'On peut parcourir la maquette ensemble là tout de suite, vous avez 5 minutes ?' ou 'Si vous préférez un moment plus calme, je peux vous rappeler demain 14 h ou jeudi 10 h'. Ces phrases servent à gérer les prospects occupés — en proposant un RAPPEL TÉLÉPHONIQUE. INTERDIT : les mots "visio", "Zoom", "Meet", "Teams", "écran partagé". Uniquement TÉLÉPHONE.],
+  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) aux 4 situations : (1) 'Je vais y réfléchir' → demander quand le rappeler par téléphone, (2) 'C'est trop cher' → rappeler le 3× sans frais et le ROI rapide, (3) 'Envoyez-moi un mail avec plus d'infos' → proposer d'en parler directement maintenant puisqu'il est déjà au téléphone avec Tom, (4) 'Je veux l'acheter maintenant' → envoi lien Stripe immédiat. Toujours VOUS. INTERDIT : "visio".]
 }
 
 Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est jeune (18 ans) mais parle comme un dirigeant posé. Réponds UNIQUEMENT avec le JSON valide.`;
@@ -138,13 +157,16 @@ Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est
     if (!jsonMatch) return FALLBACK_SCRIPT;
     const parsed = JSON.parse(jsonMatch[0]);
 
-    const clean = (s: unknown, max = 300) => String(s ?? "").slice(0, max).trim();
+    // Sanitize : on passe TOUT ce que Claude retourne dans stripVisio() pour
+    // garantir qu'aucune mention de "visio" n'atteint Rubens, même si le modèle
+    // désobéit au prompt.
+    const clean = (s: unknown, max = 300) => stripVisio(String(s ?? "").slice(0, max).trim());
     const cleanArr = (a: unknown, maxItems = 5, maxChars = 250): string[] => {
       if (!Array.isArray(a)) return [];
       return a
         .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
         .slice(0, maxItems)
-        .map((s) => s.slice(0, maxChars));
+        .map((s) => stripVisio(s.slice(0, maxChars)));
     };
 
     const opening = clean(parsed.opening) || FALLBACK_SCRIPT.opening;

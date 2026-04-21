@@ -412,6 +412,11 @@ async function scrapeWebsitePhotos(website: string): Promise<string[]> {
     const urls: string[] = [];
     const seen = new Set<string>();
 
+    // Blacklist de domaines/mots de réseaux sociaux (éviter de ramener
+    // les logos Tripadvisor, Instagram, Facebook, etc. dans la galerie)
+    const SOCIAL_HOST_RE = /(tripadvisor|instagram|fbcdn|facebook|twimg|twitter|youtube|ytimg|pinterest|linkedin|yelp|trustpilot|gstatic|googletagmanager|googleusercontent|doubleclick|adservice|widgets\.)/i;
+    const SOCIAL_PATH_RE = /(tripadvisor|instagram|facebook|twitter|youtube|pinterest|linkedin|yelp|trustpilot|snapchat|tiktok|whatsapp|telegram|email|mailto|phone|adresse|social)/i;
+
     const addUrl = (raw: string) => {
       if (!raw || raw.length > 500) return;
       let url: URL;
@@ -419,11 +424,22 @@ async function scrapeWebsitePhotos(website: string): Promise<string[]> {
         url = new URL(raw, base.origin);
       } catch { return; }
       if (url.protocol !== "http:" && url.protocol !== "https:") return;
-      // Filtrer icônes / logos / svg / thumbnails
+
+      const host = url.hostname.toLowerCase();
       const path = url.pathname.toLowerCase();
+
+      // Rejet par format
       if (/\.(svg|ico|gif)$/.test(path)) return;
-      if (/(logo|icon|favicon|sprite|avatar|loader|spinner)/.test(path)) return;
-      if (/\d{1,3}x\d{1,3}/.test(path)) return; // "150x150.jpg" thumbnails
+      // Rejet par mot-clé dans le path
+      if (/(logo|icon|favicon|sprite|avatar|loader|spinner|button|btn|arrow|chevron|star|flag|badge|pictogram|social|network)/.test(path)) return;
+      // Rejet explicite par domaine = réseau social / CDN externe
+      if (SOCIAL_HOST_RE.test(host)) return;
+      // Rejet par mot-clé "réseau social" dans le path
+      if (SOCIAL_PATH_RE.test(path)) return;
+      // Rejet thumbnails/petites dimensions dans le nom
+      if (/\d{1,3}x\d{1,3}/.test(path)) return;
+      if (/(thumb|thumbnail|mini|small|tiny|xs|sm\b|-s\.jpg|-s\.png)/.test(path)) return;
+
       const full = url.toString();
       if (seen.has(full)) return;
       seen.add(full);
