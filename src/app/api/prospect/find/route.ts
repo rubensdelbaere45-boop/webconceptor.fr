@@ -581,9 +581,10 @@ export async function POST(req: NextRequest) {
     timedOut: 0, // places ignorées parce qu'on a dépassé le budget temps
   };
 
-  // Hard deadline — Render peut couper les requêtes trop longues,
-  // on préfère renvoyer 200 avec un résultat partiel que de laisser n8n planter.
-  const DEADLINE_MS = 150_000; // 150 s
+  // Hard deadline — Render free tier coupe les requêtes à ~100 s.
+  // On fixe 80 s pour laisser une marge confortable et garantir une réponse
+  // 200 propre plutôt qu'un 502 qui tue le workflow n8n.
+  const DEADLINE_MS = 80_000; // 80 s (Render coupe vers 100 s)
   const startedAt = Date.now();
   const timeLeft = () => DEADLINE_MS - (Date.now() - startedAt);
 
@@ -596,9 +597,9 @@ export async function POST(req: NextRequest) {
     for (const place of places) {
       if (!place.location || !place.displayName?.text) continue;
 
-      // Budget temps : si on a moins de 12s restantes, on s'arrête pour garantir
-      // une réponse propre (pas de connection abort côté n8n).
-      if (timeLeft() < 12_000) {
+      // Budget temps : si on a moins de 8 s restantes, on s'arrête pour garantir
+      // une réponse propre (pas de connection abort côté n8n / 502 Render).
+      if (timeLeft() < 8_000) {
         stats.timedOut = places.length - (stats.inserted + stats.skippedNearby + stats.skippedDuplicate + stats.skippedLowRating);
         break;
       }
