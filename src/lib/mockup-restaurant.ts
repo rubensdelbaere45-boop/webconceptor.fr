@@ -1194,34 +1194,44 @@ ${
         <div class="pm-domain-status" id="pm-domain-status">Commencez à taper pour vérifier la disponibilité</div>
       </div>
 
-      <span class="pm-label">Vos coordonnées (facturation)</span>
-      <div class="pm-field">
-        <label for="pm-nom">Nom complet</label>
-        <input type="text" id="pm-nom" maxlength="120" placeholder="Jean Dupont" autocomplete="name">
+      <span class="pm-label">Vos coordonnées (facturation + enregistrement du domaine)</span>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-prenom">Prénom</label>
+          <input type="text" id="pm-prenom" maxlength="60" placeholder="Jean" autocomplete="given-name" required>
+        </div>
+        <div class="pm-field">
+          <label for="pm-nom">Nom de famille</label>
+          <input type="text" id="pm-nom" maxlength="60" placeholder="Dupont" autocomplete="family-name" required>
+        </div>
       </div>
       <div class="pm-row">
         <div class="pm-field">
           <label for="pm-email">Email</label>
-          <input type="email" id="pm-email" maxlength="200" placeholder="jean@monresto.fr" autocomplete="email">
+          <input type="email" id="pm-email" maxlength="200" placeholder="jean@monresto.fr" autocomplete="email" required>
         </div>
         <div class="pm-field">
           <label for="pm-tel">Téléphone</label>
-          <input type="tel" id="pm-tel" maxlength="30" placeholder="06 12 34 56 78" autocomplete="tel">
+          <input type="tel" id="pm-tel" maxlength="30" placeholder="06 12 34 56 78" autocomplete="tel" required>
         </div>
       </div>
       <div class="pm-field">
-        <label for="pm-adresse">Adresse</label>
-        <input type="text" id="pm-adresse" maxlength="200" placeholder="12 rue de la République" autocomplete="street-address">
+        <label for="pm-adresse">Adresse complète</label>
+        <input type="text" id="pm-adresse" maxlength="200" placeholder="12 rue de la République" autocomplete="street-address" required>
       </div>
       <div class="pm-row">
         <div class="pm-field">
-          <label for="pm-ville">Ville</label>
-          <input type="text" id="pm-ville" maxlength="100" placeholder="Paris" autocomplete="address-level2">
+          <label for="pm-cp">Code postal</label>
+          <input type="text" id="pm-cp" maxlength="10" placeholder="75004" autocomplete="postal-code" required>
         </div>
         <div class="pm-field">
-          <label for="pm-cp">Code postal</label>
-          <input type="text" id="pm-cp" maxlength="20" placeholder="75004" autocomplete="postal-code">
+          <label for="pm-ville">Ville</label>
+          <input type="text" id="pm-ville" maxlength="100" placeholder="Paris" autocomplete="address-level2" required>
         </div>
+      </div>
+      <div class="pm-field">
+        <label for="pm-entreprise">Raison sociale <span style="opacity:0.5;font-weight:normal">(si pro — optionnel)</span></label>
+        <input type="text" id="pm-entreprise" maxlength="120" placeholder="Ex : SARL Le Boudoir (facultatif)" autocomplete="organization">
       </div>
 
       <div class="pm-total">
@@ -1543,22 +1553,20 @@ function pmUpdateTotal() {
 }
 
 function pmUpdateSubmit() {
-  const nom = document.getElementById("pm-nom").value.trim();
-  const email = document.getElementById("pm-email").value.trim();
-  const tel = document.getElementById("pm-tel").value.trim();
-  const adr = document.getElementById("pm-adresse").value.trim();
-  const ville = document.getElementById("pm-ville").value.trim();
-  const cp = document.getElementById("pm-cp").value.trim();
-  let valid = nom.length >= 2
+  const prenom = (document.getElementById("pm-prenom")?.value || "").trim();
+  const nom = (document.getElementById("pm-nom")?.value || "").trim();
+  const email = (document.getElementById("pm-email")?.value || "").trim();
+  const tel = (document.getElementById("pm-tel")?.value || "").trim();
+  const adr = (document.getElementById("pm-adresse")?.value || "").trim();
+  const ville = (document.getElementById("pm-ville")?.value || "").trim();
+  const cp = (document.getElementById("pm-cp")?.value || "").trim();
+  let valid = prenom.length >= 2
+    && nom.length >= 2
     && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/.test(email)
     && tel.length >= 6
     && adr.length >= 3
     && ville.length >= 2
     && cp.length >= 2;
-  if (PM.plan === "serenite") {
-    // En Sérénité, soit on a un domaine disponible, soit on accepte sans domaine (il choisira plus tard)
-    // valid reste true
-  }
   document.getElementById("pm-submit").disabled = !valid;
 }
 
@@ -1630,12 +1638,14 @@ async function pmSubmit() {
     prospect_slug: ${JSON.stringify(prospect.slug)},
     plan: PM.plan,
     buyer: {
+      prenom: document.getElementById("pm-prenom").value.trim(),
       nom: document.getElementById("pm-nom").value.trim(),
       email: document.getElementById("pm-email").value.trim(),
       telephone: document.getElementById("pm-tel").value.trim(),
       adresse: document.getElementById("pm-adresse").value.trim(),
       ville: document.getElementById("pm-ville").value.trim(),
       cp: document.getElementById("pm-cp").value.trim(),
+      entreprise: (document.getElementById("pm-entreprise")?.value || "").trim(),
     },
   };
   if (PM.plan === "serenite" && PM.domainAvailable) {

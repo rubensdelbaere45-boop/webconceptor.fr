@@ -1,11 +1,14 @@
 /* ══════════════════════════════════════════
    IONOS Developer API — achat automatisé de domaines
-   Doc : https://developer.hosting.ionos.com/docs/domains
+
+   Stratégie : achat TOUJOURS tenté dès que le webhook Stripe valide un
+   paiement avec l'option Sérénité + un domaine. Le temps est critique :
+   chaque seconde perdue = risque que le domaine soit pris par quelqu'un
+   d'autre. Retry 3× en cas d'erreur temporaire.
 
    Variables d'env attendues :
-   - IONOS_API_KEY        = "{public_prefix}.{secret}" au format concaténé
-   - IONOS_AUTO_BUY       = "true" pour activer l'achat réel (sinon dry-run)
-   - IONOS_CONTACT_ID     = contact par défaut (optionnel, sinon créé à la volée)
+   - IONOS_API_KEY = "{public_prefix}.{secret}" (une seule string)
+     OU IONOS_API_PUBLIC_PREFIX + IONOS_API_SECRET séparés
    ══════════════════════════════════════════ */
 
 const IONOS_BASE = "https://api.hosting.ionos.com";
@@ -14,34 +17,34 @@ export interface IonosContactInfo {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string; // format E.164 +33...
+  phone: string;       // format E.164 +33...
   street: string;
   city: string;
   postalCode: string;
-  country: string; // ISO 3166 (ex: "FR")
+  country: string;     // ISO 3166 (ex: "FR")
+  organization?: string;
 }
 
 export interface IonosBuyResult {
   success: boolean;
-  dryRun: boolean;
   domainName: string;
   orderId?: string;
   contactId?: string;
+  attempts: number;
   error?: string;
   httpStatus?: number;
-  details?: unknown;
+  requestBody?: unknown;  // pour debug / log Telegram en cas d'échec
+  responseBody?: unknown;
 }
 
 function getApiKey(): string | null {
-  const key = process.env.IONOS_API_KEY;
-  if (!key) return null;
-  // Si Rubens a stocké les 2 parties séparées par espace ou point, on accepte les 2
-  // (format attendu : "public.secret" en une seule string)
-  return key.trim();
-}
-
-function isAutoBuyEnabled(): boolean {
-  return (process.env.IONOS_AUTO_BUY || "").toLowerCase() === "true";
+  const full = process.env.IONOS_API_KEY;
+  if (full && full.trim().length > 0) return full.trim();
+  // Fallback : IONOS_API_PUBLIC_PREFIX.IONOS_API_SECRET
+  const pub = process.env.IONOS_API_PUBLIC_PREFIX;
+  const secret = process.env.IONOS_API_SECRET;
+  if (pub && secret) return `${pub.trim()}.${secret.trim()}`;
+  return null;
 }
 
 // Normalise un numéro français en E.164 (+33...) attendu par IONOS
@@ -53,9 +56,12 @@ export function normalizePhoneE164(raw: string): string {
   return digits;
 }
 
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Vérifie la disponibilité d'un domaine chez IONOS.
- * Utilisé avant l'achat pour confirmer qu'il est libre.
  */
 export async function checkDomainAvailability(domainName: string): Promise<{ available: boolean; price?: number; error?: string }> {
   const apiKey = getApiKey();
@@ -80,7 +86,6 @@ export async function checkDomainAvailability(domainName: string): Promise<{ ava
     }
 
     const data = await res.json().catch(() => ({}));
-    // Le format exact dépend de l'API — on essaie plusieurs shapes
     const available = data.available === true || data.availability === "AVAILABLE" || data.status === "available";
     const price = typeof data.price === "number" ? data.price
       : typeof data.price?.gross === "number" ? data.price.gross
@@ -93,107 +98,106 @@ export async function checkDomainAvailability(domainName: string): Promise<{ ava
 
 /**
  * Lance l'achat d'un domaine chez IONOS au nom de l'acheteur.
- * Si IONOS_AUTO_BUY !== "true" → mode dry-run (simule sans appeler l'API d'achat).
+ * Retry automatique 3× avec backoff (5s, 15s) en cas d'erreur temporaire (5xx / timeout).
+ * Les erreurs définitives (domaine déjà pris, données invalides) ne sont pas retry.
  */
 export async function buyDomain(domainName: string, buyer: IonosContactInfo): Promise<IonosBuyResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
     return {
       success: false,
-      dryRun: true,
       domainName,
-      error: "IONOS_API_KEY manquante dans l'environnement",
+      attempts: 0,
+      error: "IONOS_API_KEY manquante dans l'environnement Render",
     };
   }
 
   const phone = normalizePhoneE164(buyer.phone);
 
-  // Mode dry-run : on simule sans appeler l'API d'achat (juste check disponibilité)
-  if (!isAutoBuyEnabled()) {
-    const availability = await checkDomainAvailability(domainName);
-    return {
-      success: availability.available,
-      dryRun: true,
-      domainName,
-      error: availability.error,
-      details: {
-        mode: "DRY_RUN",
-        wouldRegister: {
+  // Body standardisé pour l'API v1 domain-orders d'IONOS
+  const requestBody = {
+    properties: {
+      name: domainName,
+      period: 1, // 1 an
+    },
+    contacts: {
+      ownerc: {
+        type: buyer.organization ? "ORGANIZATION" : "INDIVIDUAL",
+        firstName: (buyer.firstName || "").slice(0, 60),
+        lastName: (buyer.lastName || "").slice(0, 60),
+        organization: buyer.organization ? buyer.organization.slice(0, 120) : undefined,
+        email: buyer.email,
+        phone,
+        address: {
+          countryCode: buyer.country || "FR",
+          street: buyer.street.slice(0, 60),
+          city: buyer.city.slice(0, 60),
+          postalCode: buyer.postalCode,
+        },
+      },
+    },
+  };
+
+  const MAX_ATTEMPTS = 3;
+  let lastError: string | undefined;
+  let lastStatus: number | undefined;
+  let lastResponseBody: unknown;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(`${IONOS_BASE}/domains/v1/domain-orders`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(30000),
+      });
+
+      const respText = await res.text();
+      let respJson: unknown;
+      try { respJson = JSON.parse(respText); } catch { respJson = { raw: respText.slice(0, 1000) }; }
+      lastResponseBody = respJson;
+      lastStatus = res.status;
+
+      if (res.ok) {
+        const orderId = (respJson as { orderId?: string; id?: string })?.orderId
+          || (respJson as { id?: string })?.id;
+        return {
+          success: true,
           domainName,
-          registrant: { ...buyer, phone },
-          estimatedPrice: availability.price,
-        },
-      },
-    };
-  }
+          orderId,
+          attempts: attempt,
+          httpStatus: res.status,
+          requestBody,
+          responseBody: respJson,
+        };
+      }
 
-  // Mode production : création de l'ordre de domaine
-  try {
-    // IONOS API v1 attend un body de type "domain-orders"
-    const body = {
-      properties: {
-        name: domainName,
-        period: 1, // 1 an
-      },
-      contacts: {
-        ownerc: {
-          type: "INDIVIDUAL",
-          firstName: buyer.firstName.slice(0, 60),
-          lastName: buyer.lastName.slice(0, 60),
-          email: buyer.email,
-          phone,
-          address: {
-            countryCode: buyer.country || "FR",
-            street: buyer.street.slice(0, 60),
-            city: buyer.city.slice(0, 60),
-            postalCode: buyer.postalCode,
-          },
-        },
-      },
-    };
+      // Erreurs 4xx (sauf 429) = définitives, pas la peine de retry
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+        lastError = `IONOS HTTP ${res.status} (erreur client — pas de retry)`;
+        break;
+      }
 
-    const res = await fetch(`${IONOS_BASE}/domains/v1/domain-orders`, {
-      method: "POST",
-      headers: {
-        "X-API-Key": apiKey,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    const respText = await res.text();
-    let respJson: unknown;
-    try { respJson = JSON.parse(respText); } catch { respJson = { raw: respText.slice(0, 500) }; }
-
-    if (!res.ok) {
-      return {
-        success: false,
-        dryRun: false,
-        domainName,
-        error: `IONOS HTTP ${res.status}`,
-        httpStatus: res.status,
-        details: respJson,
-      };
+      // 5xx / 429 / timeout → retry après pause
+      lastError = `IONOS HTTP ${res.status} (tentative ${attempt}/${MAX_ATTEMPTS})`;
+      if (attempt < MAX_ATTEMPTS) await pause(attempt === 1 ? 5000 : 15000);
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : "unknown";
+      if (attempt < MAX_ATTEMPTS) await pause(attempt === 1 ? 5000 : 15000);
     }
-
-    const orderId = (respJson as { orderId?: string; id?: string })?.orderId
-      || (respJson as { id?: string })?.id;
-
-    return {
-      success: true,
-      dryRun: false,
-      domainName,
-      orderId,
-      details: respJson,
-    };
-  } catch (err) {
-    return {
-      success: false,
-      dryRun: false,
-      domainName,
-      error: err instanceof Error ? err.message : "unknown",
-    };
   }
+
+  return {
+    success: false,
+    domainName,
+    attempts: MAX_ATTEMPTS,
+    error: lastError,
+    httpStatus: lastStatus,
+    requestBody,
+    responseBody: lastResponseBody,
+  };
 }

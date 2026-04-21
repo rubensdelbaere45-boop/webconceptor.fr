@@ -74,22 +74,35 @@ export async function POST(req: NextRequest) {
   }
 
   const buyer = {
-    nom: str(rawBuyer.nom, 120),
+    // Nouveaux champs séparés (indispensables pour l'API IONOS)
+    prenom: str(rawBuyer.prenom, 60),
+    nom: str(rawBuyer.nom, 60),
     email: str(rawBuyer.email, 200).toLowerCase(),
     telephone: str(rawBuyer.telephone, 30),
     adresse: str(rawBuyer.adresse, 200),
     ville: str(rawBuyer.ville, 100),
     cp: str(rawBuyer.cp, 20),
+    entreprise: str(rawBuyer.entreprise, 120),
   };
 
-  if (!buyer.nom || !buyer.email || !buyer.telephone || !buyer.adresse || !buyer.ville || !buyer.cp) {
-    return NextResponse.json({ error: "Coordonnées acheteur incomplètes" }, { status: 400 });
+  // Rétro-compatibilité : si le formulaire envoie encore "nom" combiné, on split
+  if (!buyer.prenom && buyer.nom.includes(" ")) {
+    const parts = buyer.nom.trim().split(/\s+/);
+    buyer.prenom = parts[0].slice(0, 60);
+    buyer.nom = parts.slice(1).join(" ").slice(0, 60);
+  }
+
+  if (!buyer.prenom || !buyer.nom || !buyer.email || !buyer.telephone || !buyer.adresse || !buyer.ville || !buyer.cp) {
+    return NextResponse.json({ error: "Coordonnées acheteur incomplètes (prénom, nom, email, téléphone, adresse, ville, code postal)" }, { status: 400 });
   }
   if (!EMAIL_RE.test(buyer.email)) {
     return NextResponse.json({ error: "Email invalide" }, { status: 400 });
   }
   if (buyer.telephone.length < 6) {
     return NextResponse.json({ error: "Téléphone invalide" }, { status: 400 });
+  }
+  if (!/^\d{4,6}$/.test(buyer.cp)) {
+    return NextResponse.json({ error: "Code postal invalide" }, { status: 400 });
   }
 
   // Validate domain if provided
@@ -188,7 +201,11 @@ export async function POST(req: NextRequest) {
         plan,
         domain: domainFull || "",
         has_serenite: plan === "serenite" ? "true" : "false",
+        // Infos acheteur complètes (utilisées par l'automatisation IONOS)
+        buyer_prenom: buyer.prenom,
         buyer_nom: buyer.nom,
+        buyer_nom_complet: `${buyer.prenom} ${buyer.nom}`.slice(0, 200),
+        buyer_entreprise: buyer.entreprise.slice(0, 200),
         buyer_email: buyer.email,
         buyer_tel: buyer.telephone,
         buyer_adresse: buyer.adresse.slice(0, 200),

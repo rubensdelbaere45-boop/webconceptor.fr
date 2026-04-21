@@ -193,19 +193,25 @@ export async function POST(req: NextRequest) {
 
       // ═══════════════════════════════════════════════════════
       // AUTO-ACHAT DU DOMAINE via IONOS API (si Sérénité + domaine)
-      // Sécurité : IONOS_AUTO_BUY=false par défaut → mode dry-run qui loggue
-      // ce qui SERAIT acheté sans débiter la carte IONOS. Passe à "true" quand
-      // tu es sûr que les infos buyer sont bien collectées.
+      // Achat TOUJOURS tenté — le temps est critique pour ne pas se faire
+      // piquer le domaine. Retry 3× automatique en cas d'erreur temporaire.
       // ═══════════════════════════════════════════════════════
       if (hasSerenite && domain && domain !== "(aucun)") {
-        // Parse "Prénom Nom" du buyer_nom. Fallback : tout en lastName.
-        const nameParts = buyerName.trim().split(/\s+/);
-        const firstName = nameParts.length > 1 ? nameParts[0] : "Prenom";
-        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : buyerName;
+        // Priorité 1 : prénom/nom séparés depuis le Stripe metadata (nouveau format)
+        // Priorité 2 : split du nom complet (prospects anciens avec nom combiné)
+        let firstName = metadata.buyer_prenom || "";
+        let lastName = metadata.buyer_nom || "";
+        if (!firstName && lastName && lastName.includes(" ")) {
+          const parts = lastName.trim().split(/\s+/);
+          firstName = parts[0];
+          lastName = parts.slice(1).join(" ");
+        }
+        if (!firstName) firstName = "Client";
 
         const contact: IonosContactInfo = {
-          firstName,
-          lastName,
+          firstName: firstName.slice(0, 60),
+          lastName: (lastName || buyerName).slice(0, 60),
+          organization: metadata.buyer_entreprise || undefined,
           email: buyerEmail || "contact@webconceptor.fr",
           phone: buyerTel || "+33635592471",
           street: metadata.buyer_adresse || "",
@@ -218,18 +224,24 @@ export async function POST(req: NextRequest) {
 
         if (tgToken && chatId) {
           const statusLine = result.success
-            ? (result.dryRun
-              ? `🧪 <b>DRY-RUN IONOS</b> — domaine ${escapeTelegram(domain)} DISPO (pas d'achat auto, achète-le manuellement)`
-              : `✅ <b>DOMAINE ACHETÉ</b> — ${escapeTelegram(domain)} (order ${escapeTelegram(result.orderId || "?")})`)
-            : `❌ <b>ACHAT DOMAINE ÉCHOUÉ</b> — ${escapeTelegram(domain)}\nRaison : ${escapeTelegram(result.error || "inconnue")}\n→ Achète-le manuellement sur IONOS`;
+            ? `✅ <b>DOMAINE ACHETÉ AUTOMATIQUEMENT</b>\n${escapeTelegram(domain)} (order <code>${escapeTelegram(result.orderId || "?")}</code>)`
+            : `❌ <b>ACHAT DOMAINE ÉCHOUÉ</b> — ${escapeTelegram(domain)}\n` +
+              `Raison : ${escapeTelegram((result.error || "inconnue").slice(0, 300))}\n` +
+              `Statut HTTP : ${result.httpStatus || "—"} · Tentatives : ${result.attempts}/3\n` +
+              `\n🚨 <b>ACHÈTE MANUELLEMENT DÈS MAINTENANT sur IONOS avant que quelqu'un ne prenne le domaine !</b>`;
+
+          const errorPayload = !result.success && result.responseBody
+            ? `\n\n<b>Debug IONOS :</b>\n<code>${escapeTelegram(JSON.stringify(result.responseBody).slice(0, 500))}</code>`
+            : "";
 
           fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `${statusLine}\n\n<b>Client :</b> ${escapeTelegram(buyerName)}\n<b>Email :</b> ${escapeTelegram(buyerEmail)}\n<b>Adresse :</b> ${escapeTelegram(metadata.buyer_adresse || "—")}, ${escapeTelegram(metadata.buyer_cp || "")} ${escapeTelegram(metadata.buyer_ville || "")}`,
+              text: `${statusLine}\n\n<b>Client :</b> ${escapeTelegram(firstName)} ${escapeTelegram(lastName)}\n<b>Email :</b> ${escapeTelegram(buyerEmail)}\n<b>Téléphone :</b> ${escapeTelegram(buyerTel)}\n<b>Adresse :</b> ${escapeTelegram(metadata.buyer_adresse || "—")}, ${escapeTelegram(metadata.buyer_cp || "")} ${escapeTelegram(metadata.buyer_ville || "")}${metadata.buyer_entreprise ? `\n<b>Entreprise :</b> ${escapeTelegram(metadata.buyer_entreprise)}` : ""}${errorPayload}`,
               parse_mode: "HTML",
+              // disable_notification: false → notif SONORE (succès OU échec = événement critique)
             }),
           }).catch(() => { /* silent */ });
         }
