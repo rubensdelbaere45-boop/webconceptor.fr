@@ -105,26 +105,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Impossible d'enregistrer la reservation" }, { status: 500 });
   }
 
-  // Notif Telegram DÉSACTIVÉE — les réservations sur les maquettes démos
-  // ne sont pas un signal d'appel pour Rubens. Les données restent dans la DB
-  // (table bookings) pour stats / argument de vente ("X réservations déjà !").
-  // Décommenter si besoin :
-  /*
+  /* ═══════════════════════════════════════════════════
+     Mode démo : on envoie un VRAI SMS au numéro entré
+     → le prospect teste sa propre maquette, voit que
+     le système fonctionne avec SON téléphone = preuve
+     concrète qui augmente énormément la conversion.
+     ═══════════════════════════════════════════════════ */
+
+  const normalizedPhone = normalizeFrenchPhone(customer_phone);
+  let smsStatus: "sent" | "failed" | "skipped" = "skipped";
+
+  if (normalizedPhone && process.env.BREVO_API_KEY) {
+    const prettyDate = formatFrenchDate(booking_date);
+    // SMS limite 160 chars unicode / 306 chars ascii — on reste sous 160 pour rester en 1 SMS (1 crédit Brevo)
+    const smsContent =
+      `Bonjour ${customer_name.split(" ")[0].slice(0, 20)}, votre reservation chez ${prospect.name.slice(0, 40)} est confirmee le ${prettyDate} a ${booking_time} pour ${guests} pers. A bientot !`.slice(0, 159);
+
+    try {
+      const smsRes = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
+        method: "POST",
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+          "accept": "application/json",
+        },
+        body: JSON.stringify({
+          type: "transactional",
+          unicodeEnabled: false,
+          sender: "WebConcept", // 11 chars max alphanumeric
+          recipient: normalizedPhone,
+          content: smsContent,
+        }),
+      });
+      smsStatus = smsRes.ok ? "sent" : "failed";
+    } catch {
+      smsStatus = "failed";
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     Notif Telegram SILENCIEUSE à Rubens — signal fort
+     qu'un prospect teste sa maquette = ultra engagé.
+     (Pas de son pour ne pas spammer la nuit.)
+     ═══════════════════════════════════════════════════ */
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (token && chatId) {
     const mockupUrl = `https://webconceptor.fr/prospects/${prospect_slug}`;
     const msg =
-      `🍽️ <b>Nouvelle réservation !</b>\n\n` +
-      `<b>Restaurant :</b> ${escapeTelegram(prospect.name)}\n` +
-      `<b>Client :</b> ${escapeTelegram(customer_name)}\n` +
-      `<b>Email :</b> ${escapeTelegram(customer_email)}\n` +
-      `<b>Téléphone :</b> ${escapeTelegram(customer_phone)}\n\n` +
-      `<b>📅 Date :</b> ${escapeTelegram(booking_date)}\n` +
-      `<b>🕐 Heure :</b> ${escapeTelegram(booking_time)}\n` +
+      `🧪 <b>DÉMO TESTÉE — prospect ultra chaud</b>\n\n` +
+      `<b>🍽 Restaurant :</b> ${escapeTelegram(prospect.name)}\n` +
+      `<b>📍 Ville :</b> ${escapeTelegram(prospect.city || "—")}\n\n` +
+      `<b>Test effectué par :</b>\n` +
+      `• Nom : ${escapeTelegram(customer_name)}\n` +
+      `• Email : ${escapeTelegram(customer_email)}\n` +
+      `• Téléphone : ${escapeTelegram(customer_phone)}\n\n` +
+      `<b>📅 Date :</b> ${escapeTelegram(booking_date)} à ${escapeTelegram(booking_time)}\n` +
       `<b>👥 Convives :</b> ${guests}\n` +
-      (notes ? `\n<b>Note :</b> ${escapeTelegram(notes.slice(0, 200))}\n` : "") +
-      `\n<a href="${mockupUrl}">Voir la maquette du restaurant</a>`;
+      (notes ? `<b>📝 Note :</b> ${escapeTelegram(notes.slice(0, 200))}\n` : "") +
+      `<b>📲 SMS envoyé :</b> ${smsStatus === "sent" ? "✅ OUI" : smsStatus === "failed" ? "❌ KO" : "—"}\n\n` +
+      `💡 Le prospect vient de tester le module résa sur sa propre maquette — c'est LE moment de le rappeler dans l'heure pour closer.\n\n` +
+      `<a href="${mockupUrl}">→ Voir sa maquette</a>`;
 
     fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -134,14 +175,36 @@ export async function POST(req: NextRequest) {
         text: msg,
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        disable_notification: true, // silencieux (pas de son)
       }),
     }).catch(() => { });
   }
-  */
 
   return NextResponse.json({
     success: true,
     booking_id: booking.id,
-    message: "Réservation enregistrée. Le restaurant vous contactera pour confirmer.",
+    sms_status: smsStatus,
+    message: smsStatus === "sent"
+      ? "Réservation confirmée — vous recevez le SMS de confirmation dans quelques secondes."
+      : "Réservation enregistrée.",
   });
+}
+
+/* ═══════════════════════════════════════════════════
+   Utils
+   ═══════════════════════════════════════════════════ */
+
+// Normalise un numéro français en E.164 (+33...). Retourne null si invalide.
+function normalizeFrenchPhone(raw: string): string | null {
+  const digits = raw.replace(/[^\d+]/g, "");
+  if (/^\+33[1-9]\d{8}$/.test(digits)) return digits;
+  if (/^33[1-9]\d{8}$/.test(digits)) return "+" + digits;
+  if (/^0[1-9]\d{8}$/.test(digits)) return "+33" + digits.slice(1);
+  return null;
+}
+
+function formatFrenchDate(iso: string): string {
+  // "2026-04-22" → "22/04"
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
 }

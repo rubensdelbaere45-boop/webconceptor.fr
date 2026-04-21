@@ -831,28 +831,30 @@ export async function POST(req: NextRequest) {
     const { data } = await supabase.from("prospects").select("*").eq("id", prospect_id).limit(1);
     if (data) prospects = data as Prospect[];
   } else {
+    // On fetch LARGE (10× batch_size) pour garantir qu'on récupère TOUS les
+    // no-site disponibles en DB, même s'ils sont anciens. Puis on trie côté JS
+    // par priorité absolue au no-site (le meilleur public : ils n'ont même pas
+    // de site donc PAS l'excuse 'j'ai déjà un site' quand on les appelle).
     const { data } = await supabase
       .from("prospects")
       .select("*")
       .eq("status", "found")
       .not("email", "is", null)
       .order("created_at", { ascending: true })
-      // On fetch 3× batch_size pour avoir de la marge, puis on sort en JS
-      // par priorité : none (pas de site) > poor (vieux site) > average > other
-      .limit(batch_size * 3);
+      .limit(batch_size * 10);
     if (data) {
-      // Tri par priorité : no-site > old-site > average > other, puis oldest first
       const QUALITY_PRIORITY: Record<string, number> = {
-        none: 0,      // pas de site = MEILLEUR candidat (ils n'ont PAS refusé, pas entendu)
+        none: 0,      // pas de site = MEILLEUR candidat (priorité absolue)
         poor: 1,      // site ancien/cassé = 2ème meilleur
         average: 2,   // site moyen = 3ème
-        good: 9,      // site moderne = skip (déjà filtré après, mais safety)
+        good: 3,      // site moderne = 4ème (on envoie quand même)
       };
       const sorted = [...(data as Prospect[])].sort((a, b) => {
         const qa = QUALITY_PRIORITY[a.site_quality || "poor"] ?? 3;
         const qb = QUALITY_PRIORITY[b.site_quality || "poor"] ?? 3;
         if (qa !== qb) return qa - qb;
-        return 0; // déjà trié par created_at en amont
+        // Au même niveau de qualité : plus ancien d'abord
+        return 0;
       });
       prospects = sorted.slice(0, batch_size);
     }

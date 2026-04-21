@@ -632,6 +632,13 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
 .bk-kicker{font-family:var(--script);font-size:26px;color:var(--accent);margin-bottom:4px}
 .bk-header h3{font-family:var(--serif);font-size:32px;font-weight:500;color:var(--ink);letter-spacing:-0.01em}
 .bk-header p{font-size:13px;color:var(--stone);margin-top:8px;letter-spacing:0.05em}
+
+/* Demo banner — seulement visible quand c'est une maquette démo */
+.bk-demo-banner{background:linear-gradient(135deg,#0066ff,#872175);color:#fff;padding:20px 48px;font-size:13px;line-height:1.5;text-align:center}
+.bk-demo-banner strong{display:block;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.bk-demo-banner .bk-demo-sub{font-size:12px;opacity:0.9;margin-top:6px}
+@media(max-width:560px){.bk-demo-banner{padding:16px 24px;font-size:12px}}
+.bk-phone-hint{font-size:11px;color:var(--accent);margin-top:4px;font-style:italic}
 .bk-body{padding:36px 48px 24px}
 .bk-step{display:none;animation:bkFadeIn 0.3s}
 .bk-step.active{display:block}
@@ -911,6 +918,13 @@ ${
       <p>Sélectionnez votre créneau</p>
     </div>
 
+    <div class="bk-demo-banner">
+      <strong>🧪 Mode démonstration</strong>
+      Testez le module de réservation avec vos vraies coordonnées :
+      vous recevrez par SMS le même message de confirmation que vos futurs clients.
+      <div class="bk-demo-sub">Aucune table n'est réellement réservée — c'est juste pour vous montrer que ça fonctionne.</div>
+    </div>
+
     <div class="bk-body">
       <!-- Step 1 : Date -->
       <div class="bk-step active" data-step="1">
@@ -958,8 +972,9 @@ ${
           <input type="email" id="bk-email" maxlength="120" placeholder="marie@example.com" autocomplete="email">
         </div>
         <div class="bk-field">
-          <label for="bk-phone">Téléphone</label>
+          <label for="bk-phone">Téléphone (votre vrai numéro pour recevoir le SMS de démo)</label>
           <input type="tel" id="bk-phone" maxlength="20" placeholder="06 12 34 56 78" autocomplete="tel">
+          <div class="bk-phone-hint">📲 Vous allez recevoir le SMS de confirmation en temps réel — preuve que le système fonctionne.</div>
         </div>
         <div class="bk-field">
           <label for="bk-notes">Demande particulière (optionnel)</label>
@@ -974,8 +989,8 @@ ${
           <div class="bk-success-icon">
             <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
           </div>
-          <h4>Demande envoyée !</h4>
-          <p>Nous vous confirmerons votre réservation par email dans les meilleurs délais.</p>
+          <h4>📲 SMS envoyé !</h4>
+          <p>Vérifiez vos messages : vous recevez le SMS de confirmation que vos futurs clients recevraient après réservation. <strong>C'est exactement ce que vos clients vivront.</strong></p>
           <div class="bk-summary" id="bk-summary-final"></div>
         </div>
       </div>
