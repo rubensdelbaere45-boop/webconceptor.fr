@@ -23,16 +23,16 @@ export interface CallScript {
 
 const FALLBACK_SCRIPT: CallScript = {
   opening:
-    "Bonjour, Tom Bauer de WebConceptor à l'appareil. J'ai vu que vous venez de regarder la maquette du site que j'ai préparée pour vous — qu'est-ce que vous en pensez ?",
+    "Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler : avez-vous eu le temps de regarder la maquette de site que nous avons préparée pour votre établissement ?",
   hooks: [
-    "Vous avez déjà les clients, il vous manque juste un site à la hauteur",
-    "La maquette inclut un module de réservation en ligne — zéro commission",
-    "Je peux mettre en ligne en 5 jours, ou en 7 avec votre nom de domaine",
+    "Vous avez déjà une belle clientèle, il vous manque juste une vitrine numérique à la hauteur",
+    "La maquette inclut un module de réservation en ligne sans commission — vous gardez 100 % de vos couverts",
+    "Nous pouvons vous mettre en ligne sous 5 jours ouvrés, 7 si vous souhaitez un nom de domaine dédié",
   ],
   objectionHandlers: [
-    "« Je dois y réfléchir » → Bien sûr, je reste joignable ; qu'est-ce qui vous fait hésiter précisément ?",
-    "« C'est cher » → 599 € TTC pour un site complet, ou 3× sans frais (200 €/mois), c'est moins cher qu'une serveuse un week-end",
-    "« J'ai déjà un site » → Je l'ai audité, et j'ai repéré quelques axes d'amélioration précis dont on peut discuter",
+    "« Je dois y réfléchir » → Bien sûr, je reste à votre disposition. Puis-je vous demander ce qui vous fait hésiter en particulier ?",
+    "« C'est cher » → 599 € TTC pour un site complet, ou en 3 fois sans frais (3 × 199,67 €). C'est l'équivalent d'un week-end de service.",
+    "« J'ai déjà un site » → Tout à fait, j'ai pris le temps de le regarder. J'ai relevé deux ou trois pistes concrètes qui pourraient vous intéresser, je peux vous les partager en 2 minutes ?",
   ],
 };
 
@@ -58,7 +58,7 @@ export async function generateCallScript(input: CallScriptInput): Promise<CallSc
       : "",
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler un prospect qui VIENT DE REGARDER sa maquette. Génère-lui un script d'appel ULTRA EFFICACE, personnalisé, à utiliser dans les 5 prochaines minutes.
+  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler un professionnel qui a reçu par email une maquette de site web. Génère-lui un script d'appel ULTRA EFFICACE, personnalisé, sobre et professionnel.
 
 Infos prospect :
 ${infoLines}
@@ -71,14 +71,20 @@ Contexte offre WebConceptor :
 - Espace admin simple pour mettre à jour la carte en 2 min
 - Option Sérénité 50 €/mois : hébergement + modifications illimitées
 
+RÈGLES IMPÉRATIVES :
+1. VOUVOIEMENT OBLIGATOIRE dans TOUT le script — c'est un professionnel, on lui doit du respect (« vous », « votre établissement », « je me permets », jamais « tu »).
+2. L'ouverture doit demander s'il A REÇU la maquette et s'il a pu la regarder — JAMAIS dire « j'ai vu que vous avez ouvert/regardé/cliqué » (effet surveillance qui fait fuir).
+3. Ton professionnel, posé, rassurant. Pas de familiarité ni de « Salut », pas de ton de commercial pressé.
+4. Personnalisation via un détail SPÉCIFIQUE au prospect (note Google, type d'établissement, ville) — mais sans donner l'impression qu'on l'espionne.
+
 Génère un JSON avec EXACTEMENT ces 3 clés :
 {
-  "opening": "Phrase d'ouverture à lire mot à mot quand le prospect décroche (MAX 25 mots, finir par une question ouverte). Personnalisée avec un détail du prospect. PAS de 'Comment allez-vous ?', tout de suite au sujet.",
-  "hooks": [3 accroches ultra-ciblées (max 15 mots chacune) à utiliser si le prospect hésite. Chaque accroche = UN bénéfice concret lié à LUI (sa note Google, son type d'établissement, son absence de site, etc.). Style impactant, pas de blabla marketing.],
-  "objectionHandlers": [3 réponses courtes (max 25 mots) aux 3 objections les plus probables : 'Je vais y réfléchir', 'C'est trop cher', et UNE troisième objection spécifique au type de prospect (ex: 'j'ai déjà un site' si siteQuality=poor/average, 'je préfère attendre' si none, etc.)]
+  "opening": "Phrase d'ouverture VOUVOYÉE (MAX 30 mots). Format impératif : 'Bonjour, Tom Bauer de WebConceptor. Je me permets de vous appeler : avez-vous eu le temps de regarder la maquette que nous avons préparée pour [nom/établissement] ?' — adapte la fin avec un détail propre au prospect.",
+  "hooks": [3 accroches VOUVOYÉES (max 18 mots chacune), posées et concrètes, à utiliser si le prospect hésite. Chaque accroche = UN bénéfice lié à LUI. Toujours 'votre' et jamais 'ton'.],
+  "objectionHandlers": [3 réponses VOUVOYÉES (max 30 mots) aux 3 objections probables : 'Je vais y réfléchir', 'C'est trop cher', et une 3ème adaptée au contexte. Toujours 'vous', jamais 'tu'.]
 }
 
-Ton : pro, direct, chaleureux, confiant. Francophone France. PAS de langue de bois. Tom est jeune (18 ans) mais pas un commercial classique. Réponds UNIQUEMENT avec le JSON valide.`;
+Ton : pro, rassurant, poli, maîtrisé. Francophone France standard. Tom est jeune (18 ans) mais parle comme un dirigeant posé. Réponds UNIQUEMENT avec le JSON valide.`;
 
   try {
     const body = isOpenRouter
