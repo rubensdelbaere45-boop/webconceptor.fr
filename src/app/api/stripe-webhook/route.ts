@@ -244,7 +244,7 @@ export async function POST(req: NextRequest) {
               metadata: {
                 source: "self_serve_mockup",
                 prospect_id: prospectId,
-                prospect_slug: prospect.slug,
+                prospect_slug: metadata.prospect_slug || "",
               },
             });
 
