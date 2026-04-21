@@ -188,9 +188,11 @@ export async function POST(req: NextRequest) {
     // Si le plan est Sérénité → on impose la carte bancaire (nécessaire pour
     // sauvegarder la PaymentMethod et créer l'abonnement récurrent 50€/mois).
     // Klarna / PayPal ne sauvegardent pas la PM pour off-session charging.
-    const paymentMethods = (plan === "serenite"
+    // On utilise un type inline pour éviter les problèmes de namespace Stripe
+    // qui peuvent varier selon la version du SDK.
+    const paymentMethods: Array<"card" | "klarna" | "paypal"> = plan === "serenite"
       ? ["card"]
-      : ["card", "klarna", "paypal"]) as Stripe.Checkout.SessionCreateParams["payment_method_types"];
+      : ["card", "klarna", "paypal"];
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
