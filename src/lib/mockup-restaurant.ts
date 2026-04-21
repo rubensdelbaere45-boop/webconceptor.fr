@@ -332,20 +332,36 @@ export function generateRestaurantMockupHtml(
     grouped.get(cat)!.push(m);
   }
 
+  // Détecte si on a les VRAIS prix (scrapés depuis le site du resto) ou non.
+  // Si non, on affiche un bandeau explicatif et les prix sont masqués dans le menu.
+  const menuHasRealPrices = content.menuItems.some(
+    (m) => m.price && m.price.trim().length > 0 && /[0-9]/.test(m.price)
+  );
+
   const menuHtml = (items: typeof content.menuItems) =>
     items
-      .map(
-        (m) => `
+      .map((m) => {
+        const priceDisplay = menuHasRealPrices && m.price && m.price.trim().length > 0
+          ? esc(m.price)
+          : `<span class="price-pending">sur mesure</span>`;
+        return `
     <div class="menu-item">
       <div class="menu-item-head">
         <h4>${esc(m.name)}</h4>
         <span class="dots"></span>
-        <span class="price">${esc(m.price)}</span>
+        <span class="price">${priceDisplay}</span>
       </div>
       <p>${esc(m.description)}</p>
-    </div>`
-      )
+    </div>`;
+      })
       .join("");
+
+  const menuPricesBanner = !menuHasRealPrices
+    ? `<div class="menu-prices-banner">
+        <strong>📝 Tarifs personnalisés à venir</strong>
+        Envoyez-nous votre carte actuelle par email à <a href="mailto:contact@webconceptor.fr?subject=Ma%20carte%20pour%20la%20maquette">contact@webconceptor.fr</a> — nous affinerons votre maquette avec vos vrais plats et vos vrais prix sous 24 h.
+      </div>`
+    : "";
 
   // Titre section avec 1ère lettre en majuscule
   const sectionTitle = (cat: string) => {
@@ -355,7 +371,7 @@ export function generateRestaurantMockupHtml(
   };
 
   // Build all sections dynamically
-  const menuSectionsHtml = Array.from(grouped.entries())
+  const menuSectionsHtml = menuPricesBanner + Array.from(grouped.entries())
     .map(
       ([cat, items]) => `<div class="menu-section">
       <div class="menu-section-title">${esc(sectionTitle(cat))}</div>
@@ -561,6 +577,10 @@ ${menuCols === 2 ? `
 ` : ""}
 .menu-item-head .dots{flex:1;border-bottom:1px dotted rgba(255,255,255,0.2);margin-bottom:4px}
 .menu-item-head .price{font-family:var(--serif);font-size:20px;color:var(--accent);font-weight:500;font-style:italic}
+.menu-item-head .price-pending{font-family:var(--sans);font-size:11px;color:rgba(249,245,239,0.55);letter-spacing:0.1em;text-transform:uppercase;font-style:normal;font-weight:500}
+.menu-prices-banner{background:rgba(193,154,86,0.1);border:1px solid rgba(193,154,86,0.3);border-radius:4px;padding:18px 22px;margin-bottom:40px;color:rgba(249,245,239,0.9);font-size:13px;line-height:1.6;text-align:center}
+.menu-prices-banner strong{display:block;color:var(--accent);font-family:var(--serif);font-size:16px;font-weight:500;margin-bottom:6px;letter-spacing:0.02em;text-transform:none}
+.menu-prices-banner a{color:var(--accent);text-decoration:underline}
 .menu-item p{font-size:14px;color:rgba(249,245,239,0.7);line-height:1.6;font-weight:300}
 .menu-cta{text-align:center;margin-top:40px}
 
@@ -756,6 +776,61 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
   .wc-cta-bar{bottom:34px;padding:10px 14px}
   .wc-cta-bar-text{font-size:12px;text-align:center;flex:1 1 100%}
   .wc-cta-bar-btn{padding:10px 18px;font-size:11px}
+}
+
+/* Très petit mobile (iPhone SE, petits Android) — évite les débordements */
+@media(max-width:520px){
+  html{overflow-x:hidden}
+  body{overflow-x:hidden;padding-bottom:140px}
+  nav{padding:0 14px;height:58px}
+  .top-strip{font-size:11px;padding:8px 12px;white-space:normal;text-align:center;line-height:1.4}
+  .wc-demo-badge{font-size:9px;padding:6px 10px;right:10px;top:10px}
+  .wc-home-btn{font-size:10px;padding:6px 10px;left:10px;top:10px}
+  .wc-home-btn-logo{width:20px;height:20px;font-size:11px}
+  .hero-inner{padding:80px 18px 90px}
+  .hero-kicker{font-size:28px}
+  .hero h1{font-size:clamp(2.2rem,9vw,3.5rem)}
+  .hero-desc{font-size:15px;margin-bottom:32px}
+  .hero-ctas{gap:10px}
+  .btn-primary,.btn-outline{padding:14px 22px;font-size:11px;letter-spacing:0.15em}
+  .hero-rating{margin-top:36px;font-size:12px;padding:10px 16px}
+  .about{padding:60px 18px}
+  .about-text h2{font-size:clamp(1.9rem,6vw,2.4rem)}
+  .about-text p{font-size:14px}
+  .about-signature{font-size:28px}
+  .menu{padding:60px 18px}
+  .menu h2{font-size:clamp(1.9rem,6vw,2.4rem)}
+  .menu-kicker{font-size:28px}
+  .menu-header{margin-bottom:48px}
+  .gallery{padding:60px 18px}
+  .gallery-grid{grid-template-columns:1fr;gap:10px}
+  .reviews{padding:60px 18px}
+  .reserve-cta{padding:70px 18px}
+  .info{padding:60px 18px}
+  .info-inner{gap:24px}
+  .bk-header{padding:32px 20px 18px}
+  .bk-header h3{font-size:24px}
+  .bk-body{padding:24px 20px 16px}
+  .bk-footer{padding:16px 20px 22px;flex-wrap:wrap;gap:10px}
+  .bk-actions{width:100%;justify-content:flex-end}
+  .bk-btn{padding:10px 18px;font-size:11px}
+  .bk-date-num{font-size:14px}
+  .bk-date-mo{font-size:8px}
+  .bk-times{grid-template-columns:repeat(3,1fr)}
+  .bk-guests{grid-template-columns:repeat(5,1fr)}
+  .bk-guest{font-size:16px}
+  .bk-demo-banner{padding:14px 18px;font-size:11px}
+  .bk-confirm-box{padding:24px 18px}
+  .bk-confirm-phone{font-size:18px;padding:12px}
+  body::after{font-size:36px}
+  .wc-cta-bar{padding:8px 10px;gap:6px}
+  .wc-cta-bar-text{font-size:11px}
+  .wc-cta-bar-btn{padding:9px 14px;font-size:10px;letter-spacing:0.1em}
+  .pm-plans{gap:10px}
+  .pm-header h3{font-size:22px}
+  .pm-body{padding:22px 20px}
+  .pm-footer{padding:16px 20px 22px;flex-wrap:wrap;gap:10px}
+  footer{padding:32px 20px 60px;font-size:11px}
 }
 /* Padding-bottom sur le body pour ne pas cacher les sections derrière le CTA + watermark */
 body{padding-bottom:110px}

@@ -4,9 +4,9 @@
    notif Telegram HOT LEAD.
 
    STRATÉGIE : l'appel NE doit PAS closer la vente.
-   Objectif = fixer un rendez-vous (visio ou téléphonique, 15-20 min)
-   pendant lequel Rubens présente la maquette en détail et propose le devis.
-   C'est bien plus facile de dire "oui à un RDV de 15 min" que "oui à 599 €".
+   Objectif = fixer un RENDEZ-VOUS TÉLÉPHONIQUE de 15-20 min
+   pendant lequel Tom présente la maquette en détail et propose le devis.
+   C'est bien plus facile de dire "oui à un appel de 15 min" que "oui à 599 €".
    ══════════════════════════════════════════ */
 
 export interface CallScriptInput {
@@ -38,14 +38,14 @@ const FALLBACK_SCRIPT: CallScript = {
     "Si on avançait ensemble, quel serait le bon moment pour vous : une mise en ligne d'ici 1 semaine, 1 mois, ou plus tard ?",
   ],
   hooks: [
-    "Je propose qu'on se bloque 15-20 min en visio pour que je vous présente la maquette en détail — ça vous permet de poser toutes vos questions",
+    "Je propose qu'on se rappelle 15-20 min au téléphone pour que je vous présente la maquette en détail — ça vous permet de poser toutes vos questions",
     "L'idée du rendez-vous, c'est de vous montrer concrètement comment le site s'intègrerait à votre activité au quotidien",
-    "Je peux vous proposer demain 14h ou jeudi 10h — quel créneau vous arrange ?",
+    "Je peux vous rappeler demain 14h ou jeudi 10h — quel créneau vous arrange ?",
   ],
   objectionHandlers: [
-    "« Je dois y réfléchir » → Bien sûr. Justement, le rendez-vous sert à ça : je vous montre tout, vous prenez votre décision après, sans engagement. Demain ou jeudi ?",
-    "« C'est trop cher » → C'est exactement pour ça que je propose d'en parler en visio — je vous détaille ce qui est inclus, le paiement en 3 fois sans frais, et vous voyez si ça tient la route pour vous.",
-    "« Envoyez-moi plus d'infos par mail » → Avec plaisir, mais en 15 min de visio on gagne une semaine d'échanges — je vous propose demain 14h ?",
+    "« Je dois y réfléchir » → Bien sûr. Justement, le rendez-vous téléphonique sert à ça : je vous détaille tout, vous prenez votre décision après, sans engagement. Demain ou jeudi ?",
+    "« C'est trop cher » → C'est exactement pour ça que je propose qu'on en reparle au calme par téléphone — je vous détaille ce qui est inclus, le paiement en 3 fois sans frais, et vous voyez si ça tient la route pour vous.",
+    "« Envoyez-moi plus d'infos par mail » → Avec plaisir, mais en 15 min au téléphone on gagne une semaine d'échanges — je vous propose demain 14h ?",
     "« Je veux le prendre maintenant » → Parfait ! Je peux vous envoyer le lien de paiement Stripe immédiatement — en une fois (599 €) ou en 3 fois sans frais via Klarna, comme vous préférez.",
   ],
 };
@@ -72,7 +72,7 @@ export async function generateCallScript(input: CallScriptInput): Promise<CallSc
       : "",
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler un professionnel qui a reçu par email une maquette de site web. L'OBJECTIF PRINCIPAL de l'appel = FIXER UN RENDEZ-VOUS de 15-20 min (visio ou téléphonique) durant lequel Tom présentera la maquette en détail et proposera le devis.
+  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler un professionnel qui a reçu par email une maquette de site web. L'OBJECTIF PRINCIPAL de l'appel = FIXER UN RENDEZ-VOUS TÉLÉPHONIQUE de 15-20 min durant lequel Tom présentera la maquette en détail et proposera le devis. UNIQUEMENT téléphonique, PAS de visio.
 
 EXCEPTION : si le prospect veut acheter directement pendant l'appel, Tom NE LE REFUSE PAS — il envoie le lien de paiement Stripe tout de suite. La règle = ne jamais bloquer une vente.
 
@@ -100,8 +100,8 @@ Génère un JSON avec EXACTEMENT ces 4 clés :
 {
   "opening": "Phrase d'ouverture VOUVOYÉE (MAX 35 mots). Format : 'Bonjour, Tom Bauer de WebConceptor à l'appareil. Je me permets de vous appeler au sujet de la maquette de site que je vous ai envoyée — avez-vous eu le temps d'y jeter un œil ?' — adapte légèrement.",
   "discoveryQuestions": [5 questions VOUVOYÉES (max 25 mots chacune) à poser pendant l'appel pour qualifier le besoin. Obligatoirement couvrir : (1) ressenti sur la maquette, (2) modifications souhaitées, (3) présence en ligne actuelle, (4) objectifs business du site (visibilité / réservations / autre), (5) timing souhaité pour lancer. Formulation professionnelle, ouverte, pas commerciale.],
-  "hooks": [3 accroches VOUVOYÉES orientées PRISE DE RDV (max 25 mots chacune). Exemple : 'Je propose qu'on se bloque 15-20 min en visio pour que je vous présente la maquette — demain 14h ou jeudi 10h ?' Chaque hook pousse VERS le RDV, pas vers la vente.],
-  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) aux 4 situations : (1) 'Je vais y réfléchir' → rassurer + reproposer RDV, (2) 'C'est trop cher' → le RDV sert à détailler, 3× sans frais, (3) 'Envoyez-moi un mail avec plus d'infos' → 15 min de visio = une semaine gagnée, (4) 'Je veux l'acheter maintenant' → 'Parfait, je vous envoie le lien de paiement Stripe tout de suite, en une fois ou en 3× sans frais via Klarna, comme vous préférez'. Toujours VOUS.]
+  "hooks": [3 accroches VOUVOYÉES orientées PRISE DE RDV TÉLÉPHONIQUE (max 25 mots chacune). Exemple : 'Je propose qu'on se rappelle 15-20 min au téléphone pour que je vous présente la maquette — demain 14h ou jeudi 10h ?' Chaque hook pousse VERS le RDV téléphonique, pas vers la vente. JAMAIS 'visio'.],
+  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) aux 4 situations : (1) 'Je vais y réfléchir' → rassurer + reproposer RDV téléphonique, (2) 'C'est trop cher' → le RDV téléphonique sert à détailler, 3× sans frais, (3) 'Envoyez-moi un mail avec plus d'infos' → 15 min au téléphone = une semaine gagnée, (4) 'Je veux l'acheter maintenant' → 'Parfait, je vous envoie le lien de paiement Stripe tout de suite, en une fois ou en 3× sans frais via Klarna, comme vous préférez'. Toujours VOUS. JAMAIS 'visio'.]
 }
 
 Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est jeune (18 ans) mais parle comme un dirigeant posé. Réponds UNIQUEMENT avec le JSON valide.`;

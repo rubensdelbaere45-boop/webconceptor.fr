@@ -146,6 +146,25 @@ Ton : chaleureux, professionnel, francophone France. N'invente PAS d'information
    Restaurant personalization — menu + content
    ══════════════════════════════════════════ */
 
+// Menu fallback avec des noms de plats génériques MAIS SANS PRIX
+// On n'invente JAMAIS de prix (ça ferait faux et amateur). Si on n'a pas scrapé
+// les vrais prix du site du resto, la maquette affichera un bandeau explicatif
+// "Tarifs affinés lors de notre échange" à la place.
+function generateFallbackMenu() {
+  return [
+    { category: "entrée", name: "Entrée du jour", description: "Au gré du marché et des saisons", price: "" },
+    { category: "entrée", name: "Entrée signature", description: "Une spécialité de la maison", price: "" },
+    { category: "entrée", name: "Entrée végétarienne", description: "Légumes frais, travail tout en finesse", price: "" },
+    { category: "plat", name: "Plat signature", description: "La création qui fait la réputation de la maison", price: "" },
+    { category: "plat", name: "Poisson du jour", description: "Arrivage frais, préparation selon l'humeur du chef", price: "" },
+    { category: "plat", name: "Viande à l'ardoise", description: "Pièce sélectionnée, cuisson personnalisée", price: "" },
+    { category: "plat", name: "Plat végétarien", description: "Création du chef autour du légume de saison", price: "" },
+    { category: "dessert", name: "Dessert maison", description: "Fait minute, selon inspiration du chef pâtissier", price: "" },
+    { category: "dessert", name: "Dessert signature", description: "La gourmandise qu'on ne présente plus", price: "" },
+    { category: "dessert", name: "Café gourmand", description: "Expresso accompagné de mignardises du jour", price: "" },
+  ];
+}
+
 async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<RestaurantContent> {
   const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
 
@@ -153,18 +172,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     heroTitle: prospect.name,
     heroSubtitle: `Une table${prospect.city ? ` à ${prospect.city}` : ""}, pensée pour vous faire vivre un moment.`,
     aboutText: `Nous vous accueillons dans un cadre chaleureux pour vous faire découvrir une cuisine généreuse, inspirée des produits de saison. Chaque plat est préparé avec soin et passion.`,
-    menuItems: [
-      { category: "entrée", name: "Salade de chèvre chaud", description: "Mesclun, toasts de chèvre, miel, noix grillées", price: "12€" },
-      { category: "entrée", name: "Tartare de saumon", description: "Saumon label rouge, aneth, citron vert, toasts", price: "14€" },
-      { category: "entrée", name: "Velouté du moment", description: "Légumes de saison mijotés, crème fraîche", price: "9€" },
-      { category: "plat", name: "Entrecôte grillée", description: "Pièce maturée 300g, frites maison, sauce au poivre", price: "24€" },
-      { category: "plat", name: "Filet de dorade", description: "Dorade rôtie, légumes de saison, huile d'olive", price: "22€" },
-      { category: "plat", name: "Risotto aux champignons", description: "Arborio crémeux, champignons des bois, parmesan 24 mois", price: "18€" },
-      { category: "plat", name: "Magret de canard", description: "Sauce au miel et épices douces, purée de patates douces", price: "23€" },
-      { category: "dessert", name: "Moelleux au chocolat", description: "Cœur coulant, glace vanille de Madagascar", price: "9€" },
-      { category: "dessert", name: "Tarte fine aux pommes", description: "Pâte feuilletée, pommes caramélisées, crème d'amande", price: "8€" },
-      { category: "dessert", name: "Café gourmand", description: "Expresso, mignardises du jour", price: "9€" },
-    ],
+    menuItems: generateFallbackMenu(),
     cuisineType: "cuisine française traditionnelle",
     vibe: "classic",
     auditTeaser: "notamment sur la visibilité dans les recherches Google et l'expérience mobile",
@@ -266,7 +274,9 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - Pour FLEURISTE → "bouquets" / "compositions" / "événements"
     - Pour AUTO-ÉCOLE → "permis B" / "accompagné" / "code accéléré"
 
-    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du service/produit", "description": "5-10 mots", "price": "X,XX€" ou "XX€" ou "dès X€" }. Prix réalistes.`
+    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du service/produit", "description": "5-10 mots", "price": "" }.
+
+    RÈGLE PRIX ABSOLUE : tu ne dois JAMAIS inventer de prix. Laisse TOUJOURS le champ "price" VIDE (chaîne vide ""). Inventer des prix fait faux et décrédibilise la maquette. Un bandeau sera affiché à la place pour inviter le restaurateur à nous envoyer ses vrais prix.`
   }
   "cuisineType": "type d'établissement en 3-6 mots (ex: 'brasserie française', 'boulangerie artisanale', 'pâtisserie fine', 'glacier artisanal', 'pizzeria napolitaine')",
   "vibe": "UN SEUL parmi ces 5, choisi selon le CARACTÈRE de l'établissement :
@@ -976,6 +986,27 @@ async function handleSend(req: NextRequest) {
           ? `🆕 <b>PAS DE SITE — PRIO MAX POUR APPEL</b>\n\n`
           : "";
 
+        // Libellé + emoji adapté au métier (plus de "Restaurant contacté" sur coiffeurs/plombiers/etc.)
+        const metierMap: Record<string, { emoji: string; label: string }> = {
+          restaurant:    { emoji: "🍽️", label: "Restaurant contacté" },
+          boulangerie:   { emoji: "🥖", label: "Boulangerie contactée" },
+          patisserie:    { emoji: "🧁", label: "Pâtisserie contactée" },
+          cafe:          { emoji: "☕", label: "Café contacté" },
+          glacier:       { emoji: "🍦", label: "Glacier contacté" },
+          coiffeur:      { emoji: "💇", label: "Salon de coiffure contacté" },
+          institut:      { emoji: "💅", label: "Institut de beauté contacté" },
+          plombier:      { emoji: "🔧", label: "Plombier contacté" },
+          electricien:   { emoji: "⚡", label: "Électricien contacté" },
+          garage:        { emoji: "🚗", label: "Garage automobile contacté" },
+          dentiste:      { emoji: "🦷", label: "Cabinet dentaire contacté" },
+          osteo:         { emoji: "🤲", label: "Ostéopathe contacté" },
+          salle_sport:   { emoji: "🏋️", label: "Salle de sport contactée" },
+          fleuriste:     { emoji: "🌸", label: "Fleuriste contactée" },
+          auto_ecole:    { emoji: "🚘", label: "Auto-école contactée" },
+          epicerie:      { emoji: "🛒", label: "Épicerie contactée" },
+        };
+        const metierInfo = metierMap[p.business_type || ""] || { emoji: "📧", label: "Prospect contacté" };
+
         if (isRestaurant) {
           // Rich restaurant notif with cuisine + talking points for phone follow-up
           const restoContent = await personalizeRestaurantWithClaude(p);
@@ -985,12 +1016,12 @@ async function handleSend(req: NextRequest) {
             .join("\n");
           await notifyTelegram(
             noSiteBadge +
-            `🍽️ <b>Restaurant contacté</b>\n\n` +
+            `${metierInfo.emoji} <b>${metierInfo.label}</b>\n\n` +
             `<b>${escapeTelegram(p.name)}</b>\n` +
             `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
             `📞 <b>${escapeTelegram(p.phone || "pas de tél")}</b>\n` +
             `✉️ ${escapeTelegram(p.email)}\n` +
-            `🍴 ${escapeTelegram(restoContent.cuisineType)}\n` +
+            `🏷️ ${escapeTelegram(restoContent.cuisineType)}\n` +
             `⭐ ${p.google_rating ? escapeTelegram(String(p.google_rating)) : "?"}/5 (${p.google_reviews_count || 0} avis)\n\n` +
             `<b>💬 Grandes lignes pour l'appel :</b>\n${talkingPointsTxt}\n\n` +
             `<a href="${escapeTelegram(mockupUrl)}">→ Voir la maquette</a>`

@@ -111,7 +111,7 @@ export async function GET(
           `⏰ Ouverte à ${escapeTelegram(parisTime)}\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `<b>⏰ Quand rappeler :</b> 45 min à 1 h après l'ouverture (ne PAS appeler dans les 5 min, ça fait tracking).\n\n` +
-          `<b>🎯 Objectif principal :</b> fixer un RDV visio 15-20 min — sauf si le prospect veut acheter tout de suite (alors on envoie le lien Stripe).\n` +
+          `<b>🎯 Objectif principal :</b> fixer un RDV TÉLÉPHONIQUE 15-20 min — sauf si le prospect veut acheter tout de suite (alors on envoie le lien Stripe).\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
           `<b>🎬 OUVERTURE (lis-la mot à mot)</b>\n` +
           `<i>« ${escapeTelegram(script.opening)} »</i>\n\n` +
