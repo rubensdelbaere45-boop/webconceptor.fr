@@ -741,12 +741,11 @@ export async function POST(req: NextRequest) {
     osmFound: 0, osmInserted: 0, osmSkippedDuplicate: 0, osmWithEmail: 0,
   };
 
-  // Mode strict : si true, on N'INSÈRE PAS les prospects sans email trouvé.
-  // Par défaut on reste tolérant (insère avec status=no_email) pour pouvoir
-  // les rappeler en cold call. Mais si l'utilisateur veut économiser les
-  // crédits et ne garder que les prospects contactables par mail, il peut
-  // passer { strict_email: true } dans le body.
-  const strictEmail = rawBody.strict_email === true;
+  // Mode strict : on N'INSÈRE PAS les prospects sans email trouvé.
+  // Par défaut = true (décision Rubens : pas d'appels, donc un prospect sans
+  // email ne sert à rien → gaspillage de crédits Supabase + DB polluée).
+  // On peut explicitement désactiver avec strict_email: false si besoin.
+  const strictEmail = rawBody.strict_email !== false;
 
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
   // On fixe 80 s pour laisser une marge confortable et garantir une réponse
@@ -836,6 +835,13 @@ export async function POST(req: NextRequest) {
       else if (siteQuality === "poor") stats.poorSite++;
       else if (siteQuality === "average") stats.averageSite++;
       else if (siteQuality === "good") stats.goodSite++;
+
+      // Mode strict : skip si aucun email trouvé (pas de gaspillage sur un
+      // prospect qu'on ne pourra jamais contacter par mail).
+      if (strictEmail && !email) {
+        stats.skippedNoEmail++;
+        continue;
+      }
 
       // Extract top Google reviews
       const topReviews = extractTopReviews(place);
