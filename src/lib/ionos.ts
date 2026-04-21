@@ -38,11 +38,16 @@ export interface IonosBuyResult {
 }
 
 function getApiKey(): string | null {
+  // Format 1 : IONOS_API_KEY = "prefix.secret" (concaténé)
   const full = process.env.IONOS_API_KEY;
   if (full && full.trim().length > 0) return full.trim();
-  // Fallback : IONOS_API_PUBLIC_PREFIX.IONOS_API_SECRET
-  const pub = process.env.IONOS_API_PUBLIC_PREFIX;
-  const secret = process.env.IONOS_API_SECRET;
+  // Format 2 : prefix + secret séparés — accepte plusieurs noms de variables
+  // pour être tolérant aux variations (Rubens utilise IONOS_API_PREFIX)
+  const pub = process.env.IONOS_API_PREFIX
+    || process.env.IONOS_API_PUBLIC_PREFIX
+    || process.env.IONOS_PREFIX;
+  const secret = process.env.IONOS_API_SECRET
+    || process.env.IONOS_SECRET;
   if (pub && secret) return `${pub.trim()}.${secret.trim()}`;
   return null;
 }
