@@ -25,6 +25,26 @@ interface Prospect {
   site_quality?: "none" | "poor" | "average" | "good" | null;
   site_audit_score?: number | null;
   site_audit_issues?: string[] | null;
+  notes?: string | null;
+}
+
+// Helpers pour parser les notes (format "[YYYY-MM-DD HH:MM] 📞 APPELÉ" ou "📝 xxx")
+function getTodayParisDate(): string {
+  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" });
+  return fmt.format(new Date());
+}
+function wasCalledToday(notes: string | null | undefined): boolean {
+  if (!notes) return false;
+  const today = getTodayParisDate();
+  return notes.split("\n").some((l) => l.startsWith(`[${today}`) && l.includes("📞 APPELÉ"));
+}
+function parseNoteLines(notes: string | null | undefined, limit = 5): string[] {
+  if (!notes) return [];
+  return notes
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && l.startsWith("["))
+    .slice(0, limit);
 }
 
 // Traduction lisible des issues d'audit (même map que dans /api/prospect/send)
@@ -313,6 +333,67 @@ export default function AdminProspectsPage() {
       addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
     }
     setLoading(false);
+  };
+
+  // Marque/démarque un prospect comme "appelé aujourd'hui"
+  const handleToggleCalled = async (p: Prospect) => {
+    const currentlyCalled = wasCalledToday(p.notes);
+    const action = currentlyCalled ? "uncall" : "called";
+    // Optimistic UI : met à jour localement avant la réponse serveur
+    setProspects((prev) =>
+      prev.map((x) => {
+        if (x.id !== p.id) return x;
+        if (currentlyCalled) {
+          // retire la ligne d'aujourd'hui localement
+          const today = getTodayParisDate();
+          const filtered = (x.notes || "").split("\n").filter((l) => !(l.startsWith(`[${today}`) && l.includes("📞 APPELÉ"))).join("\n");
+          return { ...x, notes: filtered };
+        }
+        const line = `[${getTodayParisDate()} --:--] 📞 APPELÉ`;
+        return { ...x, notes: x.notes ? `${line}\n${x.notes}` : line };
+      })
+    );
+    try {
+      const res = await fetch("/api/prospect/log-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addLog(`❌ Log appel : ${data.error || "erreur"}`);
+        loadProspects();
+        return;
+      }
+      // Met à jour avec la vraie valeur notes du serveur (avec timestamp exact)
+      setProspects((prev) => prev.map((x) => (x.id === p.id ? { ...x, notes: data.notes } : x)));
+      addLog(currentlyCalled ? `↩️ Décoché ${p.name}` : `✅ Appelé ${p.name}`);
+    } catch {
+      addLog(`❌ Log appel : erreur réseau`);
+      loadProspects();
+    }
+  };
+
+  // Ajoute une note datée sur un prospect (via un prompt)
+  const handleAddNote = async (p: Prospect) => {
+    const text = prompt(`📝 Note pour ${p.name} :\n\n(ex : "Pas dispo, rappeler vendredi 14h" / "Intéressé, envoi devis")`);
+    if (!text || !text.trim()) return;
+    try {
+      const res = await fetch("/api/prospect/log-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id, action: "note", text: text.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Erreur : ${data.error || "inconnue"}`);
+        return;
+      }
+      setProspects((prev) => prev.map((x) => (x.id === p.id ? { ...x, notes: data.notes } : x)));
+      addLog(`📝 Note ajoutée pour ${p.name}`);
+    } catch {
+      alert("Erreur réseau");
+    }
   };
 
   const handleCallScript = async (p: Prospect) => {
@@ -779,6 +860,126 @@ export default function AdminProspectsPage() {
           </div>
         )}
 
+        {/* 🎯 Dashboard d'appels quotidien — priorisé par statut */}
+        {(() => {
+          const callTargets = prospects.filter((p) => {
+            if (!p.phone) return false;
+            if (p.status === "converted" || p.status === "error") return false;
+            // Hot leads (opened/replied) + prospects récemment contactés = priorité appel
+            return ["sent", "opened", "replied", "ready", "no_email"].includes(p.status);
+          });
+          // Ordre : opened > replied > sent > ready > no_email (avec phone)
+          const priority: Record<string, number> = { opened: 0, replied: 1, sent: 2, ready: 3, no_email: 4 };
+          callTargets.sort((a, b) => (priority[a.status] ?? 9) - (priority[b.status] ?? 9));
+          const todo = callTargets.filter((p) => !wasCalledToday(p.notes));
+          const done = callTargets.filter((p) => wasCalledToday(p.notes));
+          const total = callTargets.length;
+          const doneCount = done.length;
+          const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+          if (total === 0) return null;
+
+          return (
+            <div className="mb-6 rounded-xl bg-gradient-to-br from-[#0066ff] via-[#4c1d95] to-[#872175] p-[2px] shadow-lg">
+              <div className="bg-white rounded-[10px] p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-[18px] font-bold text-[#0a0a0a] flex items-center gap-2">
+                      🎯 Appels du jour
+                      <span className="text-[12px] font-normal text-gray-500">· {getTodayParisDate()}</span>
+                    </h2>
+                    <p className="text-[12px] text-gray-500 mt-0.5">
+                      {todo.length} à appeler · {doneCount} faits · objectif {total}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[28px] font-extrabold text-[#0066ff] leading-none">{pct}%</div>
+                    <div className="text-[11px] text-gray-500 uppercase tracking-wider mt-1">Progression</div>
+                  </div>
+                </div>
+                {/* Barre de progression */}
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-4">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#0066ff] via-[#4c1d95] to-[#872175] transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  ></div>
+                </div>
+                {/* Liste des prospects à appeler (max 8 en haut) */}
+                <div className="space-y-2">
+                  {todo.slice(0, 8).map((p) => {
+                    const metier = p.business_type || "prospect";
+                    const metierEmoji: Record<string, string> = {
+                      restaurant: "🍽️", boulangerie: "🥖", patisserie: "🧁", cafe: "☕", glacier: "🍦",
+                      coiffeur: "💇", institut: "💅", plombier: "🔧", electricien: "⚡", garage: "🚗",
+                      dentiste: "🦷", osteo: "🤲", salle_sport: "🏋️", fleuriste: "🌸", auto_ecole: "🚘",
+                      epicerie: "🛒",
+                    };
+                    const emoji = metierEmoji[metier] || "📞";
+                    const telLink = p.phone.replace(/[^0-9+]/g, "");
+                    const isHot = p.status === "opened" || p.status === "replied";
+                    return (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border ${isHot ? "border-red-300 bg-red-50" : "border-gray-200 bg-gray-50"} hover:bg-white hover:shadow-sm transition`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={false}
+                          onChange={() => handleToggleCalled(p)}
+                          className="w-5 h-5 rounded border-gray-300 text-[#0066ff] focus:ring-[#0066ff] cursor-pointer"
+                          title="Cocher quand appelé"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[14px]">{emoji}</span>
+                            <span className="font-semibold text-[14px] text-[#0a0a0a] truncate">{p.name}</span>
+                            {isHot && <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider px-1.5 py-0.5 bg-red-100 rounded">🔥 Ouvert</span>}
+                            {p.google_rating ? <span className="text-[11px] text-gray-500">⭐ {p.google_rating}</span> : null}
+                          </div>
+                          <div className="text-[12px] text-gray-500 truncate">
+                            {p.city} · {p.phone}
+                          </div>
+                        </div>
+                        <a
+                          href={`tel:${telLink}`}
+                          className="px-3 py-1.5 text-[11px] font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-flex items-center gap-1"
+                          title="Appeler via FaceTime/Continuity"
+                        >
+                          📞 Appeler
+                        </a>
+                        <button
+                          onClick={() => handleCallScript(p)}
+                          className="px-3 py-1.5 text-[11px] font-semibold bg-gray-900 text-white rounded-lg hover:bg-black transition"
+                          title="Voir le script d'appel"
+                        >
+                          🎬 Script
+                        </button>
+                        <button
+                          onClick={() => handleAddNote(p)}
+                          className="px-3 py-1.5 text-[11px] font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
+                          title="Ajouter une note"
+                        >
+                          📝
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {todo.length > 8 && (
+                    <p className="text-[12px] text-center text-gray-500 pt-2">
+                      … et {todo.length - 8} autres à appeler. Liste complète ci-dessous.
+                    </p>
+                  )}
+                  {todo.length === 0 && (
+                    <div className="text-center py-6 text-[14px] text-gray-500">
+                      🎉 <strong>Bravo !</strong> Tu as appelé tous tes prospects du jour ({doneCount}/{total}).
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Prospects list */}
         <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
           {filteredProspects.length === 0 ? (
@@ -827,10 +1028,25 @@ export default function AdminProspectsPage() {
                             PIN {p.project_code}
                           </span>
                         )}
+                        {wasCalledToday(p.notes) && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
+                            ✅ Appelé aujourd&apos;hui
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-gray-500 truncate">
                         {p.city} &middot; {p.distance_km} km &middot; {p.email || "pas d'email"}{p.phone ? ` · ${p.phone}` : ""}
                       </p>
+                      {/* Affiche les 3 dernières notes datées (appels + notes manuelles) */}
+                      {p.notes && parseNoteLines(p.notes, 3).length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {parseNoteLines(p.notes, 3).map((line, i) => (
+                            <div key={i} className="text-[11px] text-gray-600 font-mono truncate bg-amber-50 border-l-2 border-amber-400 pl-2 py-0.5">
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {p.slug && (
@@ -872,6 +1088,29 @@ export default function AdminProspectsPage() {
                           📞 Appeler
                         </a>
                       )}
+                      {/* Checkbox Appelé aujourd'hui — marque ce prospect comme fait */}
+                      {p.phone && (
+                        <button
+                          onClick={() => handleToggleCalled(p)}
+                          disabled={loading}
+                          className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition disabled:opacity-50 ${
+                            wasCalledToday(p.notes)
+                              ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200"
+                              : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                          }`}
+                          title={wasCalledToday(p.notes) ? "Décocher (rappeler)" : "Marquer comme appelé"}
+                        >
+                          {wasCalledToday(p.notes) ? "✅ Fait" : "⬜ À faire"}
+                        </button>
+                      )}
+                      {/* Note — prompt pour ajouter une note datée sur ce prospect */}
+                      <button
+                        onClick={() => handleAddNote(p)}
+                        className="px-2.5 py-1.5 text-[11px] font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
+                        title="Ajouter une note (ex: pas dispo, rappeler vendredi)"
+                      >
+                        📝
+                      </button>
                       {/* Script d'appel — dès qu'une maquette existe + tél disponible */}
                       {p.phone && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
                         <button
