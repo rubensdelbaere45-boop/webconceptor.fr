@@ -945,6 +945,13 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // Badge "PAS DE SITE" — les prospects sans site convertissent mieux
+        // (ils n'ont pas l'excuse "j'ai déjà un site"), donc on les met en avant
+        // dans la notif Telegram pour que Rubens les rappelle en priorité.
+        const noSiteBadge = p.site_quality === "none"
+          ? `🆕 <b>PAS DE SITE — PRIO MAX POUR APPEL</b>\n\n`
+          : "";
+
         if (isRestaurant) {
           // Rich restaurant notif with cuisine + talking points for phone follow-up
           const restoContent = await personalizeRestaurantWithClaude(p);
@@ -953,6 +960,7 @@ export async function POST(req: NextRequest) {
             .map((t, i) => `${i + 1}. ${escapeTelegram(t)}`)
             .join("\n");
           await notifyTelegram(
+            noSiteBadge +
             `🍽️ <b>Restaurant contacté</b>\n\n` +
             `<b>${escapeTelegram(p.name)}</b>\n` +
             `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
@@ -966,6 +974,7 @@ export async function POST(req: NextRequest) {
         } else {
           // Compact épicerie notif
           await notifyTelegram(
+            noSiteBadge +
             `📧 <b>Prospect contacté</b>\n\n` +
             `<b>${escapeTelegram(p.name)}</b>\n` +
             `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +

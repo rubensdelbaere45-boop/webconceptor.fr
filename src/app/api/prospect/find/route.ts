@@ -573,12 +573,19 @@ export async function POST(req: NextRequest) {
   // Only epicerie triggers the 350km exclusion (father's Proxi competition zone)
   const applyDistanceFilter = businessType === "epicerie";
 
-  let stats = {
+  const stats = {
     found: 0, inserted: 0,
     skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0,
     withEmail: 0,
     noSite: 0, poorSite: 0, averageSite: 0, goodSite: 0,
+    timedOut: 0, // places ignorées parce qu'on a dépassé le budget temps
   };
+
+  // Hard deadline — Render peut couper les requêtes trop longues,
+  // on préfère renvoyer 200 avec un résultat partiel que de laisser n8n planter.
+  const DEADLINE_MS = 150_000; // 150 s
+  const startedAt = Date.now();
+  const timeLeft = () => DEADLINE_MS - (Date.now() - startedAt);
 
   try {
     const places = await searchProxiStores(query, googleKey);
@@ -588,6 +595,13 @@ export async function POST(req: NextRequest) {
 
     for (const place of places) {
       if (!place.location || !place.displayName?.text) continue;
+
+      // Budget temps : si on a moins de 12s restantes, on s'arrête pour garantir
+      // une réponse propre (pas de connection abort côté n8n).
+      if (timeLeft() < 12_000) {
+        stats.timedOut = places.length - (stats.inserted + stats.skippedNearby + stats.skippedDuplicate + stats.skippedLowRating);
+        break;
+      }
 
       // Distance filter (only for Proxi / épicerie prospects)
       const dKm = distanceKm(AUBENTON_LAT, AUBENTON_LNG, place.location.latitude, place.location.longitude);
@@ -624,22 +638,22 @@ export async function POST(req: NextRequest) {
       let websitePhotos: string[] = [];
       let siteAudit: SiteAudit | null = null;
       if (place.websiteUri) {
-        email = await findEmailOnWebsite(place.websiteUri);
+        // Parallélise les 5 scrapers par place → ~4× plus rapide qu'en séquentiel.
+        // Chaque scraper catch ses propres erreurs et retourne null/[] en cas d'échec.
+        const shouldScrapeMenu = businessType !== "epicerie";
+        const results = await Promise.allSettled([
+          findEmailOnWebsite(place.websiteUri),
+          shouldScrapeMenu ? scrapeRestaurantMenu(place.websiteUri) : Promise.resolve(null),
+          scrapeAboutText(place.websiteUri),
+          scrapeWebsitePhotos(place.websiteUri),
+          auditWebsite(place.websiteUri),
+        ]);
+        email = results[0].status === "fulfilled" ? (results[0].value as string | null) : null;
+        scrapedMenu = results[1].status === "fulfilled" ? (results[1].value as ScrapedMenuItem[] | null) : null;
+        aboutScraped = results[2].status === "fulfilled" ? (results[2].value as string | null) : null;
+        websitePhotos = results[3].status === "fulfilled" ? (results[3].value as string[]) : [];
+        siteAudit = results[4].status === "fulfilled" ? (results[4].value as SiteAudit | null) : null;
         if (email) stats.withEmail++;
-
-        // Pour tous les types food (sauf épicerie) : tente de scraper le vrai menu/carte
-        if (businessType !== "epicerie") {
-          scrapedMenu = await scrapeRestaurantMenu(place.websiteUri);
-        }
-
-        // Scrape "about" page to détecter si c'est une vieille maison / famille
-        aboutScraped = await scrapeAboutText(place.websiteUri);
-
-        // Scrape leurs vraies photos (og:image + img tags)
-        websitePhotos = await scrapeWebsitePhotos(place.websiteUri);
-
-        // AUDIT du site existant → détecte sites vieillis / non-optimisés
-        siteAudit = await auditWebsite(place.websiteUri);
       }
       // Pas de site = opportunité max (site_quality = "none")
       const siteQuality: SiteQuality = place.websiteUri
@@ -692,7 +706,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, stats });
   } catch (err) {
+    // N'ÉCHOUE JAMAIS pour n8n — on renvoie 200 avec l'erreur dans le body.
+    // Le workflow continue à la campagne suivante, il n'y a plus d'alerte "connection aborted".
     const msg = err instanceof Error ? err.message : "Erreur";
-    return NextResponse.json({ error: msg, stats }, { status: 500 });
+    return NextResponse.json({ success: false, error: msg, stats }, { status: 200 });
   }
 }
