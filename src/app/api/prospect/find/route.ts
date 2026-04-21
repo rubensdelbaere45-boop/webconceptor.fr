@@ -541,13 +541,24 @@ export async function POST(req: NextRequest) {
     : "Proxi épicerie France";
 
   // business_type : whitelist de types métier pour filtres admin + templates adaptés
-  // - 'epicerie'   : Proxi et autres épiceries (seul type qui a filtre 350km Aubenton)
-  // - 'restaurant' : resto/brasserie/bistrot/pizzeria/crêperie
-  // - 'boulangerie': boulangeries + viennoiseries
-  // - 'patisserie' : pâtissiers + chocolatiers
-  // - 'cafe'       : cafés + salons de thé
-  // - 'glacier'    : glaciers + bars d'été
-  const ALLOWED_TYPES = ["epicerie", "restaurant", "boulangerie", "patisserie", "cafe", "glacier"];
+  const ALLOWED_TYPES = [
+    "epicerie",      // Proxi (seul avec filtre 350km Aubenton)
+    "restaurant",    // resto/brasserie/bistrot/pizzeria/crêperie
+    "boulangerie",   // boulangeries + viennoiseries
+    "patisserie",    // pâtissiers + chocolatiers
+    "cafe",          // cafés + salons de thé
+    "glacier",       // glaciers + bars d'été
+    "coiffeur",      // salons de coiffure H/F
+    "institut",      // instituts de beauté + spas
+    "plombier",      // plombiers / chauffagistes
+    "electricien",   // électriciens
+    "garage",        // garages auto / mécaniciens
+    "dentiste",      // dentistes / ortho
+    "osteo",         // ostéopathes / kinés
+    "salle_sport",   // salles de sport / coachs
+    "fleuriste",     // fleuristes
+    "auto_ecole",    // auto-écoles
+  ];
   const businessType: string = typeof rawBody.business_type === "string"
     && ALLOWED_TYPES.includes(rawBody.business_type)
     ? rawBody.business_type

@@ -20,6 +20,87 @@ export interface RestaurantProspect {
   hours?: string;
   // Photos scrapées du site actuel du prospect (URLs directes externes)
   website_photos?: string[];
+  // Type métier — détermine le libellé des CTAs (réserver vs rdv vs devis, etc.)
+  business_type?: string;
+}
+
+/* Libellés CTA adaptés au métier (évite "Réserver une table" chez un coiffeur) */
+export function getBusinessLabels(businessType?: string) {
+  const t = (businessType || "restaurant").toLowerCase();
+  // FOOD avec table / service sur place
+  if (["restaurant", "cafe", "glacier"].includes(t)) {
+    return {
+      ctaVerb: "Réserver une table",
+      ctaShort: "Réserver",
+      menuSectionTitle: "Quelques suggestions",
+      aboutHeadline: "Une cuisine de <em>caractère</em>",
+      navItems: ["L'adresse", "La carte", "Ambiance", "Nous trouver"],
+      topStrip: "Cuisine authentique",
+    };
+  }
+  // FOOD à emporter
+  if (["boulangerie", "patisserie"].includes(t)) {
+    return {
+      ctaVerb: "Commander",
+      ctaShort: "Commander",
+      menuSectionTitle: "Nos créations",
+      aboutHeadline: "Le goût du <em>travail bien fait</em>",
+      navItems: ["La maison", "Nos produits", "Ambiance", "Nous trouver"],
+      topStrip: "Artisan passionné",
+    };
+  }
+  if (t === "fleuriste") {
+    return {
+      ctaVerb: "Commander un bouquet",
+      ctaShort: "Commander",
+      menuSectionTitle: "Nos collections",
+      aboutHeadline: "L'art de la <em>composition</em>",
+      navItems: ["La maison", "Nos fleurs", "Ambiance", "Nous trouver"],
+      topStrip: "Fleuriste artisan",
+    };
+  }
+  // SERVICES avec RDV (beauté, santé)
+  if (["coiffeur", "institut", "dentiste", "osteo"].includes(t)) {
+    return {
+      ctaVerb: "Prendre rendez-vous",
+      ctaShort: "Rendez-vous",
+      menuSectionTitle: "Nos prestations",
+      aboutHeadline: "Un <em>savoir-faire</em> d'exception",
+      navItems: ["La maison", "Prestations", "Ambiance", "Nous trouver"],
+      topStrip: "Sur rendez-vous",
+    };
+  }
+  // SERVICES techniques (devis)
+  if (["plombier", "electricien", "garage"].includes(t)) {
+    return {
+      ctaVerb: "Demander un devis",
+      ctaShort: "Devis",
+      menuSectionTitle: "Nos prestations",
+      aboutHeadline: "Un <em>savoir-faire</em> reconnu",
+      navItems: ["Présentation", "Prestations", "Réalisations", "Nous trouver"],
+      topStrip: "Intervention rapide",
+    };
+  }
+  // SPORT / Formation
+  if (["salle_sport", "auto_ecole"].includes(t)) {
+    return {
+      ctaVerb: "Réserver un créneau",
+      ctaShort: "Réserver",
+      menuSectionTitle: "Nos formules",
+      aboutHeadline: "Votre <em>objectif</em>, notre priorité",
+      navItems: ["Présentation", "Formules", "Ambiance", "Nous trouver"],
+      topStrip: "Place dispo cette semaine",
+    };
+  }
+  // Default = restaurant
+  return {
+    ctaVerb: "Réserver une table",
+    ctaShort: "Réserver",
+    menuSectionTitle: "Quelques suggestions",
+    aboutHeadline: "Une cuisine de <em>caractère</em>",
+    navItems: ["L'adresse", "La carte", "Ambiance", "Nous trouver"],
+    topStrip: "Cuisine authentique",
+  };
 }
 
 export interface RestaurantReview {
@@ -185,6 +266,9 @@ export function generateRestaurantMockupHtml(
     if (pickedTheme) theme = pickedTheme;
     if (FONT_PAIRS[fontIdx]) fontPair = FONT_PAIRS[fontIdx];
   }
+
+  // Labels CTAs adaptés au type métier (évite "Réserver une table" chez un coiffeur)
+  const labels = getBusinessLabels(prospect.business_type);
 
   // Variations de LAYOUT déterministes par hash — chaque prospect a son propre layout.
   // Hero alignment : 3 variantes (centered, left, right)
@@ -660,7 +744,7 @@ body{padding-bottom:110px}
 <div class="wc-demo-badge">Maquette</div>
 
 <div class="top-strip">
-  <strong>${esc(prospect.name.toUpperCase())}</strong> &nbsp;·&nbsp; ${esc(content.cuisineType || "Cuisine authentique")}${prospect.city ? " · " + esc(prospect.city) : ""}
+  <strong>${esc(prospect.name.toUpperCase())}</strong> &nbsp;·&nbsp; ${esc(content.cuisineType || labels.topStrip)}${prospect.city ? " · " + esc(prospect.city) : ""}
 </div>
 
 <nav>
@@ -674,7 +758,7 @@ body{padding-bottom:110px}
     <li><a href="#gallery">Ambiance</a></li>
     <li><a href="#info">Nous trouver</a></li>
   </ul>
-  <button class="nav-cta" onclick="bkOpen()">Réserver une table</button>
+  <button class="nav-cta" onclick="bkOpen()">${esc(labels.ctaVerb)}</button>
 </nav>
 
 <section class="hero">
@@ -684,7 +768,7 @@ body{padding-bottom:110px}
     <h1>${esc(content.heroTitle)}</h1>
     <p class="hero-desc">${esc(content.heroSubtitle)}</p>
     <div class="hero-ctas">
-      <button class="btn-primary" onclick="bkOpen()">Réserver une table →</button>
+      <button class="btn-primary" onclick="bkOpen()">${esc(labels.ctaVerb)} →</button>
       <a href="#menu" class="btn-outline">Voir la carte</a>
     </div>
     ${
@@ -701,8 +785,8 @@ body{padding-bottom:110px}
       ${img(photoUrls[1], FALLBACK_PHOTOS[1], "Ambiance " + prospect.name, 'loading="lazy"')}
     </div>
     <div class="about-text">
-      <div class="kicker">L'adresse</div>
-      <h2>Une cuisine de <em>caractère</em></h2>
+      <div class="kicker">${esc(labels.navItems[0])}</div>
+      <h2>${labels.aboutHeadline}</h2>
       <p>${esc(content.aboutText)}</p>
       <p class="about-signature">${esc(prospect.name)}</p>
     </div>
@@ -712,13 +796,13 @@ body{padding-bottom:110px}
 <section id="menu" class="menu">
   <div class="menu-inner">
     <div class="menu-header">
-      <div class="menu-kicker">La carte</div>
-      <h2>Quelques suggestions</h2>
-      <p class="menu-subtitle">Produits frais, de saison, travaillés avec passion</p>
+      <div class="menu-kicker">${esc(labels.navItems[1] || "La carte")}</div>
+      <h2>${esc(labels.menuSectionTitle)}</h2>
+      <p class="menu-subtitle">${prospect.business_type === "plombier" || prospect.business_type === "electricien" || prospect.business_type === "garage" ? "Intervention soignée · devis clair · garantie travaux" : prospect.business_type === "coiffeur" || prospect.business_type === "institut" || prospect.business_type === "dentiste" || prospect.business_type === "osteo" ? "Un accueil attentif · des prestations sur-mesure" : "Produits frais, de saison, travaillés avec passion"}</p>
     </div>
     ${menuSectionsHtml}
     <div class="menu-cta">
-      <button class="btn-primary" onclick="bkOpen()" style="background:var(--accent);border-color:var(--accent);color:#fff">Réserver une table →</button>
+      <button class="btn-primary" onclick="bkOpen()" style="background:var(--accent);border-color:var(--accent);color:#fff">${esc(labels.ctaVerb)} →</button>
     </div>
   </div>
 </section>
@@ -772,7 +856,7 @@ ${
     <div class="reserve-kicker">Envie d'un bon moment ?</div>
     <h2>Réservez votre table <em>en quelques clics</em></h2>
     <p>Nous vous accueillons du mardi au samedi, midi et soir. Groupes et privatisations sur demande.</p>
-    <button class="btn-primary" onclick="bkOpen()">Réserver maintenant →</button>
+    <button class="btn-primary" onclick="bkOpen()">${esc(labels.ctaShort)} maintenant →</button>
   </div>
 </section>
 

@@ -226,12 +226,19 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
   // If we already have a scraped real menu, we don't need Claude to invent dishes
   const hasScrapedMenu = Array.isArray(prospect.menu_items) && prospect.menu_items.length >= 4;
 
-  const prompt = `Tu prépares une maquette de site web premium pour un établissement français que nous prospectons. Ça peut être : restaurant, brasserie, bistrot, pizzeria, crêperie, boulangerie, pâtisserie, chocolatier, glacier, café, salon de thé, food truck.
+  const prompt = `Tu prépares une maquette de site web premium pour un établissement français que nous prospectons. Ça peut être :
+- FOOD : restaurant, brasserie, bistrot, pizzeria, crêperie, boulangerie, pâtisserie, chocolatier, glacier, café, salon de thé, food truck
+- SERVICES BEAUTÉ : coiffeur, institut de beauté, spa, barbier, manucure
+- SERVICES TECHNIQUES : plombier, électricien, chauffagiste, mécanicien/garage auto
+- SANTÉ : dentiste, orthodontiste, ostéopathe, kiné
+- SPORT/LOISIRS : salle de sport, coach sportif, école de danse
+- COMMERCE : fleuriste, librairie, boutique mode
+- FORMATION : auto-école
 
 Infos de l'établissement :
 ${infoLines}
 
-INFÈRE le type précis depuis le nom (ex: "Le Pain Quotidien" → boulangerie, "La Petite Italie" → pizzeria/resto italien, "Aux Délices Sucrés" → pâtisserie).
+INFÈRE le type précis depuis le nom + le business_type passé en contexte (ex: "Le Pain Quotidien" → boulangerie, "Salon Mirror Mirror" → coiffeur, "Plomberie Martin" → plombier, "Cabinet Dr Durand" → dentiste).
 
 Génère un objet JSON avec ces clés EXACTEMENT :
 {
@@ -249,9 +256,17 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - Pour CRÊPERIE → "crêpes salées" / "crêpes sucrées" / "boissons"
     - Pour GLACIER → "glaces" / "sorbets" / "coupes"
     - Pour CAFÉ / salon de thé → "boissons" / "douceurs" / "en-cas salés"
-    - Pour FOOD TRUCK → adapte au type de cuisine
+    - Pour COIFFEUR → "coupes" / "colorations" / "soins"
+    - Pour INSTITUT BEAUTÉ / spa → "soins visage" / "épilations" / "massages"
+    - Pour PLOMBIER / électricien / chauffagiste → "urgences" / "installations" / "entretien"
+    - Pour GARAGE AUTO → "entretien" / "réparations" / "révisions"
+    - Pour DENTISTE / orthodontiste → "consultations" / "soins" / "esthétique"
+    - Pour OSTÉO / kiné → "consultations" / "rééducation" / "bien-être"
+    - Pour SALLE DE SPORT / coach → "abonnements" / "cours collectifs" / "coaching privé"
+    - Pour FLEURISTE → "bouquets" / "compositions" / "événements"
+    - Pour AUTO-ÉCOLE → "permis B" / "accompagné" / "code accéléré"
 
-    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du produit", "description": "5-10 mots sur les ingrédients/particularités", "price": "X,XX€" ou "XX€" }. Prix réalistes selon le type.`
+    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du service/produit", "description": "5-10 mots", "price": "X,XX€" ou "XX€" ou "dès X€" }. Prix réalistes.`
   }
   "cuisineType": "type d'établissement en 3-6 mots (ex: 'brasserie française', 'boulangerie artisanale', 'pâtisserie fine', 'glacier artisanal', 'pizzeria napolitaine')",
   "vibe": "UN SEUL parmi ces 5, choisi selon le CARACTÈRE de l'établissement :
@@ -821,9 +836,26 @@ export async function POST(req: NextRequest) {
       .select("*")
       .eq("status", "found")
       .not("email", "is", null)
-      .order("created_at", { ascending: true }) // oldest first → pas de prospect oublié
-      .limit(batch_size);
-    if (data) prospects = data as Prospect[];
+      .order("created_at", { ascending: true })
+      // On fetch 3× batch_size pour avoir de la marge, puis on sort en JS
+      // par priorité : none (pas de site) > poor (vieux site) > average > other
+      .limit(batch_size * 3);
+    if (data) {
+      // Tri par priorité : no-site > old-site > average > other, puis oldest first
+      const QUALITY_PRIORITY: Record<string, number> = {
+        none: 0,      // pas de site = MEILLEUR candidat (ils n'ont PAS refusé, pas entendu)
+        poor: 1,      // site ancien/cassé = 2ème meilleur
+        average: 2,   // site moyen = 3ème
+        good: 9,      // site moderne = skip (déjà filtré après, mais safety)
+      };
+      const sorted = [...(data as Prospect[])].sort((a, b) => {
+        const qa = QUALITY_PRIORITY[a.site_quality || "poor"] ?? 3;
+        const qb = QUALITY_PRIORITY[b.site_quality || "poor"] ?? 3;
+        if (qa !== qb) return qa - qb;
+        return 0; // déjà trié par created_at en amont
+      });
+      prospects = sorted.slice(0, batch_size);
+    }
   }
 
   if (prospects.length === 0) {
@@ -873,6 +905,7 @@ export async function POST(req: NextRequest) {
           google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
           photos: p.photos, hours: p.hours,
           website_photos: p.website_photos || undefined,
+          business_type: p.business_type, // important : détermine les labels CTAs
         };
         // Ajoute les Google reviews au content pour affichage dans la maquette
         const contentWithReviews = {

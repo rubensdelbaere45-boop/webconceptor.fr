@@ -42,7 +42,7 @@ export default function AdminProspectsPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("Proxi épicerie France");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "restaurant" | "epicerie" | "boulangerie" | "patisserie" | "cafe" | "glacier">("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [batchSize, setBatchSize] = useState(5);
   const [dryRun, setDryRun] = useState(true);
@@ -640,13 +640,23 @@ export default function AdminProspectsPage() {
             { value: "restaurant", label: "Restaurants", emoji: "🍽️" },
             { value: "boulangerie", label: "Boulangeries", emoji: "🥐" },
             { value: "patisserie", label: "Pâtisseries", emoji: "🧁" },
-            { value: "cafe", label: "Cafés / Salons de thé", emoji: "☕" },
+            { value: "cafe", label: "Cafés", emoji: "☕" },
             { value: "glacier", label: "Glaciers", emoji: "🍦" },
+            { value: "coiffeur", label: "Coiffeurs", emoji: "💇" },
+            { value: "institut", label: "Instituts beauté", emoji: "💅" },
+            { value: "plombier", label: "Plombiers", emoji: "🔧" },
+            { value: "electricien", label: "Électriciens", emoji: "⚡" },
+            { value: "garage", label: "Garages", emoji: "🔩" },
+            { value: "dentiste", label: "Dentistes", emoji: "🦷" },
+            { value: "osteo", label: "Ostéos / Kinés", emoji: "🩺" },
+            { value: "salle_sport", label: "Salles de sport", emoji: "💪" },
+            { value: "fleuriste", label: "Fleuristes", emoji: "💐" },
+            { value: "auto_ecole", label: "Auto-écoles", emoji: "🚗" },
             { value: "epicerie", label: "Épiceries (Proxi)", emoji: "🛒" },
           ].map((t) => (
             <button
               key={t.value}
-              onClick={() => setTypeFilter(t.value as typeof typeFilter)}
+              onClick={() => setTypeFilter(t.value)}
               className={`px-4 py-1.5 rounded-full text-[12px] font-semibold transition ${
                 typeFilter === t.value
                   ? "bg-[#0066ff] text-white shadow-sm"
@@ -710,14 +720,24 @@ export default function AdminProspectsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14px] font-semibold truncate">{p.name}</p>
                         <span className="text-[11px]">
-                          {{
+                          {({
                             restaurant: "🍽️",
                             boulangerie: "🥐",
                             patisserie: "🧁",
                             cafe: "☕",
                             glacier: "🍦",
+                            coiffeur: "💇",
+                            institut: "💅",
+                            plombier: "🔧",
+                            electricien: "⚡",
+                            garage: "🔩",
+                            dentiste: "🦷",
+                            osteo: "🩺",
+                            salle_sport: "💪",
+                            fleuriste: "💐",
+                            auto_ecole: "🚗",
                             epicerie: "🛒",
-                          }[p.business_type || "epicerie"] || "•"}
+                          } as Record<string, string>)[p.business_type || "epicerie"] || "•"}
                         </span>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colorClass}`}>
                           {p.status}
