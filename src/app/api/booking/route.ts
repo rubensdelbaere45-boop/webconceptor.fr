@@ -81,9 +81,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Restaurant introuvable" }, { status: 404 });
   }
 
-  // PROTECTION BUDGET BREVO : max 3 SMS de démo par prospect
-  // (Brevo = 195 crédits SMS restants, cap à 3 par resto = ~65 prospects possibles)
-  const DEMO_SMS_MAX = 3;
+  // PROTECTION BUDGET BREVO : max 2 SMS de démo par prospect
+  // (Brevo = 195 crédits SMS restants, cap à 2 par resto = ~97 prospects testeurs possibles).
+  // Le 1er SMS prouve que ça marche, le 2e permet de tester un autre créneau — suffisant.
+  const DEMO_SMS_MAX = 2;
   const currentCount = Number(prospect.demo_sms_count || 0);
   const smsQuotaReached = currentCount >= DEMO_SMS_MAX;
 

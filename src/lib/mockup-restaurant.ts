@@ -639,6 +639,25 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
 .bk-demo-banner .bk-demo-sub{font-size:12px;opacity:0.9;margin-top:6px}
 @media(max-width:560px){.bk-demo-banner{padding:16px 24px;font-size:12px}}
 .bk-phone-hint{font-size:11px;color:var(--accent);margin-top:4px;font-style:italic}
+.bk-phone-status{font-size:12px;margin-top:6px;font-weight:600;min-height:16px}
+.bk-phone-status.ok{color:#16a34a}
+.bk-phone-status.err{color:#dc2626}
+.bk-field input.phone-ok{border-bottom-color:#16a34a !important}
+.bk-field input.phone-err{border-bottom-color:#dc2626 !important}
+
+/* Modal confirm numéro téléphone */
+.bk-confirm-overlay{position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
+.bk-confirm-overlay.open{display:flex;animation:bkFadeIn 0.25s ease}
+.bk-confirm-box{background:var(--warm);max-width:420px;width:100%;border-radius:6px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.4);animation:bkSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)}
+.bk-confirm-box h5{font-family:var(--serif);font-size:22px;font-weight:500;color:var(--ink);margin-bottom:12px}
+.bk-confirm-box p{font-size:14px;color:var(--stone);margin-bottom:18px;line-height:1.5}
+.bk-confirm-phone{background:var(--cream);padding:16px;border-radius:4px;font-family:var(--serif);font-size:22px;font-weight:600;color:var(--ink);letter-spacing:0.05em;margin-bottom:24px;border:1px solid var(--accent)}
+.bk-confirm-actions{display:flex;gap:10px;justify-content:center}
+.bk-confirm-actions button{padding:12px 22px;font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;border-radius:2px;transition:all 0.2s;border:1px solid transparent;cursor:pointer}
+.bk-confirm-cancel{background:transparent;color:var(--stone);border-color:rgba(0,0,0,0.15)}
+.bk-confirm-cancel:hover{color:var(--ink);border-color:var(--ink)}
+.bk-confirm-ok{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bk-confirm-ok:hover{background:var(--accent);border-color:var(--accent)}
 .bk-body{padding:36px 48px 24px}
 .bk-step{display:none;animation:bkFadeIn 0.3s}
 .bk-step.active{display:block}
@@ -919,10 +938,10 @@ ${
     </div>
 
     <div class="bk-demo-banner">
-      <strong>🧪 Mode démonstration — 3 SMS de test maximum</strong>
+      <strong>🧪 Mode démonstration — 2 SMS de test maximum</strong>
       Testez le module de réservation avec vos vraies coordonnées :
       vous recevrez par SMS le même message de confirmation que vos futurs clients.
-      <div class="bk-demo-sub">Limite de 3 SMS par établissement (pour protéger notre quota). Aucune table n'est réellement réservée.</div>
+      <div class="bk-demo-sub">Limite de 2 SMS par établissement. Aucune table n'est réellement réservée.</div>
     </div>
 
     <div class="bk-body">
@@ -973,8 +992,10 @@ ${
         </div>
         <div class="bk-field">
           <label for="bk-phone">Téléphone (votre vrai numéro pour recevoir le SMS de démo)</label>
-          <input type="tel" id="bk-phone" maxlength="20" placeholder="06 12 34 56 78" autocomplete="tel">
-          <div class="bk-phone-hint">📲 Vous allez recevoir le SMS de confirmation en temps réel. <strong>3 SMS maximum par établissement.</strong></div>
+          <input type="tel" id="bk-phone" maxlength="14" placeholder="06 12 34 56 78" autocomplete="tel" inputmode="tel"
+                 oninput="bkFormatPhone(this)" onblur="bkValidatePhone(this)">
+          <div class="bk-phone-hint" id="bk-phone-hint">📲 Vous allez recevoir le SMS de confirmation en temps réel. <strong>2 SMS maximum par établissement.</strong></div>
+          <div class="bk-phone-status" id="bk-phone-status"></div>
         </div>
         <div class="bk-field">
           <label for="bk-notes">Demande particulière (optionnel)</label>
@@ -1007,6 +1028,20 @@ ${
         <button class="bk-btn bk-btn-back" id="bk-back" style="display:none" onclick="bkBack()">← Retour</button>
         <button class="bk-btn bk-btn-next" id="bk-next" onclick="bkNext()" disabled>Continuer →</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Phone confirm modal (demo SMS) -->
+<div class="bk-confirm-overlay" id="bk-confirm-overlay" onclick="if(event.target===this)bkConfirmCancel()">
+  <div class="bk-confirm-box">
+    <h5>📲 Confirmez votre numéro</h5>
+    <p>Le SMS de démonstration sera envoyé à ce numéro :</p>
+    <div class="bk-confirm-phone" id="bk-confirm-phone">—</div>
+    <p style="font-size:12px;opacity:0.75">Vérifiez bien le numéro avant d'envoyer. Chaque établissement dispose de 2 SMS de test maximum.</p>
+    <div class="bk-confirm-actions">
+      <button class="bk-confirm-cancel" onclick="bkConfirmCancel()">Modifier</button>
+      <button class="bk-confirm-ok" onclick="bkConfirmOk()">Oui, envoyer →</button>
     </div>
   </div>
 </div>
@@ -1262,12 +1297,68 @@ function bkGoStep(n) {
 
 function bkBack() { if (BK.step > 1) bkGoStep(BK.step - 1); }
 
+// Formate un numéro français en direct pendant la saisie : "0612345678" → "06 12 34 56 78"
+function bkFormatPhone(input) {
+  let raw = input.value.replace(/[^\\d+]/g, "");
+  if (raw.startsWith("+33")) raw = "0" + raw.slice(3);
+  else if (raw.startsWith("33") && raw.length > 9) raw = "0" + raw.slice(2);
+  raw = raw.replace(/\\D/g, "").slice(0, 10);
+  input.value = raw.replace(/(.{2})/g, "$1 ").trim();
+  bkValidatePhone(input);
+}
+
+// Valide en live qu'on a bien un 10 chiffres commençant par 0X (X ≠ 0)
+function bkValidatePhone(input) {
+  const status = document.getElementById("bk-phone-status");
+  const digits = input.value.replace(/\\D/g, "");
+  if (digits.length === 0) {
+    input.classList.remove("phone-ok", "phone-err");
+    if (status) { status.textContent = ""; status.className = "bk-phone-status"; }
+    return false;
+  }
+  const ok = /^0[1-9]\\d{8}$/.test(digits);
+  input.classList.toggle("phone-ok", ok);
+  input.classList.toggle("phone-err", !ok);
+  if (status) {
+    if (ok) { status.textContent = "✓ Numéro français valide"; status.className = "bk-phone-status ok"; }
+    else if (digits.length < 10) { status.textContent = "Entrez 10 chiffres (ex : 06 12 34 56 78)"; status.className = "bk-phone-status err"; }
+    else { status.textContent = "Numéro invalide — format attendu : 06 XX XX XX XX"; status.className = "bk-phone-status err"; }
+  }
+  return ok;
+}
+
+// Stockage du form state pendant la confirmation
+let BK_PENDING_SUBMIT = null;
+
 async function bkNext() {
   if (BK.step < 4) {
     if (BK.step === 3) bkBuildSummary();
     bkGoStep(BK.step + 1);
     return;
   }
+  // À l'étape 4 (step récap + coordonnées) : d'abord vérifier le numéro
+  // et demander confirmation avant d'envoyer réellement.
+  const phoneInput = document.getElementById("bk-phone");
+  const err = document.getElementById("bk-error");
+  err.style.display = "none";
+  if (!bkValidatePhone(phoneInput)) {
+    err.textContent = "Veuillez entrer un numéro de téléphone français valide (ex : 06 12 34 56 78).";
+    err.style.display = "";
+    phoneInput.focus();
+    return;
+  }
+  // Affiche le modal de confirmation
+  document.getElementById("bk-confirm-phone").textContent = phoneInput.value;
+  document.getElementById("bk-confirm-overlay").classList.add("open");
+}
+
+function bkConfirmCancel() {
+  document.getElementById("bk-confirm-overlay").classList.remove("open");
+  document.getElementById("bk-phone").focus();
+}
+
+async function bkConfirmOk() {
+  document.getElementById("bk-confirm-overlay").classList.remove("open");
   const btn = document.getElementById("bk-next");
   const err = document.getElementById("bk-error");
   err.style.display = "none";
