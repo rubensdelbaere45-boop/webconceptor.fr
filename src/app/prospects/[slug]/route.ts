@@ -182,7 +182,26 @@ export async function GET(
     })();
   }
 
-  return new NextResponse(data.mockup_html, {
+  // ═══════════════════════════════════════════════════════════════════
+  // PATCH RUNTIME de l'offre Sérénité
+  // Les maquettes déjà envoyées aux prospects contiennent 2 mentions fausses
+  // qu'on corrige à la volée sans toucher la DB :
+  //   - "Hébergement inclus à vie" → dépend du paiement du 50 €/mois
+  //   - "Emails pros (contact@votresite.fr)" → on ne fournit pas ce service
+  // Les nouvelles maquettes (depuis commit 93fc606) sont déjà correctes,
+  // ces remplacements ne modifient rien en plus.
+  // ═══════════════════════════════════════════════════════════════════
+  const patchedHtml = data.mockup_html
+    .replace(
+      /<li>Hébergement inclus à vie<\/li>/g,
+      "<li>Hébergement inclus (tant que l'abonnement est actif)</li>"
+    )
+    .replace(
+      /<li>Emails pros \(contact@votresite\.fr\)<\/li>/g,
+      "<li>Sauvegardes automatiques + monitoring</li>"
+    );
+
+  return new NextResponse(patchedHtml, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
