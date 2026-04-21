@@ -185,11 +185,27 @@ export async function POST(req: NextRequest) {
   const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
 
   try {
+    // Si le plan est Sérénité → on impose la carte bancaire (nécessaire pour
+    // sauvegarder la PaymentMethod et créer l'abonnement récurrent 50€/mois).
+    // Klarna / PayPal ne sauvegardent pas la PM pour off-session charging.
+    const paymentMethods: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
+      plan === "serenite" ? ["card"] : ["card", "klarna", "paypal"];
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card", "klarna", "paypal"],
+      payment_method_types: paymentMethods,
       line_items: lineItems,
       customer_email: buyer.email,
+      // Toujours créer un Customer Stripe (nécessaire pour l'abonnement récurrent)
+      customer_creation: "always",
+      // Pour Sérénité : sauvegarde la CB pour pouvoir prélever les 50€/mois ensuite
+      ...(plan === "serenite"
+        ? {
+            payment_intent_data: {
+              setup_future_usage: "off_session",
+            },
+          }
+        : {}),
       success_url: `${origin}/prospect/success?slug=${encodeURIComponent(prospect.slug)}&s={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/prospects/${encodeURIComponent(prospect.slug)}`,
       locale: "fr",

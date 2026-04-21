@@ -192,6 +192,91 @@ export async function POST(req: NextRequest) {
       }
 
       // ═══════════════════════════════════════════════════════
+      // CRÉATION AUTO DE L'ABONNEMENT SÉRÉNITÉ 50€/mois
+      // Trial 30 jours → le 1er mois déjà payé dans le checkout one-shot,
+      // les prélèvements récurrents démarrent 30 jours après.
+      // ═══════════════════════════════════════════════════════
+      if (hasSerenite) {
+        const serenitePriceId = process.env.STRIPE_SERENITE_PRICE_ID;
+        const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+
+        if (!serenitePriceId) {
+          // Env var manquante : on prévient Rubens pour qu'il crée la sub manuellement
+          if (tgToken && chatId) {
+            fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `⚠️ <b>STRIPE_SERENITE_PRICE_ID manquante dans Render</b>\n\nLe client ${escapeTelegram(buyerName)} a pris Sérénité mais l'abonnement 50€/mois n'a PAS été créé automatiquement.\n\n→ Crée-le manuellement dans Stripe.`,
+                parse_mode: "HTML",
+              }),
+            }).catch(() => { /* silent */ });
+          }
+        } else if (!customerId) {
+          if (tgToken && chatId) {
+            fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `⚠️ <b>Customer Stripe introuvable</b>\n\nLe client ${escapeTelegram(buyerName)} a pris Sérénité mais on n'a pas récupéré son customer_id → abonnement PAS créé.\n\n→ Crée-le manuellement.`,
+                parse_mode: "HTML",
+              }),
+            }).catch(() => { /* silent */ });
+          }
+        } else {
+          try {
+            // Récupère la PaymentMethod du Customer pour la marquer comme default
+            const pmList = await stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 1 });
+            const pm = pmList.data[0];
+            if (pm) {
+              await stripe.customers.update(customerId, {
+                invoice_settings: { default_payment_method: pm.id },
+              });
+            }
+
+            // Crée l'abonnement avec trial 30 jours (le 1er mois est déjà payé via le checkout one-shot)
+            const subscription = await stripe.subscriptions.create({
+              customer: customerId,
+              items: [{ price: serenitePriceId }],
+              trial_period_days: 30,
+              metadata: {
+                source: "self_serve_mockup",
+                prospect_id: prospectId,
+                prospect_slug: prospect.slug,
+              },
+            });
+
+            if (tgToken && chatId) {
+              fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `✅ <b>ABONNEMENT SÉRÉNITÉ CRÉÉ</b>\n\nClient : ${escapeTelegram(buyerName)}\nID abonnement : <code>${escapeTelegram(subscription.id)}</code>\n\nPrélèvement mensuel 50€/mois démarre automatiquement dans 30 jours.`,
+                  parse_mode: "HTML",
+                }),
+              }).catch(() => { /* silent */ });
+            }
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "erreur inconnue";
+            if (tgToken && chatId) {
+              fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `❌ <b>ABONNEMENT SÉRÉNITÉ ÉCHOUÉ</b>\n\nClient : ${escapeTelegram(buyerName)}\nRaison : ${escapeTelegram(msg.slice(0, 300))}\n\n→ Crée-le manuellement dans Stripe.`,
+                  parse_mode: "HTML",
+                }),
+              }).catch(() => { /* silent */ });
+            }
+          }
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════
       // AUTO-ACHAT DU DOMAINE via IONOS API (si Sérénité + domaine)
       // Achat TOUJOURS tenté — le temps est critique pour ne pas se faire
       // piquer le domaine. Retry 3× automatique en cas d'erreur temporaire.
