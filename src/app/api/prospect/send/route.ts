@@ -873,17 +873,12 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    // SKIP si le prospect a déjà un site "good" (conversion quasi nulle).
-    // On marque en status='error' + raison claire pour qu'il n'apparaisse plus
-    // dans les prochains runs, sans changer le schéma DB.
-    if (p.site_quality === "good") {
-      await supabase
-        .from("prospects")
-        .update({ status: "error", error: "skipped: modern site already live" })
-        .eq("id", p.id);
-      results.push({ id: p.id, name: p.name, status: "skipped_good_site" });
-      continue;
-    }
+    // Note : on NE skip PLUS les "good" sites — le tri par priorité gère déjà
+    // l'ordre (no-site > poor > average > good), donc les bons prospects passent
+    // en premier. Skipper les "good" faisait 0 envoi sur les campagnes premium
+    // (ex : restaurants gastronomiques Paris où 99% ont un site moderne).
+    // Pitch valide même pour un site moderne : module réservation sans commission,
+    // 3× sans frais, et un design premium reste un argument.
 
     try {
       // Branch by business_type

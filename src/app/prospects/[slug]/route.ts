@@ -94,14 +94,15 @@ export async function GET(
         });
 
         const phoneLine = phoneDisplay
-          ? `📞 <a href="tel:${escapeTelegram(phoneLink)}"><b>${escapeTelegram(phoneDisplay)}</b></a>\n<i>(appelle maintenant, la maquette est ouverte)</i>`
+          ? `📞 <a href="tel:${escapeTelegram(phoneLink)}"><b>${escapeTelegram(phoneDisplay)}</b></a>`
           : `📞 <i>Pas de numéro disponible</i>`;
 
+        const questionsBlock = script.discoveryQuestions.slice(0, 5).map((q, i) => `${i + 1}. ${escapeTelegram(q)}`).join("\n");
         const hooksBlock = script.hooks.slice(0, 3).map((h, i) => `${i + 1}. ${escapeTelegram(h)}`).join("\n");
-        const objectionsBlock = script.objectionHandlers.slice(0, 3).map((o) => `• ${escapeTelegram(o)}`).join("\n");
+        const objectionsBlock = script.objectionHandlers.slice(0, 4).map((o) => `• ${escapeTelegram(o)}`).join("\n");
 
         const message =
-          `🔥 <b>HOT LEAD — ${typeLabel} ouvre sa maquette !</b>\n\n` +
+          `🔥 <b>HOT LEAD — ${typeLabel} a ouvert sa maquette</b>\n\n` +
           `<b>${typeEmoji} ${escapeTelegram(data.name)}</b>\n` +
           `📍 ${escapeTelegram(data.address || data.city || "—")}\n` +
           phoneLine + "\n" +
@@ -109,12 +110,15 @@ export async function GET(
           (data.google_rating ? `⭐ ${data.google_rating}/5 (${data.google_reviews_count || 0} avis)\n` : "") +
           `⏰ Ouverte à ${escapeTelegram(parisTime)}\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `<b>🎬 SCRIPT D'APPEL (lis-le direct)</b>\n\n` +
+          `<b>⏰ Quand rappeler :</b> 45 min à 1 h après l'ouverture (ne PAS appeler dans les 5 min, ça fait tracking).\n\n` +
+          `<b>🎯 Objectif principal :</b> fixer un RDV visio 15-20 min — sauf si le prospect veut acheter tout de suite (alors on envoie le lien Stripe).\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `<b>🎬 OUVERTURE (lis-la mot à mot)</b>\n` +
           `<i>« ${escapeTelegram(script.opening)} »</i>\n\n` +
-          `<b>🎯 Si hésitation :</b>\n${hooksBlock}\n\n` +
+          `<b>❓ QUESTIONS À POSER PENDANT L'APPEL</b>\n${questionsBlock}\n\n` +
+          `<b>🎯 Accroches RDV si hésitation :</b>\n${hooksBlock}\n\n` +
           `<b>🛡 Objections :</b>\n${objectionsBlock}\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
-          `<b>💡 Conseil :</b> Rappelle dans les 5 minutes.\n\n` +
           `🎯 <a href="https://webconceptor.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
           (data.website ? `\n🌐 <a href="${escapeTelegram(data.website)}">Son site actuel</a>` : "");
 
