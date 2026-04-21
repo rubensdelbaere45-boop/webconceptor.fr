@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
 import { searchPagesJaunes } from "@/lib/sources/pages-jaunes";
+import { searchOverpass } from "@/lib/sources/overpass";
 
 /* ══════════════════════════════════════════
    CONFIG
@@ -730,13 +731,22 @@ export async function POST(req: NextRequest) {
 
   const stats = {
     found: 0, inserted: 0,
-    skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0,
+    skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0, skippedNoEmail: 0,
     withEmail: 0,
     noSite: 0, poorSite: 0, averageSite: 0, goodSite: 0,
     timedOut: 0, // places ignorées parce qu'on a dépassé le budget temps
-    // Source Pages Jaunes (2ème source de prospects en plus de Google Places)
+    // Source Pages Jaunes
     pjFound: 0, pjInserted: 0, pjSkippedDuplicate: 0, pjWithEmail: 0,
+    // Source OpenStreetMap Overpass
+    osmFound: 0, osmInserted: 0, osmSkippedDuplicate: 0, osmWithEmail: 0,
   };
+
+  // Mode strict : si true, on N'INSÈRE PAS les prospects sans email trouvé.
+  // Par défaut on reste tolérant (insère avec status=no_email) pour pouvoir
+  // les rappeler en cold call. Mais si l'utilisateur veut économiser les
+  // crédits et ne garder que les prospects contactables par mail, il peut
+  // passer { strict_email: true } dans le body.
+  const strictEmail = rawBody.strict_email === true;
 
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
   // On fixe 80 s pour laisser une marge confortable et garantir une réponse
@@ -881,102 +891,142 @@ export async function POST(req: NextRequest) {
       ? rawBody.pj_activity.trim().slice(0, 60)
       : defaultPagesJaunesActivity(businessType);
 
+    // Fonction utilitaire commune : insère un prospect externe (PJ ou OSM)
+    // avec scraping emails/audit et déduplication.
+    async function insertExternalProspect(p: {
+      name: string;
+      address: string;
+      city: string;
+      postalCode: string;
+      phone: string;
+      website: string;
+      email?: string;
+      lat?: number;
+      lng?: number;
+    }, sourcePrefix: "pj" | "osm"): Promise<"inserted" | "duplicate" | "no_email" | "timeout"> {
+      if (timeLeft() < 8_000) return "timeout";
+      if (!p.name || p.name.length < 2) return "duplicate";
+
+      // Dédup par téléphone OU name+postal_code
+      let existing: { id: string } | null = null;
+      if (p.phone && p.phone.length >= 8) {
+        const { data } = await supabase.from("prospects").select("id").eq("phone", p.phone).maybeSingle();
+        existing = data;
+      }
+      if (!existing && p.postalCode) {
+        const { data } = await supabase.from("prospects").select("id").eq("name", p.name).eq("postal_code", p.postalCode).maybeSingle();
+        existing = data;
+      }
+      if (existing) return "duplicate";
+
+      const city = p.city || pjLocation;
+      const slug = slugify(`${p.name}-${city}-${sourcePrefix}-${Math.random().toString(36).slice(2, 10)}`);
+
+      // Scrape emails + audit si site dispo
+      let email: string | null = p.email || null;
+      let additionalEmails: string[] = [];
+      let siteAudit: SiteAudit | null = null;
+      let websitePhotos: string[] = [];
+      if (p.website) {
+        try {
+          const results = await Promise.allSettled([
+            findEmailsOnWebsite(p.website),
+            scrapeWebsitePhotos(p.website),
+            auditWebsite(p.website),
+          ]);
+          const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
+          if (allEmails[0]) email = email || allEmails[0];
+          additionalEmails = allEmails.slice(email ? 0 : 1).filter((e) => e.toLowerCase() !== (email || "").toLowerCase()).slice(0, 2);
+          websitePhotos = results[1].status === "fulfilled" ? (results[1].value as string[]) : [];
+          siteAudit = results[2].status === "fulfilled" ? (results[2].value as SiteAudit | null) : null;
+        } catch { /* silent */ }
+      }
+
+      // Mode strict : skip si pas d'email
+      if (strictEmail && !email) return "no_email";
+
+      const siteQuality: SiteQuality = p.website ? (siteAudit?.quality || "poor") : "none";
+      if (siteQuality === "none") stats.noSite++;
+      else if (siteQuality === "poor") stats.poorSite++;
+      else if (siteQuality === "average") stats.averageSite++;
+      else if (siteQuality === "good") stats.goodSite++;
+
+      const syntheticId = `${sourcePrefix}_${Buffer.from(p.name + p.postalCode).toString("base64").slice(0, 30)}`;
+
+      await supabase.from("prospects").insert({
+        slug,
+        google_place_id: syntheticId,
+        name: p.name,
+        address: p.address || "",
+        city,
+        postal_code: p.postalCode || "",
+        lat: typeof p.lat === "number" ? p.lat : null,
+        lng: typeof p.lng === "number" ? p.lng : null,
+        distance_km: null,
+        phone: p.phone || "",
+        website: p.website || "",
+        email: email || null,
+        additional_emails: additionalEmails.length ? additionalEmails : null,
+        google_rating: null,
+        google_reviews_count: null,
+        photos: null,
+        hours: "",
+        business_type: businessType,
+        website_photos: websitePhotos.length ? websitePhotos : null,
+        site_quality: siteQuality,
+        site_audit_score: siteAudit?.score ?? null,
+        site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
+        status: email ? "found" : "no_email",
+      });
+
+      return "inserted";
+    }
+
     if (pjLocation && pjActivity && timeLeft() > 20_000) {
       try {
         const pjResults = await searchPagesJaunes(pjActivity, pjLocation);
         stats.pjFound = pjResults.length;
 
         for (const p of pjResults) {
-          if (timeLeft() < 8_000) {
-            stats.timedOut += pjResults.length - stats.pjInserted;
+          const result = await insertExternalProspect(p, "pj");
+          if (result === "inserted") {
+            stats.pjInserted++;
+            if (p.website) stats.pjWithEmail++;
+          } else if (result === "duplicate") {
+            stats.pjSkippedDuplicate++;
+          } else if (result === "no_email") {
+            stats.skippedNoEmail++;
+          } else if (result === "timeout") {
             break;
           }
-          if (!p.name || p.name.length < 2) continue;
-
-          // Dédup : check par tél d'abord (le + fiable), puis par name+postal
-          let existing: { id: string } | null = null;
-          if (p.phone && p.phone.length >= 8) {
-            const { data } = await supabase
-              .from("prospects")
-              .select("id")
-              .eq("phone", p.phone)
-              .maybeSingle();
-            existing = data;
-          }
-          if (!existing && p.postalCode) {
-            const { data } = await supabase
-              .from("prospects")
-              .select("id")
-              .eq("name", p.name)
-              .eq("postal_code", p.postalCode)
-              .maybeSingle();
-            existing = data;
-          }
-          if (existing) { stats.pjSkippedDuplicate++; continue; }
-
-          const slug = slugify(`${p.name}-${p.city || pjLocation}-pj-${Math.random().toString(36).slice(2, 10)}`);
-
-          // Scrape email + audit si site web trouvé
-          let email: string | null = null;
-          let additionalEmails: string[] = [];
-          let siteAudit: SiteAudit | null = null;
-          let websitePhotos: string[] = [];
-          if (p.website) {
-            try {
-              const results = await Promise.allSettled([
-                findEmailsOnWebsite(p.website),
-                scrapeWebsitePhotos(p.website),
-                auditWebsite(p.website),
-              ]);
-              const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
-              email = allEmails[0] || null;
-              additionalEmails = allEmails.slice(1);
-              websitePhotos = results[1].status === "fulfilled" ? (results[1].value as string[]) : [];
-              siteAudit = results[2].status === "fulfilled" ? (results[2].value as SiteAudit | null) : null;
-              if (email) stats.pjWithEmail++;
-            } catch { /* silent */ }
-          }
-
-          const siteQuality: SiteQuality = p.website
-            ? (siteAudit?.quality || "poor")
-            : "none";
-          if (siteQuality === "none") stats.noSite++;
-          else if (siteQuality === "poor") stats.poorSite++;
-          else if (siteQuality === "average") stats.averageSite++;
-          else if (siteQuality === "good") stats.goodSite++;
-
-          // google_place_id = synthétique "pj_{hash}" pour ne pas entrer en conflit
-          const syntheticId = `pj_${Buffer.from(p.name + p.postalCode).toString("base64").slice(0, 30)}`;
-
-          await supabase.from("prospects").insert({
-            slug,
-            google_place_id: syntheticId,
-            name: p.name,
-            address: p.address || "",
-            city: p.city || pjLocation,
-            postal_code: p.postalCode || "",
-            lat: null,
-            lng: null,
-            distance_km: null,
-            phone: p.phone || "",
-            website: p.website || "",
-            email: email || null,
-            additional_emails: additionalEmails.length ? additionalEmails : null,
-            google_rating: null,
-            google_reviews_count: null,
-            photos: null,
-            hours: "",
-            business_type: businessType,
-            website_photos: websitePhotos.length ? websitePhotos : null,
-            site_quality: siteQuality,
-            site_audit_score: siteAudit?.score ?? null,
-            site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
-            status: email ? "found" : "no_email",
-          });
-
-          stats.pjInserted++;
         }
       } catch { /* silent : Pages Jaunes en bonus, ne doit jamais bloquer */ }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SOURCE 3 : OpenStreetMap (via Overpass API)
+    // Complément gratuit et illimité — dataset communautaire énorme,
+    // surtout fort sur les petites villes et les quartiers.
+    // ═══════════════════════════════════════════════════════════════
+    if (pjLocation && timeLeft() > 25_000) {
+      try {
+        const osmResults = await searchOverpass(businessType, pjLocation, 50);
+        stats.osmFound = osmResults.length;
+
+        for (const p of osmResults) {
+          const result = await insertExternalProspect(p, "osm");
+          if (result === "inserted") {
+            stats.osmInserted++;
+            if (p.email || p.website) stats.osmWithEmail++;
+          } else if (result === "duplicate") {
+            stats.osmSkippedDuplicate++;
+          } else if (result === "no_email") {
+            stats.skippedNoEmail++;
+          } else if (result === "timeout") {
+            break;
+          }
+        }
+      } catch { /* silent : OSM en bonus, ne doit jamais bloquer */ }
     }
 
     return NextResponse.json({ success: true, stats });
