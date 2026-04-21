@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateCallScript } from "@/lib/call-script";
+import { auditWebsite } from "@/lib/site-audit";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -13,8 +14,10 @@ function getSupabaseAdmin() {
 /* ══════════════════════════════════════════
    POST /api/prospect/call-script
    Body : { prospect_id }
-   Renvoie un script d'appel personnalisé généré par Claude Haiku pour
-   ce prospect précis — utile pour rappeler un HOT LEAD manqué.
+   Renvoie un script d'appel personnalisé Claude + les points d'audit
+   du site actuel du prospect (issues, score, qualité).
+   Si le prospect n'a PAS encore été audité (prospect ancien avant l'ajout
+   des colonnes audit), on audite à la volée et on met à jour la DB.
    ══════════════════════════════════════════ */
 
 export async function POST(req: NextRequest) {
@@ -35,12 +38,50 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("name, city, business_type, google_rating, google_reviews_count, site_quality, address")
+    .select("id, name, city, business_type, google_rating, google_reviews_count, site_quality, site_audit_score, site_audit_issues, address, website")
     .eq("id", prospect_id)
     .maybeSingle();
 
   if (error || !data) {
     return NextResponse.json({ error: "Prospect introuvable" }, { status: 404 });
+  }
+
+  // Si le prospect a un site ET que l'audit n'a PAS été fait (prospect ancien),
+  // on audite à la volée et on met à jour la DB pour les prochains runs.
+  let siteQuality = data.site_quality;
+  let siteAuditScore = data.site_audit_score;
+  let siteAuditIssues: string[] | null = Array.isArray(data.site_audit_issues) ? data.site_audit_issues : null;
+
+  const needsLiveAudit = data.website
+    && data.website.trim().length > 0
+    && (!siteAuditIssues || siteAuditIssues.length === 0)
+    && siteQuality !== "none";
+
+  if (needsLiveAudit) {
+    try {
+      const audit = await auditWebsite(data.website);
+      if (audit) {
+        siteQuality = audit.quality;
+        siteAuditScore = audit.score;
+        siteAuditIssues = audit.issues;
+        // Met à jour la DB pour ne plus avoir à refaire ce travail la prochaine fois
+        await supabase
+          .from("prospects")
+          .update({
+            site_quality: audit.quality,
+            site_audit_score: audit.score,
+            site_audit_issues: audit.issues.length ? audit.issues : null,
+          })
+          .eq("id", data.id);
+      }
+    } catch {
+      // silent — on laisse les données telles quelles si l'audit échoue
+    }
+  }
+
+  // Si pas de site du tout → quality = "none"
+  if (!data.website || data.website.trim().length === 0) {
+    siteQuality = "none";
   }
 
   const script = await generateCallScript({
@@ -49,9 +90,18 @@ export async function POST(req: NextRequest) {
     businessType: data.business_type,
     googleRating: data.google_rating,
     googleReviewsCount: data.google_reviews_count,
-    siteQuality: data.site_quality,
+    siteQuality: siteQuality,
     address: data.address,
   });
 
-  return NextResponse.json({ success: true, script });
+  return NextResponse.json({
+    success: true,
+    script,
+    audit: {
+      site_quality: siteQuality,
+      site_audit_score: siteAuditScore,
+      site_audit_issues: siteAuditIssues,
+      website: data.website || null,
+    },
+  });
 }

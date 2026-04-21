@@ -333,27 +333,45 @@ export default function AdminProspectsPage() {
       const s = data.script;
 
       // Bloc audit : les points concrets à sortir pendant l'appel pour montrer
-      // qu'on a regardé son site avant (ou que le prospect n'a pas de site du tout).
+      // qu'on a regardé son site avant. On utilise les données RENVOYÉES par l'API
+      // (qui inclut l'audit à la volée pour les prospects anciens), fallback sur
+      // les données du state local si l'API ne les a pas.
+      const audit = data.audit || {};
+      const auditQuality: string = audit.site_quality ?? p.site_quality ?? null;
+      const auditScore: number | null = audit.site_audit_score ?? p.site_audit_score ?? null;
+      const auditIssues: string[] = Array.isArray(audit.site_audit_issues)
+        ? audit.site_audit_issues
+        : Array.isArray(p.site_audit_issues) ? p.site_audit_issues : [];
+      const websiteUrl: string = audit.website || p.website || "";
+
       let auditBlock = "";
-      if (p.site_quality === "none") {
+      if (auditQuality === "none") {
         auditBlock =
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `🆕 CE PROSPECT N'A PAS DE SITE\n\n` +
           `Argument clé : aujourd'hui, un commerce sans site, c'est 3 clients\n` +
           `sur 4 qui cherchent sur Google ne vous trouvent pas. Notre maquette\n` +
           `répond à ce besoin pile — visibilité, réservations, crédibilité.\n\n`;
-      } else if (p.site_audit_issues && p.site_audit_issues.length > 0) {
-        const issueLines = p.site_audit_issues
-          .map((key) => `• ${AUDIT_ISSUE_LABELS[key] || key}`)
+      } else if (auditIssues.length > 0) {
+        const issueLines = auditIssues
+          .map((key: string) => `• ${AUDIT_ISSUE_LABELS[key] || key}`)
           .slice(0, 8)
           .join("\n");
-        const scoreLine = p.site_audit_score != null ? ` (score audit : ${p.site_audit_score}/100)` : "";
+        const scoreLine = auditScore != null ? ` (score audit : ${auditScore}/100)` : "";
         auditBlock =
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `🔍 POINTS D'AMÉLIORATION DE SON SITE ACTUEL${scoreLine}\n` +
           `(à ressortir si la personne dit "j'ai déjà un site")\n\n` +
           issueLines +
-          `\n\nSon site actuel : ${p.website || "—"}\n\n`;
+          `\n\nSon site actuel : ${websiteUrl || "—"}\n\n`;
+      } else if (websiteUrl) {
+        // On a un site mais pas d'issues détectées → son site est correct.
+        auditBlock =
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `ℹ️ SITE ACTUEL : ${websiteUrl}\n` +
+          `(Audit : ${auditQuality || "?"}${auditScore != null ? ` — ${auditScore}/100` : ""})\n` +
+          `Aucun problème technique majeur détecté. Angle de vente : design plus moderne,\n` +
+          `module de réservation sans commission, espace admin simple.\n\n`;
       }
 
       // Discovery questions : à poser pendant l'appel après l'ouverture
