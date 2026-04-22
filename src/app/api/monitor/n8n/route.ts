@@ -89,8 +89,14 @@ async function handler(req: NextRequest) {
   const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
   const TWENTY_FIVE_HOURS_MS = 25 * 60 * 60 * 1000;
 
-  // On ne surveille que les workflows qui contiennent "WebConceptor" (nos 3 workflows)
-  const ourWorkflows = workflows.filter((w) => /webconceptor/i.test(w.name));
+  // On ne surveille QUE les 3 workflows actifs par ID (précis, évite de spammer
+  // les anciens brouillons désactivés qui ont aussi "webconceptor" dans le nom).
+  const ACTIVE_WORKFLOW_IDS = new Set([
+    "wSmfcn9acDuKdVqT", // Prospection quotidienne 9h
+    "YxIeBu4yoYxwOLoC", // Relances J+2 (10h30)
+    "wfG4XLRdreNqmao4", // 2ème vague emails (15h)
+  ]);
+  const ourWorkflows = workflows.filter((w) => ACTIVE_WORKFLOW_IDS.has(w.id));
 
   for (const wf of ourWorkflows) {
     const report: MonitorReport = {

@@ -971,9 +971,13 @@ async function handleSend(req: NextRequest) {
 
     try {
       // Branch by business_type
-      // Template restaurant pour tout type food (resto, boulangerie, pâtisserie, café, glacier)
-      // Template épicerie uniquement pour les Proxi / commerces de proximité
-      const isRestaurant = p.business_type !== "epicerie";
+      // Template RESTAURANT (hero + about + menu + galerie + réservation) :
+      //   uniquement pour les métiers FOOD où la carte + la résa ont du sens.
+      // Template ÉPICERIE (générique, épuré, sans menu/résa) : pour TOUS les
+      //   autres métiers (services beauté/santé/artisans/commerces).
+      // → Évite de voir une salle de sport avec un template "menu entrée/plat/dessert".
+      const FOOD_METIERS = new Set(["restaurant", "boulangerie", "patisserie", "cafe", "glacier"]);
+      const isRestaurant = FOOD_METIERS.has(p.business_type || "");
       const mockupUrl = `${origin}/prospects/${p.slug}`;
 
       let html: string;

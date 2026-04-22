@@ -199,7 +199,22 @@ export async function GET(
     .replace(
       /<li>Emails pros \(contact@votresite\.fr\)<\/li>/g,
       "<li>Sauvegardes automatiques + monitoring</li>"
-    );
+    )
+    // ═══════════════════════════════════════════════════════════════════
+    // PATCH PRIX 599€ → 320€ TTC
+    // Les maquettes stockées en DB avant le changement de prix affichent
+    // encore 599€. On remplace à la volée pour que les prospects voient
+    // le nouveau prix quel que soit l'ancienneté de la maquette.
+    // ═══════════════════════════════════════════════════════════════════
+    .replace(/599\s*€\s*TTC/g, "320 € TTC")
+    .replace(/599\s*€(?!\w)/g, "320 €")
+    .replace(/599,00\s*€/g, "320,00 €")
+    .replace(/599\s*€/g, "320 €")
+    .replace(/3\s*×\s*199,67\s*€/g, "3 × 106,67 €")
+    .replace(/199,67\s*€/g, "106,67 €")
+    .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 320")
+    // Prix détecté dans les commentaires HTML ou métadonnées
+    .replace(/prix\s*[:=]\s*599/gi, "prix: 320");
 
   return new NextResponse(patchedHtml, {
     headers: {

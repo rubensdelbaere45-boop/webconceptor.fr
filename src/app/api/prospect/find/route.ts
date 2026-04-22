@@ -732,6 +732,7 @@ export async function POST(req: NextRequest) {
   const stats = {
     found: 0, inserted: 0,
     skippedNearby: 0, skippedDuplicate: 0, skippedLowRating: 0, skippedNoEmail: 0,
+    skippedFranchise: 0, // prospects franchisés (Basic-Fit, McDo, etc.) skippés
     withEmail: 0,
     noSite: 0, poorSite: 0, averageSite: 0, goodSite: 0,
     timedOut: 0, // places ignorées parce qu'on a dépassé le budget temps
@@ -746,6 +747,52 @@ export async function POST(req: NextRequest) {
   // email ne sert à rien → gaspillage de crédits Supabase + DB polluée).
   // On peut explicitement désactiver avec strict_email: false si besoin.
   const strictEmail = rawBody.strict_email !== false;
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLACKLIST FRANCHISES & CHAÎNES
+  // Ces enseignes sont franchisées → elles ont déjà un site corporate
+  // national. Inutile de les prospecter : 0 chance de conversion +
+  // gaspillage de crédits Brevo + temps scraping.
+  // On skip si le nom contient un des termes ci-dessous (case-insensitive).
+  // ═══════════════════════════════════════════════════════════════
+  const FRANCHISE_BLACKLIST = [
+    // Sport / fitness
+    "basic-fit", "basic fit", "basicfit", "fitness park", "on air fitness",
+    "l'orange bleue", "keepcool", "keep cool", "magic form", "club med gym",
+    "gymlib", "neoness", "cmg sports", "planet fitness",
+    // Food chaînes
+    "mcdonald", "mcdo", "burger king", "kfc", "quick", "subway", "starbucks",
+    "paul", "brioche dorée", "la mie caline", "five guys", "la pataterie",
+    "courtepaille", "buffalo grill", "la boucherie", "memphis", "hippopotamus",
+    "léon de bruxelles", "flunch", "bistro régent", "del arte", "pizza hut",
+    "domino", "la pizza de nico", "basilic & co", "pomme de pain",
+    "columbus café", "pret a manger", "pret manger", "exki", "franprix",
+    "carrefour express", "carrefour city", "carrefour market", "monoprix",
+    "casino shop", "spar", "vival", "utile", "g20", "lidl", "aldi",
+    "leader price", "picard", "grand frais", "naturalia", "biocoop",
+    // Beauté / coiffure
+    "jean louis david", "saint algue", "franck provost", "camille albane",
+    "dessange", "coiff & co", "coiff&co", "coiff and co", "tchip",
+    "yves rocher", "l'occitane", "marionnaud", "sephora", "nocibé",
+    "body minute", "séphora", "the body shop", "lush", "kiko",
+    // Auto
+    "speedy", "midas", "feu vert", "point s", "norauto", "roady", "euromaster",
+    "vulco", "first stop", "ad expert", "carglass", "mondial pare-brise",
+    // Auto-école
+    "ecf", "auto école.com", "permisecolenet", "codes rousseau",
+    "ornikar", "en voiture simone",
+    // Retail
+    "phone house", "generale optique", "optic 2000", "krys", "afflelou",
+    "optical center", "grandoptical", "ekotiq", "acuitis",
+    // Santé chaînes
+    "dentilibre", "dentego", "centre dentaire", "générations dentaire",
+    // Plombier / électricien franchise
+    "elek maison", "plomberie.com", "ménage service",
+  ];
+  const isFranchiseName = (name: string): boolean => {
+    const lower = name.toLowerCase();
+    return FRANCHISE_BLACKLIST.some((f) => lower.includes(f));
+  };
 
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
   // On fixe 80 s pour laisser une marge confortable et garantir une réponse
@@ -768,6 +815,12 @@ export async function POST(req: NextRequest) {
       if (timeLeft() < 8_000) {
         stats.timedOut = places.length - (stats.inserted + stats.skippedNearby + stats.skippedDuplicate + stats.skippedLowRating);
         break;
+      }
+
+      // Blacklist franchises : skip direct (pas de site à leur vendre)
+      if (isFranchiseName(place.displayName.text)) {
+        stats.skippedFranchise++;
+        continue;
       }
 
       // Distance filter (only for Proxi / épicerie prospects)
@@ -915,9 +968,10 @@ export async function POST(req: NextRequest) {
       email?: string;
       lat?: number;
       lng?: number;
-    }, sourcePrefix: "pj" | "osm"): Promise<"inserted" | "duplicate" | "no_email" | "timeout"> {
+    }, sourcePrefix: "pj" | "osm"): Promise<"inserted" | "duplicate" | "no_email" | "timeout" | "franchise"> {
       if (timeLeft() < 8_000) return "timeout";
       if (!p.name || p.name.length < 2) return "duplicate";
+      if (isFranchiseName(p.name)) return "franchise";
 
       // Dédup par téléphone OU name+postal_code
       let existing: { id: string } | null = null;
@@ -1008,6 +1062,8 @@ export async function POST(req: NextRequest) {
             stats.pjSkippedDuplicate++;
           } else if (result === "no_email") {
             stats.skippedNoEmail++;
+          } else if (result === "franchise") {
+            stats.skippedFranchise++;
           } else if (result === "timeout") {
             break;
           }
@@ -1034,6 +1090,8 @@ export async function POST(req: NextRequest) {
             stats.osmSkippedDuplicate++;
           } else if (result === "no_email") {
             stats.skippedNoEmail++;
+          } else if (result === "franchise") {
+            stats.skippedFranchise++;
           } else if (result === "timeout") {
             break;
           }
