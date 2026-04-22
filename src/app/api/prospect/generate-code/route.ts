@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       description: `Site web personnalisé pour ${prospect.name}${prospect.city ? ` — ${prospect.city}` : ""}`,
       client_name: prospect.name,
       client_email: prospect.email || "",
-      price_cents: 59900,
+      price_cents: 32000,
       preview_url: mockupUrl,
       contract_text: contractText,
       status: "sent",
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       (prospect.city ? `📍 ${prospect.city}\n` : "") +
       (prospect.email ? `✉️ ${prospect.email}\n` : "") +
       `\n<b>Code :</b> <code>${code}</code>\n` +
-      `<b>Prix :</b> 599 € TTC (ou 3× sans frais)\n\n` +
+      `<b>Prix :</b> 320 € TTC (ou 3× sans frais)\n\n` +
       `<a href="https://webconceptor.fr/code?c=${code}">Lien direct /code</a>`;
     fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
       method: "POST",

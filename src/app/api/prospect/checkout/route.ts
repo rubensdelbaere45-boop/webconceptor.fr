@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
             ? "Création sur-mesure + hébergement + modifications illimitées"
             : "Création sur-mesure, livraison 5 jours",
         },
-        unit_amount: 59900,
+        unit_amount: 32000,
       },
       quantity: 1,
     },

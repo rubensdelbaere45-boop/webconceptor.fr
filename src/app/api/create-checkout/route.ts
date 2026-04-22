@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
             name: `Site web WebConceptor — ${project.title}`,
             description: "Creation de site web professionnel sur-mesure (livraison 5 jours)",
           },
-          unit_amount: project.price_cents || 59900,
+          unit_amount: project.price_cents || 32000,
         },
         quantity: 1,
       },
@@ -144,8 +144,8 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       // Méthodes de paiement :
       // - 'card' : carte bancaire classique (Visa/MC/Amex)
-      // - 'klarna' : Paiement en 3× OU 4× sans frais (client paye 200€/mois,
-      //   tu encaisses 599€ immédiatement, Klarna prend le risque)
+      // - 'klarna' : Paiement en 3× OU 4× sans frais (client paye ~107€/mois,
+      //   tu encaisses 320€ immédiatement, Klarna prend le risque)
       // - 'paypal' : au cas où certains préfèrent
       // Si Klarna pas encore activé dans le dashboard Stripe, ignoré silencieusement
       payment_method_types: ["card", "klarna", "paypal"],

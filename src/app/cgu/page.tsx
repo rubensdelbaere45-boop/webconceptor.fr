@@ -20,7 +20,7 @@ export default function CGU() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 2 — Prestations</h2>
-            <p>WebConceptor propose la creation de sites web professionnels sur-mesure. Le prix de base est a partir de 599 euros (paiement unique). Une formule d&apos;hebergement et de maintenance optionnelle est disponible a 50 euros par mois, sans engagement.</p>
+            <p>WebConceptor propose la creation de sites web professionnels sur-mesure. Le prix de base est a partir de 320 euros (paiement unique). Une formule d&apos;hebergement et de maintenance optionnelle est disponible a 50 euros par mois, sans engagement.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 3 — Processus de commande</h2>

@@ -1256,7 +1256,7 @@ ${
 
 <!-- Sticky CTA Bar — 'Obtenir ce site' avec urgence -->
 <div class="wc-cta-bar">
-  <span class="wc-cta-bar-text">🔥 <strong>Offre de lancement : 599 € TTC</strong> — livraison 5 jours, paiement sécurisé Stripe</span>
+  <span class="wc-cta-bar-text">🔥 <strong>Offre de lancement : 320 € TTC</strong> — livraison 5 jours, paiement sécurisé Stripe</span>
   <button class="wc-cta-bar-btn" onclick="pmOpen()">J'achète ce site →</button>
 </div>
 
@@ -1283,8 +1283,8 @@ ${
       <div class="pm-plans">
         <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">Simple</div>
-          <div class="pm-plan-price">599 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
-          <div class="pm-plan-price-sub">ou 3× sans frais (3 × 199,67 €)</div>
+          <div class="pm-plan-price">320 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price-sub">ou 3× sans frais (3 × 106,67 €)</div>
           <ul>
             <li>✓ Livraison sous 5 jours</li>
             <li>✓ Design premium responsive</li>
@@ -1295,7 +1295,7 @@ ${
         </div>
         <div class="pm-plan selected recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
           <div class="pm-plan-title">Sérénité</div>
-          <div class="pm-plan-price">599 € <span style="font-size:13px;opacity:0.6">+ 50 €/mois</span></div>
+          <div class="pm-plan-price">320 € <span style="font-size:13px;opacity:0.6">+ 50 €/mois</span></div>
           <div class="pm-plan-price-sub">Tout inclus, zéro prise de tête</div>
           <ul>
             <li>✓ <strong>Votre nom de domaine</strong> (.fr, .com, .eu…)</li>
@@ -1379,10 +1379,10 @@ ${
       </div>
 
       <div class="pm-total">
-        <div class="pm-total-row"><span>Site web</span><span>599,00 €</span></div>
+        <div class="pm-total-row"><span>Site web</span><span>320,00 €</span></div>
         <div class="pm-total-row" id="pm-total-domain" style="display:none"><span id="pm-total-domain-label">Nom de domaine</span><span id="pm-total-domain-price">—</span></div>
         <div class="pm-total-row" id="pm-total-serenite" style="display:none"><span>Formule Sérénité (1er mois)</span><span>50,00 €</span></div>
-        <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">599,00 €</span></div>
+        <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">320,00 €</span></div>
       </div>
 
       <button class="pm-submit" id="pm-submit" onclick="pmSubmit()">Payer en ligne (Stripe)</button>
@@ -1688,7 +1688,7 @@ function pmSelectPlan(plan) {
 }
 
 function pmUpdateTotal() {
-  let cents = 59900;
+  let cents = 32000;
   if (PM.plan === "serenite") {
     cents += 5000;
     if (PM.domainAvailable) cents += PM.domainPriceCents;

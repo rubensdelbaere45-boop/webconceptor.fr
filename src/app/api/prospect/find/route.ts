@@ -843,6 +843,12 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      // Mode strict : skip si pas d'email (pas d'appels = pas de valeur pour un prospect sans email)
+      if (strictEmail && !email) {
+        stats.skippedNoEmail++;
+        continue;
+      }
+
       // Extract top Google reviews
       const topReviews = extractTopReviews(place);
 

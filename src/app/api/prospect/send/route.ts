@@ -186,7 +186,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       "Site vitrine personnalisé avec votre identité",
       "Module de réservation en ligne intégré (sans commission)",
       "Espace admin pour gérer la carte en 2 minutes",
-      "599 € TTC ou 3× sans frais (Klarna)",
+      "320 € TTC ou 3× sans frais (Klarna)",
       "Option Sérénité 50 €/mois : mises à jour illimitées",
     ],
     emailSubject: `Maquette de votre site pour ${prospect.name}`,
@@ -315,7 +315,7 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - Site actuel 'moderne', 'jeune', 'branché', 'festif' → 'modern' ou 'sunny'.
     - Site actuel 'élégant', 'raffiné', 'gastronomique' → 'classic'.
     Le prospect doit se dire 'c'est MON établissement' en voyant la maquette, pas 'ça ne me ressemble pas'. Les couleurs dominantes (si fournies) doivent t'aider à confirmer ton choix de vibe.",
-  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 599€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
+  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 320€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
   "auditTeaser": "SI le prospect a un site 'poor' ou 'average' (donc un site qui existe mais qui peut être amélioré) : UNE SEULE phrase courte (max 15 mots), MYSTÉRIEUSE, qui évoque VAGUEMENT 1-2 axes d'amélioration sans tout révéler. Ex: 'notamment sur votre visibilité dans les recherches Google locales et l'affichage sur mobile' ou 'notamment sur la structure SEO et l'expérience des visiteurs mobiles'. Ne JAMAIS lister tous les problèmes, rester dans le teaser. Si le prospect n'a pas de site (site_quality='none'), retourne une chaîne vide ''.",
   "emailSubject": "Objet d'email COURT (45 caractères max) et PERCUTANT. Doit donner envie de cliquer SANS sembler commercial. Évite 'offre', 'promotion', 'opportunité'. Format préférentiel : 'Maquette prête pour [nom établissement]' ou '[Nom] — votre site en 5 jours'. Ajouter l'emoji 🎯 ou ✨ autorisé. PAS de MAJUSCULES TOTALES.",
   "emailOpening": "Bonjour [prénom si on l'a, sinon neutre], (avec virgule)",
@@ -754,8 +754,8 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
   </ul>
   <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #0066ff;border-radius:6px;padding:20px 24px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
-    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">599 € TTC tout compris</p>
-    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 199,67 €</p>
+    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">320 € TTC tout compris</p>
+    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
     <p style="font-size:12px;color:#1e40af;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Site à vous à vie • ✓ Satisfait ou remboursé 14 jours</p>
   </div>
 
@@ -822,8 +822,8 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
-    <p style="font-family:Georgia,serif;font-size:22px;color:#1a1310;margin:0 0 4px;font-weight:600">599 € TTC tout compris</p>
-    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 199,67 €</p>
+    <p style="font-family:Georgia,serif;font-size:22px;color:#1a1310;margin:0 0 4px;font-weight:600">320 € TTC tout compris</p>
+    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
     <p style="font-size:12px;color:#92400e;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
   </div>
 

@@ -102,7 +102,7 @@ const faqs = [
   },
   {
     q: "Que se passe-t-il si je n\u2019aime pas le résultat ?",
-    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 599€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
+    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 320€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
   },
   {
     q: "Le site est-il vraiment à moi après paiement ?",
@@ -311,7 +311,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Design premium, livraison en 5 jours. <strong>À partir de 599 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
+            Design premium, livraison en 5 jours. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
             <span className="text-[#a3a3a3] text-base">Hébergement &amp; maintenance en option — 50 €/mois.</span>
           </motion.p>
 
@@ -591,12 +591,12 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={stagger(0.15)} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="max-w-3xl mx-auto grid md:grid-cols-2 gap-5">
-            {/* 599€ */}
+            {/* 320€ */}
             <motion.div variants={scaleIn} whileHover={{ y: -4 }} className="bg-[#0a0a0a] rounded-2xl p-8 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">
                 <p className="text-[12px] text-white/40 mb-1">À partir de</p>
-                <p className="text-5xl font-extrabold tracking-tight mb-1">599 <span className="text-xl font-medium text-white/50">&euro;</span></p>
+                <p className="text-5xl font-extrabold tracking-tight mb-1">320 <span className="text-xl font-medium text-white/50">&euro;</span></p>
                 <p className="text-[13px] text-white/40 mb-8">Paiement unique &middot; Livraison 5 jours</p>
                 <div className="space-y-2.5 mb-8">
                   {included.map((i) => (

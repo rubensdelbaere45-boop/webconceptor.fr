@@ -325,7 +325,7 @@ export default function AdminProspectsPage() {
       navigator.clipboard?.writeText(p.project_code).catch(() => {});
       return;
     }
-    if (!confirm(`Générer un code PIN pour ${p.name} ?\n\nCela créera un projet Stripe à 599 € lié à sa maquette. Code seulement, pas d'email envoyé.`)) {
+    if (!confirm(`Générer un code PIN pour ${p.name} ?\n\nCela créera un projet Stripe à 320 € lié à sa maquette. Code seulement, pas d'email envoyé.`)) {
       return;
     }
     setLoading(true);

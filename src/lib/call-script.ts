@@ -57,9 +57,9 @@ const FALLBACK_SCRIPT: CallScript = {
   ],
   objectionHandlers: [
     "« Je dois y réfléchir » → Bien sûr. Je vous rappelle quand ? Demain matin ou jeudi après-midi vous conviennent ?",
-    "« C'est trop cher » → Je comprends. Pour info c'est 599 € TTC tout compris, ou en 3 fois sans frais via Klarna (3 × 199,67 €). À l'usage vous récupérez ça en quelques mois de réservations.",
+    "« C'est trop cher » → Je comprends. Pour info c'est 320 € TTC tout compris, ou en 3 fois sans frais via Klarna (3 × 106,67 €). À l'usage vous récupérez ça en quelques mois de réservations.",
     "« Envoyez-moi plus d'infos par mail » → Je peux bien sûr, mais autant en parler directement maintenant qu'on est tous les deux sur la maquette. Qu'est-ce qui vous manque pour décider ?",
-    "« Je veux le prendre maintenant » → Parfait ! Je vous envoie le lien de paiement Stripe dans la minute — en une fois (599 € TTC) ou en 3 fois sans frais via Klarna, comme vous préférez.",
+    "« Je veux le prendre maintenant » → Parfait ! Je vous envoie le lien de paiement Stripe dans la minute — en une fois (320 € TTC) ou en 3 fois sans frais via Klarna, comme vous préférez.",
   ],
 };
 
@@ -99,8 +99,8 @@ Infos prospect :
 ${infoLines}
 
 Contexte offre WebConceptor (à mentionner SEULEMENT si le prospect demande) :
-- Site vitrine premium sur-mesure : 599 € TTC
-- Paiement en 3× sans frais via Klarna (3 × 199,67 €)
+- Site vitrine premium sur-mesure : 320 € TTC
+- Paiement en 3× sans frais via Klarna (3 × 106,67 €)
 - Livraison en 5 jours (7 avec nom de domaine)
 - Module réservation en ligne intégré (0 commission vs TheFork 2,50 €/couvert)
 - Espace admin simple
