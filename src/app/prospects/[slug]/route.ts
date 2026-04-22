@@ -213,10 +213,99 @@ export async function GET(
     .replace(/3\s*×\s*199,67\s*€/g, "3 × 106,67 €")
     .replace(/199,67\s*€/g, "106,67 €")
     .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 320")
-    // Prix détecté dans les commentaires HTML ou métadonnées
     .replace(/prix\s*[:=]\s*599/gi, "prix: 320");
 
-  return new NextResponse(patchedHtml, {
+  // ═══════════════════════════════════════════════════════════════════
+  // INJECTION LEVIERS DE CONVERSION (pour les anciennes maquettes)
+  // Les maquettes générées AVANT le commit 3eb4e0c n'ont pas :
+  //   - compteur 48h dans la CTA bar
+  //   - chat IA proactif après 30s
+  //   - cart abandon tracking quand modal d'achat ouvert
+  //   - badge -47% prix barré
+  // On injecte un <script> qui ajoute ces features à la volée si absents.
+  // Les nouvelles maquettes les ont déjà → le script détecte et skip.
+  // ═══════════════════════════════════════════════════════════════════
+  const mockupSlug = slug.replace(/[^a-z0-9_-]/gi, "").slice(0, 100);
+  const injectedHtml = patchedHtml.includes("wc-countdown")
+    ? patchedHtml // déjà les nouveaux features
+    : patchedHtml.replace(
+        /<\/body>/i,
+        `<script>
+(function wcInjectLevers() {
+  var SLUG = ${JSON.stringify(mockupSlug)};
+
+  // LEVIER 1a : compteur 48h dans la CTA bar
+  var ctaText = document.querySelector('.wc-cta-bar-text');
+  if (ctaText && ctaText.innerHTML.indexOf('320') !== -1 && ctaText.innerHTML.indexOf('Offre expire') === -1) {
+    try {
+      var SKEY = 'wc_mockup_deadline_' + SLUG;
+      var deadline = Number(localStorage.getItem(SKEY));
+      if (!deadline || isNaN(deadline) || deadline < Date.now()) {
+        deadline = Date.now() + 48 * 60 * 60 * 1000;
+        localStorage.setItem(SKEY, String(deadline));
+      }
+      ctaText.innerHTML = '🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong style="color:#c19a56">320 € TTC</strong> — <span id="wc-cd-inj">Offre expire dans <strong>--:--:--</strong></span>';
+      var update = function() {
+        var el = document.getElementById('wc-cd-inj');
+        if (!el) return;
+        var diff = deadline - Date.now();
+        if (diff <= 0) { el.innerHTML = '<strong style="color:#ef4444">Offre expirée — contactez-nous</strong>'; return; }
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        el.innerHTML = 'Offre expire dans <strong>' + pad(h) + ':' + pad(m) + ':' + pad(s) + '</strong>';
+      };
+      update();
+      setInterval(update, 1000);
+    } catch (e) {}
+  }
+
+  // LEVIER 2 : cart abandon tracking sur le bouton "J'achète"
+  var ctaBtn = document.querySelector('.wc-cta-bar-btn');
+  if (ctaBtn && !ctaBtn.hasAttribute('data-wc-tracked')) {
+    ctaBtn.setAttribute('data-wc-tracked', '1');
+    ctaBtn.addEventListener('click', function() {
+      try {
+        fetch('/api/prospect/modal-opened', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prospect_slug: SLUG }),
+        }).catch(function() {});
+      } catch (e) {}
+    });
+  }
+
+  // LEVIER 3 : chat IA proactif après 30s (badge rouge + message d'accueil)
+  try {
+    var PKEY = 'wc_chat_pinged_' + SLUG;
+    if (!sessionStorage.getItem(PKEY)) {
+      setTimeout(function() {
+        var panel = document.getElementById('wc-chat-panel');
+        var btn = document.getElementById('wc-chat-btn');
+        if (!panel || !btn || panel.classList.contains('open')) return;
+        var badge = document.createElement('span');
+        badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff';
+        badge.textContent = '1';
+        btn.style.position = 'relative';
+        btn.appendChild(badge);
+        var msgs = document.getElementById('wc-chat-messages');
+        if (msgs) {
+          var m = document.createElement('div');
+          m.className = 'wc-chat-msg bot';
+          m.innerHTML = "Bonjour 👋 Je vois que vous consultez votre maquette. Avez-vous des questions sur le prix, la livraison ou la personnalisation ? Je réponds instantanément.";
+          msgs.appendChild(m);
+        }
+        try { sessionStorage.setItem(PKEY, '1'); } catch (e) {}
+      }, 30000);
+    }
+  } catch (e) {}
+})();
+</script>
+</body>`
+      );
+
+  return new NextResponse(injectedHtml, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
