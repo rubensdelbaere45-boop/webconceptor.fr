@@ -92,8 +92,15 @@ export async function POST(req: NextRequest) {
     buyer.nom = parts.slice(1).join(" ").slice(0, 60);
   }
 
-  if (!buyer.prenom || !buyer.nom || !buyer.email || !buyer.telephone || !buyer.adresse || !buyer.ville || !buyer.cp) {
-    return NextResponse.json({ error: "Coordonnées acheteur incomplètes (prénom, nom, email, téléphone, adresse, ville, code postal)" }, { status: 400 });
+  // Adresse, CP, ville requis UNIQUEMENT pour Sérénité (enregistrement domaine IONOS).
+  // Pour la formule Simple, on se contente de prénom + nom + email + téléphone
+  // → moins de friction au checkout = +conversion.
+  const needsFullAddress = plan === "serenite";
+  if (!buyer.prenom || !buyer.nom || !buyer.email || !buyer.telephone) {
+    return NextResponse.json({ error: "Prénom, nom, email et téléphone requis" }, { status: 400 });
+  }
+  if (needsFullAddress && (!buyer.adresse || !buyer.ville || !buyer.cp)) {
+    return NextResponse.json({ error: "Adresse complète requise pour la formule Sérénité (enregistrement du domaine)" }, { status: 400 });
   }
   if (!EMAIL_RE.test(buyer.email)) {
     return NextResponse.json({ error: "Email invalide" }, { status: 400 });
@@ -101,7 +108,7 @@ export async function POST(req: NextRequest) {
   if (buyer.telephone.length < 6) {
     return NextResponse.json({ error: "Téléphone invalide" }, { status: 400 });
   }
-  if (!/^\d{4,6}$/.test(buyer.cp)) {
+  if (needsFullAddress && !/^\d{4,6}$/.test(buyer.cp)) {
     return NextResponse.json({ error: "Code postal invalide" }, { status: 400 });
   }
 

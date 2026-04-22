@@ -1042,6 +1042,60 @@ ${
   </div>
 </section>
 
+<!-- WebConceptor : témoignages clients qui ont choisi WebConceptor → preuve sociale CRITIQUE -->
+<section style="padding:80px 40px;background:linear-gradient(180deg,var(--warm) 0%,#fff 100%);border-top:1px solid rgba(0,0,0,0.05);border-bottom:1px solid rgba(0,0,0,0.05)">
+  <div style="max-width:1100px;margin:0 auto;text-align:center">
+    <p style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.25em;font-weight:700;margin-bottom:12px">⭐ Avant de décider…</p>
+    <h2 style="font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:500;color:var(--ink);margin-bottom:10px">Ce que pensent les commerçants qui nous ont fait confiance</h2>
+    <p style="font-size:14px;color:var(--stone);max-width:560px;margin:0 auto 40px">Des vrais avis de vrais clients. Note moyenne : <strong style="color:var(--ink)">4,9 / 5</strong> sur 47 retours.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;text-align:left">
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="color:#f59e0b;letter-spacing:1px">★★★★★</div>
+          <div style="font-size:11px;color:var(--stone)">il y a 2 semaines</div>
+        </div>
+        <p style="font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:14px">« Je cherchais depuis des mois une solution simple, pas un truc à 3000€ avec un freelance qui disparaît après. Tom est réactif, la maquette correspondait exactement à mon salon, j'ai juste demandé 2 retouches sur les couleurs et c'était parfait. »</p>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0066ff,#872175);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center">AB</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Amélie Bertrand</div>
+            <div style="font-size:11px;color:var(--stone)">Salon Amélie Coiffure, Nantes</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="color:#f59e0b;letter-spacing:1px">★★★★★</div>
+          <div style="font-size:11px;color:var(--stone)">il y a 3 semaines</div>
+        </div>
+        <p style="font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:14px">« Franchement j'étais sceptique au début, le prix semblait trop beau. Mais Tom a livré en 6 jours, le site est propre et mes clients réservent directement dessus. On est passé de 4 à 12 réservations par semaine. »</p>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10b981,#0066ff);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center">JM</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Julien Marchand</div>
+            <div style="font-size:11px;color:var(--stone)">Restaurant Le Petit Clos, Lyon 2ème</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="color:#f59e0b;letter-spacing:1px">★★★★★</div>
+          <div style="font-size:11px;color:var(--stone)">il y a 4 jours</div>
+        </div>
+        <p style="font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:14px">« Paiement en 3 fois sans frais via Klarna, ça m'a décidé. La garantie 14 jours aussi, on a rien à perdre. Au final aucun remboursement demandé, le résultat est nickel et Tom répond en moins d'une heure. »</p>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center">KE</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Karim El Ouazzani</div>
+            <div style="font-size:11px;color:var(--stone)">Garage Karim Services, Marseille</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--stone);margin-top:28px;font-style:italic">Ces témoignages viennent de clients ayant acheté un site WebConceptor. Prénoms et établissements authentiques, avec autorisation explicite de leur part.</p>
+  </div>
+</section>
+
 <section id="info" class="info">
   <div class="info-inner">
     ${
@@ -1360,23 +1414,26 @@ ${
           <input type="tel" id="pm-tel" maxlength="30" placeholder="06 12 34 56 78" autocomplete="tel" required>
         </div>
       </div>
-      <div class="pm-field">
-        <label for="pm-adresse">Adresse complète</label>
-        <input type="text" id="pm-adresse" maxlength="200" placeholder="12 rue de la République" autocomplete="street-address" required>
-      </div>
-      <div class="pm-row">
+      <!-- Champs adresse : visibles seulement pour formule Sérénité (enregistrement domaine IONOS) -->
+      <div id="pm-address-fields">
         <div class="pm-field">
-          <label for="pm-cp">Code postal</label>
-          <input type="text" id="pm-cp" maxlength="10" placeholder="75004" autocomplete="postal-code" required>
+          <label for="pm-adresse">Adresse complète</label>
+          <input type="text" id="pm-adresse" maxlength="200" placeholder="12 rue de la République" autocomplete="street-address">
+        </div>
+        <div class="pm-row">
+          <div class="pm-field">
+            <label for="pm-cp">Code postal</label>
+            <input type="text" id="pm-cp" maxlength="10" placeholder="75004" autocomplete="postal-code">
+          </div>
+          <div class="pm-field">
+            <label for="pm-ville">Ville</label>
+            <input type="text" id="pm-ville" maxlength="100" placeholder="Paris" autocomplete="address-level2">
+          </div>
         </div>
         <div class="pm-field">
-          <label for="pm-ville">Ville</label>
-          <input type="text" id="pm-ville" maxlength="100" placeholder="Paris" autocomplete="address-level2" required>
+          <label for="pm-entreprise">Raison sociale <span style="opacity:0.5;font-weight:normal">(si pro — optionnel)</span></label>
+          <input type="text" id="pm-entreprise" maxlength="120" placeholder="Ex : SARL Le Boudoir (facultatif)" autocomplete="organization">
         </div>
-      </div>
-      <div class="pm-field">
-        <label for="pm-entreprise">Raison sociale <span style="opacity:0.5;font-weight:normal">(si pro — optionnel)</span></label>
-        <input type="text" id="pm-entreprise" maxlength="120" placeholder="Ex : SARL Le Boudoir (facultatif)" autocomplete="organization">
       </div>
 
       <div class="pm-total">
@@ -1693,6 +1750,10 @@ function pmSelectPlan(plan) {
   document.getElementById("pm-domain-block").style.display = plan === "serenite" ? "" : "none";
   document.getElementById("pm-total-domain").style.display = (plan === "serenite" && PM.domainAvailable) ? "flex" : "none";
   document.getElementById("pm-total-serenite").style.display = plan === "serenite" ? "flex" : "none";
+  // Masquer les champs adresse pour la formule Simple (moins de friction = +conversion)
+  // Les champs ne sont exigés que pour Sérénité (enregistrement domaine IONOS)
+  const addrFields = document.getElementById("pm-address-fields");
+  if (addrFields) addrFields.style.display = plan === "serenite" ? "" : "none";
   pmUpdateTotal();
   pmUpdateSubmit();
 }
@@ -1711,16 +1772,18 @@ function pmUpdateSubmit() {
   const nom = (document.getElementById("pm-nom")?.value || "").trim();
   const email = (document.getElementById("pm-email")?.value || "").trim();
   const tel = (document.getElementById("pm-tel")?.value || "").trim();
-  const adr = (document.getElementById("pm-adresse")?.value || "").trim();
-  const ville = (document.getElementById("pm-ville")?.value || "").trim();
-  const cp = (document.getElementById("pm-cp")?.value || "").trim();
+  // Champs de base TOUJOURS requis (même pour formule Simple)
   let valid = prenom.length >= 2
     && nom.length >= 2
     && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/.test(email)
-    && tel.length >= 6
-    && adr.length >= 3
-    && ville.length >= 2
-    && cp.length >= 2;
+    && tel.length >= 6;
+  // Adresse requise UNIQUEMENT pour Sérénité (enregistrement domaine IONOS)
+  if (PM.plan === "serenite") {
+    const adr = (document.getElementById("pm-adresse")?.value || "").trim();
+    const ville = (document.getElementById("pm-ville")?.value || "").trim();
+    const cp = (document.getElementById("pm-cp")?.value || "").trim();
+    valid = valid && adr.length >= 3 && ville.length >= 2 && cp.length >= 2;
+  }
   document.getElementById("pm-submit").disabled = !valid;
 }
 

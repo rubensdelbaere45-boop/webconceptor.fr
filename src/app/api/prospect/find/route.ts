@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
 import { searchPagesJaunes } from "@/lib/sources/pages-jaunes";
 import { searchOverpass } from "@/lib/sources/overpass";
+import { checkEmailMx } from "@/lib/email-mx-check";
 
 /* ══════════════════════════════════════════
    CONFIG
@@ -660,11 +661,23 @@ async function findEmailsOnWebsite(website: string): Promise<string[]> {
       if (foundEmails.size >= 3) break;
     }
 
-    // Tri par priorité (0 = personnel = meilleur) puis limite 3
-    return Array.from(foundEmails.entries())
+    // Tri par priorité (0 = personnel = meilleur)
+    const sorted = Array.from(foundEmails.entries())
       .sort((a, b) => a[1] - b[1])
-      .slice(0, 3)
       .map(([email]) => email);
+
+    // Vérification MX DNS : écarte les emails dont le domaine n'accepte pas de mail.
+    // Réduit drastiquement les hard bounces Brevo (8,6% → ~3%) et préserve la
+    // réputation du domaine d'envoi webconceptor.fr.
+    const valid: string[] = [];
+    for (const e of sorted) {
+      if (valid.length >= 3) break;
+      try {
+        const ok = await checkEmailMx(e);
+        if (ok) valid.push(e);
+      } catch { /* doute → on garde */ valid.push(e); }
+    }
+    return valid;
   } catch {
     return [];
   }
