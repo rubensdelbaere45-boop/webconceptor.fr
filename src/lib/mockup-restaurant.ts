@@ -1256,7 +1256,7 @@ ${
 
 <!-- Sticky CTA Bar — 'Obtenir ce site' avec urgence -->
 <div class="wc-cta-bar">
-  <span class="wc-cta-bar-text">🔥 <strong>Offre de lancement : 320 € TTC</strong> — livraison 5 jours, paiement sécurisé Stripe</span>
+  <span class="wc-cta-bar-text">🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong>320 € TTC</strong> — <span id="wc-countdown">Offre expire dans <strong>--:--:--</strong></span></span>
   <button class="wc-cta-bar-btn" onclick="pmOpen()">J'achète ce site →</button>
 </div>
 
@@ -1283,7 +1283,8 @@ ${
       <div class="pm-plans">
         <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">Simple</div>
-          <div class="pm-plan-price">320 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price"><span style="text-decoration:line-through;opacity:0.4;font-size:20px;font-weight:400;margin-right:8px">599€</span>320 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price-sub" style="color:#c19a56;font-weight:600">⚡ -47% — Offre de lancement</div>
           <div class="pm-plan-price-sub">ou 3× sans frais (3 × 106,67 €)</div>
           <ul>
             <li>✓ Livraison sous 5 jours</li>
@@ -1669,6 +1670,15 @@ const PM = {
 function pmOpen() {
   document.getElementById("pm-overlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  // Cart abandon tracking : signale à Rubens qu'un prospect a ouvert le modal
+  // d'achat. Si 1h plus tard il n'a pas payé, relance auto par email.
+  try {
+    fetch("/api/prospect/modal-opened", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prospect_slug: ${JSON.stringify(prospect.slug)} }),
+    }).catch(() => {});
+  } catch {}
 }
 function pmClose() {
   document.getElementById("pm-overlay").classList.remove("open");
@@ -1839,6 +1849,37 @@ pmUpdateSubmit();
 
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { pmClose(); bkClose(); } });
 
+// ─── Compteur 48h "Offre expire dans..." ──────────────
+// Deadline = 48h après la PREMIÈRE ouverture de cette maquette par CE visiteur
+// (stocké dans localStorage pour la persistance cross-session). Si c'est la
+// toute première visite, on initialise now + 48h.
+(function wcInitCountdown() {
+  try {
+    const STORAGE_KEY = "wc_mockup_deadline_" + ${JSON.stringify(prospect.slug)};
+    let deadline = Number(localStorage.getItem(STORAGE_KEY));
+    if (!deadline || isNaN(deadline) || deadline < Date.now()) {
+      deadline = Date.now() + 48 * 60 * 60 * 1000;
+      localStorage.setItem(STORAGE_KEY, String(deadline));
+    }
+    const el = document.getElementById("wc-countdown");
+    const update = () => {
+      if (!el) return;
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        el.innerHTML = "<strong>Offre expirée — contactez-nous pour un devis</strong>";
+        return;
+      }
+      const h = Math.floor(diff / (60 * 60 * 1000));
+      const m = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+      const s = Math.floor((diff % (60 * 1000)) / 1000);
+      const pad = (n) => String(n).padStart(2, "0");
+      el.innerHTML = "Offre expire dans <strong>" + pad(h) + ":" + pad(m) + ":" + pad(s) + "</strong>";
+    };
+    update();
+    setInterval(update, 1000);
+  } catch { /* localStorage bloqué → pas grave */ }
+})();
+
 // ─── Chat widget (assistant IA) ─────────────────────
 const WC_CHAT = {
   slug: ${JSON.stringify(prospect.slug)},
@@ -1926,6 +1967,37 @@ async function wcChatSend() {
   sendBtn.disabled = false;
   input.focus();
 }
+
+// ─── Chat PROACTIF : s'ouvre tout seul après 30s sur la page ───
+// Si le prospect n'a pas déjà interagi, on affiche un badge "💬 1 message"
+// sur le bouton pour attirer l'attention. Ne s'ouvre qu'une fois par session.
+(function wcInitProactiveChat() {
+  const STORAGE_KEY = "wc_chat_pinged_" + ${JSON.stringify(prospect.slug)};
+  try {
+    if (sessionStorage.getItem(STORAGE_KEY)) return; // déjà vu dans cette session
+  } catch {}
+  setTimeout(() => {
+    const panel = document.getElementById("wc-chat-panel");
+    const btn = document.getElementById("wc-chat-btn");
+    if (!panel || !btn) return;
+    if (panel.classList.contains("open")) return;
+    // Badge rouge "1" sur le bouton + pulse d'animation
+    const badge = document.createElement("span");
+    badge.style.cssText = "position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:wcPulse 1.5s ease-in-out infinite";
+    badge.textContent = "1";
+    btn.style.position = "relative";
+    btn.appendChild(badge);
+    // Ajoute un message dans le chat (visible à l'ouverture)
+    const msgsContainer = document.getElementById("wc-chat-messages");
+    if (msgsContainer) {
+      const msg = document.createElement("div");
+      msg.className = "wc-chat-msg bot";
+      msg.innerHTML = "Bonjour 👋 Je vois que vous consultez la maquette de <strong>${esc(prospect.name)}</strong>. Avez-vous des questions sur le prix, la livraison ou la personnalisation ? Je réponds instantanément.";
+      msgsContainer.appendChild(msg);
+    }
+    try { sessionStorage.setItem(STORAGE_KEY, "1"); } catch {}
+  }, 30000);
+})();
 
 // ─── Modal "Demander une modification" ─────────────
 function wcMsgOpen() {

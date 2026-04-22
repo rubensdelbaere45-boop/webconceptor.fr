@@ -753,7 +753,7 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
     <li>Un design responsive (PC, tablette, téléphone)</li>
   </ul>
   <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #0066ff;border-radius:6px;padding:20px 24px;margin:24px 0;text-align:center">
-    <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
+    <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
     <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">320 € TTC tout compris</p>
     <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
     <p style="font-size:12px;color:#1e40af;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Site à vous à vie • ✓ Satisfait ou remboursé 14 jours</p>
@@ -821,10 +821,12 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
   </div>
 
   <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
-    <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🎯 Offre de lancement</p>
-    <p style="font-family:Georgia,serif;font-size:22px;color:#1a1310;margin:0 0 4px;font-weight:600">320 € TTC tout compris</p>
+    <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
+    <p style="margin:0 0 4px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">320 € TTC</span></p>
     <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
-    <p style="font-size:12px;color:#92400e;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
+    <p style="font-size:12px;color:#92400e;margin:0 0 14px;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
+    <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;box-shadow:0 4px 12px rgba(193,154,86,0.4)">Voir ma maquette →</a>
+    <p style="font-size:11px;color:#92400e;margin:10px 0 0;font-weight:600">⏳ Offre valable 48 h</p>
   </div>
 
   <p style="font-size:14px;color:#4a4340;margin-bottom:14px;line-height:1.7"><strong>Concrètement, avec ce site vous gagnez :</strong></p>
