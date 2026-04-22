@@ -21,12 +21,15 @@ function getSupabaseAdmin() {
   );
 }
 
+// Accepte UNIQUEMENT les mobiles français 06/07 (pas les fixes 01-05, 08, 09 où
+// le SMS ne sera jamais lu). Retourne null si numéro invalide ou non-mobile.
 function toMobileE164(raw: string): string | null {
   const digits = String(raw || "").replace(/[^0-9+]/g, "");
   if (!digits) return null;
   let normalized = digits;
   if (normalized.startsWith("+33")) normalized = "0" + normalized.slice(3);
   else if (normalized.startsWith("33") && normalized.length === 11) normalized = "0" + normalized.slice(2);
+  // Strict 06/07 uniquement — ne jamais envoyer à un fixe (crédit SMS gâché)
   if (!/^0[67]\d{8}$/.test(normalized)) return null;
   return "+33" + normalized.slice(1);
 }
@@ -85,21 +88,38 @@ async function handler(req: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin();
-  const MAX_SMS = 10;
 
-  // ULTRA HOT LEADS :
-  //   - view_count >= 2 (ouvert au moins 2 fois la maquette)
-  //   - hot_sms_sent_at IS NULL (jamais reçu de SMS hot)
-  //   - phone NOT NULL
-  //   - status IN ('opened', 'sent') — pas 'converted' ni 'replied'
+  // CIBLAGE ULTRA STRICT : on n'envoie un SMS qu'aux prospects qui ont
+  // la PROBABILITÉ MAXIMALE d'acheter. Un SMS mal ciblé = crédit Brevo gâché
+  // (195 restants) + potentielle plainte spam.
+  //
+  // Critères cumulatifs (tous doivent matcher) :
+  //   - view_count >= 2          → ouvert au moins 2× leur maquette = très intéressé
+  //   - site_quality IN (none, poor) → ont VRAIMENT besoin d'un site
+  //                                   (pas ceux qui ont déjà un bon site)
+  //   - hot_sms_sent_at IS NULL  → jamais encore relancé par SMS
+  //   - phone NOT NULL           → on a un numéro
+  //   - status IN (opened, sent) → pas convertis, pas replied
+  //   - opened_at > 7 jours      → encore "chauds", pas oubliés
+  //   - email NOT NULL           → qualifiés (ont un vrai contact pro)
+  const MAX_SMS = 5; // max 5/run, priorité qualité sur volume
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
   const { data: prospects, error } = await supabase
     .from("prospects")
-    .select("id, name, slug, phone, view_count, status")
+    .select("id, name, slug, phone, view_count, status, site_quality")
     .gte("view_count", 2)
+    .in("site_quality", ["none", "poor"])
     .is("hot_sms_sent_at", null)
     .not("phone", "is", null)
+    .not("email", "is", null)
     .in("status", ["opened", "sent"])
-    .limit(MAX_SMS);
+    .gte("opened_at", sevenDaysAgo)
+    .order("view_count", { ascending: false }) // plus engagés d'abord
+    .limit(MAX_SMS * 3); // on fetch + large, filtre 06/07 côté TS
+
+  // Filtre SQL additionnel : phone commence par 06, 07, +336, +337
+  // (fait côté TS via toMobileE164 qui valide strictement)
 
   if (error) {
     console.error("[hot-lead-sms] query error:", error);
@@ -110,19 +130,23 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ success: true, processed: 0, message: "Aucun hot lead" });
   }
 
+  // Pre-filtre mobiles 06/07 + limite à MAX_SMS — évite de marquer en "error"
+  // les non-mobiles (fixe) qui seraient ensuite jamais re-testés
+  const mobileReady: typeof prospects = [];
+  for (const p of prospects) {
+    const mobile = toMobileE164(p.phone || "");
+    if (mobile && mobileReady.length < MAX_SMS) mobileReady.push(p);
+  }
+  if (mobileReady.length === 0) {
+    return NextResponse.json({ success: true, processed: 0, message: "Aucun prospect mobile parmi les hot leads" });
+  }
+
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
   let lastCredits: number | undefined;
 
-  for (const p of prospects) {
+  for (const p of mobileReady) {
     const mobile = toMobileE164(p.phone || "");
-    if (!mobile) {
-      await supabase
-        .from("prospects")
-        .update({ hot_sms_sent_at: new Date().toISOString() })
-        .eq("id", p.id);
-      results.push({ id: p.id, name: p.name, status: "skipped_not_mobile" });
-      continue;
-    }
+    if (!mobile) continue; // safety (déjà filtré mais double check)
 
     const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
     const content = buildHotLeadSms(p.name, mockupUrl);
