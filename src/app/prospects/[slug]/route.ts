@@ -209,19 +209,19 @@ export async function GET(
       "<li>Sauvegardes automatiques + monitoring</li>"
     )
     // ═══════════════════════════════════════════════════════════════════
-    // PATCH PRIX 599€ → 320€ TTC
+    // PATCH PRIX 599€ → 199€ TTC
     // Les maquettes stockées en DB avant le changement de prix affichent
     // encore 599€. On remplace à la volée pour que les prospects voient
     // le nouveau prix quel que soit l'ancienneté de la maquette.
     // ═══════════════════════════════════════════════════════════════════
-    .replace(/599\s*€\s*TTC/g, "320 € TTC")
-    .replace(/599\s*€(?!\w)/g, "320 €")
-    .replace(/599,00\s*€/g, "320,00 €")
-    .replace(/599\s*€/g, "320 €")
-    .replace(/3\s*×\s*199,67\s*€/g, "3 × 106,67 €")
-    .replace(/199,67\s*€/g, "106,67 €")
-    .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 320")
-    .replace(/prix\s*[:=]\s*599/gi, "prix: 320");
+    .replace(/599\s*€\s*TTC/g, "199 € TTC")
+    .replace(/599\s*€(?!\w)/g, "199 €")
+    .replace(/599,00\s*€/g, "199,00 €")
+    .replace(/599\s*€/g, "199 €")
+    .replace(/3\s*×\s*199,67\s*€/g, "3 × 66,33 €")
+    .replace(/199,67\s*€/g, "66,33 €")
+    .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 199")
+    .replace(/prix\s*[:=]\s*599/gi, "prix: 199");
 
   // ═══════════════════════════════════════════════════════════════════
   // INJECTION LEVIERS DE CONVERSION (pour les anciennes maquettes)
@@ -252,7 +252,7 @@ export async function GET(
         deadline = Date.now() + 48 * 60 * 60 * 1000;
         localStorage.setItem(SKEY, String(deadline));
       }
-      ctaText.innerHTML = '🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong style="color:#c19a56">320 € TTC</strong> — <span id="wc-cd-inj">Offre expire dans <strong>--:--:--</strong></span>';
+      ctaText.innerHTML = '🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong style="color:#c19a56">199 € TTC</strong> — <span id="wc-cd-inj">Offre expire dans <strong>--:--:--</strong></span>';
       var update = function() {
         var el = document.getElementById('wc-cd-inj');
         if (!el) return;

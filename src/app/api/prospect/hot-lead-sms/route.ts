@@ -41,7 +41,7 @@ function gsmSafe(s: string): string {
 function buildHotLeadSms(prospectName: string, mockupUrl: string): string {
   const name = gsmSafe(prospectName).slice(0, 40);
   // 160 chars max pour 1 SMS Brevo = 1 crédit
-  return `Bonjour, Tom de WebConceptor. J'ai vu que vous revenez sur la maquette ${name}. Une question qui vous bloque ? Prix 320 EUR (-47%) valable 48h: ${mockupUrl}. Stop: STOP`.slice(0, 160);
+  return `Bonjour, Tom de WebConceptor. J'ai vu votre visite sur la maquette ${name}. Offre flash 199 EUR (-47%) expire dans 24h: ${mockupUrl}. Stop: STOP`.slice(0, 160);
 }
 
 async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean; credits?: number; error?: string }> {
@@ -89,32 +89,32 @@ async function handler(req: NextRequest) {
 
   const supabase = getSupabaseAdmin();
 
-  // CIBLAGE ULTRA STRICT : on n'envoie un SMS qu'aux prospects qui ont
-  // la PROBABILITÉ MAXIMALE d'acheter. Un SMS mal ciblé = crédit Brevo gâché
-  // (195 restants) + potentielle plainte spam.
+  // CIBLAGE ÉLARGI (mode push final) : toute ouverture de maquette déclenche
+  // une opportunité de SMS. Budget : 195 SMS restants, on monte MAX_SMS à 10/run
+  // pour saturer la fenêtre 9h-19h (5 runs/jour × 10 = 50 SMS possibles/jour).
   //
   // Critères cumulatifs (tous doivent matcher) :
-  //   - view_count >= 2          → ouvert au moins 2× leur maquette = très intéressé
+  //   - view_count >= 1          → a ouvert sa maquette au moins 1× = intéressé
   //   - site_quality IN (none, poor) → ont VRAIMENT besoin d'un site
   //                                   (pas ceux qui ont déjà un bon site)
   //   - hot_sms_sent_at IS NULL  → jamais encore relancé par SMS
   //   - phone NOT NULL           → on a un numéro
   //   - status IN (opened, sent) → pas convertis, pas replied
-  //   - opened_at > 7 jours      → encore "chauds", pas oubliés
+  //   - opened_at > 14 jours     → fenêtre élargie (ancien 7j trop restrictif)
   //   - email NOT NULL           → qualifiés (ont un vrai contact pro)
-  const MAX_SMS = 5; // max 5/run, priorité qualité sur volume
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const MAX_SMS = 10; // max 10/run en mode push final
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: prospects, error } = await supabase
     .from("prospects")
     .select("id, name, slug, phone, view_count, status, site_quality")
-    .gte("view_count", 2)
+    .gte("view_count", 1)
     .in("site_quality", ["none", "poor"])
     .is("hot_sms_sent_at", null)
     .not("phone", "is", null)
     .not("email", "is", null)
     .in("status", ["opened", "sent"])
-    .gte("opened_at", sevenDaysAgo)
+    .gte("opened_at", fourteenDaysAgo)
     .order("view_count", { ascending: false }) // plus engagés d'abord
     .limit(MAX_SMS * 3); // on fetch + large, filtre 06/07 côté TS
 

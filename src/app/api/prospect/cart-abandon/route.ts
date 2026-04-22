@@ -36,7 +36,7 @@ function buildCartAbandonEmail(prospectName: string, mockupUrl: string): { subje
 
   <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#92400e;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 Offre de lancement</p>
-    <p style="margin:0 0 6px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">320 € TTC</span></p>
+    <p style="margin:0 0 6px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">199 € TTC</span></p>
     <p style="font-size:13px;color:#78350f;margin:0 0 14px">ou 3× sans frais via Klarna</p>
     <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;box-shadow:0 4px 12px rgba(193,154,86,0.4)">Finaliser ma commande →</a>
   </div>

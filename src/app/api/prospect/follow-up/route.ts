@@ -55,7 +55,7 @@ function followUpDay3Email(prospectName: string, mockupUrl: string): string {
     <p style="font-size:13px;color:#525252;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700">Voir ou revoir la maquette</p>
     <a href="${mockupUrl}" style="display:inline-block;margin-top:8px;padding:12px 24px;background:#0066ff;color:#fff;text-decoration:none;border-radius:100px;font-weight:600;font-size:14px">Voir ma maquette →</a>
   </div>
-  <p style="font-size:14px;color:#525252;margin-bottom:16px"><strong>Pour rappel :</strong> 320 € TTC tout compris, livraison en 5 jours, ou en 3 fois sans frais via Klarna (3 × 106,67 €).</p>
+  <p style="font-size:14px;color:#525252;margin-bottom:16px"><strong>Pour rappel :</strong> 199 € TTC tout compris, livraison en 5 jours, ou en 3 fois sans frais via Klarna (3 × 66,33 €).</p>
   <p style="font-size:14px;color:#525252;margin-bottom:24px">Répondez-moi simplement à ce mail si vous avez la moindre question — je m'adapte à vos envies (photos, couleurs, textes).</p>
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
@@ -78,7 +78,7 @@ function followUpDay7Email(prospectName: string, mockupUrl: string): string {
   <div style="text-align:center;margin:28px 0">
     <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#0066ff;color:#fff;text-decoration:none;border-radius:100px;font-weight:600;font-size:15px">Voir ma maquette une dernière fois →</a>
   </div>
-  <p style="font-size:14px;color:#525252;margin-bottom:16px">320 € TTC tout compris — 3 fois sans frais via Klarna si besoin.</p>
+  <p style="font-size:14px;color:#525252;margin-bottom:16px">199 € TTC tout compris — 3 fois sans frais via Klarna si besoin.</p>
   <p style="font-size:14px;color:#525252;margin-bottom:24px">Merci en tout cas d'avoir pris le temps de regarder — bonne continuation avec <strong>${prospectName}</strong> !</p>
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>

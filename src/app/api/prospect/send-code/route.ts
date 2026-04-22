@@ -114,7 +114,7 @@ function buildCodeEmailHtml(opts: {
           <div style="flex-shrink:0;width:28px;height:28px;background:#c19a56;color:#fff;border-radius:50%;font-weight:700;font-size:14px;line-height:28px;text-align:center">2</div>
           <div>
             <p style="margin:0;font-weight:600;color:#1a1310;font-size:14px">Vous validez le paiement</p>
-            <p style="margin:4px 0 0;color:#4a4340;font-size:13px;line-height:1.6">Stripe sécurisé. <strong>320 € TTC</strong> (site) + prix du domaine. Paiement en <strong style="color:#c19a56">1× ou 3× sans frais</strong> (Klarna).</p>
+            <p style="margin:4px 0 0;color:#4a4340;font-size:13px;line-height:1.6">Stripe sécurisé. <strong>199 € TTC</strong> (site) + prix du domaine. Paiement en <strong style="color:#c19a56">1× ou 3× sans frais</strong> (Klarna).</p>
           </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:14px">
@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
         description: `Site web personnalisé pour ${prospect.name}${prospect.city ? ` — ${prospect.city}` : ""}`,
         client_name: prospect.name,
         client_email: prospect.email,
-        price_cents: 32000,
+        price_cents: 19900,
         preview_url: mockupUrl,
         contract_text: contractText,
         status: "sent",
@@ -309,7 +309,7 @@ export async function POST(req: NextRequest) {
       (prospect.city ? `📍 ${escapeTelegram(prospect.city)}\n` : "") +
       `✉️ ${escapeTelegram(prospect.email)}\n\n` +
       `<b>Code :</b> <code>${escapeTelegram(code)}</code>\n` +
-      `<b>Prix :</b> 320 € TTC (ou 3× sans frais)\n\n` +
+      `<b>Prix :</b> 199 € TTC (ou 3× sans frais)\n\n` +
       `<a href="${escapeTelegram(codeUrl)}">Lien /code</a>`;
     fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
       method: "POST",

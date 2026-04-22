@@ -44,7 +44,7 @@ function buildReminderEmail(prospectName: string, mockupUrl: string): { subject:
   <ul style="font-size:14px;color:#525252;padding-left:20px;margin-bottom:20px">
     <li>Site premium livré sous <strong>5 à 7 jours</strong></li>
     <li>Module de réservation intégré — <strong>0 commission</strong> (vous gardez 100 % de vos couverts)</li>
-    <li><strong>320 € TTC</strong> tout compris (ou 3× sans frais via Klarna)</li>
+    <li><strong>199 € TTC</strong> tout compris (ou 3× sans frais via Klarna)</li>
     <li>Satisfait ou remboursé 14 jours</li>
   </ul>
 

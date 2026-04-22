@@ -186,7 +186,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       "Site vitrine personnalisé avec votre identité",
       "Module de réservation en ligne intégré (sans commission)",
       "Espace admin pour gérer la carte en 2 minutes",
-      "320 € TTC ou 3× sans frais (Klarna)",
+      "199 € TTC ou 3× sans frais (Klarna)",
       "Option Sérénité 50 €/mois : mises à jour illimitées",
     ],
     emailSubject: `Maquette de votre site pour ${prospect.name}`,
@@ -315,7 +315,7 @@ Génère un objet JSON avec ces clés EXACTEMENT :
     - Site actuel 'moderne', 'jeune', 'branché', 'festif' → 'modern' ou 'sunny'.
     - Site actuel 'élégant', 'raffiné', 'gastronomique' → 'classic'.
     Le prospect doit se dire 'c'est MON établissement' en voyant la maquette, pas 'ça ne me ressemble pas'. Les couleurs dominantes (si fournies) doivent t'aider à confirmer ton choix de vibe.",
-  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 320€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
+  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 199€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
   "auditTeaser": "SI le prospect a un site 'poor' ou 'average' (donc un site qui existe mais qui peut être amélioré) : UNE SEULE phrase courte (max 15 mots), MYSTÉRIEUSE, qui évoque VAGUEMENT 1-2 axes d'amélioration sans tout révéler. Ex: 'notamment sur votre visibilité dans les recherches Google locales et l'affichage sur mobile' ou 'notamment sur la structure SEO et l'expérience des visiteurs mobiles'. Ne JAMAIS lister tous les problèmes, rester dans le teaser. Si le prospect n'a pas de site (site_quality='none'), retourne une chaîne vide ''.",
   "emailSubject": "Objet d'email COURT (max 55 chars) et PERCUTANT → doit déclencher le clic. DOIT inclure le NOM DE L'ÉTABLISSEMENT (= personnalisation, déjoue les filtres anti-spam génériques). DOIT évoquer quelque chose de TANGIBLE (pas 'offre commerciale'). 5 formats gagnants possibles, pick ONE au hasard selon le ressenti : 1) '✨ [Nom], votre site web est prêt' — 2) 'Maquette [Nom] à valider (5 jours max)' — 3) '[Nom] — une maquette pour vous' — 4) 'J'ai préparé le site de [Nom]' — 5) '[Nom] : votre vitrine en ligne'. ❌ INTERDITS : 'offre', 'promotion', 'opportunité', 'exclusif', '50%', toutes majuscules, points d'exclamation multiples.",
   "emailOpening": "Bonjour [prénom si on l'a, sinon neutre], (avec virgule)",
@@ -754,8 +754,8 @@ function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockup
   </ul>
   <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #0066ff;border-radius:6px;padding:20px 24px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
-    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">320 € TTC tout compris</p>
-    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
+    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">199 € TTC tout compris</p>
+    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 66,33 €</p>
     <p style="font-size:12px;color:#1e40af;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Site à vous à vie • ✓ Satisfait ou remboursé 14 jours</p>
   </div>
 
@@ -822,8 +822,8 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
-    <p style="margin:0 0 4px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">320 € TTC</span></p>
-    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 106,67 €</p>
+    <p style="margin:0 0 4px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">199 € TTC</span></p>
+    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 66,33 €</p>
     <p style="font-size:12px;color:#92400e;margin:0 0 14px;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
     <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;box-shadow:0 4px 12px rgba(193,154,86,0.4)">Voir ma maquette →</a>
     <p style="font-size:11px;color:#92400e;margin:10px 0 0;font-weight:600">⏳ Offre valable 48 h</p>

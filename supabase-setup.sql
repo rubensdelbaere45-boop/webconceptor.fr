@@ -167,6 +167,15 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS cart_opened_at TIMESTAMPTZ
 
 -- Horodatage de l'email de relance panier abandonné (idempotent).
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS cart_relance_sent_at TIMESTAMPTZ;
+
+-- Horodatage du blast flash 24h (1er email "offre 24h", idempotent).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS blast_flash_sent_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_prospects_blast_flash ON public.prospects(blast_flash_sent_at);
+
+-- Horodatage du final push (2e blast "dernière chance", idempotent).
+-- Envoyé seulement aux prospects qui ont déjà reçu le blast_flash sans convertir.
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS final_push_sent_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_prospects_final_push ON public.prospects(final_push_sent_at);
 -- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
 -- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
 -- au lieu de proposer un style opposé qui le fait fuir.

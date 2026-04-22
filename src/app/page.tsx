@@ -46,11 +46,11 @@ const benefits = [
   {
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
       </svg>
     ),
-    title: "Disponible 24h/24",
-    desc: "Votre vitrine ne ferme jamais. Même le dimanche à 3h du matin.",
+    title: "Refonte de l'existant",
+    desc: "Site trop vieux, pas responsive, peu crédible ? On modernise sans perdre votre SEO.",
     color: "from-amber-500/10 to-orange-500/10",
     iconBg: "bg-amber-500 text-white"
   },
@@ -141,7 +141,7 @@ const faqs = [
   },
   {
     q: "Que se passe-t-il si je n\u2019aime pas le résultat ?",
-    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 320€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
+    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 199€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
   },
   {
     q: "Le site est-il vraiment à moi après paiement ?",
@@ -350,7 +350,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Design premium, livraison en 5 jours. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
+            Nouveau site ou refonte d&apos;un site existant. Design premium, livré en 5 jours. <strong>À partir de 199 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
             <span className="text-[#a3a3a3] text-base">Hébergement &amp; maintenance en option — 50 €/mois.</span>
           </motion.p>
 
@@ -640,7 +640,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={stagger(0.15)} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="max-w-3xl mx-auto grid md:grid-cols-2 gap-5">
-            {/* 320€ */}
+            {/* 199€ */}
             <motion.div variants={scaleIn} whileHover={{ y: -4 }} className="bg-[#0a0a0a] rounded-2xl p-8 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">

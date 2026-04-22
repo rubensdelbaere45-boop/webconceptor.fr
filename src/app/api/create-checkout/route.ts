@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
       // Méthodes de paiement :
       // - 'card' : carte bancaire classique (Visa/MC/Amex)
       // - 'klarna' : Paiement en 3× OU 4× sans frais (client paye ~107€/mois,
-      //   tu encaisses 320€ immédiatement, Klarna prend le risque)
+      //   tu encaisses 199€ immédiatement, Klarna prend le risque)
       // - 'paypal' : au cas où certains préfèrent
       // Si Klarna pas encore activé dans le dashboard Stripe, ignoré silencieusement
       payment_method_types: ["card", "klarna", "paypal"],
