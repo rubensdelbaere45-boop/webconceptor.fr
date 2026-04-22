@@ -74,9 +74,13 @@ export async function POST(req: NextRequest) {
     ? currentNotes // déjà loggé dans la même minute, pas de double
     : (currentNotes ? `${noteLine}\n${currentNotes}` : noteLine);
 
+  // cart_opened_at permet au cron de détecter les paniers abandonnés 1h+ plus tard
   await supabase
     .from("prospects")
-    .update({ notes: newNotes })
+    .update({
+      notes: newNotes,
+      cart_opened_at: new Date().toISOString(),
+    })
     .eq("id", prospect.id);
 
   // Notif Telegram SONORE — événement critique, Rubens doit réagir

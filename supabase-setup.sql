@@ -153,6 +153,20 @@ ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS additional_emails TEXT[];
 -- Idempotence : 1 seule relance par prospect.
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS email_reminder_sent_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_prospects_email_reminder ON public.prospects(email_reminder_sent_at);
+
+-- Compteur d'ouvertures de maquette par un humain.
+-- Permet de détecter les ULTRA HOT LEADS (vue 2+ fois sans achat = très intéressé).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0;
+CREATE INDEX IF NOT EXISTS idx_prospects_view_count ON public.prospects(view_count);
+
+-- Horodatage du SMS ultra-hot lead (1 seul par prospect, éviter le spam).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS hot_sms_sent_at TIMESTAMPTZ;
+
+-- Horodatage de l'ouverture du modal d'achat (cart abandon tracking).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS cart_opened_at TIMESTAMPTZ;
+
+-- Horodatage de l'email de relance panier abandonné (idempotent).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS cart_relance_sent_at TIMESTAMPTZ;
 -- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
 -- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
 -- au lieu de proposer un style opposé qui le fait fuir.

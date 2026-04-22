@@ -80,19 +80,27 @@ export async function GET(
   const isBot = isBotUserAgent(userAgent);
   const isFirstOpen = !data.opened_at && !isBot;
 
-  // Log the view (non-blocking). is(opened_at, null) garantit un seul trigger.
-  // Si bot → on ne met pas à jour opened_at (comme ça la première vraie
-  // ouverture par un humain déclenchera bien la notif HOT LEAD).
+  // Log the view (non-blocking). Incrémente view_count à CHAQUE ouverture humaine
+  // → permet de détecter les ULTRA HOT LEADS (vue 2+ fois = très intéressé).
+  // Le opened_at n'est mis à jour QUE lors de la 1ère ouverture (status=opened).
   if (!isBot) {
-    supabase
-      .from("prospects")
-      .update({
-        opened_at: new Date().toISOString(),
-        status: "opened",
-      })
-      .eq("id", data.id)
-      .is("opened_at", null)
-      .then(() => {});
+    (async () => {
+      try {
+        // Lit le view_count actuel puis incrémente (non-atomique mais safe à notre volume)
+        const { data: current } = await supabase
+          .from("prospects")
+          .select("view_count")
+          .eq("id", data.id)
+          .maybeSingle();
+        const nextCount = ((current?.view_count as number | null) ?? 0) + 1;
+        const updates: Record<string, unknown> = { view_count: nextCount };
+        if (!data.opened_at) {
+          updates.opened_at = new Date().toISOString();
+          updates.status = "opened";
+        }
+        await supabase.from("prospects").update(updates).eq("id", data.id);
+      } catch { /* silent */ }
+    })();
   }
 
   // Notify Telegram SEULEMENT à la 1ère ouverture PAR UN HUMAIN (hot lead) —

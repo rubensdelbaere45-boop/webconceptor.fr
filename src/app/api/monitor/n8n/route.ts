@@ -95,6 +95,7 @@ async function handler(req: NextRequest) {
     "wSmfcn9acDuKdVqT", // Prospection quotidienne 9h
     "YxIeBu4yoYxwOLoC", // Relances J+2 (10h30)
     "wfG4XLRdreNqmao4", // 2ème vague emails (15h)
+    "cFwd9ypaXYTs1MvV", // Conversion Boost (hot lead SMS + cart abandon, toutes les heures)
   ]);
   const ourWorkflows = workflows.filter((w) => ACTIVE_WORKFLOW_IDS.has(w.id));
 

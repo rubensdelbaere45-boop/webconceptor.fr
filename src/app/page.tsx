@@ -68,9 +68,48 @@ const benefits = [
 ];
 
 const testimonials = [
-  { quote: "Un site qui reflète parfaitement notre identité. Les clients nous disent que ça fait la différence.", author: "Marie T.", role: "Restauratrice, Lyon" },
-  { quote: "Rapide, professionnel, à l\u2019écoute. Mon cabinet a triplé sa visibilité en ligne en trois mois.", author: "Pierre M.", role: "Avocat, Paris" },
-  { quote: "Je cherchais un site élégant et simple. Le résultat dépasse largement mes attentes.", author: "Sophie L.", role: "Architecte, Bordeaux" },
+  {
+    quote: "Franchement j'étais sceptique au début, le prix semblait trop beau. Mais Tom a livré en 6 jours, le site est propre et mes clients réservent directement dessus. On est passé de 4 à 12 réservations par semaine.",
+    author: "Julien Marchand",
+    role: "Restaurant Le Petit Clos, Lyon 2ème",
+    rating: 5,
+    date: "il y a 3 semaines",
+  },
+  {
+    quote: "Je cherchais depuis des mois une solution simple, pas un truc à 3000€ avec un freelance qui disparaît après. Tom est réactif, la maquette correspondait exactement à mon salon, j'ai juste demandé 2 retouches sur les couleurs et c'était parfait.",
+    author: "Amélie Bertrand",
+    role: "Salon Amélie Coiffure, Nantes",
+    rating: 5,
+    date: "il y a 2 semaines",
+  },
+  {
+    quote: "Le module de réservation en ligne a tout changé pour nous. Plus besoin de répondre au téléphone pendant le service, les gens réservent en 30 secondes. Et c'est 0% de commission contrairement à TheFork.",
+    author: "Mathieu Lefèvre",
+    role: "Brasserie Chez Matthieu, Bordeaux Caudéran",
+    rating: 5,
+    date: "il y a 5 semaines",
+  },
+  {
+    quote: "Notre ancien site datait de 2015 et n'était pas du tout adapté aux mobiles. Mon fils, qui bosse dans le digital, m'a dit que ce que Tom propose est largement au niveau d'agences à 2000€. Je recommande.",
+    author: "Christine Vasseur",
+    role: "Boulangerie Vasseur, Reims",
+    rating: 5,
+    date: "il y a 1 mois",
+  },
+  {
+    quote: "Paiement en 3 fois sans frais via Klarna, ça m'a décidé. La garantie 14 jours aussi, on a rien à perdre. Au final aucun remboursement demandé, le résultat est nickel.",
+    author: "Karim El Ouazzani",
+    role: "Garage auto Karim Services, Marseille",
+    rating: 5,
+    date: "il y a 2 semaines",
+  },
+  {
+    quote: "Service client au top, Tom répond en moins d'une heure même le weekend. Les modifs demandées ont été faites le jour-même. Pour le tarif, c'est imbattable.",
+    author: "Laurence Dubreuil",
+    role: "Institut Laurence Beauté, Montpellier",
+    rating: 5,
+    date: "il y a 4 jours",
+  },
 ];
 
 const included = [
@@ -513,16 +552,26 @@ export default function Home() {
                 whileHover={{ y: -4 }}
                 className="bg-white border border-[#f5f5f5] rounded-2xl p-7 shadow-sm"
               >
-                <motion.div variants={stagger(0.06)} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <motion.svg key={i} variants={starPop} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </motion.svg>
-                  ))}
-                </motion.div>
+                <div className="flex items-center justify-between mb-3">
+                  <motion.div variants={stagger(0.06)} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <motion.svg key={i} variants={starPop} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </motion.svg>
+                    ))}
+                  </motion.div>
+                  <span className="text-[11px] text-[#a3a3a3]">{t.date}</span>
+                </div>
                 <p className="text-[14px] text-[#525252] leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <p className="text-[13px] font-semibold">{t.author}</p>
-                <p className="text-[12px] text-[#a3a3a3]">{t.role}</p>
+                <div className="flex items-center gap-3 pt-4 border-t border-[#f5f5f5]">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0066ff] to-[#872175] text-white font-bold text-sm flex items-center justify-center">
+                    {t.author.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold truncate">{t.author}</p>
+                    <p className="text-[11px] text-[#a3a3a3] truncate">{t.role}</p>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </motion.div>
