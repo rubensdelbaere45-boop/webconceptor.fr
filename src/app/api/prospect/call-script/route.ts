@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, city, business_type, google_rating, google_reviews_count, site_quality, site_audit_score, site_audit_issues, address, website")
+    .select("id, name, city, business_type, google_rating, google_reviews_count, site_quality, site_audit_score, site_audit_issues, address, website, view_count, cart_opened_at, opened_at, replied_at")
     .eq("id", prospect_id)
     .maybeSingle();
 
@@ -92,6 +92,12 @@ export async function POST(req: NextRequest) {
     googleReviewsCount: data.google_reviews_count,
     siteQuality: siteQuality,
     address: data.address,
+    // Signaux d'engagement — permettent au script de se personnaliser
+    // (ex: "j'ai vu que vous étiez sur le point de commander" si cart abandon)
+    viewCount: data.view_count,
+    cartOpenedAt: data.cart_opened_at,
+    openedAt: data.opened_at,
+    repliedAt: data.replied_at,
   });
 
   return NextResponse.json({

@@ -26,6 +26,81 @@ interface Prospect {
   site_audit_score?: number | null;
   site_audit_issues?: string[] | null;
   notes?: string | null;
+  view_count?: number | null;
+  cart_opened_at?: string | null;
+  unsubscribed_at?: string | null;
+  hot_sms_sent_at?: string | null;
+}
+
+/**
+ * Calcule un score de probabilité de conversion pour chaque prospect.
+ * Plus le score est haut, plus on a de chances de closer au téléphone.
+ *
+ * Retourne -1 pour les prospects à EXCLURE (désabonnés, sans téléphone,
+ * déjà convertis, déjà appelés aujourd'hui).
+ */
+function computeCallScore(p: Prospect): { score: number; signals: string[] } {
+  const signals: string[] = [];
+
+  // Exclusions dures
+  if (p.unsubscribed_at) return { score: -1, signals: [] };
+  if (!p.phone) return { score: -1, signals: [] };
+  if (p.status === "converted") return { score: -1, signals: [] };
+  if (wasCalledToday(p.notes)) return { score: -1, signals: [] };
+
+  let score = 0;
+  const vc = p.view_count || 0;
+
+  // Engagement fort : chaque vue de la maquette = +15 pts (signal le plus fort)
+  if (vc > 0) {
+    score += vc * 15;
+    signals.push(`vu ${vc}× sa maquette`);
+  }
+
+  // a cliqué sur "J'achète" puis abandonné = HOT (conversion à portée)
+  if (p.cart_opened_at) {
+    score += 40;
+    signals.push("a cliqué J'achète");
+  }
+
+  // Réponse au mail = ultra hot
+  if (p.replied_at) {
+    score += 30;
+    signals.push("a répondu au mail");
+  }
+
+  // Récence de l'ouverture mail
+  if (p.opened_at) {
+    const days = Math.floor((Date.now() - new Date(p.opened_at).getTime()) / 86400000);
+    if (days >= 0 && days <= 3) {
+      score += 10;
+      signals.push(days === 0 ? "ouvert mail aujourd'hui" : `ouvert mail il y a ${days}j`);
+    } else if (days <= 7) {
+      score += 5;
+      signals.push(`ouvert il y a ${days}j`);
+    }
+  }
+
+  // Qualification : ils ont BESOIN d'un site
+  if (p.site_quality === "none" || p.site_quality === "poor") {
+    score += 15;
+    if (p.site_quality === "none") signals.push("pas de site actuel");
+    else signals.push("site actuel de mauvaise qualité");
+  } else if (p.site_quality === "average") {
+    score += 5;
+  }
+
+  // Qualité de la cible (google rating)
+  if ((p.google_rating || 0) >= 4.0) score += 3;
+
+  // Mobile direct = meilleur taux de réponse que fixe standard
+  const phone = (p.phone || "").replace(/\s/g, "");
+  if (phone.startsWith("06") || phone.startsWith("07")) {
+    score += 3;
+    signals.push("mobile direct");
+  }
+
+  return { score, signals };
 }
 
 // Helpers pour parser les notes (format "[YYYY-MM-DD HH:MM] 📞 APPELÉ" ou "📝 xxx")

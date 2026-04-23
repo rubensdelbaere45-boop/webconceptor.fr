@@ -25,12 +25,19 @@ function stripVisio(s: string): string {
 export interface CallScriptInput {
   prospectName: string;
   city?: string | null;
-  businessType?: string | null; // "restaurant" | "epicerie"
+  businessType?: string | null; // "restaurant" | "epicerie" | etc.
   cuisineType?: string | null;
   googleRating?: number | null;
   googleReviewsCount?: number | null;
   siteQuality?: "none" | "poor" | "average" | "good" | null;
   address?: string | null;
+  // SIGNAUX D'ENGAGEMENT — permettent au script de s'adapter : un prospect
+  // qui a vu la maquette 7× ne doit pas entendre la même ouverture qu'un
+  // prospect qui n'a jamais cliqué le lien email.
+  viewCount?: number | null;      // Nombre d'ouvertures de la maquette
+  cartOpenedAt?: string | null;   // Timestamp du clic sur "J'achète" (si abandonné paiement)
+  openedAt?: string | null;       // Première ouverture du mail
+  repliedAt?: string | null;      // A répondu au mail ?
 }
 
 export interface CallScript {
@@ -40,9 +47,78 @@ export interface CallScript {
   objectionHandlers: string[]; // Réponses aux objections probables
 }
 
+// Bénéfices concrets par type de métier — utilisé pour personnaliser le pitch
+// de la présentation. Toujours un bénéfice VRAI et mesurable pour ce métier.
+const BUSINESS_PITCH: Record<string, string> = {
+  restaurant: "avec un module de réservation en ligne intégré, directement sur votre site — zéro commission contrairement à TheFork",
+  boulangerie: "avec une vitrine claire de vos pains et viennoiseries, pensée pour attirer les clients du quartier",
+  patisserie: "avec une boutique en ligne pour vos commandes sur-mesure (gâteaux, événements)",
+  chocolatier: "avec une boutique en ligne pour vos tablettes et créations, livraison possible",
+  cafe: "avec une vitrine claire sur votre carte et vos horaires, pensée pour le mobile",
+  glacier: "avec la mise en avant de vos parfums du jour et la commande pour événements",
+  coiffeur: "avec un module de prise de rendez-vous intégré, sans commission contrairement à Treatwell",
+  institut: "avec un module de prise de rendez-vous direct, sans commission intermédiaire",
+  fleuriste: "avec une boutique en ligne pour vos compositions et livraisons",
+  plombier: "avec un formulaire de devis rapide intégré, GPS pour qu'ils viennent à vous",
+  electricien: "avec un formulaire de devis clair et vos références en ligne",
+  dentiste: "avec la prise de rendez-vous en ligne et votre équipe mise en valeur",
+  osteo: "avec la prise de rendez-vous en ligne simple et claire",
+  salle_sport: "avec les cours, les tarifs et l'inscription en ligne",
+  auto_ecole: "avec les forfaits clairs et l'inscription en ligne",
+  garage: "avec un formulaire de devis et la présentation de vos prestations",
+  epicerie: "avec une vitrine claire de vos rayons et horaires",
+};
+
+// Construit une ouverture d'appel PERSONNALISÉE basée sur l'engagement réel
+// du prospect. Respecte la structure voulue par Rubens :
+// 1. Salutation polie + présentation rapide du correspondant
+// 2. "Est-ce que je vous dérange ?" (respect du temps)
+// 3. Self-pitch court (qui est WebConceptor, ce qu'on fait)
+// 4. Présentation du motif (maquette préparée)
+// 5. Question sur la réception
+// 6. + PERSONNALISATION si engagement (vue X fois, panier abandonné...)
+function buildFallbackOpening(input: CallScriptInput): string {
+  const name = input.prospectName || "votre établissement";
+  const bType = (input.businessType || "").toLowerCase();
+  const pitch = BUSINESS_PITCH[bType] || "pensée pour améliorer votre visibilité et vos demandes entrantes";
+
+  // Signaux d'engagement
+  const vc = input.viewCount || 0;
+  const hasCart = !!input.cartOpenedAt;
+
+  // Début standard (respectueux, self-présentation)
+  let opening =
+    `Bonjour, Tom Bauer de WebConceptor à l'appareil. ` +
+    `Est-ce que je vous dérange une minute ? ` +
+    `\n\n` +
+    `Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. ` +
+    `J'ai préparé récemment une maquette sur-mesure pour ${name}, ${pitch}. ` +
+    `Je vous l'ai envoyée par email. `;
+
+  // Personnalisation selon l'engagement
+  if (hasCart) {
+    opening += `D'ailleurs, j'ai vu que vous étiez sur le point de valider la commande avant de quitter la page — je voulais justement vous appeler pour savoir s'il y avait eu un souci technique, ou une question qui vous a retenu ?`;
+  } else if (vc >= 5) {
+    opening += `D'ailleurs, j'ai vu que vous l'avez consultée plusieurs fois cette semaine — qu'en avez-vous pensé ? Y a-t-il des éléments qui vous freinent ?`;
+  } else if (vc >= 2) {
+    opening += `D'ailleurs, j'ai vu que vous y êtes revenu plusieurs fois — est-ce qu'elle vous plaît ? Ou est-ce que certains éléments sont à adapter ?`;
+  } else if (vc >= 1) {
+    opening += `Avez-vous eu le temps d'y jeter un œil ? J'aimerais avoir votre premier ressenti.`;
+  } else {
+    opening += `Avez-vous bien reçu ma maquette ? Si vous voulez, on peut la parcourir ensemble là tout de suite, ça prend 5 minutes.`;
+  }
+
+  return opening;
+}
+
+// Fallback non-personnalisé (utilisé UNIQUEMENT si buildFallbackOpening n'est
+// pas appelable, par exemple en lecture directe du fichier). Même structure.
 const FALLBACK_SCRIPT: CallScript = {
   opening:
-    "Bonjour, Tom Bauer de WebConceptor à l'appareil. J'espère que je ne vous dérange pas ? Je me permets de vous contacter parce que j'ai préparé ce matin une maquette de site internet personnalisée pour votre établissement, avec un module de réservation en ligne intégré. Je vous l'ai envoyée par email à l'adresse que vous utilisez pour votre établissement. Avez-vous eu le temps d'y jeter un œil, ou est-ce que c'est encore trop frais ?",
+    "Bonjour, Tom Bauer de WebConceptor à l'appareil. Est-ce que je vous dérange une minute ?\n\n" +
+    "Je me présente rapidement : chez WebConceptor, nous créons et modernisons les sites internet pour les professionnels comme vous. " +
+    "J'ai préparé récemment une maquette sur-mesure pour votre établissement, pensée pour améliorer votre visibilité et vos demandes entrantes. " +
+    "Je vous l'ai envoyée par email. Avez-vous bien reçu ma maquette ?",
   discoveryQuestions: [
     "Qu'avez-vous pensé de la maquette dans son ensemble ? Quel a été votre premier ressenti ?",
     "Y a-t-il des éléments visuels que vous aimeriez modifier, enrichir ou voir apparaître différemment ?",
@@ -65,17 +141,46 @@ const FALLBACK_SCRIPT: CallScript = {
 
 export async function generateCallScript(input: CallScriptInput): Promise<CallScript> {
   const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
-  if (!key) return FALLBACK_SCRIPT;
+
+  // Fallback personnalisé quand pas de clé API OU quand Claude échoue.
+  // Construit une ouverture déjà adaptative basée sur les vrais signaux
+  // d'engagement (view_count, cart_opened_at).
+  const personalizedFallback: CallScript = {
+    ...FALLBACK_SCRIPT,
+    opening: buildFallbackOpening(input),
+  };
+
+  if (!key) return personalizedFallback;
 
   const isOpenRouter = key.startsWith("sk-or-");
   const endpoint = isOpenRouter
     ? "https://openrouter.ai/api/v1/chat/completions"
     : "https://api.anthropic.com/v1/messages";
 
+  // Construit la ligne d'engagement pour que Claude personnalise le script
+  const engagementParts: string[] = [];
+  if (input.viewCount && input.viewCount > 0) {
+    engagementParts.push(`a consulté la maquette ${input.viewCount} fois`);
+  }
+  if (input.cartOpenedAt) {
+    engagementParts.push("A CLIQUÉ sur le bouton 'J'achète' puis a abandonné avant paiement (cart abandon) — signal ultra fort, il hésite sur le dernier mètre");
+  }
+  if (input.repliedAt) {
+    engagementParts.push("A RÉPONDU à notre email (rare — prospect très engagé)");
+  }
+  if (input.openedAt && !engagementParts.length) {
+    const days = Math.floor((Date.now() - new Date(input.openedAt).getTime()) / 86400000);
+    engagementParts.push(`a ouvert le mail il y a ${days} jour${days > 1 ? "s" : ""}`);
+  }
+
+  const engagementLine = engagementParts.length
+    ? `SIGNAUX D'ENGAGEMENT (à utiliser dans l'ouverture pour personnaliser) : ${engagementParts.join(" · ")}`
+    : "Aucun signal d'engagement connu — le prospect n'a pas encore cliqué la maquette.";
+
   const infoLines = [
     `Nom : ${input.prospectName}`,
     input.city ? `Ville : ${input.city}` : "",
-    input.businessType ? `Type : ${input.businessType}` : "",
+    input.businessType ? `Type d'activité : ${input.businessType}` : "",
     input.cuisineType ? `Cuisine : ${input.cuisineType}` : "",
     input.googleRating
       ? `Note Google : ${input.googleRating}/5 (${input.googleReviewsCount || 0} avis)`
@@ -83,17 +188,14 @@ export async function generateCallScript(input: CallScriptInput): Promise<CallSc
     input.siteQuality
       ? `Qualité site actuel : ${input.siteQuality}${input.siteQuality === "none" ? " (pas de site !)" : ""}`
       : "",
+    engagementLine,
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tom Bauer (fondateur WebConceptor) va appeler UN PROFESSIONNEL qui a reçu par email une maquette de site web.
+  const prompt = `Tom Bauer (fondateur WebConceptor, 18 ans mais très professionnel) va appeler UN PROFESSIONNEL qui a reçu par email une maquette de site web.
 
-CONTEXTE IMPORTANT : Tom ET le prospect auront la maquette OUVERTE sous les yeux pendant l'appel (l'URL de la maquette a été envoyée par email). Donc l'appel EST le rendez-vous — PAS BESOIN de planifier un autre RDV pour présenter la maquette. On en parle directement là, tout de suite.
+CONTEXTE : Tom ET le prospect auront la maquette OUVERTE sous les yeux pendant l'appel. L'appel EST le rendez-vous — PAS de planification d'un autre RDV. Si le prospect ne peut pas parler → proposer UN RAPPEL TÉLÉPHONIQUE. Jamais de visio/Zoom/Meet.
 
-SEULE EXCEPTION : si le prospect dit "je ne peux pas parler maintenant", Tom propose UN RAPPEL TÉLÉPHONIQUE plus tard dans la journée ou le lendemain (demain 14 h ou jeudi 10 h). Jamais de visio, jamais de Zoom, jamais de Google Meet — UNIQUEMENT par téléphone.
-
-Si le prospect veut acheter immédiatement → lien Stripe envoyé tout de suite (en 1× ou 3× Klarna).
-
-Génère un script d'appel direct et conversationnel, personnalisé, sobre et professionnel.
+Si le prospect veut acheter → lien Stripe envoyé immédiatement (1× 199 € ou 3× Klarna 66,33 €).
 
 Infos prospect :
 ${infoLines}
@@ -115,15 +217,34 @@ RÈGLES IMPÉRATIVES :
 6. Ton professionnel, posé, NON pressé.
 7. Si le prospect veut acheter direct → lien Stripe immédiat.
 
+RÈGLES IMPÉRATIVES (non négociables) :
+1. VOUVOIEMENT partout (« vous », « votre », jamais « tu »).
+2. ❌ INTERDICTION des mots : "visio", "visioconférence", "Zoom", "Google Meet", "Teams", "écran partagé", "en ligne" (au sens réunion). UNIQUEMENT téléphone.
+3. TOUJOURS respectueux. TOUJOURS se présenter clairement (qui est Tom, ce qu'est WebConceptor). Pas de pitch agressif.
+4. Si signaux d'engagement → les UTILISER dans l'ouverture pour personnaliser (ex: "j'ai vu que vous étiez sur le point de commander..."). PAS d'invention — uniquement les vrais signaux fournis.
+
+STRUCTURE OBLIGATOIRE de l'ouverture (ordre strict en 4 étapes) :
+  (1) SALUTATION + PRÉSENTATION DE TOM : "Bonjour, Tom Bauer de WebConceptor à l'appareil."
+  (2) RESPECT DU TEMPS : "Est-ce que je vous dérange une minute ?" (laisse un blanc pour sa réponse mentale)
+  (3) SELF-PRÉSENTATION DE L'ENTREPRISE + MOTIF : "Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. J'ai préparé récemment une maquette sur-mesure pour [NOM], [UN bénéfice concret vrai pour ce métier]. Je vous l'ai envoyée par email."
+  (4) QUESTION SUR LA MAQUETTE (adaptée à l'engagement) :
+      - Si cart abandon : "D'ailleurs, j'ai vu que vous étiez sur le point de valider la commande avant de quitter la page — je voulais savoir s'il y a eu un souci technique ou une question qui vous a retenu ?"
+      - Si vu 5× ou + : "D'ailleurs, j'ai vu que vous l'avez consultée plusieurs fois cette semaine — qu'en avez-vous pensé ? Y a-t-il des éléments qui vous freinent ?"
+      - Si vu 2-4× : "D'ailleurs, j'ai vu que vous y êtes revenu plusieurs fois — est-ce qu'elle vous plaît ?"
+      - Si vu 1× : "Avez-vous eu le temps d'y jeter un œil ? J'aimerais avoir votre premier ressenti."
+      - Si jamais vu : "Avez-vous bien reçu ma maquette ? Si vous voulez, on peut la parcourir ensemble là tout de suite, ça prend 5 minutes."
+
+L'ouverture doit faire 80 à 130 mots (longue, respectueuse, pas bâclée).
+
 Génère un JSON avec EXACTEMENT ces 4 clés :
 {
-  "opening": "Phrase d'ouverture VOUVOYÉE de 60 à 90 MOTS (prend le temps, ne bâcle pas la présentation — le prospect doit avoir le temps de se situer). Structure imposée : (1) Salutation + nom + entreprise, (2) courte courtoisie 'j'espère que je ne vous dérange pas', (3) raison de l'appel (maquette préparée ce matin pour son établissement, mentionner UN bénéfice concret comme module de réservation intégré), (4) confirmer qu'on a envoyé par email, (5) question ouverte sur s'il a eu le temps de regarder. Exemple : 'Bonjour, Tom Bauer de WebConceptor à l'appareil. J'espère que je ne vous dérange pas ? Je me permets de vous contacter parce que j'ai préparé ce matin une maquette de site internet personnalisée pour votre établissement, avec un module de réservation en ligne intégré. Je vous l'ai envoyée par email. Avez-vous eu le temps d'y jeter un œil ?' — adapte avec un détail propre au prospect (ville, type métier).",
-  "discoveryQuestions": [5 questions VOUVOYÉES (max 25 mots chacune) à poser PENDANT L'APPEL, le prospect ayant la maquette sous les yeux. Obligatoirement couvrir : (1) ressenti sur la maquette, (2) modifications souhaitées (images, couleurs, textes), (3) présence en ligne actuelle, (4) objectifs du site (réservations, visibilité, etc.), (5) timing de lancement. Formulation pro, ouverte, pas commerciale.],
-  "hooks": [3 phrases VOUVOYÉES (max 25 mots chacune) pour avancer la conversation pendant l'appel. Ex : 'On peut parcourir la maquette ensemble là tout de suite, vous avez 5 minutes ?' ou 'Si vous préférez un moment plus calme, je peux vous rappeler demain 14 h ou jeudi 10 h'. Ces phrases servent à gérer les prospects occupés — en proposant un RAPPEL TÉLÉPHONIQUE. INTERDIT : les mots "visio", "Zoom", "Meet", "Teams", "écran partagé". Uniquement TÉLÉPHONE.],
-  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) aux 4 situations : (1) 'Je vais y réfléchir' → demander quand le rappeler par téléphone, (2) 'C'est trop cher' → rappeler le 3× sans frais et le ROI rapide, (3) 'Envoyez-moi un mail avec plus d'infos' → proposer d'en parler directement maintenant puisqu'il est déjà au téléphone avec Tom, (4) 'Je veux l'acheter maintenant' → envoi lien Stripe immédiat. Toujours VOUS. INTERDIT : "visio".]
+  "opening": "L'ouverture complète en 4 étapes ci-dessus, VOUVOYÉE, adaptée au métier + engagement du prospect. Intègre un bénéfice concret lié au métier (réservation sans commission pour resto/coiffeur/esthé, formulaire de devis pour plombier/électricien, boutique en ligne pour chocolatier/fleuriste, etc.).",
+  "discoveryQuestions": [5 questions VOUVOYÉES (max 25 mots) à poser après l'ouverture. Couvrir : (1) premier ressenti visuel, (2) éléments à adapter, (3) comment ils gèrent leur présence en ligne aujourd'hui, (4) objectifs principaux du site, (5) timing de lancement.],
+  "hooks": [3 phrases VOUVOYÉES (max 25 mots) pour gérer les prospects occupés : proposer de regarder ensemble maintenant, OU proposer un rappel téléphonique demain/après-demain. INTERDIT : visio/Zoom/Meet/Teams.],
+  "objectionHandlers": [4 réponses VOUVOYÉES (max 40 mots) : (1) "Je vais y réfléchir" → proposer un rappel téléphonique précis, (2) "Trop cher" → 3× sans frais Klarna + ROI rapide, (3) "Envoyez-moi un mail" → proposer d'en parler maintenant puisqu'on est déjà au téléphone et qu'il a la maquette, (4) "Je le prends maintenant" → lien Stripe immédiat.]
 }
 
-Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est jeune (18 ans) mais parle comme un dirigeant posé. Réponds UNIQUEMENT avec le JSON valide.`;
+Ton : pro, calme, respectueux, posé. Francophone France. Réponds UNIQUEMENT avec le JSON valide.`;
 
   try {
     const body = isOpenRouter
@@ -148,13 +269,13 @@ Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!res.ok) return FALLBACK_SCRIPT;
+    if (!res.ok) return personalizedFallback;
     const data = await res.json();
     const raw = isOpenRouter ? data.choices?.[0]?.message?.content : data.content?.[0]?.text;
-    if (!raw) return FALLBACK_SCRIPT;
+    if (!raw) return personalizedFallback;
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return FALLBACK_SCRIPT;
+    if (!jsonMatch) return personalizedFallback;
     const parsed = JSON.parse(jsonMatch[0]);
 
     // Sanitize : on passe TOUT ce que Claude retourne dans stripVisio() pour
@@ -169,18 +290,18 @@ Ton : pro, rassurant, poli, jamais pressé. Francophone France standard. Tom est
         .map((s) => stripVisio(s.slice(0, maxChars)));
     };
 
-    const opening = clean(parsed.opening) || FALLBACK_SCRIPT.opening;
+    const opening = clean(parsed.opening, 800) || personalizedFallback.opening;
     const discoveryQuestions = cleanArr(parsed.discoveryQuestions);
     const hooks = cleanArr(parsed.hooks);
     const objectionHandlers = cleanArr(parsed.objectionHandlers);
 
     return {
       opening,
-      discoveryQuestions: discoveryQuestions.length >= 3 ? discoveryQuestions : FALLBACK_SCRIPT.discoveryQuestions,
-      hooks: hooks.length >= 2 ? hooks : FALLBACK_SCRIPT.hooks,
-      objectionHandlers: objectionHandlers.length >= 2 ? objectionHandlers : FALLBACK_SCRIPT.objectionHandlers,
+      discoveryQuestions: discoveryQuestions.length >= 3 ? discoveryQuestions : personalizedFallback.discoveryQuestions,
+      hooks: hooks.length >= 2 ? hooks : personalizedFallback.hooks,
+      objectionHandlers: objectionHandlers.length >= 2 ? objectionHandlers : personalizedFallback.objectionHandlers,
     };
   } catch {
-    return FALLBACK_SCRIPT;
+    return personalizedFallback;
   }
 }
