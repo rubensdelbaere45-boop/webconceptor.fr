@@ -75,31 +75,30 @@ export async function GET(
     );
   }
 
-  // Détection des bots : on SERT toujours la maquette, mais on ne compte pas
-  // l'ouverture et on ne notifie pas → plus de faux HOT LEAD.
+  // VIEW_COUNT désormais 100% côté client via /api/prospect/track-view
+  // (JS beacon qui ne fire QU'APRÈS une vraie interaction humaine). Les
+  // scanners email ne comptent plus de fausses views.
+  //
+  // Ici on garde juste :
+  //   - isBot (UA check) pour ne pas notifier Telegram sur les previews
+  //   - opened_at set sur la 1ère visite non-bot (pour le flag "mail ouvert"
+  //     qui sert ailleurs : critères SMS hot lead, email-reminders, etc.)
+  //   - Telegram HOT LEAD fire sur la 1ère visite non-bot UA (accepter un
+  //     petit risque de faux positif pour les scanners qui spoofent un
+  //     UA réaliste — la confirmation définitive vient du JS beacon)
   const userAgent = req.headers.get("user-agent") || "";
   const isBot = isBotUserAgent(userAgent);
   const isFirstOpen = !data.opened_at && !isBot;
 
-  // Log the view (non-blocking). Incrémente view_count à CHAQUE ouverture humaine
-  // → permet de détecter les ULTRA HOT LEADS (vue 2+ fois = très intéressé).
-  // Le opened_at n'est mis à jour QUE lors de la 1ère ouverture (status=opened).
-  if (!isBot) {
+  if (isFirstOpen) {
+    // Set opened_at + status=opened sans toucher view_count (c'est track-view
+    // qui gère le compteur maintenant)
     (async () => {
       try {
-        // Lit le view_count actuel puis incrémente (non-atomique mais safe à notre volume)
-        const { data: current } = await supabase
+        await supabase
           .from("prospects")
-          .select("view_count")
-          .eq("id", data.id)
-          .maybeSingle();
-        const nextCount = ((current?.view_count as number | null) ?? 0) + 1;
-        const updates: Record<string, unknown> = { view_count: nextCount };
-        if (!data.opened_at) {
-          updates.opened_at = new Date().toISOString();
-          updates.status = "opened";
-        }
-        await supabase.from("prospects").update(updates).eq("id", data.id);
+          .update({ opened_at: new Date().toISOString(), status: "opened" })
+          .eq("id", data.id);
       } catch { /* silent */ }
     })();
   }
@@ -326,9 +325,62 @@ export async function GET(
   // dans mockup-restaurant.ts → on ne re-injecte pas chez lui.
   // ═══════════════════════════════════════════════════════════════════
   const hasNativeSalesUi = injectedHtml.includes('class="wc-cta-bar"') || injectedHtml.includes('class="wc-sx-cta"');
-  const finalHtml = hasNativeSalesUi
+  const withSalesUi = hasNativeSalesUi
     ? injectedHtml
     : injectedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site") + "</body>");
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BEACON VIEW TRACKING — fire uniquement sur interaction humaine réelle
+  // ═══════════════════════════════════════════════════════════════════
+  // Les scanners email (Mimecast, Proofpoint, Microsoft Defender) exécutent
+  // rarement le JS et ne simulent jamais de scroll/mouse/touch. Ce beacon :
+  //   1. Attend 3 s après load (filtre les bots headless ultra-rapides)
+  //   2. Écoute mousemove / scroll / click / touchstart / keydown
+  //   3. Au 1er événement, POST /api/prospect/track-view → incrémente view_count
+  //   4. Auto-disarm après le premier fire (une interaction = une vue)
+  //
+  // Résultat : view_count reflète enfin le nombre de VRAIS humains qui ont
+  // interagi avec la maquette. Les 7× "ouvertures" de scanner ne comptent plus.
+  const beaconScript = `<script>
+(function wcBeacon() {
+  try {
+    var SLUG = ${JSON.stringify(mockupSlug)};
+    var fired = false;
+    var armed = false;
+    function fire() {
+      if (fired) return;
+      fired = true;
+      try {
+        fetch('/api/prospect/track-view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: SLUG }),
+          keepalive: true,
+        }).catch(function(){});
+      } catch (e) {}
+    }
+    function arm() {
+      if (armed) return;
+      armed = true;
+      var opts = { passive: true, once: true };
+      window.addEventListener('scroll', fire, opts);
+      window.addEventListener('mousemove', fire, opts);
+      window.addEventListener('click', fire, opts);
+      window.addEventListener('touchstart', fire, opts);
+      window.addEventListener('keydown', fire, opts);
+      // Filet de sécurité : si 25 s sur la page sans interaction (rare mais
+      // arrive quand l'utilisateur lit sans bouger), on fire quand même —
+      // 25 s dépasse le timeout typique d'un scanner JS-capable (1-5 s).
+      setTimeout(fire, 25000);
+    }
+    // Attente 3 s avant d'armer les listeners → filtre les scanners headless
+    // qui déclenchent mousemove/scroll au chargement
+    setTimeout(arm, 3000);
+  } catch (e) {}
+})();
+</script>`;
+
+  const finalHtml = withSalesUi.replace(/<\/body>/i, beaconScript + "</body>");
 
   return new NextResponse(finalHtml, {
     headers: {
