@@ -33,6 +33,36 @@ interface Prospect {
 }
 
 /**
+ * Verdict APPEL / NE PAS APPELER basé sur site_quality.
+ * Règle NON-NÉGOCIABLE : notre maquette template est une PROGRESSION pour les
+ * prospects sans site ou avec un site vieux/moche, mais elle est INFÉRIEURE
+ * à ce qu'a déjà un prospect qui a investi dans un vrai site pro (e-commerce
+ * Wavy/Shopify, site designer, etc.). Les appeler = humiliation garantie.
+ */
+export type CallVerdict =
+  | { level: "GO"; label: string; emoji: string; color: string; bg: string }
+  | { level: "STOP"; label: string; emoji: string; color: string; bg: string }
+  | { level: "CHECK"; label: string; emoji: string; color: string; bg: string };
+
+function getCallVerdict(p: Prospect): CallVerdict {
+  const q = p.site_quality;
+  if (q === "none") {
+    return { level: "GO", label: "OK — PAS DE SITE", emoji: "🟢", color: "text-emerald-800", bg: "bg-emerald-100 border-emerald-300" };
+  }
+  if (q === "poor") {
+    return { level: "GO", label: "OK — SITE POURRI", emoji: "🟢", color: "text-emerald-800", bg: "bg-emerald-100 border-emerald-300" };
+  }
+  if (q === "average") {
+    return { level: "STOP", label: "NE PAS APPELER — site correct", emoji: "🔴", color: "text-red-800", bg: "bg-red-100 border-red-300" };
+  }
+  if (q === "good") {
+    return { level: "STOP", label: "NE PAS APPELER — site pro", emoji: "🔴", color: "text-red-800", bg: "bg-red-100 border-red-300" };
+  }
+  // null / pas audité → on vérifie d'abord
+  return { level: "CHECK", label: "À VÉRIFIER — regarder son site d'abord", emoji: "🟡", color: "text-amber-800", bg: "bg-amber-100 border-amber-300" };
+}
+
+/**
  * Calcule un score de probabilité de conversion pour chaque prospect.
  * Plus le score est haut, plus on a de chances de closer au téléphone.
  *
@@ -1069,8 +1099,14 @@ export default function AdminProspectsPage() {
             <div className="divide-y divide-gray-100">
               {filteredProspects.map((p) => {
                 const colorClass = statusColors[p.status] || "bg-gray-100 text-gray-500";
+                const verdict = getCallVerdict(p);
+                // Row tint selon le verdict : vert = appeler, rouge = non, jaune = vérifier
+                const rowTint =
+                  verdict.level === "GO" ? "border-l-4 border-l-emerald-500 bg-emerald-50/40 hover:bg-emerald-50"
+                  : verdict.level === "STOP" ? "border-l-4 border-l-red-500 bg-red-50/40 hover:bg-red-50 opacity-75"
+                  : "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50";
                 return (
-                  <div key={p.id} className="p-4 flex items-center gap-4 hover:bg-gray-50">
+                  <div key={p.id} className={`p-4 flex items-center gap-4 transition ${rowTint}`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14px] font-semibold truncate">{p.name}</p>
@@ -1112,6 +1148,14 @@ export default function AdminProspectsPage() {
                             ✅ Appelé aujourd&apos;hui
                           </span>
                         )}
+                        {(() => {
+                          const v = getCallVerdict(p);
+                          return (
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${v.bg} ${v.color}`} title={v.label}>
+                              {v.emoji} {v.level === "GO" ? "APPELER" : v.level === "STOP" ? "NE PAS APPELER" : "À VÉRIFIER"}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="text-[12px] text-gray-500 truncate">
                         {p.city} &middot; {p.distance_km} km &middot; {p.email || "pas d'email"}{p.phone ? ` · ${p.phone}` : ""}
@@ -1157,14 +1201,31 @@ export default function AdminProspectsPage() {
                           {dryRun ? "Générer" : "Envoyer"}
                         </button>
                       )}
-                      {/* Appeler directement — link tel: lance FaceTime / Continuity sur Mac */}
+                      {/* Appeler directement — couleur adaptée au verdict GO/STOP/CHECK */}
                       {p.phone && (
                         <a
                           href={`tel:${p.phone.replace(/[^0-9+]/g, "")}`}
-                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-flex items-center gap-1"
-                          title={`Appeler ${p.phone} (FaceTime/Continuity)`}
+                          onClick={(e) => {
+                            if (verdict.level === "STOP" && !confirm(`⛔ Ce prospect a un ${p.site_quality === "good" ? "SITE PRO" : "SITE CORRECT"}. Tu risques de te faire incendier comme avec LFLF.\n\nAppeler quand même ?`)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition inline-flex items-center gap-1 ${
+                            verdict.level === "STOP"
+                              ? "bg-red-200 text-red-900 hover:bg-red-300 border border-red-400"
+                              : verdict.level === "CHECK"
+                                ? "bg-amber-500 text-white hover:bg-amber-600"
+                                : "bg-green-600 text-white hover:bg-green-700"
+                          }`}
+                          title={
+                            verdict.level === "STOP"
+                              ? "⛔ NE PAS APPELER — site déjà correct"
+                              : verdict.level === "CHECK"
+                                ? "🟡 À VÉRIFIER — regarde son site avant"
+                                : `📞 Appeler ${p.phone}`
+                          }
                         >
-                          📞 Appeler
+                          {verdict.level === "STOP" ? "⛔" : verdict.level === "CHECK" ? "🟡" : "📞"} Appeler
                         </a>
                       )}
                       {/* Checkbox Appelé aujourd'hui — marque ce prospect comme fait */}
@@ -1332,6 +1393,31 @@ export default function AdminProspectsPage() {
 
             {scriptPanel.script && !scriptPanel.loading && (
               <>
+                {/* VERDICT — bannière géante en haut pour décider d'appeler ou pas */}
+                {(() => {
+                  const v = getCallVerdict(scriptPanel.prospect as Prospect);
+                  const details =
+                    v.level === "STOP" && scriptPanel.prospect?.site_quality === "good"
+                      ? "Ce prospect a un SITE PRO MODERNE (e-commerce, design custom, etc.). Notre template va paraître moins bien que ce qu'il a déjà. Tu vas te faire incendier comme avec LFLF Fleuriste."
+                      : v.level === "STOP" && scriptPanel.prospect?.site_quality === "average"
+                      ? "Ce prospect a un site CORRECT. Notre template ne sera pas une progression claire. Risque d'humiliation."
+                      : v.level === "CHECK"
+                      ? "Son site n'a pas été audité. Clique sur « Son site actuel » dans les infos rapides et regarde 30 secondes AVANT d'appeler. Si ça a l'air pro/moderne → passe au suivant."
+                      : "Pas de site ou site très daté. Notre maquette représente une vraie progression. Fonce.";
+                  return (
+                    <div className={`rounded-xl p-4 border-2 ${v.bg} ${v.color} flex items-start gap-3`}>
+                      <span className="text-[32px] leading-none flex-shrink-0">{v.emoji}</span>
+                      <div className="flex-1">
+                        <div className={`text-[15px] font-extrabold ${v.color}`}>
+                          {v.level === "GO" ? "✅ VAS-Y, APPELLE" : v.level === "STOP" ? "⛔ NE PAS APPELER" : "🟡 À VÉRIFIER AVANT"}
+                        </div>
+                        <div className={`text-[12px] mt-1 ${v.color}`}>{details}</div>
+                        <div className={`text-[11px] mt-2 opacity-80 ${v.color}`}>Qualité site actuel : <strong>{scriptPanel.prospect?.site_quality || "non audité"}</strong></div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Infos rapides */}
                 <div className="flex flex-wrap gap-2 pb-3 border-b border-gray-100">
                   {scriptPanel.prospect.city && (
