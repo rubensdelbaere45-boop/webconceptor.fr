@@ -3,6 +3,31 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 
+interface RichAudit {
+  brand?: {
+    primaryColor?: string;
+    tone?: string;
+    keywords?: string[];
+  } | null;
+  contentToKeep?: {
+    uniqueSellingPoints?: string[];
+    aboutText?: string;
+  } | null;
+  existingFeatures?: string[] | null;
+  missingFeatures?: string[] | null;
+  weaknesses?: string[] | null;
+  improvementBrief?: {
+    featuresToAdd?: string[];
+    heroConcept?: string;
+    ctaStrategy?: string;
+  } | null;
+  verdict?: {
+    quality?: "none" | "poor" | "average" | "good";
+    summary?: string;
+    confidence?: "low" | "medium" | "high";
+  } | null;
+}
+
 interface Prospect {
   id: string;
   slug: string;
@@ -30,6 +55,7 @@ interface Prospect {
   cart_opened_at?: string | null;
   unsubscribed_at?: string | null;
   hot_sms_sent_at?: string | null;
+  rich_audit?: RichAudit | null;
 }
 
 /**
@@ -515,6 +541,29 @@ export default function AdminProspectsPage() {
   };
 
   // Supprime définitivement un prospect (bouton poubelle)
+  // Relance un audit IA complet du site + régénère la maquette sur-mesure
+  const handleReAudit = async (p: Prospect) => {
+    if (!confirm(`Lancer un nouvel audit IA et régénérer la maquette de ${p.name} ?\n\nCela prend 20-60 secondes. Coût Claude : ~0,05 €.`)) return;
+    addLog(`🧠 Re-audit en cours pour ${p.name}…`);
+    try {
+      const res = await fetch("/api/prospect/re-audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_id: p.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addLog(`❌ Re-audit ${p.name} : ${data.error || "erreur"}`);
+        return;
+      }
+      const s = data.audit_summary;
+      addLog(`✅ Re-audit ${p.name} · qualité=${s?.quality} · ton=${s?.tone} · ${s?.featuresToAddCount || 0} améliorations · coût ${s?.cost_usd ? s.cost_usd.toFixed(3) + " $" : "—"}`);
+      loadProspects(); // refresh
+    } catch {
+      addLog(`❌ Re-audit ${p.name} : erreur réseau`);
+    }
+  };
+
   const handleDelete = async (p: Prospect) => {
     const confirmed = confirm(
       `🗑️ Supprimer définitivement ce prospect ?\n\n` +
@@ -1500,6 +1549,50 @@ export default function AdminProspectsPage() {
                   </div>
                 </div>
 
+                {/* Rich audit — Analyse Claude du site actuel (si dispo) */}
+                {scriptPanel.prospect?.rich_audit && (() => {
+                  const ra = scriptPanel.prospect.rich_audit!;
+                  return (
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-2">
+                        🧠 Analyse IA du site actuel
+                        {ra.verdict?.quality && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded font-mono">
+                            qualité : {ra.verdict.quality}
+                          </span>
+                        )}
+                      </div>
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-[12px] leading-relaxed space-y-2">
+                        {ra.verdict?.summary && (
+                          <p className="text-purple-900 font-medium">{ra.verdict.summary}</p>
+                        )}
+                        {ra.brand?.tone && (
+                          <p className="text-purple-700"><strong>Ton détecté :</strong> {ra.brand.tone} · <strong>Couleurs :</strong> <span className="font-mono">{ra.brand.primaryColor}</span></p>
+                        )}
+                        {Array.isArray(ra.missingFeatures) && ra.missingFeatures.length > 0 && (
+                          <div>
+                            <p className="font-bold text-purple-800">❌ Ce qu'il n'a PAS actuellement :</p>
+                            <ul className="list-disc list-inside ml-2 mt-1">
+                              {ra.missingFeatures.slice(0, 5).map((m, i) => (<li key={i}>{m}</li>))}
+                            </ul>
+                          </div>
+                        )}
+                        {Array.isArray(ra.improvementBrief?.featuresToAdd) && ra.improvementBrief!.featuresToAdd!.length > 0 && (
+                          <div>
+                            <p className="font-bold text-emerald-800">✅ Ce que notre maquette AJOUTE :</p>
+                            <ul className="list-disc list-inside ml-2 mt-1">
+                              {ra.improvementBrief!.featuresToAdd!.slice(0, 5).map((f, i) => (<li key={i}>{f}</li>))}
+                            </ul>
+                          </div>
+                        )}
+                        {ra.improvementBrief?.ctaStrategy && (
+                          <p className="text-purple-800 italic border-t border-purple-200 pt-2 mt-2"><strong>Stratégie CTA recommandée :</strong> {ra.improvementBrief.ctaStrategy}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Audit du site */}
                 {scriptPanel.audit && (
                   <>
@@ -1592,6 +1685,13 @@ export default function AdminProspectsPage() {
                 className="px-3 py-2 bg-amber-500 text-white text-[12px] font-semibold rounded-lg hover:bg-amber-600"
               >
                 📝 Note
+              </button>
+              <button
+                onClick={() => scriptPanel.prospect && handleReAudit(scriptPanel.prospect)}
+                className="px-3 py-2 bg-purple-600 text-white text-[12px] font-semibold rounded-lg hover:bg-purple-700"
+                title="Relancer un audit IA du site + régénérer la maquette"
+              >
+                🧠 Re-audit
               </button>
               <button
                 onClick={() => scriptPanel.prospect && handleDelete(scriptPanel.prospect)}
