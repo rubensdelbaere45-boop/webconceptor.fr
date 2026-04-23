@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare, escapeTelegram } from "@/lib/security";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
+import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
+import type { DeepAudit } from "@/lib/deep-audit";
 
 /* ══════════════════════════════════════════
    POST /api/prospect/regenerate-mockup
@@ -69,6 +71,7 @@ interface MinimalProspect {
   about_scraped?: string | null;
   website_photos?: string[] | null;
   site_style_dna?: { dominantColors?: string[]; fontFamilies?: string[]; keywords?: string[] } | null;
+  rich_audit?: DeepAudit | null;
   view_count?: number;
   mockup_html?: string | null;
 }
@@ -112,7 +115,7 @@ async function handler(req: NextRequest) {
   // Sélection des prospects à régénérer
   let query = supabase
     .from("prospects")
-    .select("id, slug, name, city, address, phone, website, email, google_rating, google_reviews_count, photos, hours, business_type, menu_items, reviews, about_scraped, website_photos, site_style_dna, view_count, mockup_html")
+    .select("id, slug, name, city, address, phone, website, email, google_rating, google_reviews_count, photos, hours, business_type, menu_items, reviews, about_scraped, website_photos, site_style_dna, rich_audit, view_count, mockup_html")
     .not("mockup_html", "is", null);
 
   if (slug) {
@@ -158,19 +161,35 @@ async function handler(req: NextRequest) {
         continue;
       }
 
-      const content = buildContentFromExisting(p);
-      const adaptive: AdaptiveProspect = {
-        id: p.id, slug: p.slug, name: p.name,
-        city: p.city, address: p.address, phone: p.phone,
-        website: p.website, email: p.email,
-        google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-        photos: p.photos, hours: p.hours, business_type: p.business_type,
-        menu_items: p.menu_items, reviews: p.reviews,
-        about_scraped: p.about_scraped,
-        website_photos: p.website_photos,
-        site_style_dna: p.site_style_dna,
-      };
-      const html = generateAdaptiveMockupHtml(adaptive, content, origin);
+      let html: string;
+
+      // Si on a un rich_audit (DeepAudit) en DB, on utilise le générateur
+      // mockup-custom (maquette vraiment sur-mesure). Sinon fallback adaptive.
+      if (p.rich_audit) {
+        const custom: CustomProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, email: p.email,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          photos: p.photos, hours: p.hours, business_type: p.business_type,
+          reviews: p.reviews,
+        };
+        html = generateCustomMockupHtml(custom, p.rich_audit, origin);
+      } else {
+        const content = buildContentFromExisting(p);
+        const adaptive: AdaptiveProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, email: p.email,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          photos: p.photos, hours: p.hours, business_type: p.business_type,
+          menu_items: p.menu_items, reviews: p.reviews,
+          about_scraped: p.about_scraped,
+          website_photos: p.website_photos,
+          site_style_dna: p.site_style_dna,
+        };
+        html = generateAdaptiveMockupHtml(adaptive, content, origin);
+      }
 
       await supabase
         .from("prospects")

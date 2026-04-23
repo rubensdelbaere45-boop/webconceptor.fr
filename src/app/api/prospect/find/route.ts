@@ -4,6 +4,7 @@ import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
 import { searchPagesJaunes } from "@/lib/sources/pages-jaunes";
 import { searchOverpass } from "@/lib/sources/overpass";
 import { checkEmailMx } from "@/lib/email-mx-check";
+import { runDeepAudit, type DeepAudit } from "@/lib/deep-audit";
 
 /* ══════════════════════════════════════════
    CONFIG
@@ -901,8 +902,11 @@ export async function POST(req: NextRequest) {
       let websitePhotos: string[] = [];
       let siteAudit: SiteAudit | null = null;
       let styleDna: SiteStyleDNA | null = null;
+      let deepAudit: DeepAudit | null = null;
       if (place.websiteUri) {
-        // Parallélise les 6 scrapers par place → ~5× plus rapide qu'en séquentiel.
+        // Parallélise les 7 scrapers par place → ~5× plus rapide qu'en séquentiel.
+        // NEW : ajout de runDeepAudit qui fait un audit riche Claude-assisté
+        //       et stocke le brief d'amélioration en DB (utilisé par mockup-custom).
         const shouldScrapeMenu = businessType !== "epicerie";
         const results = await Promise.allSettled([
           findEmailsOnWebsite(place.websiteUri),
@@ -910,7 +914,13 @@ export async function POST(req: NextRequest) {
           scrapeAboutText(place.websiteUri),
           scrapeWebsitePhotos(place.websiteUri),
           auditWebsite(place.websiteUri),
-          extractSiteStyleDNA(place.websiteUri),  // ← NEW : couleurs, polices, ambiance du site actuel
+          extractSiteStyleDNA(place.websiteUri),
+          runDeepAudit({
+            prospectName: place.displayName.text,
+            siteUrl: place.websiteUri,
+            businessType,
+            city,
+          }),
         ]);
         const allEmails = results[0].status === "fulfilled" ? (results[0].value as string[]) : [];
         email = allEmails[0] || null;
@@ -920,6 +930,7 @@ export async function POST(req: NextRequest) {
         websitePhotos = results[3].status === "fulfilled" ? (results[3].value as string[]) : [];
         siteAudit = results[4].status === "fulfilled" ? (results[4].value as SiteAudit | null) : null;
         styleDna = results[5].status === "fulfilled" ? (results[5].value as SiteStyleDNA | null) : null;
+        deepAudit = results[6].status === "fulfilled" ? (results[6].value as DeepAudit | null) : null;
         if (email) stats.withEmail++;
       }
       // Pas de site = opportunité max (site_quality = "none")
@@ -980,6 +991,7 @@ export async function POST(req: NextRequest) {
         site_audit_score: siteAudit?.score ?? null,
         site_audit_issues: siteAudit?.issues && siteAudit.issues.length ? siteAudit.issues : null,
         site_style_dna: styleDna || null,
+        rich_audit: deepAudit || null,
         status: email ? "found" : "no_email",
       });
 

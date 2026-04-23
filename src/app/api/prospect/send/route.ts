@@ -7,6 +7,8 @@ import {
   type RestaurantContent,
 } from "@/lib/mockup-restaurant";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
+import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
+import type { DeepAudit } from "@/lib/deep-audit";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -45,6 +47,7 @@ interface Prospect {
     fontFamilies?: string[];
     keywords?: string[];
   } | null;
+  rich_audit?: DeepAudit | null;
 }
 
 interface PersonalizedContent {
@@ -1058,23 +1061,35 @@ async function handleSend(req: NextRequest) {
         emailSubject = restoContent.emailSubject;
       } else {
         const content = await personalizeWithClaude(p);
-        // Utilise le nouveau générateur adaptatif (couleurs dominantes du site actuel,
-        // vraies photos website_photos, about_scraped, libellés par business_type).
-        // L'ancien generateMockupHtml (template Proxi épicerie hardcodé, identique
-        // pour tous) est abandonné : chocolatier = coiffeur = plombier recevaient
-        // la même maquette générique. Plus jamais.
-        const adaptive: AdaptiveProspect = {
-          id: p.id, slug: p.slug, name: p.name,
-          city: p.city, address: p.address, phone: p.phone,
-          website: p.website, email: p.email,
-          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-          photos: p.photos, hours: p.hours, business_type: p.business_type,
-          menu_items: p.menu_items, reviews: p.reviews,
-          about_scraped: p.about_scraped,
-          website_photos: p.website_photos,
-          site_style_dna: p.site_style_dna,
-        };
-        html = generateAdaptiveMockupHtml(adaptive, content, origin);
+        // Priorité : si on a un rich_audit Claude-assisté en DB, on utilise
+        // mockup-custom qui génère une maquette VRAIMENT sur-mesure (couleurs,
+        // photos, sections, brief d'amélioration → tout personnalisé). Sinon
+        // fallback sur mockup-adaptive (template adaptatif legacy).
+        if (p.rich_audit) {
+          const custom: CustomProspect = {
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city, address: p.address, phone: p.phone,
+            website: p.website, email: p.email,
+            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+            photos: p.photos, hours: p.hours, business_type: p.business_type,
+            reviews: p.reviews,
+          };
+          html = generateCustomMockupHtml(custom, p.rich_audit, origin);
+        } else {
+          // Legacy fallback : prospect scrappé avant la Phase 2 du refactor
+          const adaptive: AdaptiveProspect = {
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city, address: p.address, phone: p.phone,
+            website: p.website, email: p.email,
+            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+            photos: p.photos, hours: p.hours, business_type: p.business_type,
+            menu_items: p.menu_items, reviews: p.reviews,
+            about_scraped: p.about_scraped,
+            website_photos: p.website_photos,
+            site_style_dna: p.site_style_dna,
+          };
+          html = generateAdaptiveMockupHtml(adaptive, content, origin);
+        }
         emailBody = buildEmailBody(p, content, mockupUrl);
         emailSubject = content.emailSubject;
       }
