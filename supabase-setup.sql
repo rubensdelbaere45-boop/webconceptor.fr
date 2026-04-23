@@ -186,6 +186,14 @@ CREATE INDEX IF NOT EXISTS idx_prospects_final_push ON public.prospects(final_pu
 -- les taux de plaintes spam).
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS unsubscribed_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_prospects_unsubscribed ON public.prospects(unsubscribed_at);
+
+-- Audit profond du site actuel du prospect (produit par lib/deep-audit.ts).
+-- JSON riche avec identité visuelle, contenu à préserver, features présentes/
+-- manquantes, faiblesses, brief d'amélioration, verdict qualité.
+-- Sert à générer une maquette VRAIMENT personnalisée (pas un template).
+-- Un seul appel Claude Haiku 4.5 par prospect (avec prompt caching = 12×
+-- moins cher), résultat stocké et réutilisable à chaque régénération.
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS rich_audit JSONB;
 -- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
 -- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
 -- au lieu de proposer un style opposé qui le fait fuir.
