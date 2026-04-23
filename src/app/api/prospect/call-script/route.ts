@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, city, business_type, google_rating, google_reviews_count, site_quality, site_audit_score, site_audit_issues, address, website, view_count, cart_opened_at, opened_at, replied_at")
+    .select("id, name, city, business_type, google_rating, google_reviews_count, site_quality, site_audit_score, site_audit_issues, address, website, view_count, cart_opened_at, opened_at, replied_at, sent_at, status")
     .eq("id", prospect_id)
     .maybeSingle();
 
@@ -98,6 +98,9 @@ export async function POST(req: NextRequest) {
     cartOpenedAt: data.cart_opened_at,
     openedAt: data.opened_at,
     repliedAt: data.replied_at,
+    // mailSent = false si jamais emailé → cold call pur, le script propose
+    // de préparer une maquette au lieu de prétendre qu'il l'a reçue
+    mailSent: !!data.sent_at,
   });
 
   return NextResponse.json({

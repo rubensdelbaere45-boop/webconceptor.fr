@@ -38,6 +38,10 @@ export interface CallScriptInput {
   cartOpenedAt?: string | null;   // Timestamp du clic sur "J'achète" (si abandonné paiement)
   openedAt?: string | null;       // Première ouverture du mail
   repliedAt?: string | null;      // A répondu au mail ?
+  // Si mailSent = false, le prospect n'a JAMAIS reçu de mail → l'appel est un
+  // cold call pur. On ne doit PAS prétendre qu'il a reçu une maquette ; on
+  // lui PROPOSE d'en préparer une.
+  mailSent?: boolean;
 }
 
 export interface CallScript {
@@ -85,17 +89,37 @@ function buildFallbackOpening(input: CallScriptInput): string {
   // Signaux d'engagement
   const vc = input.viewCount || 0;
   const hasCart = !!input.cartOpenedAt;
+  // COLD CALL pur : le prospect n'a JAMAIS reçu de mail — on ne ment pas,
+  // on propose de préparer une maquette plutôt que prétendre qu'il l'a
+  const isColdCall = input.mailSent === false;
 
   // Début standard (respectueux, self-présentation)
-  let opening =
+  const header =
     `Bonjour, Tom Bauer de WebConceptor à l'appareil. ` +
     `Est-ce que je vous dérange une minute ? ` +
     `\n\n` +
-    `Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. ` +
+    `Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. `;
+
+  if (isColdCall) {
+    // Cold call : pas encore de maquette envoyée → on propose
+    const reasonLine = input.siteQuality === "none"
+      ? `Je vois que vous n'avez pas encore de site internet pour ${name}. `
+      : `Je vois que le site actuel de ${name} gagnerait à être modernisé. `;
+    return (
+      header +
+      reasonLine +
+      `Je peux vous préparer gratuitement une maquette sur-mesure (${pitch}), ` +
+      `et vous l'envoyer par email pour que vous la regardiez tranquillement. ` +
+      `Est-ce que ça vous intéresse d'y jeter un œil avant de décider ?`
+    );
+  }
+
+  // Mail déjà envoyé : ouverture adaptative selon engagement
+  let opening =
+    header +
     `J'ai préparé récemment une maquette sur-mesure pour ${name}, ${pitch}. ` +
     `Je vous l'ai envoyée par email. `;
 
-  // Personnalisation selon l'engagement
   if (hasCart) {
     opening += `D'ailleurs, j'ai vu que vous étiez sur le point de valider la commande avant de quitter la page — je voulais justement vous appeler pour savoir s'il y avait eu un souci technique, ou une question qui vous a retenu ?`;
   } else if (vc >= 5) {

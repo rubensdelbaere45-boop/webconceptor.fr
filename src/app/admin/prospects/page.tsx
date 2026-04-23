@@ -1275,8 +1275,9 @@ export default function AdminProspectsPage() {
                       >
                         🗑️
                       </button>
-                      {/* Script d'appel — dès qu'une maquette existe + tél disponible */}
-                      {p.phone && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
+                      {/* Script d'appel — disponible pour TOUT prospect avec téléphone
+                          (y compris ceux en status=found / no_email = cold call) */}
+                      {p.phone && p.status !== "converted" && p.status !== "error" && (
                         <button
                           onClick={() => handleCallScript(p)}
                           disabled={loading}
