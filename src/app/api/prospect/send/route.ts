@@ -6,6 +6,7 @@ import {
   type RestaurantProspect,
   type RestaurantContent,
 } from "@/lib/mockup-restaurant";
+import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -55,16 +56,45 @@ interface PersonalizedContent {
   emailPitch: string;
 }
 
+// Libellés naturels par business_type pour que le prompt Claude ne parle
+// plus jamais d'une "épicerie de proximité" quand c'est un chocolatier ou
+// un plombier. Évite aussi au fallback de déraper ("L'épicerie de proximité
+// à Paris" alors que c'est un coiffeur) — bug historique qui faisait IA.
+const BUSINESS_LABELS: Record<string, { name: string; descriptor: string; sector: string }> = {
+  restaurant:   { name: "restaurant",                descriptor: "une table chaleureuse",             sector: "restauration" },
+  boulangerie:  { name: "boulangerie artisanale",    descriptor: "une boulangerie de quartier",       sector: "boulangerie" },
+  patisserie:   { name: "pâtisserie / chocolaterie", descriptor: "une maison de créations sucrées",   sector: "pâtisserie artisanale" },
+  cafe:         { name: "café",                      descriptor: "un café de proximité",              sector: "café / restauration" },
+  glacier:      { name: "glacier artisanal",         descriptor: "un glacier artisanal",              sector: "glace artisanale" },
+  coiffeur:     { name: "salon de coiffure",         descriptor: "un salon de coiffure",              sector: "coiffure" },
+  institut:     { name: "institut de beauté",        descriptor: "un institut de beauté",             sector: "esthétique et bien-être" },
+  fleuriste:    { name: "fleuriste",                 descriptor: "une boutique de fleurs",            sector: "fleuriste" },
+  plombier:     { name: "entreprise de plomberie",   descriptor: "un artisan plombier de confiance",  sector: "plomberie / chauffage" },
+  electricien:  { name: "entreprise d'électricité",  descriptor: "un artisan électricien",            sector: "électricité" },
+  dentiste:     { name: "cabinet dentaire",          descriptor: "un cabinet dentaire",               sector: "soins dentaires" },
+  osteo:        { name: "cabinet d'ostéopathie",     descriptor: "un cabinet d'ostéopathie",          sector: "ostéopathie" },
+  salle_sport:  { name: "salle de sport",            descriptor: "une salle de sport",                sector: "fitness / sport" },
+  fitness:      { name: "salle de sport",            descriptor: "une salle de sport",                sector: "fitness / sport" },
+  auto_ecole:   { name: "auto-école",                descriptor: "une auto-école locale",             sector: "permis de conduire" },
+  garage:       { name: "garage automobile",         descriptor: "un garage indépendant",             sector: "mécanique auto" },
+  epicerie:     { name: "épicerie de proximité",     descriptor: "une épicerie de proximité",         sector: "commerce de proximité" },
+};
+
+function getBusinessLabel(bt?: string) {
+  return BUSINESS_LABELS[bt || ""] || { name: "commerce local", descriptor: "un commerce local", sector: "activité locale" };
+}
+
 async function personalizeWithClaude(prospect: Prospect): Promise<PersonalizedContent> {
   const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
+  const label = getBusinessLabel(prospect.business_type);
 
   const fallback: PersonalizedContent = {
     heroTitle: `${prospect.name}`,
-    heroSubtitle: `L'épicerie de proximité${prospect.city ? ` à ${prospect.city}` : ""}`,
-    aboutText: `Un commerce de proximité au cœur de la vie du village. Découvrez nos produits frais, nos arrivages et nos spécialités.`,
+    heroSubtitle: `${label.descriptor.charAt(0).toUpperCase() + label.descriptor.slice(1)}${prospect.city ? ` à ${prospect.city}` : ""}`,
+    aboutText: `Notre équipe vous accueille${prospect.city ? ` à ${prospect.city}` : ""} avec un service attentionné et un savoir-faire reconnu. Nous sommes fiers de faire partie de votre quotidien.`,
     emailSubject: `Maquette de votre site web pour ${prospect.name}`,
     emailOpening: `Bonjour,`,
-    emailPitch: `J'ai pris l'initiative de réaliser une maquette complète du site web de ${prospect.name}, en m'appuyant sur les informations publiques disponibles sur votre magasin.`,
+    emailPitch: `J'ai pris l'initiative de réaliser une maquette complète du site web de ${prospect.name}, en m'appuyant sur les informations publiques disponibles.`,
   };
 
   if (!key) return fallback;
@@ -74,31 +104,52 @@ async function personalizeWithClaude(prospect: Prospect): Promise<PersonalizedCo
     ? "https://openrouter.ai/api/v1/chat/completions"
     : "https://api.anthropic.com/v1/messages";
 
+  // Si on a scrapé le "à propos" du site, on le donne à Claude comme matière
+  // première pour qu'il génère un texte qui SONNE comme le prospect, pas comme
+  // un template générique. C'est le levier principal d'authenticité.
+  const aboutExcerpt = (prospect.about_scraped || "").slice(0, 800);
+  // Même chose pour les keywords d'ambiance extraits du site (traditionnel, moderne…)
+  const keywords = (prospect.site_style_dna?.keywords || []).slice(0, 5).join(", ");
+  // Liste des produits/services déjà scrapés (si menu_items rempli)
+  const itemsSample = Array.isArray(prospect.menu_items)
+    ? prospect.menu_items.slice(0, 6).map((i) => i.name).filter(Boolean).join(", ")
+    : "";
+
   const infoLines = [
-    `Nom du magasin : ${prospect.name}`,
+    `Nom : ${prospect.name}`,
+    `Activité : ${label.name}`,
     prospect.city ? `Ville : ${prospect.city}` : "",
     prospect.address ? `Adresse : ${prospect.address}` : "",
     prospect.google_rating ? `Note Google : ${prospect.google_rating}/5 (${prospect.google_reviews_count || 0} avis)` : "",
     prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
     prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
+    keywords ? `Ambiance détectée (du site actuel) : ${keywords}` : "",
+    itemsSample ? `Produits/services connus : ${itemsSample}` : "",
+    aboutExcerpt ? `Texte "à propos" du site actuel (à reprendre dans ton propre style) :\n"${aboutExcerpt}"` : "",
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tu prépares une maquette de site web et un email professionnel cordial pour un magasin Proxi (épicerie de proximité française) que nous prospectons.
+  const prompt = `Tu prépares une maquette de site web et un email professionnel pour ${label.descriptor} que nous prospectons. Secteur : ${label.sector}.
 
-Infos du magasin :
+RÈGLES CRUCIALES :
+- Le texte doit refléter CE métier précisément — JAMAIS de formulation générique qui pourrait s'appliquer à n'importe quel commerce.
+- Si un texte "à propos" du site actuel est fourni, INSPIRE-TOI-EN (ton, valeurs, vocabulaire) sans le recopier mot pour mot.
+- Si des keywords d'ambiance sont détectés, respecte-les (traditionnel ≠ moderne).
+- N'invente JAMAIS une info fausse (pas de date de création, pas de nombre d'employés).
+
+Infos de l'entreprise :
 ${infoLines}
 
 Génère un objet JSON avec ces 6 clés EXACTEMENT :
 {
-  "heroTitle": "titre du hero site, court (5-8 mots), évoque le commerce de proximité et le nom",
-  "heroSubtitle": "sous-titre hero, 10-15 mots, évoque la ville ou le quartier",
-  "aboutText": "paragraphe À propos de 40-60 mots, chaleureux, évoque les produits, l'ambiance, la proximité",
-  "emailSubject": "objet de l'email, 50 caractères max, personnalisé avec le nom du magasin",
+  "heroTitle": "titre du hero site, court (5-9 mots), évoque clairement le métier (${label.name}) et/ou le nom de l'entreprise",
+  "heroSubtitle": "sous-titre hero, 10-18 mots, évoque la ville/quartier + 1 point fort du métier (savoir-faire, rapidité, tradition…)",
+  "aboutText": "paragraphe À propos de 45-70 mots, s'inspire du texte du site si fourni, évoque le métier, l'équipe, l'ambiance. JAMAIS de mots génériques comme 'produits frais' si c'est pas un commerce alimentaire.",
+  "emailSubject": "objet de l'email, 45-60 caractères max, personnalisé avec nom + activité (ex: 'Maquette site pour [nom] — [ville]')",
   "emailOpening": "salutation polie (Bonjour, ...), sans nom si inconnu",
-  "emailPitch": "1-2 phrases professionnelles mentionnant que tu as préparé une maquette de leur site et que tu l'as adaptée à leur activité. Mentionne 1 détail réel du magasin (ville, note Google si >4, etc.)"
+  "emailPitch": "2 phrases maximum. Mentionne que tu as préparé une maquette adaptée à LEUR métier spécifique (cite le métier). Cite 1 détail réel (ville, note Google si >= 4.3, ancienneté si dispo)."
 }
 
-Ton : chaleureux, professionnel, francophone France. N'invente PAS d'information. Réponds UNIQUEMENT avec le JSON valide, sans texte avant ou après.`;
+Ton : professionnel francophone France, adapté au secteur. Pas d'emojis. Réponds UNIQUEMENT avec le JSON valide.`;
 
   try {
     const body = isOpenRouter
@@ -1007,7 +1058,23 @@ async function handleSend(req: NextRequest) {
         emailSubject = restoContent.emailSubject;
       } else {
         const content = await personalizeWithClaude(p);
-        html = generateMockupHtml(p, content, origin);
+        // Utilise le nouveau générateur adaptatif (couleurs dominantes du site actuel,
+        // vraies photos website_photos, about_scraped, libellés par business_type).
+        // L'ancien generateMockupHtml (template Proxi épicerie hardcodé, identique
+        // pour tous) est abandonné : chocolatier = coiffeur = plombier recevaient
+        // la même maquette générique. Plus jamais.
+        const adaptive: AdaptiveProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, email: p.email,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          photos: p.photos, hours: p.hours, business_type: p.business_type,
+          menu_items: p.menu_items, reviews: p.reviews,
+          about_scraped: p.about_scraped,
+          website_photos: p.website_photos,
+          site_style_dna: p.site_style_dna,
+        };
+        html = generateAdaptiveMockupHtml(adaptive, content, origin);
         emailBody = buildEmailBody(p, content, mockupUrl);
         emailSubject = content.emailSubject;
       }
