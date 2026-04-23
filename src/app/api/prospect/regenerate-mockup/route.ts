@@ -32,9 +32,9 @@ function getSupabaseAdmin() {
 }
 
 // Content de secours si on ne re-call pas Claude — on réutilise ce qui est déjà
-// en DB via email_subject / email_body, et on construit heroTitle / heroSubtitle
-// / aboutText à partir du label métier. Évite un appel OpenRouter par prospect
-// (coûteux + lent en batch).
+// en DB. Le générateur mockup-adaptive applique son propre cleanAboutText()
+// sur prospect.about_scraped directement, donc on laisse aboutText vide ici
+// (fallback métier) et le générateur choisira le meilleur texte.
 function buildContentFromExisting(p: MinimalProspect): {
   heroTitle: string;
   heroSubtitle: string;
@@ -44,9 +44,9 @@ function buildContentFromExisting(p: MinimalProspect): {
   return {
     heroTitle: p.name,
     heroSubtitle: `${label.descriptor.charAt(0).toUpperCase() + label.descriptor.slice(1)}${p.city ? ` à ${p.city}` : ""}`,
-    aboutText: (p.about_scraped && p.about_scraped.trim().length >= 80)
-      ? p.about_scraped
-      : `Notre équipe vous accueille${p.city ? ` à ${p.city}` : ""} avec un service attentionné et un savoir-faire reconnu. Nous sommes fiers de faire partie de votre quotidien.`,
+    // Fallback générique SANS revenir sur about_scraped : le générateur le traite
+    // lui-même (cleanAboutText décode entités, vire nav, tronque proprement).
+    aboutText: `Notre équipe vous accueille${p.city ? ` à ${p.city}` : ""} avec un service attentionné et un savoir-faire reconnu.`,
   };
 }
 

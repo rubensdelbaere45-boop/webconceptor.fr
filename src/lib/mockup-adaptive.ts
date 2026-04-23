@@ -552,6 +552,116 @@ function escape(s: string): string {
 }
 
 /* ══════════════════════════════════════════
+   Nettoyage des textes "à propos" scrapés
+   Le scraper extrait souvent la page entière : nav, menu boutique, footer,
+   entités HTML non décodées, etc. On doit nettoyer AGRESSIVEMENT avant
+   d'afficher : toute pollution = signal "site généré automatiquement".
+   ══════════════════════════════════════════ */
+
+// Décode les entités HTML communes (numériques + nommées)
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&euro;/g, "€")
+    .replace(/&#39;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, "“")
+    .replace(/&#8221;/g, "”")
+    .replace(/&#8230;/g, "…")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => { try { return String.fromCharCode(parseInt(h, 16)); } catch { return ""; } })
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCharCode(Number(n)); } catch { return ""; } });
+}
+
+// Détecte les bouts de texte qui ressemblent à du menu / navigation / footer.
+// Signaux : suite de 3+ "mots" très courts (< 12 chars) enchaînés sans
+// ponctuation ; présence de termes ultra-courts ALL CAPS ; liens sociaux…
+function looksLikeNavigation(s: string): boolean {
+  const lower = s.toLowerCase();
+  const navSignals = [
+    "aller au contenu", "skip to content", "menu principal", "navigation",
+    "facebook instagram", "instagram pinterest", "twitter instagram",
+    "mon compte", "panier", "se connecter", "inscription",
+    "mentions légales", "conditions générales", "politique de confidentialité",
+    "politique des cookies", "cgv", "cgu", "tous droits réservés",
+  ];
+  if (navSignals.some((sig) => lower.includes(sig))) return true;
+  // Ratio de majuscules élevé (menu type "BOUTIQUE ACCUEIL CONTACT") = nav
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length >= 3) {
+    const allCaps = words.filter((w) => w.length >= 2 && w === w.toUpperCase() && /[A-Z]/.test(w)).length;
+    if (allCaps / words.length > 0.4) return true;
+  }
+  return false;
+}
+
+/**
+ * Nettoie et tronque le texte "à propos" scrapé.
+ * Stratégie :
+ *   1. Décode les entités HTML
+ *   2. Normalise espaces / sauts de ligne
+ *   3. Jette les segments-navigation en tête (avant la vraie prose)
+ *   4. Tronque à la phrase complète sous 450 chars
+ *   5. Si le résultat est trop court ou toujours bizarre → on rejette
+ *
+ * Retourne soit un texte propre, soit null (=> on laisse le fallback Claude).
+ */
+function cleanAboutText(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== "string") return null;
+
+  let text = decodeHtmlEntities(raw);
+  // Remplace les retours à la ligne multiples et les espaces en rafale
+  text = text.replace(/\s*\n\s*/g, " ").replace(/\s{2,}/g, " ").trim();
+  if (text.length < 80) return null;
+
+  // On split en "segments" sur les fins de phrase + pipes/séparateurs
+  // communs sur les sites (|, ·, →, /). Puis on jette les premiers segments
+  // qui ressemblent à de la nav.
+  const segments = text
+    .split(/(?<=[.!?…])\s+|\s*[|·•→»]\s*/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 8);
+
+  // On drop les premiers segments tant qu'ils ont l'air nav
+  let startIdx = 0;
+  while (startIdx < segments.length && looksLikeNavigation(segments[startIdx])) {
+    startIdx++;
+  }
+  if (startIdx >= segments.length) return null;
+
+  // On reconstruit la prose à partir du premier segment légitime, stoppe
+  // dès qu'on atteint ~450 chars ou qu'on tombe sur un nouveau segment nav.
+  let out = "";
+  for (let i = startIdx; i < segments.length; i++) {
+    const seg = segments[i];
+    if (looksLikeNavigation(seg)) break;
+    if (out.length + seg.length + 2 > 450) {
+      // tronque à la phrase en cours si possible
+      if (out.length < 80) out = out + (out ? " " : "") + seg.slice(0, 450 - out.length - 1) + "…";
+      break;
+    }
+    out = out + (out ? " " : "") + seg;
+    // Stop à la fin d'une phrase si >= 250 chars — évite de couper au milieu
+    if (out.length >= 250 && /[.!?…]$/.test(seg)) break;
+  }
+
+  out = out.trim();
+  if (out.length < 80) return null;
+
+  // Dernier garde-fou : si plus de 30% des mots sont en ALL CAPS, c'est nav résiduelle
+  const words = out.split(/\s+/).filter(Boolean);
+  const caps = words.filter((w) => w.length >= 3 && w === w.toUpperCase() && /[A-Z]/.test(w)).length;
+  if (words.length >= 5 && caps / words.length > 0.3) return null;
+
+  return out;
+}
+
+/* ══════════════════════════════════════════
    Rendu HTML
    ══════════════════════════════════════════ */
 
@@ -566,16 +676,23 @@ export function generateAdaptiveMockupHtml(
   const heroPhoto = photos[0] || "";
   const galleryPhotos = photos.slice(1, 5); // 4 max en galerie
 
-  // About text : on prend en priorité ce qui est scrapé de leur site (authentique),
-  // sinon le texte généré par Claude
-  const rawAbout = (prospect.about_scraped || "").trim();
-  const aboutText = rawAbout.length >= 80 && rawAbout.length <= 800
-    ? rawAbout
-    : content.aboutText;
+  // About text : on PRIORISE le scrapé nettoyé (vraie voix du prospect),
+  // sinon on retombe sur content.aboutText (Claude ou fallback).
+  // cleanAboutText() vire la navigation, décode les entités HTML, et tronque
+  // à une phrase complète sous 450 chars. Retourne null si le scrapé est
+  // irrécupérable (ex : trop court, que du menu).
+  const aboutText = cleanAboutText(prospect.about_scraped) || content.aboutText;
 
   const cityStr = prospect.city ? escape(prospect.city) : "";
   const addressStr = escape(prospect.address || "");
   const phoneStr = escape(prospect.phone || "");
+
+  // Adresse complète URL-encodée pour les apps de navigation (Waze, Apple Plans,
+  // Google Maps). On utilise l'adresse telle quelle si dispo, sinon lat/lng si
+  // on les a, sinon on désactive les boutons.
+  const rawAddress = (prospect.address || "").trim();
+  const navQuery = rawAddress ? encodeURIComponent(rawAddress) : "";
+  const showNavButtons = rawAddress.length > 0;
 
   // Textes DYNAMIQUES — basés sur les vraies données du prospect uniquement
   const topStripContent = buildTopStripHtml(prospect);
@@ -725,6 +842,16 @@ nav{position:sticky;top:0;z-index:100;height:72px;padding:0 40px;display:flex;al
 
 .info{padding:80px 40px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
 .info-visual{aspect-ratio:4/3;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:24px;display:flex;align-items:center;justify-content:center;padding:40px;color:#fff;position:relative;overflow:hidden}
+.nav-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.nav-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.15s;border:1.5px solid rgba(0,0,0,0.08);background:#fff;color:#1a1a1a}
+.nav-btn:hover{transform:translateY(-1px);border-color:var(--primary);box-shadow:0 6px 16px rgba(0,0,0,0.08)}
+.nav-btn.waze{background:#33CCFF;color:#fff;border-color:#33CCFF}
+.nav-btn.waze:hover{background:#1BA8D9;border-color:#1BA8D9}
+.nav-btn.plans{background:#007AFF;color:#fff;border-color:#007AFF}
+.nav-btn.plans:hover{background:#0056B3;border-color:#0056B3}
+.nav-btn.gmaps{background:#4285F4;color:#fff;border-color:#4285F4}
+.nav-btn.gmaps:hover{background:#1A73E8;border-color:#1A73E8}
+.nav-btn svg{width:16px;height:16px;flex-shrink:0}
 .info-visual::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:radial-gradient(circle,rgba(255,255,255,0.2),transparent 70%);border-radius:50%}
 .info-visual-content{position:relative;z-index:1;text-align:center}
 .info-visual-tag{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;opacity:0.85}
@@ -758,6 +885,7 @@ footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);
   .info{padding:60px 20px;grid-template-columns:1fr;gap:32px}
   .gallery{padding:20px 20px 60px}.gallery-grid{grid-template-columns:repeat(2,1fr)}
   .cta{padding:60px 20px 100px}
+  .nav-buttons{grid-template-columns:1fr}
   body::after{font-size:60px}
 }
 </style>
@@ -834,7 +962,7 @@ ${reviewsHtml}
     <div class="info-visual-content">
       <div class="info-visual-tag">Nous trouver</div>
       <h3>${cityStr ? `À ${cityStr}` : "Près de chez vous"}</h3>
-      <p>${addressStr ? escape(addressStr) : "Contactez-nous pour l'adresse"}</p>
+      <p>${addressStr ? addressStr : "Contactez-nous pour l'adresse"}</p>
     </div>
   </div>
   <div class="info-text">
@@ -846,6 +974,21 @@ ${reviewsHtml}
       ${prospect.hours ? infoItem("clock", "Horaires", escape(prospect.hours.slice(0, 200))) : ""}
       ${prospect.website ? infoItem("web", "Site actuel", escape(prospect.website)) : ""}
     </div>
+    ${showNavButtons ? `
+    <div class="nav-buttons" role="group" aria-label="Itinéraire">
+      <a href="https://waze.com/ul?q=${navQuery}&navigate=yes" target="_blank" rel="noopener noreferrer" class="nav-btn waze" aria-label="Ouvrir dans Waze">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.54 6.63c-.98-2.18-3.17-3.72-5.7-3.72H9.17c-2.54 0-4.72 1.54-5.7 3.72C2.53 8.79 3 11.22 4.5 12.97v1.35c0 1.1.9 2 2 2h.63c.55 0 1-.45 1-1s-.45-1-1-1H6.5v-1.6l-.3-.34c-1.08-1.21-1.49-2.82-1.1-4.33.5-1.94 2.2-3.34 4.07-3.34h5.67c1.88 0 3.57 1.4 4.07 3.34.39 1.51-.02 3.12-1.1 4.33l-.31.34v1.6h-.63c-.55 0-1 .45-1 1s.45 1 1 1h.63c1.1 0 2-.9 2-2v-1.35c1.5-1.75 1.97-4.18.93-6.34zM8.5 10.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S7 8.17 7 9s.67 1.5 1.5 1.5zm7 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S14 8.17 14 9s.67 1.5 1.5 1.5zm-4.36 3.47h1.72c.28 0 .51.23.51.51 0 .99-.8 1.79-1.79 1.79h-.16c-.99 0-1.79-.8-1.79-1.79 0-.28.23-.51.51-.51z"/></svg>
+        Waze
+      </a>
+      <a href="https://maps.apple.com/?q=${navQuery}&dirflg=d" target="_blank" rel="noopener noreferrer" class="nav-btn plans" aria-label="Ouvrir dans Apple Plans">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+        Plans
+      </a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${navQuery}" target="_blank" rel="noopener noreferrer" class="nav-btn gmaps" aria-label="Ouvrir dans Google Maps">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 7 12s7-6.75 7-12c0-4.42-3.58-8-8-8zm0 10.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5zm7-2.5c0-3.87-3.13-7-7-7" opacity="0"/><path d="M19.32 11.8C19.77 10.56 20 9.3 20 8c0-3.87-3.13-7-7-7S6 4.13 6 8c0 1.3.23 2.56.68 3.8l6.32 10.2 6.32-10.2zM13 10.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+        Google Maps
+      </a>
+    </div>` : ""}
   </div>
 </section>
 

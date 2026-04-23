@@ -24,7 +24,7 @@ export function buildSalesUiSnippet(slug: string, prospectName: string): string 
   return `
 <style>
 /* ─── CTA bar fixe en haut ─────────────────────────────────── */
-.wc-sx-cta{position:fixed;top:0;left:0;right:0;z-index:9996;background:linear-gradient(90deg,#0a0a0a,#1a1a1a);color:#fff;padding:12px 20px 12px 60px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 2px 16px rgba(0,0,0,0.2);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;font-size:13px;flex-wrap:wrap}
+.wc-sx-cta{position:fixed;top:0;left:0;right:0;z-index:9996;background:linear-gradient(90deg,#0a0a0a,#1a1a1a);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 2px 16px rgba(0,0,0,0.2);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;font-size:13px;flex-wrap:wrap}
 .wc-sx-cta-text{flex:1;min-width:200px;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
 .wc-sx-cta-price-old{text-decoration:line-through;opacity:0.5;font-size:13px}
 .wc-sx-cta-price{font-weight:800;font-size:16px;color:#FFD700;letter-spacing:0.01em}
@@ -32,8 +32,20 @@ export function buildSalesUiSnippet(slug: string, prospectName: string): string 
 .wc-sx-cta-countdown strong{color:#FFD700;font-variant-numeric:tabular-nums}
 .wc-sx-cta-btn{padding:11px 22px;background:#FFD700;color:#0a0a0a;font-weight:800;font-size:13px;border:none;border-radius:100px;cursor:pointer;letter-spacing:0.04em;transition:transform 0.15s,box-shadow 0.15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .wc-sx-cta-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,215,0,0.3)}
+/* ─── Override : les pills WebConceptor (home-btn + demo-badge) étaient
+   positionnés à top:14px et recouvraient la CTA bar. On les descend sous
+   la CTA bar (top:62px) pour que prix + bouton "Je commande" soient visibles. */
+.wc-home-btn{top:62px !important}
+.wc-demo-badge{top:62px !important}
 body{padding-top:56px !important}
-@media(max-width:640px){.wc-sx-cta{padding:10px 14px;font-size:12px}.wc-sx-cta-btn{padding:9px 16px;font-size:12px}.wc-sx-cta-price{font-size:14px}body{padding-top:80px !important}}
+@media(max-width:640px){
+  .wc-sx-cta{padding:10px 14px;font-size:12px}
+  .wc-sx-cta-btn{padding:9px 16px;font-size:12px}
+  .wc-sx-cta-price{font-size:14px}
+  body{padding-top:80px !important}
+  .wc-home-btn{top:86px !important}
+  .wc-demo-badge{top:86px !important}
+}
 
 /* ─── Modal achat ──────────────────────────────────────────── */
 .wc-sx-overlay{position:fixed;inset:0;z-index:10000;background:rgba(10,10,10,0.7);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
