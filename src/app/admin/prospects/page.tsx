@@ -63,8 +63,8 @@ function getCallVerdict(p: Prospect): CallVerdict {
 }
 
 /**
- * Calcule un score de probabilité de conversion pour chaque prospect.
- * Plus le score est haut, plus on a de chances de closer au téléphone.
+ * Calcule un "yes likelihood score" pour chaque prospect — probabilité qu'il
+ * dise OUI au téléphone. Plus haut le score, plus chaud le prospect.
  *
  * Retourne -1 pour les prospects à EXCLURE (désabonnés, sans téléphone,
  * déjà convertis, déjà appelés aujourd'hui).
@@ -81,56 +81,69 @@ function computeCallScore(p: Prospect): { score: number; signals: string[] } {
   let score = 0;
   const vc = p.view_count || 0;
 
-  // Engagement fort : chaque vue de la maquette = +15 pts (signal le plus fort)
+  // ENGAGEMENT EXTRÊME — "à un clic de dire oui"
+  if (p.cart_opened_at) {
+    score += 100;
+    signals.push("🛒 a cliqué J'achète");
+  }
+  if (p.replied_at) {
+    score += 60;
+    signals.push("💬 A RÉPONDU au mail");
+  }
+
+  // Engagement fort : chaque vue humaine = +15 pts
   if (vc > 0) {
     score += vc * 15;
-    signals.push(`vu ${vc}× sa maquette`);
+    signals.push(`👁️ vu ${vc}× sa maquette`);
   }
 
-  // a cliqué sur "J'achète" puis abandonné = HOT (conversion à portée)
-  if (p.cart_opened_at) {
-    score += 40;
-    signals.push("a cliqué J'achète");
-  }
-
-  // Réponse au mail = ultra hot
-  if (p.replied_at) {
-    score += 30;
-    signals.push("a répondu au mail");
-  }
-
-  // Récence de l'ouverture mail
+  // Récence de l'ouverture mail — plus c'est frais, plus ils se souviennent
   if (p.opened_at) {
     const days = Math.floor((Date.now() - new Date(p.opened_at).getTime()) / 86400000);
     if (days >= 0 && days <= 3) {
       score += 10;
-      signals.push(days === 0 ? "ouvert mail aujourd'hui" : `ouvert mail il y a ${days}j`);
+      signals.push(days === 0 ? "📧 ouvert aujourd'hui" : `📧 ouvert il y a ${days}j`);
     } else if (days <= 7) {
       score += 5;
-      signals.push(`ouvert il y a ${days}j`);
+      signals.push(`📧 ouvert il y a ${days}j`);
     }
   }
 
-  // Qualification : ils ont BESOIN d'un site
-  if (p.site_quality === "none" || p.site_quality === "poor") {
-    score += 15;
-    if (p.site_quality === "none") signals.push("pas de site actuel");
-    else signals.push("site actuel de mauvaise qualité");
-  } else if (p.site_quality === "average") {
-    score += 5;
+  // QUALIFICATION — ils ont VRAIMENT besoin d'un site
+  if (p.site_quality === "none") {
+    score += 20;
+    signals.push("⚠️ pas de site actuel");
+    // Bonus si legitimate business (rating élevé + pas de site = parfait)
+    if ((p.google_rating || 0) >= 4.5) {
+      score += 15;
+      signals.push("⭐ business qualifié");
+    }
+  } else if (p.site_quality === "poor") {
+    score += 12;
+    signals.push("🕰️ site très daté");
   }
 
   // Qualité de la cible (google rating)
-  if ((p.google_rating || 0) >= 4.0) score += 3;
+  if ((p.google_rating || 0) >= 4.5) score += 3;
+  else if ((p.google_rating || 0) >= 4.0) score += 2;
 
-  // Mobile direct = meilleur taux de réponse que fixe standard
+  // Mobile direct = meilleur taux de réponse (pas de barrière standard)
   const phone = (p.phone || "").replace(/\s/g, "");
   if (phone.startsWith("06") || phone.startsWith("07")) {
-    score += 3;
-    signals.push("mobile direct");
+    score += 5;
+    signals.push("📱 mobile direct");
   }
 
   return { score, signals };
+}
+
+// Niveau de chaleur pour affichage — catégorise le score en pastilles
+function getHeatBadge(score: number): { label: string; emoji: string; bg: string } | null {
+  if (score >= 120) return { label: "ULTRA CHAUD", emoji: "🔥🔥🔥", bg: "bg-red-600 text-white" };
+  if (score >= 80)  return { label: "TRÈS CHAUD", emoji: "🔥🔥", bg: "bg-red-500 text-white" };
+  if (score >= 40)  return { label: "CHAUD", emoji: "🔥", bg: "bg-orange-500 text-white" };
+  if (score >= 20)  return { label: "BONNE CIBLE", emoji: "✨", bg: "bg-emerald-500 text-white" };
+  return null;
 }
 
 // Helpers pour parser les notes (format "[YYYY-MM-DD HH:MM] 📞 APPELÉ" ou "📝 xxx")
@@ -973,13 +986,15 @@ export default function AdminProspectsPage() {
             // Inclut "found" pour les cold call (pas encore de mail envoyé)
             return ["sent", "opened", "replied", "ready", "no_email", "found"].includes(p.status);
           });
-          // Tri : verdict GO d'abord (site none/poor) > CHECK > STOP, puis par statut à l'intérieur
+          // Tri : verdict GO d'abord, puis DANS chaque verdict → trié par
+          // "yes likelihood score" (cart abandon > a répondu > views > qualification)
+          // Rubens veut voir en TÊTE les prospects les plus sûrs de dire oui.
           const verdictRank: Record<string, number> = { GO: 0, CHECK: 1, STOP: 2 };
-          const statusRank: Record<string, number> = { opened: 0, replied: 1, sent: 2, ready: 3, found: 4, no_email: 5 };
           callTargets.sort((a, b) => {
             const dv = verdictRank[getCallVerdict(a).level] - verdictRank[getCallVerdict(b).level];
             if (dv !== 0) return dv;
-            return (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9);
+            // Intra-verdict : score DESC (plus haut = plus chaud)
+            return computeCallScore(b).score - computeCallScore(a).score;
           });
           const todo = callTargets.filter((p) => !wasCalledToday(p.notes));
           const done = callTargets.filter((p) => wasCalledToday(p.notes));
@@ -1028,6 +1043,8 @@ export default function AdminProspectsPage() {
                     const telLink = p.phone.replace(/[^0-9+]/g, "");
                     const isHot = p.status === "opened" || p.status === "replied";
                     const v = getCallVerdict(p);
+                    const { score, signals } = computeCallScore(p);
+                    const heat = getHeatBadge(score);
                     // Row tint selon verdict : vert (GO) / rouge (STOP) / jaune (CHECK)
                     const verdictBg =
                       v.level === "GO" ? "border-l-4 border-l-emerald-500 bg-emerald-50"
@@ -1049,12 +1066,22 @@ export default function AdminProspectsPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[14px]">{emoji}</span>
                             <span className="font-semibold text-[14px] text-[#0a0a0a] truncate">{p.name}</span>
+                            {heat && (
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide ${heat.bg}`} title={`Score probabilité oui : ${score}`}>
+                                {heat.emoji} {heat.label}
+                              </span>
+                            )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${v.bg} ${v.color}`} title={v.label}>
                               {v.emoji} {v.level === "GO" ? "APPELER" : v.level === "STOP" ? "NE PAS APPELER" : "À VÉRIFIER"}
                             </span>
-                            {isHot && <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider px-1.5 py-0.5 bg-red-100 rounded">🔥 Ouvert</span>}
+                            {isHot && !heat && <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider px-1.5 py-0.5 bg-red-100 rounded">🔥 Ouvert</span>}
                             {p.google_rating ? <span className="text-[11px] text-gray-500">⭐ {p.google_rating}</span> : null}
                           </div>
+                          {signals.length > 0 && (
+                            <div className="text-[11px] text-gray-600 mt-0.5 truncate">
+                              {signals.slice(0, 3).join(" · ")}
+                            </div>
+                          )}
                           <div className="text-[12px] text-gray-600 truncate flex items-center gap-2">
                             <span>{p.city} · {p.phone}</span>
                           </div>
