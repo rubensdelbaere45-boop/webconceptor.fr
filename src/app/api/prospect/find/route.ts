@@ -802,9 +802,28 @@ export async function POST(req: NextRequest) {
     // Plombier / électricien franchise
     "elek maison", "plomberie.com", "ménage service",
   ];
+  // Matching par MOT ENTIER pour éviter les faux positifs type :
+  //   "Jean-Paul Hévin" (artisan indé) matché par "paul"
+  //   "Centre des Ostéopathes de Garibaldi" matché par "aldi"
+  //   "Paulette Restaurant" matché par "paul"
+  // On normalise le nom (lower + sépare ponctuation/diacritiques), on splitte
+  // en tokens, et on matche UNIQUEMENT si la séquence blacklistée apparaît
+  // comme mot(s) entier(s).
+  const normalizeForMatch = (s: string): string =>
+    s.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // vire accents
+      .replace(/[^a-z0-9\s-]/g, " ") // ponctuation → espace
+      .replace(/\s+/g, " ")
+      .trim();
+
   const isFranchiseName = (name: string): boolean => {
-    const lower = name.toLowerCase();
-    return FRANCHISE_BLACKLIST.some((f) => lower.includes(f));
+    const normalized = ` ${normalizeForMatch(name)} `; // space-pad pour les bords
+    return FRANCHISE_BLACKLIST.some((f) => {
+      const normF = normalizeForMatch(f);
+      if (!normF) return false;
+      // Match mot(s) entier(s) : " <normF> " délimité par des espaces
+      return normalized.includes(` ${normF} `);
+    });
   };
 
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
