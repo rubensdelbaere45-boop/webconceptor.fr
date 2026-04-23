@@ -29,10 +29,22 @@ function gsmSafe(s: string): string {
   return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E\n\r]/g, "");
 }
 
+// KILL SWITCH SMS — cohérent avec hot-lead-sms et sms-reminders.
+// Remettre à false après validation ARCEP du sender alphanumérique.
+const SMS_DISABLED = true;
+
 async function handler(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
   if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+  }
+
+  if (SMS_DISABLED) {
+    return NextResponse.json({
+      success: false,
+      disabled: true,
+      message: "SMS temporairement désactivés (kill switch) — remettre SMS_DISABLED=false après validation sender ARCEP",
+    });
   }
 
   const url = new URL(req.url);

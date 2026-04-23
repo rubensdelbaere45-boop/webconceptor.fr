@@ -68,6 +68,12 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
   }
 }
 
+// KILL SWITCH SMS — mis à true par Rubens le 2026-04-23 suite à un problème
+// de sender (SMS partent sous "BatiPilote" au lieu de "WebConcept" car le
+// sender alphanumérique WebConcept n'est pas validé ARCEP sur le compte Brevo).
+// Remettre à false UNIQUEMENT après validation ARCEP côté Brevo.
+const SMS_DISABLED = true;
+
 async function handler(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
   const cronSecret = req.headers.get("x-cron-secret") || "";
@@ -75,6 +81,15 @@ async function handler(req: NextRequest) {
   const cronOK = safeCompare(cronSecret, process.env.CRON_SECRET);
   if (!adminOK && !cronOK) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+  }
+
+  if (SMS_DISABLED) {
+    return NextResponse.json({
+      success: true,
+      processed: 0,
+      sent: 0,
+      message: "SMS temporairement désactivés — en attente validation sender ARCEP",
+    });
   }
 
   // Couvre-feu 9h-19h (heure Paris) — pas de SMS le soir ou le matin très tôt

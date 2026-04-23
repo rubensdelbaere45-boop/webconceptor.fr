@@ -843,15 +843,10 @@ nav{position:sticky;top:0;z-index:100;height:72px;padding:0 40px;display:flex;al
 .info{padding:80px 40px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
 .info-visual{aspect-ratio:4/3;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:24px;display:flex;align-items:center;justify-content:center;padding:40px;color:#fff;position:relative;overflow:hidden}
 .nav-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
-.nav-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.15s;border:1.5px solid rgba(0,0,0,0.08);background:#fff;color:#1a1a1a}
-.nav-btn:hover{transform:translateY(-1px);border-color:var(--primary);box-shadow:0 6px 16px rgba(0,0,0,0.08)}
-.nav-btn.waze{background:#33CCFF;color:#fff;border-color:#33CCFF}
-.nav-btn.waze:hover{background:#1BA8D9;border-color:#1BA8D9}
-.nav-btn.plans{background:#007AFF;color:#fff;border-color:#007AFF}
-.nav-btn.plans:hover{background:#0056B3;border-color:#0056B3}
-.nav-btn.gmaps{background:#4285F4;color:#fff;border-color:#4285F4}
-.nav-btn.gmaps:hover{background:#1A73E8;border-color:#1A73E8}
-.nav-btn svg{width:16px;height:16px;flex-shrink:0}
+.nav-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.15s;border:1.5px solid rgba(0,0,0,0.08);background:#fff;color:#1a1a1a}
+.nav-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.1);border-color:rgba(0,0,0,0.15)}
+.nav-btn svg{width:24px;height:24px;flex-shrink:0;border-radius:5px}
+.nav-btn.waze svg{background:#33CCFF}
 .info-visual::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:radial-gradient(circle,rgba(255,255,255,0.2),transparent 70%);border-radius:50%}
 .info-visual-content{position:relative;z-index:1;text-align:center}
 .info-visual-tag{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;opacity:0.85}
@@ -977,16 +972,33 @@ ${reviewsHtml}
     ${showNavButtons ? `
     <div class="nav-buttons" role="group" aria-label="Itinéraire">
       <a href="https://waze.com/ul?q=${navQuery}&navigate=yes" target="_blank" rel="noopener noreferrer" class="nav-btn waze" aria-label="Ouvrir dans Waze">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.54 6.63c-.98-2.18-3.17-3.72-5.7-3.72H9.17c-2.54 0-4.72 1.54-5.7 3.72C2.53 8.79 3 11.22 4.5 12.97v1.35c0 1.1.9 2 2 2h.63c.55 0 1-.45 1-1s-.45-1-1-1H6.5v-1.6l-.3-.34c-1.08-1.21-1.49-2.82-1.1-4.33.5-1.94 2.2-3.34 4.07-3.34h5.67c1.88 0 3.57 1.4 4.07 3.34.39 1.51-.02 3.12-1.1 4.33l-.31.34v1.6h-.63c-.55 0-1 .45-1 1s.45 1 1 1h.63c1.1 0 2-.9 2-2v-1.35c1.5-1.75 1.97-4.18.93-6.34zM8.5 10.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S7 8.17 7 9s.67 1.5 1.5 1.5zm7 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S14 8.17 14 9s.67 1.5 1.5 1.5zm-4.36 3.47h1.72c.28 0 .51.23.51.51 0 .99-.8 1.79-1.79 1.79h-.16c-.99 0-1.79-.8-1.79-1.79 0-.28.23-.51.51-.51z"/></svg>
-        Waze
+        <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#fff" d="M38.62 20.77c0 8.47-7.14 15.31-15.82 15.31-3.1 0-5.67-.76-7.78-1.52-1.35 1.07-3.1 1.67-4.97 1.67-.7 0-1.28-.43-1.45-1.07-.17-.64.12-1.34.7-1.64.87-.46 1.28-1.13 1.28-2.02 0-.46-.12-.91-.23-1.34C8.4 28.86 7.5 26.53 7.5 23.97c0-8.47 7.14-15.3 15.82-15.3s15.3 6.83 15.3 15.3v-3.2z"/>
+          <circle cx="18" cy="22" r="2" fill="#333"/>
+          <circle cx="28" cy="22" r="2" fill="#333"/>
+          <path fill="#333" d="M23 30c-3 0-5-2-5-4h10c0 2-2 4-5 4z"/>
+        </svg>
+        <span>Waze</span>
       </a>
       <a href="https://maps.apple.com/?q=${navQuery}&dirflg=d" target="_blank" rel="noopener noreferrer" class="nav-btn plans" aria-label="Ouvrir dans Apple Plans">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-        Plans
+        <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="44" height="44" rx="10" fill="#fff"/>
+          <path fill="#2E7FF5" d="M24 8 L14 40 L24 32 L34 40 Z" opacity="0.95"/>
+          <path fill="#E54B4B" d="M24 8 L34 40 L24 32 Z" opacity="0.95"/>
+          <circle cx="24" cy="24" r="3" fill="#fff"/>
+        </svg>
+        <span>Plans</span>
       </a>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${navQuery}" target="_blank" rel="noopener noreferrer" class="nav-btn gmaps" aria-label="Ouvrir dans Google Maps">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 7 12s7-6.75 7-12c0-4.42-3.58-8-8-8zm0 10.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5zm7-2.5c0-3.87-3.13-7-7-7" opacity="0"/><path d="M19.32 11.8C19.77 10.56 20 9.3 20 8c0-3.87-3.13-7-7-7S6 4.13 6 8c0 1.3.23 2.56.68 3.8l6.32 10.2 6.32-10.2zM13 10.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-        Google Maps
+        <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#34A853" d="M7 18l10 6v17L7 35z"/>
+          <path fill="#FBBC04" d="M24 6c-3.5 0-6.5 1.3-9 3.4L17 24l7-5z"/>
+          <path fill="#4285F4" d="M24 6v13l9-6-5.5-5.6C26 6.5 25 6 24 6z"/>
+          <path fill="#1A73E8" d="M33 13l-9 6 9 6 8-6z"/>
+          <path fill="#EA4335" d="M24 19c-4 0-7 3-7 7 0 5 7 15 7 15s7-10 7-15c0-4-3-7-7-7z"/>
+          <circle cx="24" cy="26" r="3" fill="#fff"/>
+        </svg>
+        <span>Google Maps</span>
       </a>
     </div>` : ""}
   </div>
