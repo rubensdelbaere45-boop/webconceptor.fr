@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram } from "@/lib/security";
 import { generateCallScript } from "@/lib/call-script";
 import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
+import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -64,15 +65,80 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality")
+    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality, menu_items, reviews, about_scraped, website_photos, site_style_dna, hours")
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error || !data || !data.mockup_html) {
+  if (error || !data) {
     return new NextResponse(
       `<!DOCTYPE html><html><head><title>Maquette introuvable</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Maquette introuvable</h1><p>Cette maquette n'existe pas ou a été retirée.</p><p><a href="https://webconceptor.fr">Retour à WebConceptor</a></p></body></html>`,
       { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
+  }
+
+  // GÉNÉRATION À LA VOLÉE si mockup_html absent (prospects status=found,
+  // purgés précédemment et jamais emailés). Permet à Rubens d'ouvrir la
+  // maquette d'un cold-call prospect depuis l'admin sans devoir passer par
+  // "Envoyer/Générer" au préalable. Les restaurants et les types food sont
+  // exclus de la génération adaptive (ils ont leur propre template restaurant
+  // — génération côté send/route uniquement). Pour eux, on affiche un message.
+  if (!data.mockup_html) {
+    const FOOD_METIERS = new Set(["restaurant", "boulangerie", "patisserie", "cafe", "glacier"]);
+    const isRestoMetier = FOOD_METIERS.has(data.business_type || "");
+
+    if (isRestoMetier) {
+      // Message clair : maquette pas encore générée, cliquer Envoyer dans l'admin
+      return new NextResponse(
+        `<!DOCTYPE html><html><head><title>Maquette pas encore générée</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a;margin-bottom:8px}h2{color:#525252;font-size:16px;font-weight:500;margin-bottom:30px}p{max-width:540px;margin:0 auto 20px}a{color:#0066ff}.btn{display:inline-block;padding:12px 24px;background:#0a0a0a;color:#fff;border-radius:999px;text-decoration:none;font-weight:600;margin-top:12px}</style></head><body><h1>Maquette pas encore générée</h1><h2>${data.name}</h2><p>La maquette n'a pas encore été préparée pour ce prospect (type restaurant/boulangerie — nécessite génération complète avec Claude).</p><p>Dans ton admin, clique sur <strong>« Envoyer »</strong> (mode dry-run) ou <strong>« Générer »</strong> pour ce prospect. La maquette sera alors disponible sous ce lien.</p><a class="btn" href="https://webconceptor.fr/admin/prospects">Retour à l'admin</a></body></html>`,
+        { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      );
+    }
+
+    // Non-restaurant : on génère avec le fallback content (sans Claude, rapide)
+    try {
+      const label = ((bt: string) => {
+        const m: Record<string, string> = {
+          coiffeur: "un salon de coiffure", institut: "un institut de beauté",
+          fleuriste: "une boutique de fleurs", plombier: "un artisan plombier",
+          electricien: "un artisan électricien", dentiste: "un cabinet dentaire",
+          osteo: "un cabinet d'ostéopathie", salle_sport: "une salle de sport",
+          auto_ecole: "une auto-école locale", garage: "un garage indépendant",
+          epicerie: "une épicerie de proximité",
+        };
+        return m[bt] || "un commerce local";
+      })(data.business_type || "");
+
+      const adaptive: AdaptiveProspect = {
+        id: data.id,
+        slug,
+        name: data.name,
+        city: data.city, address: data.address, phone: data.phone,
+        website: data.website, email: data.email,
+        google_rating: data.google_rating, google_reviews_count: data.google_reviews_count,
+        photos: undefined, hours: data.hours, business_type: data.business_type,
+        menu_items: data.menu_items, reviews: data.reviews,
+        about_scraped: data.about_scraped,
+        website_photos: data.website_photos,
+        site_style_dna: data.site_style_dna,
+      };
+      const fallbackContent = {
+        heroTitle: data.name,
+        heroSubtitle: `${label.charAt(0).toUpperCase() + label.slice(1)}${data.city ? ` à ${data.city}` : ""}`,
+        aboutText: `Notre équipe vous accueille${data.city ? ` à ${data.city}` : ""} avec un service attentionné et un savoir-faire reconnu.`,
+      };
+      const origin = new URL(req.url).origin;
+      const generated = generateAdaptiveMockupHtml(adaptive, fallbackContent, origin);
+
+      // Sauvegarde pour les prochaines visites (évite de re-générer à chaque fois)
+      await supabase.from("prospects").update({ mockup_html: generated }).eq("id", data.id);
+      data.mockup_html = generated;
+    } catch (err) {
+      console.error("[prospects/slug] on-demand generation failed:", err);
+      return new NextResponse(
+        `<!DOCTYPE html><html><head><title>Maquette indisponible</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Génération de maquette impossible</h1><p>Une erreur est survenue. Essayez "Envoyer" dans l'admin pour forcer la génération.</p><p><a href="https://webconceptor.fr/admin/prospects">Retour à l'admin</a></p></body></html>`,
+        { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      );
+    }
   }
 
   // VIEW_COUNT désormais 100% côté client via /api/prospect/track-view
