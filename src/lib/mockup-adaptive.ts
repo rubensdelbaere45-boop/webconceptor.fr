@@ -973,31 +973,34 @@ ${reviewsHtml}
     <div class="nav-buttons" role="group" aria-label="Itinéraire">
       <a href="https://waze.com/ul?q=${navQuery}&navigate=yes" target="_blank" rel="noopener noreferrer" class="nav-btn waze" aria-label="Ouvrir dans Waze">
         <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#fff" d="M38.62 20.77c0 8.47-7.14 15.31-15.82 15.31-3.1 0-5.67-.76-7.78-1.52-1.35 1.07-3.1 1.67-4.97 1.67-.7 0-1.28-.43-1.45-1.07-.17-.64.12-1.34.7-1.64.87-.46 1.28-1.13 1.28-2.02 0-.46-.12-.91-.23-1.34C8.4 28.86 7.5 26.53 7.5 23.97c0-8.47 7.14-15.3 15.82-15.3s15.3 6.83 15.3 15.3v-3.2z"/>
-          <circle cx="18" cy="22" r="2" fill="#333"/>
-          <circle cx="28" cy="22" r="2" fill="#333"/>
-          <path fill="#333" d="M23 30c-3 0-5-2-5-4h10c0 2-2 4-5 4z"/>
+          <rect width="48" height="48" rx="10" fill="#33CCFF"/>
+          <path fill="#fff" d="M36 21.4c0 5.9-4.4 10.9-10.2 11.8.2.5.3 1.1.3 1.7 0 2.3-1.9 4.1-4.1 4.1-1.7 0-3.2-1-3.9-2.5-2 .5-4-.4-5.2-2l-.4-.6c-.4-.5-.1-1.2.5-1.3l.7-.1c1.3-.3 1.9-1.6 1.6-2.9C14 27.9 13 25.7 13 23.4 13 17 18.4 12 25 12c6 0 11 4.2 11 9.4z"/>
+          <circle cx="22" cy="22" r="1.8" fill="#2A2A2A"/>
+          <circle cx="29" cy="22" r="1.8" fill="#2A2A2A"/>
+          <path fill="none" stroke="#2A2A2A" stroke-width="1.8" stroke-linecap="round" d="M22 27c1.5 1.5 5.5 1.5 7 0"/>
+          <circle cx="18" cy="25.5" r="1.4" fill="#FF8FB1" opacity="0.85"/>
+          <circle cx="33" cy="25.5" r="1.4" fill="#FF8FB1" opacity="0.85"/>
         </svg>
         <span>Waze</span>
       </a>
       <a href="https://maps.apple.com/?q=${navQuery}&dirflg=d" target="_blank" rel="noopener noreferrer" class="nav-btn plans" aria-label="Ouvrir dans Apple Plans">
         <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="44" height="44" rx="10" fill="#fff"/>
-          <path fill="#2E7FF5" d="M24 8 L14 40 L24 32 L34 40 Z" opacity="0.95"/>
-          <path fill="#E54B4B" d="M24 8 L34 40 L24 32 Z" opacity="0.95"/>
-          <circle cx="24" cy="24" r="3" fill="#fff"/>
+          <rect width="48" height="48" rx="10" fill="#F2F2F2"/>
+          <path stroke="#C8DEF0" stroke-width="1" fill="none" d="M0 12h48M0 20h48M0 28h48M0 36h48M12 0v48M24 0v48M36 0v48"/>
+          <path stroke="#D8D8D8" stroke-width="0.5" stroke-dasharray="1,1" fill="none" d="M6 6l36 36M42 6L6 42"/>
+          <g transform="translate(24 24)">
+            <path fill="#F44336" d="M0-14 L6 0 L0-2 Z"/>
+            <path fill="#E53935" d="M0-14 L-6 0 L0-2 Z"/>
+            <path fill="#2196F3" d="M0 14 L-6 0 L0 2 Z"/>
+            <path fill="#1E88E5" d="M0 14 L6 0 L0 2 Z"/>
+            <circle r="2.5" fill="#fff"/>
+            <circle r="1.2" fill="#2A2A2A"/>
+          </g>
         </svg>
         <span>Plans</span>
       </a>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${navQuery}" target="_blank" rel="noopener noreferrer" class="nav-btn gmaps" aria-label="Ouvrir dans Google Maps">
-        <svg viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#34A853" d="M7 18l10 6v17L7 35z"/>
-          <path fill="#FBBC04" d="M24 6c-3.5 0-6.5 1.3-9 3.4L17 24l7-5z"/>
-          <path fill="#4285F4" d="M24 6v13l9-6-5.5-5.6C26 6.5 25 6 24 6z"/>
-          <path fill="#1A73E8" d="M33 13l-9 6 9 6 8-6z"/>
-          <path fill="#EA4335" d="M24 19c-4 0-7 3-7 7 0 5 7 15 7 15s7-10 7-15c0-4-3-7-7-7z"/>
-          <circle cx="24" cy="26" r="3" fill="#fff"/>
-        </svg>
+        <img src="${origin}/logos/gmaps.png" alt="Google Maps" width="28" height="28" loading="lazy" style="object-fit:contain"/>
         <span>Google Maps</span>
       </a>
     </div>` : ""}

@@ -396,6 +396,44 @@ export default function AdminProspectsPage() {
     }
   };
 
+  // Supprime définitivement un prospect (bouton poubelle)
+  const handleDelete = async (p: Prospect) => {
+    const confirmed = confirm(
+      `🗑️ Supprimer définitivement ce prospect ?\n\n` +
+      `${p.name}${p.city ? ` (${p.city})` : ""}\n` +
+      `${p.phone || "pas de tel"} · ${p.email || "pas d'email"}\n\n` +
+      `Cette action est IRRÉVERSIBLE — le prospect disparaît de la base et tu ne pourras plus le retrouver.`
+    );
+    if (!confirmed) return;
+
+    // Optimistic UI : retire de la liste immédiatement
+    const backup = prospects;
+    setProspects((prev) => prev.filter((x) => x.id !== p.id));
+
+    try {
+      const res = await fetch("/api/prospect/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ id: p.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        // rollback UI si échec serveur
+        setProspects(backup);
+        alert(`Erreur suppression : ${data.error || "inconnue"}`);
+        return;
+      }
+      addLog(`🗑️ Supprimé : ${p.name}`);
+      // Si le script panel était ouvert sur ce prospect, le fermer
+      if (scriptPanel.open && scriptPanel.prospect?.id === p.id) {
+        setScriptPanel({ ...scriptPanel, open: false });
+      }
+    } catch {
+      setProspects(backup);
+      alert("Erreur réseau, suppression annulée.");
+    }
+  };
+
   // Ajoute une note datée sur un prospect (via un prompt)
   const handleAddNote = async (p: Prospect) => {
     const text = prompt(`📝 Note pour ${p.name} :\n\n(ex : "Pas dispo, rappeler vendredi 14h" / "Intéressé, envoi devis")`);
@@ -1077,6 +1115,15 @@ export default function AdminProspectsPage() {
                       >
                         📝
                       </button>
+                      {/* Supprimer — libère la place quand le prospect refuse */}
+                      <button
+                        onClick={() => handleDelete(p)}
+                        disabled={loading}
+                        className="px-2.5 py-1.5 text-[11px] font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                        title="Supprimer définitivement ce prospect (pas intéressé)"
+                      >
+                        🗑️
+                      </button>
                       {/* Script d'appel — dès qu'une maquette existe + tél disponible */}
                       {p.phone && ["ready", "sent", "opened", "replied", "converted"].includes(p.status) && (
                         <button
@@ -1218,8 +1265,26 @@ export default function AdminProspectsPage() {
                   {scriptPanel.prospect.google_rating && (
                     <span className="px-2 py-1 bg-amber-50 rounded text-[11px] text-amber-700">⭐ {scriptPanel.prospect.google_rating}/5 ({scriptPanel.prospect.google_reviews_count} avis)</span>
                   )}
+                  {scriptPanel.prospect?.slug && (() => {
+                    const slug = scriptPanel.prospect.slug;
+                    return (
+                      <a
+                        href={`/prospects/${slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open(`/prospects/${slug}`, "_blank", "noopener,noreferrer");
+                        }}
+                        className="px-2 py-1 bg-emerald-50 rounded text-[11px] text-emerald-700 hover:bg-emerald-100 font-semibold"
+                        title="Ouvrir la maquette WebConceptor envoyée à ce prospect"
+                      >
+                        🎨 Ma maquette
+                      </a>
+                    );
+                  })()}
                   {scriptPanel.audit?.website && (
-                    <a href={scriptPanel.audit.website} target="_blank" rel="noopener noreferrer" className="px-2 py-1 bg-blue-50 rounded text-[11px] text-blue-700 hover:underline">🌐 Son site</a>
+                    <a href={scriptPanel.audit.website} target="_blank" rel="noopener noreferrer" className="px-2 py-1 bg-blue-50 rounded text-[11px] text-blue-700 hover:underline">🌐 Son site actuel</a>
                   )}
                 </div>
 
@@ -1323,6 +1388,13 @@ export default function AdminProspectsPage() {
                 className="px-3 py-2 bg-amber-500 text-white text-[12px] font-semibold rounded-lg hover:bg-amber-600"
               >
                 📝 Note
+              </button>
+              <button
+                onClick={() => scriptPanel.prospect && handleDelete(scriptPanel.prospect)}
+                className="px-3 py-2 bg-red-500 text-white text-[12px] font-semibold rounded-lg hover:bg-red-600"
+                title="Supprimer ce prospect (pas intéressé)"
+              >
+                🗑️
               </button>
             </div>
           )}
