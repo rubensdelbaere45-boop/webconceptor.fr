@@ -51,13 +51,16 @@ export interface AdaptiveContent {
 
 interface BusinessConfig {
   metaTitle: string;         // <title> du site
-  heroTag: string;           // petit badge au-dessus du h1
+  // heroTag / topStripText retirés : générés dynamiquement à partir des vraies
+  // données du prospect (rating, ville, horaires réels) pour éviter tout
+  // mensonge type "Ouvert 7j/7" ou "Garantie décennale" qu'on ne peut pas
+  // vérifier côté scrape.
+  metierLabel: string;       // ex: "salon de coiffure", utilisé dans le heroTag
   sectionTag: string;        // badge au-dessus de "À propos"
   productsTitle: string;     // titre de la section produits/services
-  productsIntro: string;     // phrase d'intro
+  productsIntro: string;     // courte phrase d'intro NEUTRE (pas d'affirmation)
   fallbackCategories: Array<{ emoji: string; title: string; desc: string }>;
-  topStripText: string;      // bandeau haut
-  ctaBottom: string;         // bouton du bas
+  ctaBottom: string;         // bouton du bas (action que NOUS proposons)
   fallbackColor: string;     // couleur par défaut si site_style_dna vide
   fallbackAccent: string;    // accent
   iconHero: string;          // SVG ou emoji
@@ -66,107 +69,101 @@ interface BusinessConfig {
 const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   restaurant: {
     metaTitle: "Restaurant",
-    heroTag: "Cuisine de saison",
+    metierLabel: "restaurant",
     sectionTag: "Notre maison",
     productsTitle: "Notre carte",
-    productsIntro: "Des plats travaillés à partir de produits frais",
+    productsIntro: "Un aperçu de ce que nous proposons.",
     fallbackCategories: [
-      { emoji: "🥗", title: "Entrées", desc: "Frais & de saison" },
-      { emoji: "🍽️", title: "Plats", desc: "Cuisine maison" },
-      { emoji: "🍰", title: "Desserts", desc: "Faits ici" },
-      { emoji: "🍷", title: "Cave", desc: "Sélection vignerons" },
+      { emoji: "🥗", title: "Entrées", desc: "" },
+      { emoji: "🍽️", title: "Plats", desc: "" },
+      { emoji: "🍰", title: "Desserts", desc: "" },
+      { emoji: "🍷", title: "Boissons", desc: "" },
     ],
-    topStripText: "Réservation en ligne · 0% de commission · Paiement sécurisé",
     ctaBottom: "Réserver une table",
     fallbackColor: "#8B2332",
     fallbackAccent: "#D4A574",
     iconHero: "🍽️",
   },
   boulangerie: {
-    metaTitle: "Boulangerie artisanale",
-    heroTag: "Pain & viennoiseries",
+    metaTitle: "Boulangerie",
+    metierLabel: "boulangerie",
     sectionTag: "La boulangerie",
-    productsTitle: "Nos pains & viennoiseries",
-    productsIntro: "Pétris et cuits sur place chaque jour",
+    productsTitle: "Nos produits",
+    productsIntro: "Un aperçu de notre gamme.",
     fallbackCategories: [
-      { emoji: "🥖", title: "Pains", desc: "Tradition, complet, céréales" },
-      { emoji: "🥐", title: "Viennoiseries", desc: "Beurre AOP" },
-      { emoji: "🥧", title: "Tartes & quiches", desc: "Salées & sucrées" },
-      { emoji: "🎂", title: "Pâtisseries", desc: "Du classique au créatif" },
+      { emoji: "🥖", title: "Pains", desc: "" },
+      { emoji: "🥐", title: "Viennoiseries", desc: "" },
+      { emoji: "🥧", title: "Tartes & quiches", desc: "" },
+      { emoji: "🎂", title: "Pâtisseries", desc: "" },
     ],
-    topStripText: "Fournée du matin · Cuisson à l'ancienne · Ingrédients français",
     ctaBottom: "Nous trouver",
     fallbackColor: "#C08957",
     fallbackAccent: "#5C3A21",
     iconHero: "🥖",
   },
   patisserie: {
-    metaTitle: "Pâtisserie artisanale",
-    heroTag: "Pâtisserie & chocolaterie",
+    metaTitle: "Pâtisserie",
+    metierLabel: "pâtisserie",
     sectionTag: "La pâtisserie",
     productsTitle: "Nos créations",
-    productsIntro: "Chaque pièce est fabriquée à la main dans notre laboratoire",
+    productsIntro: "Un aperçu de notre gamme.",
     fallbackCategories: [
-      { emoji: "🍰", title: "Gâteaux", desc: "À la part ou entiers" },
-      { emoji: "🍫", title: "Chocolats", desc: "Tablettes, bonbons, ganaches" },
-      { emoji: "🍪", title: "Petits fours", desc: "Pour vos événements" },
-      { emoji: "🎂", title: "Sur commande", desc: "Anniversaires, mariages" },
+      { emoji: "🍰", title: "Gâteaux", desc: "" },
+      { emoji: "🍫", title: "Chocolats", desc: "" },
+      { emoji: "🍪", title: "Petits fours", desc: "" },
+      { emoji: "🎂", title: "Sur commande", desc: "" },
     ],
-    topStripText: "Créations artisanales · Commandes événements · Tempérage chocolat",
-    ctaBottom: "Voir nos créations",
+    ctaBottom: "Nous contacter",
     fallbackColor: "#9B4A7B",
     fallbackAccent: "#E8A87C",
     iconHero: "🍰",
   },
   cafe: {
-    metaTitle: "Café & restauration",
-    heroTag: "Café & petits-déjeuners",
+    metaTitle: "Café",
+    metierLabel: "café",
     sectionTag: "Le café",
     productsTitle: "Notre carte",
-    productsIntro: "Cafés de spécialité, pâtisseries maison, restauration légère",
+    productsIntro: "Un aperçu de ce que nous proposons.",
     fallbackCategories: [
-      { emoji: "☕", title: "Cafés", desc: "Spécialité, filtre, latte art" },
-      { emoji: "🥐", title: "Petit-déj", desc: "Formule complète" },
-      { emoji: "🥪", title: "Déjeuner", desc: "Salades, sandwichs, brunch" },
-      { emoji: "🍰", title: "Douceurs", desc: "Pâtisseries maison" },
+      { emoji: "☕", title: "Cafés", desc: "" },
+      { emoji: "🥐", title: "Petit-déj", desc: "" },
+      { emoji: "🥪", title: "Déjeuner", desc: "" },
+      { emoji: "🍰", title: "Douceurs", desc: "" },
     ],
-    topStripText: "Ouvert tôt · Wifi offert · Brunch le weekend",
     ctaBottom: "Nos horaires",
     fallbackColor: "#3E2723",
     fallbackAccent: "#C19A6B",
     iconHero: "☕",
   },
   glacier: {
-    metaTitle: "Glacier artisanal",
-    heroTag: "Glaces & sorbets artisanaux",
+    metaTitle: "Glacier",
+    metierLabel: "glacier",
     sectionTag: "La maison",
     productsTitle: "Nos parfums",
-    productsIntro: "Fabrication quotidienne, ingrédients frais, sans arômes artificiels",
+    productsIntro: "Un aperçu de notre gamme.",
     fallbackCategories: [
-      { emoji: "🍦", title: "Glaces", desc: "Au lait entier" },
-      { emoji: "🍧", title: "Sorbets", desc: "Fruits pressés" },
-      { emoji: "🍨", title: "Coupes", desc: "Créations du maître glacier" },
-      { emoji: "🎂", title: "Gâteaux glacés", desc: "Sur commande" },
+      { emoji: "🍦", title: "Glaces", desc: "" },
+      { emoji: "🍧", title: "Sorbets", desc: "" },
+      { emoji: "🍨", title: "Coupes", desc: "" },
+      { emoji: "🎂", title: "Sur commande", desc: "" },
     ],
-    topStripText: "Turbine artisanale · Fruits de saison · Zéro arôme artificiel",
-    ctaBottom: "Découvrir nos parfums",
+    ctaBottom: "Nos horaires",
     fallbackColor: "#F4B8C1",
     fallbackAccent: "#6AB7B8",
     iconHero: "🍦",
   },
   coiffeur: {
     metaTitle: "Salon de coiffure",
-    heroTag: "Coiffure femme, homme, enfant",
+    metierLabel: "salon de coiffure",
     sectionTag: "Le salon",
     productsTitle: "Nos prestations",
-    productsIntro: "Coupes, colorations, soins, événementiel — prise de rendez-vous en ligne",
+    productsIntro: "Un aperçu des prestations proposées.",
     fallbackCategories: [
-      { emoji: "✂️", title: "Coupes", desc: "Femme, homme, enfant" },
-      { emoji: "🎨", title: "Coloration", desc: "Naturelle, balayage, mèches" },
-      { emoji: "💆", title: "Soins", desc: "Kératine, hydratation" },
-      { emoji: "👰", title: "Événement", desc: "Mariage, cérémonie" },
+      { emoji: "✂️", title: "Coupes", desc: "" },
+      { emoji: "🎨", title: "Coloration", desc: "" },
+      { emoji: "💆", title: "Soins", desc: "" },
+      { emoji: "👰", title: "Événement", desc: "" },
     ],
-    topStripText: "Prise de RDV en ligne · Fidélité client · Produits pro",
     ctaBottom: "Prendre rendez-vous",
     fallbackColor: "#2D2D2D",
     fallbackAccent: "#C9A66B",
@@ -174,17 +171,16 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   institut: {
     metaTitle: "Institut de beauté",
-    heroTag: "Beauté, soins, bien-être",
+    metierLabel: "institut de beauté",
     sectionTag: "L'institut",
     productsTitle: "Nos soins",
-    productsIntro: "Soins visage, épilations, manucures, massages — sur rendez-vous",
+    productsIntro: "Un aperçu des soins proposés.",
     fallbackCategories: [
-      { emoji: "💆‍♀️", title: "Visage", desc: "Soins anti-âge, éclat" },
-      { emoji: "🌿", title: "Corps", desc: "Modelages, gommages" },
-      { emoji: "💅", title: "Mains & pieds", desc: "Manucure, beauté des pieds" },
-      { emoji: "✨", title: "Épilation", desc: "Traditionnelle ou laser" },
+      { emoji: "💆‍♀️", title: "Visage", desc: "" },
+      { emoji: "🌿", title: "Corps", desc: "" },
+      { emoji: "💅", title: "Mains & pieds", desc: "" },
+      { emoji: "✨", title: "Épilation", desc: "" },
     ],
-    topStripText: "Rendez-vous en ligne · Cartes cadeaux · Offres fidélité",
     ctaBottom: "Prendre rendez-vous",
     fallbackColor: "#C48B9F",
     fallbackAccent: "#6E4555",
@@ -192,35 +188,33 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   fleuriste: {
     metaTitle: "Fleuriste",
-    heroTag: "Bouquets & compositions florales",
+    metierLabel: "boutique de fleurs",
     sectionTag: "La boutique",
     productsTitle: "Nos compositions",
-    productsIntro: "Bouquets du jour, événements, abonnements, livraison",
+    productsIntro: "Un aperçu de notre gamme.",
     fallbackCategories: [
-      { emoji: "💐", title: "Bouquets", desc: "Du jour ou sur mesure" },
-      { emoji: "💒", title: "Mariages", desc: "Cérémonies, réceptions" },
-      { emoji: "🌿", title: "Plantes", desc: "Intérieur & extérieur" },
-      { emoji: "🚴", title: "Livraison", desc: "Ville & alentours" },
+      { emoji: "💐", title: "Bouquets", desc: "" },
+      { emoji: "💒", title: "Mariages", desc: "" },
+      { emoji: "🌿", title: "Plantes", desc: "" },
+      { emoji: "🚴", title: "Livraison", desc: "" },
     ],
-    topStripText: "Livraison rapide · Fleurs fraîches · Commande en ligne",
     ctaBottom: "Commander un bouquet",
     fallbackColor: "#D4668C",
     fallbackAccent: "#2F7045",
     iconHero: "💐",
   },
   plombier: {
-    metaTitle: "Plombier chauffagiste",
-    heroTag: "Intervention rapide 7j/7",
+    metaTitle: "Plombier",
+    metierLabel: "entreprise de plomberie",
     sectionTag: "L'entreprise",
     productsTitle: "Nos prestations",
-    productsIntro: "Dépannage urgence, sanitaire, chauffage, rénovation salle de bain",
+    productsIntro: "Un aperçu des interventions proposées.",
     fallbackCategories: [
-      { emoji: "🚿", title: "Sanitaire", desc: "Pose, dépannage, rénovation" },
-      { emoji: "🔥", title: "Chauffage", desc: "Chaudière, pompe à chaleur" },
-      { emoji: "🚰", title: "Fuite & dégât", desc: "Détection, réparation" },
-      { emoji: "🛁", title: "Salle de bain", desc: "Rénovation complète" },
+      { emoji: "🚿", title: "Sanitaire", desc: "" },
+      { emoji: "🔥", title: "Chauffage", desc: "" },
+      { emoji: "🚰", title: "Dépannage", desc: "" },
+      { emoji: "🛁", title: "Salle de bain", desc: "" },
     ],
-    topStripText: "Intervention 24/7 · Devis gratuit · Garantie décennale",
     ctaBottom: "Demander un devis",
     fallbackColor: "#1E4D8C",
     fallbackAccent: "#F4A900",
@@ -228,17 +222,16 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   electricien: {
     metaTitle: "Électricien",
-    heroTag: "Installation & dépannage électrique",
+    metierLabel: "entreprise d'électricité",
     sectionTag: "L'entreprise",
     productsTitle: "Nos prestations",
-    productsIntro: "Mise aux normes, installation, domotique, dépannage urgence",
+    productsIntro: "Un aperçu des interventions proposées.",
     fallbackCategories: [
-      { emoji: "⚡", title: "Installation", desc: "Neuf & rénovation" },
-      { emoji: "🏠", title: "Mise aux normes", desc: "Consuel, diagnostic" },
-      { emoji: "🔌", title: "Dépannage", desc: "Urgence 24/7" },
-      { emoji: "📡", title: "Domotique", desc: "Maison connectée" },
+      { emoji: "⚡", title: "Installation", desc: "" },
+      { emoji: "🏠", title: "Mise aux normes", desc: "" },
+      { emoji: "🔌", title: "Dépannage", desc: "" },
+      { emoji: "📡", title: "Domotique", desc: "" },
     ],
-    topStripText: "Qualifelec RGE · Devis gratuit · Garantie décennale",
     ctaBottom: "Demander un devis",
     fallbackColor: "#F4A900",
     fallbackAccent: "#1E4D8C",
@@ -246,35 +239,33 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   dentiste: {
     metaTitle: "Cabinet dentaire",
-    heroTag: "Soins dentaires & prothèses",
+    metierLabel: "cabinet dentaire",
     sectionTag: "Le cabinet",
     productsTitle: "Nos soins",
-    productsIntro: "Soins conservateurs, prothèses, implantologie, orthodontie",
+    productsIntro: "Un aperçu des soins proposés.",
     fallbackCategories: [
-      { emoji: "🦷", title: "Soins", desc: "Conservateurs & prévention" },
-      { emoji: "✨", title: "Esthétique", desc: "Blanchiment, facettes" },
-      { emoji: "🔩", title: "Implants", desc: "Solutions durables" },
-      { emoji: "😁", title: "Orthodontie", desc: "Adulte & enfant" },
+      { emoji: "🦷", title: "Soins", desc: "" },
+      { emoji: "✨", title: "Esthétique", desc: "" },
+      { emoji: "🔩", title: "Implants", desc: "" },
+      { emoji: "😁", title: "Orthodontie", desc: "" },
     ],
-    topStripText: "Prise de RDV en ligne · Tiers payant · Urgences dentaires",
     ctaBottom: "Prendre rendez-vous",
     fallbackColor: "#4A90E2",
     fallbackAccent: "#50C878",
     iconHero: "🦷",
   },
   osteo: {
-    metaTitle: "Ostéopathe D.O.",
-    heroTag: "Ostéopathie adulte, enfant, sportif",
+    metaTitle: "Ostéopathe",
+    metierLabel: "cabinet d'ostéopathie",
     sectionTag: "Le cabinet",
     productsTitle: "Nos consultations",
-    productsIntro: "Ostéopathie structurelle, viscérale, crânienne — sur rendez-vous",
+    productsIntro: "Un aperçu des consultations proposées.",
     fallbackCategories: [
-      { emoji: "🧘", title: "Adulte", desc: "Douleurs, stress, posture" },
-      { emoji: "👶", title: "Nourrisson", desc: "Régurgitations, sommeil" },
-      { emoji: "🏃", title: "Sportif", desc: "Prévention, récupération" },
-      { emoji: "🤰", title: "Périnatal", desc: "Grossesse & post-partum" },
+      { emoji: "🧘", title: "Adulte", desc: "" },
+      { emoji: "👶", title: "Nourrisson", desc: "" },
+      { emoji: "🏃", title: "Sportif", desc: "" },
+      { emoji: "🤰", title: "Périnatal", desc: "" },
     ],
-    topStripText: "RDV en ligne · Remboursé mutuelle · Domicile possible",
     ctaBottom: "Prendre rendez-vous",
     fallbackColor: "#5D9B9B",
     fallbackAccent: "#2D5F5F",
@@ -282,35 +273,33 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   salle_sport: {
     metaTitle: "Salle de sport",
-    heroTag: "Musculation, cardio, cours collectifs",
+    metierLabel: "salle de sport",
     sectionTag: "La salle",
     productsTitle: "Nos offres",
-    productsIntro: "Abonnements sans engagement, cours collectifs, coaching personnalisé",
+    productsIntro: "Un aperçu de ce qui est proposé.",
     fallbackCategories: [
-      { emoji: "🏋️", title: "Musculation", desc: "Zone libre & guidée" },
-      { emoji: "🚴", title: "Cardio", desc: "Vélo, tapis, rameurs" },
-      { emoji: "🧘", title: "Cours collectifs", desc: "Yoga, HIIT, crossfit" },
-      { emoji: "💪", title: "Coaching", desc: "Individuel ou duo" },
+      { emoji: "🏋️", title: "Musculation", desc: "" },
+      { emoji: "🚴", title: "Cardio", desc: "" },
+      { emoji: "🧘", title: "Cours collectifs", desc: "" },
+      { emoji: "💪", title: "Coaching", desc: "" },
     ],
-    topStripText: "Ouvert 7j/7 · Sans engagement · Coaching inclus",
-    ctaBottom: "Essai gratuit",
+    ctaBottom: "Nous contacter",
     fallbackColor: "#FF4500",
     fallbackAccent: "#0F1E2E",
     iconHero: "💪",
   },
   auto_ecole: {
     metaTitle: "Auto-école",
-    heroTag: "Permis B, AAC, conduite supervisée",
+    metierLabel: "auto-école",
     sectionTag: "L'école",
     productsTitle: "Nos forfaits",
-    productsIntro: "Permis B, boîte auto, AAC, stages accélérés — à partir de 18 ans",
+    productsIntro: "Un aperçu des forfaits proposés.",
     fallbackCategories: [
-      { emoji: "🚗", title: "Permis B", desc: "Forfait 20h classique" },
-      { emoji: "📚", title: "Code", desc: "Forfait illimité en ligne" },
-      { emoji: "⚡", title: "Stage accéléré", desc: "2 semaines" },
-      { emoji: "🎓", title: "AAC", desc: "Conduite accompagnée" },
+      { emoji: "🚗", title: "Permis B", desc: "" },
+      { emoji: "📚", title: "Code", desc: "" },
+      { emoji: "⚡", title: "Stage accéléré", desc: "" },
+      { emoji: "🎓", title: "AAC", desc: "" },
     ],
-    topStripText: "Taux de réussite 85% · Inscription en ligne · Aide CPF",
     ctaBottom: "Voir les forfaits",
     fallbackColor: "#0066CC",
     fallbackAccent: "#FFCC00",
@@ -318,35 +307,33 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
   },
   garage: {
     metaTitle: "Garage automobile",
-    heroTag: "Entretien, réparation, carrosserie",
+    metierLabel: "garage automobile",
     sectionTag: "Le garage",
     productsTitle: "Nos prestations",
-    productsIntro: "Révision, pneumatiques, freinage, carrosserie, contrôle technique",
+    productsIntro: "Un aperçu des services proposés.",
     fallbackCategories: [
-      { emoji: "🔧", title: "Mécanique", desc: "Révision & réparation" },
-      { emoji: "🛞", title: "Pneumatiques", desc: "Montage & équilibrage" },
-      { emoji: "🎨", title: "Carrosserie", desc: "Peinture & redressage" },
-      { emoji: "✅", title: "CT", desc: "Contrôle technique" },
+      { emoji: "🔧", title: "Mécanique", desc: "" },
+      { emoji: "🛞", title: "Pneumatiques", desc: "" },
+      { emoji: "🎨", title: "Carrosserie", desc: "" },
+      { emoji: "✅", title: "Contrôle technique", desc: "" },
     ],
-    topStripText: "Devis gratuit · Véhicule de prêt · Toutes marques",
     ctaBottom: "Demander un devis",
     fallbackColor: "#2D2D2D",
     fallbackAccent: "#FF4500",
     iconHero: "🔧",
   },
   epicerie: {
-    metaTitle: "Épicerie de proximité",
-    heroTag: "Votre commerce de proximité",
+    metaTitle: "Épicerie",
+    metierLabel: "commerce de proximité",
     sectionTag: "Le magasin",
     productsTitle: "Nos rayons",
-    productsIntro: "Produits frais, spécialités locales, service client",
+    productsIntro: "Un aperçu de ce que vous trouverez en magasin.",
     fallbackCategories: [
-      { emoji: "🧀", title: "Fromagerie", desc: "Sélection locale" },
-      { emoji: "🥖", title: "Boulangerie", desc: "Pain & pâtisseries" },
-      { emoji: "🍎", title: "Fruits & Légumes", desc: "De saison" },
-      { emoji: "🍷", title: "Cave", desc: "Vins & spiritueux" },
+      { emoji: "🛒", title: "Alimentation", desc: "" },
+      { emoji: "🥖", title: "Boulangerie", desc: "" },
+      { emoji: "🍎", title: "Fruits & légumes", desc: "" },
+      { emoji: "🍷", title: "Boissons", desc: "" },
     ],
-    topStripText: "Arrivages frais · Produits locaux · Service à l'ancienne",
     ctaBottom: "Nous contacter",
     fallbackColor: "#872175",
     fallbackAccent: "#4CAF50",
@@ -397,6 +384,87 @@ function isLight(hex: string): boolean {
   if (!rgb) return false;
   const yiq = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
   return yiq > 160;
+}
+
+/* ══════════════════════════════════════════
+   Parsing des horaires Google Places → infos fiables
+   Format reçu (exemple) :
+     "lundi: Fermé | mardi: 09:00 – 19:00 | mercredi: 09:00 – 19:00 |
+      jeudi: 09:00 – 19:00 | vendredi: 09:00 – 19:00 |
+      samedi: 09:00 – 17:00 | dimanche: Fermé"
+   → retourne { openDays: 5 } (compte les jours non-fermés)
+   Aucune invention : si on n'a pas de données, openDays = null.
+   ══════════════════════════════════════════ */
+
+function parseOpenDays(hoursStr?: string): number | null {
+  if (!hoursStr || typeof hoursStr !== "string") return null;
+  const normalized = hoursStr.toLowerCase();
+  // On split sur les séparateurs courants (|, ;, \n)
+  const segments = normalized.split(/[|;\n]+/).map((s) => s.trim()).filter(Boolean);
+  if (segments.length === 0) return null;
+  let openCount = 0;
+  let seenCount = 0;
+  const daysSeen = new Set<string>();
+  const dayRegex = /(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s*[:\-–]\s*(.+)/;
+  for (const seg of segments) {
+    const m = seg.match(dayRegex);
+    if (!m) continue;
+    const day = m[1];
+    const val = m[2];
+    if (daysSeen.has(day)) continue;
+    daysSeen.add(day);
+    seenCount++;
+    // On considère "fermé" / "closed" comme non-ouvert. Tout le reste = ouvert.
+    if (!/\b(fermé|ferme|closed)\b/.test(val)) openCount++;
+  }
+  // On ne retourne qu'une valeur si on a vu 5+ jours — sinon trop peu de données
+  // pour affirmer quoi que ce soit
+  return seenCount >= 5 ? openCount : null;
+}
+
+/* ══════════════════════════════════════════
+   Top strip : BANDEAU DONNÉES RÉELLES uniquement
+   On affiche seulement ce qu'on peut vérifier :
+     - note Google (si >= 4.0 ET avec ≥ 10 avis)
+     - nombre d'avis
+     - ville
+     - ouverture N jours/7 (parsé depuis les horaires Google)
+   Si on n'a rien → on retourne une chaîne vide, le bandeau n'est pas rendu.
+   ══════════════════════════════════════════ */
+
+function buildTopStripHtml(prospect: AdaptiveProspect): string {
+  const parts: string[] = [];
+
+  if (typeof prospect.google_rating === "number" && prospect.google_rating >= 4.0) {
+    const count = typeof prospect.google_reviews_count === "number" && prospect.google_reviews_count >= 10
+      ? ` · ${prospect.google_reviews_count} avis Google`
+      : "";
+    parts.push(`⭐ ${prospect.google_rating.toFixed(1)}/5 sur Google${count}`);
+  }
+
+  const openDays = parseOpenDays(prospect.hours);
+  if (openDays !== null && openDays >= 1 && openDays <= 7) {
+    parts.push(`Ouvert ${openDays} jour${openDays > 1 ? "s" : ""}/7`);
+  }
+
+  if (prospect.city) {
+    parts.push(prospect.city);
+  }
+
+  return parts.join(" · ");
+}
+
+/* ══════════════════════════════════════════
+   Hero tag : métier + ville (truthful)
+   Pas de promesse type "Intervention 24/7". Juste ce qu'on sait.
+   ══════════════════════════════════════════ */
+
+function buildHeroTagText(prospect: AdaptiveProspect, config: BusinessConfig): string {
+  const bits: string[] = [];
+  // Capitalise la 1re lettre du métier
+  bits.push(config.metierLabel.charAt(0).toUpperCase() + config.metierLabel.slice(1));
+  if (prospect.city) bits.push(prospect.city);
+  return bits.join(" · ");
 }
 
 // Choisit le thème final en combinant site_style_dna et fallback par métier
@@ -509,6 +577,10 @@ export function generateAdaptiveMockupHtml(
   const addressStr = escape(prospect.address || "");
   const phoneStr = escape(prospect.phone || "");
 
+  // Textes DYNAMIQUES — basés sur les vraies données du prospect uniquement
+  const topStripContent = buildTopStripHtml(prospect);
+  const heroTagContent = buildHeroTagText(prospect, config);
+
   // Produits/services : utilise menu_items si dispo, sinon catégories fallback métier
   const hasItems = Array.isArray(prospect.menu_items) && prospect.menu_items.length >= 3;
   const itemsHtml = hasItems
@@ -561,19 +633,25 @@ export function generateAdaptiveMockupHtml(
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--warm);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;position:relative}
 ::selection{background:var(--primary);color:#fff}
-body::after{content:'WEBCONCEPTOR · DÉMO';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.02);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
+body::after{content:'WEBCONCEPTOR · APERÇU';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.05);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 
-.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.92);color:#fff;padding:7px 14px;border-radius:100px;font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;backdrop-filter:blur(10px);pointer-events:none;display:inline-flex;align-items:center;gap:6px}
-.wc-demo-badge::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
+.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.95);color:#fff;padding:9px 16px;border-radius:100px;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;backdrop-filter:blur(10px);display:inline-flex;align-items:center;gap:8px;box-shadow:0 6px 22px rgba(0,0,0,0.18);cursor:default}
+.wc-demo-badge::before{content:'';width:7px;height:7px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
 .wc-home-btn{position:fixed;top:14px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);transition:all 0.2s;font-family:var(--sans)}
 .wc-home-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.18)}
 .wc-home-btn-logo{width:22px;height:22px;background:#0066ff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px}
-.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#2A1B26,var(--primary));padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;font-family:var(--sans)}
-.wc-watermark strong{color:#fff;letter-spacing:0.15em}
-.wc-watermark a{color:#FFD700;font-weight:700}
+/* Bandeau info flottant : rassure le prospect que les mentions WebConceptor
+   disparaissent au moment du paiement — bloqueur fréquent de conversion. */
+.wc-reassurance{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:9997;background:#fff;color:#1a1a1a;padding:10px 20px;border-radius:100px;font-size:12px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,0.14);border:1px solid rgba(0,102,255,0.2);display:inline-flex;align-items:center;gap:10px;max-width:92vw;font-family:var(--sans)}
+.wc-reassurance .wc-reassurance-icon{width:22px;height:22px;background:#0066ff;color:#fff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+.wc-reassurance strong{color:#0066ff;font-weight:700}
+.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#2A1B26,var(--primary));padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.95);letter-spacing:0.05em;font-weight:600;font-family:var(--sans);text-align:center;flex-wrap:wrap}
+.wc-watermark strong{color:#fff;letter-spacing:0.12em;text-transform:uppercase}
+.wc-watermark a{color:#FFD700;font-weight:700;text-decoration:underline}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@media(max-width:640px){.wc-reassurance{font-size:11px;padding:9px 14px;bottom:48px}.wc-watermark{font-size:10px}}
 
 .top-strip{background:var(--primary);color:${isLight(theme.primary) ? "#1a1a1a" : "#fff"};text-align:center;padding:9px 20px;font-size:12px;font-weight:500;position:relative;z-index:2;letter-spacing:0.01em}
 nav{position:sticky;top:0;z-index:100;height:72px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,253,248,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,0.05)}
@@ -690,9 +768,9 @@ footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);
   <span class="wc-home-btn-logo">W</span>
   <span>WebConceptor</span>
 </a>
-<div class="wc-demo-badge">Maquette</div>
+<div class="wc-demo-badge" title="Tous les badges WebConceptor disparaissent automatiquement à l'achat">Maquette · retirée à l'achat</div>
 
-<div class="top-strip">${escape(config.topStripText)}</div>
+${topStripContent ? `<div class="top-strip">${escape(topStripContent)}</div>` : ""}
 
 <nav>
   <div class="logo">
@@ -712,7 +790,7 @@ footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);
 <section class="hero">
   <div class="hero-inner">
     <div>
-      <div class="hero-tag"><span class="dot"></span>${escape(config.heroTag)}${cityStr ? ` · ${cityStr}` : ""}</div>
+      <div class="hero-tag"><span class="dot"></span>${escape(heroTagContent)}</div>
       <h1>${escape(content.heroTitle)}</h1>
       <p>${escape(content.heroSubtitle)}</p>
       <div class="hero-ctas">
@@ -754,9 +832,9 @@ ${reviewsHtml}
 <section id="contact" class="info">
   <div class="info-visual">
     <div class="info-visual-content">
-      <div class="info-visual-tag">Venez nous voir</div>
+      <div class="info-visual-tag">Nous trouver</div>
       <h3>${cityStr ? `À ${cityStr}` : "Près de chez vous"}</h3>
-      <p>Un accueil chaleureux vous attend</p>
+      <p>${addressStr ? escape(addressStr) : "Contactez-nous pour l'adresse"}</p>
     </div>
   </div>
   <div class="info-text">
@@ -773,19 +851,24 @@ ${reviewsHtml}
 
 <section class="cta">
   <div class="cta-inner">
-    <span class="section-tag" style="color:var(--accent)">Rencontrons-nous</span>
+    <span class="section-tag" style="color:var(--accent)">Contact</span>
     <h2>${escape(config.ctaBottom)}</h2>
-    <p>L&rsquo;équipe vous accueille avec le sourire${cityStr ? ` à ${cityStr}` : ""}.</p>
+    <p>${phoneStr ? `Joignez-nous au ${phoneStr}` : "Écrivez-nous pour prendre contact."}${cityStr ? ` · ${cityStr}` : ""}</p>
     <a href="#contact" class="btn-primary">${escape(config.ctaBottom)}</a>
   </div>
 </section>
 
 <footer>&copy; 2026 — Maquette générée par WebConceptor</footer>
 
+<div class="wc-reassurance" title="Les mentions WebConceptor disparaissent automatiquement au moment du paiement">
+  <span class="wc-reassurance-icon">W</span>
+  <span>Badges WebConceptor <strong>retirés automatiquement</strong> dès l'achat</span>
+</div>
+
 <div class="wc-watermark">
-  Maquette conçue par <strong>WEBCONCEPTOR</strong> &middot;
-  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a> &middot;
-  Toute reproduction interdite
+  <strong>APERÇU WEBCONCEPTOR</strong> &middot;
+  les mentions ci-présentes sont retirées à l'achat &middot;
+  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
 </div>
 
 </body>

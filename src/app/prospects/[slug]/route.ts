@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram } from "@/lib/security";
 import { generateCallScript } from "@/lib/call-script";
+import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -313,7 +314,23 @@ export async function GET(
 </body>`
       );
 
-  return new NextResponse(injectedHtml, {
+  // ═══════════════════════════════════════════════════════════════════
+  // INJECTION SALES UI UNIVERSELLE
+  // Les maquettes non-restaurant (adaptive) et l'ancien template épicerie
+  // n'ont AUCUN CTA d'achat. Sans ça, le prospect voit une belle maquette
+  // mais n'a aucun moyen de commander. On injecte un CTA bar fixe + modal
+  // d'achat si la maquette n'a pas de `.wc-cta-bar` natif (restaurant) ni
+  // déjà été injectée (`.wc-sx-cta`).
+  //
+  // Le restaurant a son propre CTA riche (réservation, domaine, chat IA)
+  // dans mockup-restaurant.ts → on ne re-injecte pas chez lui.
+  // ═══════════════════════════════════════════════════════════════════
+  const hasNativeSalesUi = injectedHtml.includes('class="wc-cta-bar"') || injectedHtml.includes('class="wc-sx-cta"');
+  const finalHtml = hasNativeSalesUi
+    ? injectedHtml
+    : injectedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site") + "</body>");
+
+  return new NextResponse(finalHtml, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "X-Content-Type-Options": "nosniff",

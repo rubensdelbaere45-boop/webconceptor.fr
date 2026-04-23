@@ -430,7 +430,7 @@ export function generateRestaurantMockupHtml(
 html{scroll-behavior:smooth;scrollbar-color:var(--accent) var(--cream)}
 body{font-family:var(--sans);background:var(--warm);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;position:relative;line-height:1.6}
 ::selection{background:var(--accent);color:#fff}
-body::after{content:'WEBCONCEPTOR · DÉMO';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.025);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
+body::after{content:'WEBCONCEPTOR · APERÇU';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.05);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -439,11 +439,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .wc-home-btn{position:fixed;top:14px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);transition:all 0.2s}
 .wc-home-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.18)}
 .wc-home-btn-logo{width:22px;height:22px;background:#0066ff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px}
-.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.92);color:#fff;padding:7px 14px;border-radius:100px;font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;backdrop-filter:blur(10px);pointer-events:none;display:inline-flex;align-items:center;gap:6px}
-.wc-demo-badge::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
-.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,var(--ink),var(--deep));padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:0.08em;text-transform:uppercase;font-weight:600}
-.wc-watermark strong{color:#fff;letter-spacing:0.15em}
-.wc-watermark a{color:var(--accent);font-weight:700}
+.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.95);color:#fff;padding:9px 16px;border-radius:100px;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;backdrop-filter:blur(10px);display:inline-flex;align-items:center;gap:8px;box-shadow:0 6px 22px rgba(0,0,0,0.18);cursor:default}
+.wc-demo-badge::before{content:'';width:7px;height:7px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
+/* Bandeau info rassurance : disparition du branding WebConceptor à l'achat */
+.wc-reassurance{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:9997;background:#fff;color:#1a1a1a;padding:10px 20px;border-radius:100px;font-size:12px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,0.14);border:1px solid rgba(0,102,255,0.2);display:inline-flex;align-items:center;gap:10px;max-width:92vw}
+.wc-reassurance .wc-reassurance-icon{width:22px;height:22px;background:#0066ff;color:#fff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+.wc-reassurance strong{color:#0066ff;font-weight:700}
+.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,var(--ink),var(--deep));padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.95);letter-spacing:0.05em;font-weight:600;text-align:center;flex-wrap:wrap}
+.wc-watermark strong{color:#fff;letter-spacing:0.12em;text-transform:uppercase}
+.wc-watermark a{color:var(--accent);font-weight:700;text-decoration:underline}
+@media(max-width:640px){.wc-reassurance{font-size:11px;padding:9px 14px;bottom:48px}.wc-watermark{font-size:10px}}
 
 /* Sticky CTA Bar ("Obtenir ce site") — au-dessus du watermark */
 .wc-cta-bar{position:fixed;bottom:34px;left:0;right:0;z-index:9997;background:linear-gradient(135deg,var(--deep) 0%,var(--ink) 100%);padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;box-shadow:0 -8px 30px rgba(0,0,0,0.25);border-top:2px solid var(--accent)}
@@ -923,7 +928,7 @@ body{padding-bottom:110px}
   <span class="wc-home-btn-logo">W</span>
   <span>WebConceptor</span>
 </a>
-<div class="wc-demo-badge">Maquette</div>
+<div class="wc-demo-badge" title="Tous les badges WebConceptor disparaissent automatiquement à l'achat">Maquette · retirée à l'achat</div>
 
 <div class="top-strip">
   <strong>${esc(prospect.name.toUpperCase())}</strong> &nbsp;·&nbsp; ${esc(content.cuisineType || labels.topStrip)}${prospect.city ? " · " + esc(prospect.city) : ""}
@@ -1450,10 +1455,15 @@ ${
   </div>
 </div>
 
+<div class="wc-reassurance" title="Les mentions WebConceptor disparaissent automatiquement au moment du paiement">
+  <span class="wc-reassurance-icon">W</span>
+  <span>Badges WebConceptor <strong>retirés automatiquement</strong> dès l'achat</span>
+</div>
+
 <div class="wc-watermark">
-  Maquette conçue par <strong>WEBCONCEPTOR</strong> &middot;
-  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a> &middot;
-  Toute reproduction interdite
+  <strong>APERÇU WEBCONCEPTOR</strong> &middot;
+  les mentions ci-présentes sont retirées à l'achat &middot;
+  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
 </div>
 
 <script>
