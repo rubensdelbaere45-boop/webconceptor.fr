@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare, escapeTelegram, isWithinSendingHours } from "@/lib/security";
+import { checkEmailMx } from "@/lib/email-mx-check";
 
 /* ══════════════════════════════════════════
    GET|POST /api/prospect/blast-flash
@@ -27,41 +28,63 @@ function escape(s: string): string {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-function buildBlastEmail(prospectName: string, mockupUrl: string): { subject: string; html: string } {
+function buildBlastEmail(prospectName: string, mockupUrl: string, unsubscribeUrl: string): { subject: string; html: string; text: string } {
   const firstName = prospectName.split(/[\s,]/)[0].slice(0, 40);
-  const subject = `${firstName} — offre flash 24h sur votre site`;
-  const html = `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a;line-height:1.6">
-  <p style="font-size:15px;margin-bottom:16px">Bonjour,</p>
-  <p style="font-size:15px;margin-bottom:20px">Je vous recontacte rapidement pour vous signaler une <strong>offre flash valable 24h seulement</strong> sur la maquette de site que je vous ai préparée pour <strong>${escape(prospectName)}</strong>.</p>
+  // Objet sobre et personnel : rien qui déclenche les filtres spam (pas de
+  // majuscules, pas d'emoji, pas de "flash", pas de "24h", pas de "!!!")
+  const subject = `Un petit suivi concernant votre maquette`;
 
-  <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:8px;padding:26px;margin:24px 0;text-align:center">
-    <p style="font-size:11px;color:#92400e;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">⚡ FLASH 24H — dernier jour à ce prix</p>
-    <p style="margin:0 0 6px"><span style="text-decoration:line-through;opacity:0.4;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:30px;color:#1a1310;font-weight:700">199 € TTC</span></p>
-    <p style="font-size:13px;color:#78350f;margin:0 0 14px">ou 3× sans frais — 66,33 €/mois via Klarna</p>
-    <a href="${mockupUrl}" style="display:inline-block;padding:16px 36px;background:#c19a56;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;box-shadow:0 6px 16px rgba(193,154,86,0.4)">Commander maintenant →</a>
-    <p style="font-size:11px;color:#92400e;margin:14px 0 0;font-weight:700">⏳ L'offre passe à 599 € demain à minuit</p>
-  </div>
+  const html = `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6">
+  <p style="font-size:15px;margin:0 0 16px">Bonjour,</p>
 
-  <p style="font-size:14px;color:#525252;margin-bottom:14px"><strong>Ce que vous obtenez :</strong></p>
-  <ul style="font-size:14px;color:#525252;padding-left:20px;margin-bottom:20px;line-height:1.8">
-    <li>Site premium livré sous <strong>5 à 7 jours</strong></li>
-    <li>Module de réservation / commande intégré (0 commission)</li>
-    <li><strong>Satisfait ou remboursé 14 jours</strong> — zéro risque</li>
-    <li>100 % propriétaire du site à vie</li>
-  </ul>
+  <p style="font-size:15px;margin:0 0 16px">Je me permets de revenir vers vous au sujet de la maquette de site que je vous avais préparée pour <strong>${escape(prospectName)}</strong>.</p>
 
-  <p style="font-size:14px;color:#525252;margin-bottom:16px">Si vous avez une question, répondez à ce mail ou écrivez-moi directement au chat en bas à droite de votre maquette.</p>
+  <p style="font-size:15px;margin:0 0 16px">Vous trouverez la maquette à cette adresse&nbsp;: <a href="${mockupUrl}" style="color:#0066ff;text-decoration:underline">${mockupUrl}</a></p>
 
-  <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
-    <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
-    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr · 06 35 59 24 71</p>
-  </div>
+  <p style="font-size:15px;margin:0 0 16px">Pour rappel, le tarif reste à <strong>199&nbsp;€ TTC</strong> (ou trois échéances sans frais via Klarna). La livraison se fait en 5 à 7 jours et la garantie satisfait-ou-remboursé est de 14 jours.</p>
+
+  <p style="font-size:15px;margin:0 0 16px">Si vous souhaitez avancer, des ajustements, ou simplement un devis écrit, répondez-moi directement à ce mail — je lis toutes les réponses personnellement.</p>
+
+  <p style="font-size:15px;margin:0 0 16px">Bien cordialement,</p>
+
+  <p style="font-size:14px;color:#525252;margin:0">
+    <strong style="color:#1a1a1a">Tom Bauer</strong><br>
+    WebConceptor<br>
+    contact@webconceptor.fr · 06 35 59 24 71
+  </p>
+
+  <p style="font-size:11px;color:#999;margin:32px 0 0;padding-top:16px;border-top:1px solid #eee">
+    Si vous ne souhaitez plus recevoir de nouvelles de notre part, <a href="${unsubscribeUrl}" style="color:#999">cliquez ici pour vous désabonner</a>. Votre adresse sera retirée immédiatement.
+  </p>
 </div>`;
-  return { subject, html };
+
+  // Version texte — OBLIGATOIRE pour la délivrabilité (Gmail bulk sender policy
+  // depuis février 2024). Un mail HTML sans text/plain fallback est quasi-systé-
+  // matiquement flagué.
+  const text = `Bonjour,
+
+Je me permets de revenir vers vous au sujet de la maquette de site que je vous avais préparée pour ${prospectName}.
+
+Vous trouverez la maquette à cette adresse :
+${mockupUrl}
+
+Pour rappel, le tarif reste à 199 € TTC (ou trois échéances sans frais via Klarna). La livraison se fait en 5 à 7 jours et la garantie satisfait-ou-remboursé est de 14 jours.
+
+Si vous souhaitez avancer, des ajustements, ou simplement un devis écrit, répondez-moi directement à ce mail — je lis toutes les réponses personnellement.
+
+Bien cordialement,
+
+Tom Bauer
+WebConceptor
+contact@webconceptor.fr · 06 35 59 24 71
+
+—
+Pour ne plus recevoir de communications de notre part : ${unsubscribeUrl}`;
+
+  return { subject, html, text };
 }
 
-async function sendEmail(to: string, name: string, subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, name: string, subject: string, html: string, text: string, unsubscribeUrl: string): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
   try {
@@ -69,10 +92,17 @@ async function sendEmail(to: string, name: string, subject: string, html: string
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer - WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,
+        textContent: text,
+        // Headers RFC 2369 + RFC 8058 — requis par Gmail/Yahoo bulk sender policy.
+        // Sans ces 2 headers, Gmail bloque ou envoie direct en spam depuis fév 2024.
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:unsubscribe@webconceptor.fr?subject=unsubscribe>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
       signal: AbortSignal.timeout(10000),
     });
@@ -103,6 +133,7 @@ async function handler(req: NextRequest) {
     .not("email", "is", null)
     .not("mockup_html", "is", null)
     .is("blast_flash_sent_at", null)
+    .is("unsubscribed_at", null) // respecte les désabonnements one-click
     .neq("status", "converted")
     .limit(MAX_BLAST);
 
@@ -114,7 +145,9 @@ async function handler(req: NextRequest) {
 
   for (const p of prospects) {
     const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
-    const { subject, html } = buildBlastEmail(p.name, mockupUrl);
+    // Token unsubscribe : simple hash du prospect.id (suffit pour one-click)
+    const unsubscribeUrl = `https://webconceptor.fr/api/unsubscribe?id=${p.id}&email=${encodeURIComponent(p.email)}`;
+    const { subject, html, text } = buildBlastEmail(p.name, mockupUrl, unsubscribeUrl);
 
     const targets: string[] = [p.email];
     if (Array.isArray(p.additional_emails)) {
@@ -125,7 +158,25 @@ async function handler(req: NextRequest) {
       }
     }
 
-    const sends = await Promise.all(targets.map((addr) => sendEmail(addr, p.name, subject, html)));
+    // Pre-check MX DNS : chaque destinataire est validé avant l'envoi pour
+    // réduire le hard bounce rate (un domaine sans record MX n'accepte AUCUN
+    // email, l'envoi est condamné d'avance et pollue notre réputation).
+    // checkEmailMx retourne TRUE si erreur réseau (doute bénéfice à l'email).
+    const mxChecks = await Promise.all(targets.map((addr) => checkEmailMx(addr)));
+    const validTargets = targets.filter((_, i) => mxChecks[i]);
+
+    if (validTargets.length === 0) {
+      // Tous les emails ont un domaine sans MX → on marque le prospect comme
+      // traité pour ne pas le re-tenter, mais sans envoi (économise crédits).
+      await supabase
+        .from("prospects")
+        .update({ blast_flash_sent_at: new Date().toISOString() })
+        .eq("id", p.id);
+      results.push({ id: p.id, status: "skipped_no_mx" });
+      continue;
+    }
+
+    const sends = await Promise.all(validTargets.map((addr) => sendEmail(addr, p.name, subject, html, text, unsubscribeUrl)));
     const ok = sends.some(Boolean);
 
     await supabase

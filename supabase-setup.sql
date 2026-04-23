@@ -176,6 +176,16 @@ CREATE INDEX IF NOT EXISTS idx_prospects_blast_flash ON public.prospects(blast_f
 -- Envoyé seulement aux prospects qui ont déjà reçu le blast_flash sans convertir.
 ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS final_push_sent_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_prospects_final_push ON public.prospects(final_push_sent_at);
+
+-- Horodatage du désabonnement "one-click" (RFC 8058 / Gmail bulk sender policy)
+-- Quand un prospect clique le lien unsubscribe dans le mail, cette colonne
+-- est remplie. Tous les endpoints de prospection (blast-flash, final-push,
+-- send, email-reminders) DOIVENT filtrer sur `unsubscribed_at IS NULL` pour
+-- respecter le souhait de l'utilisateur — non seulement c'est obligatoire
+-- légalement (RGPD), mais aussi vital pour la délivrabilité (Gmail monitore
+-- les taux de plaintes spam).
+ALTER TABLE public.prospects ADD COLUMN IF NOT EXISTS unsubscribed_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_prospects_unsubscribed ON public.prospects(unsubscribed_at);
 -- ADN visuel du site actuel (couleurs dominantes, polices, mots-clés ambiance)
 -- → permet à Claude de générer une maquette qui MATCHE l'univers du prospect
 -- au lieu de proposer un style opposé qui le fait fuir.
