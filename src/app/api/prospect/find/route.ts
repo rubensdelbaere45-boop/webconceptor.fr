@@ -762,44 +762,54 @@ export async function POST(req: NextRequest) {
   const strictEmail = rawBody.strict_email !== false;
 
   // ═══════════════════════════════════════════════════════════════
-  // BLACKLIST FRANCHISES & CHAÎNES
-  // Ces enseignes sont franchisées → elles ont déjà un site corporate
-  // national. Inutile de les prospecter : 0 chance de conversion +
-  // gaspillage de crédits Brevo + temps scraping.
-  // On skip si le nom contient un des termes ci-dessous (case-insensitive).
+  // BLACKLIST MEGA-FRANCHISES
+  // Uniquement les chaînes nationales avec SITE CORPORATE FORT ou
+  // POLITIQUE WEB CENTRALISÉE. Le gérant de l'enseigne locale n'a PAS le
+  // pouvoir de décider de son propre site → 0% de conversion, donc skip.
+  //
+  // NE PAS METTRE ICI les petites franchises locales type Proxi, Vival, Utile,
+  // Spar, G20, Casino Shop — ces gérants locaux sont indépendants, décident
+  // seuls de leur présence web, et la majorité n'a pas de site → bonne cible.
+  //
+  // Idem pour les boulangeries dites "franchisées" type Paul ou La Mie Câline :
+  // le réseau fournit la marque, mais l'exploitant local est souvent autonome
+  // sur le digital. Laisser passer le scrape et laisser site_quality filtrer.
   // ═══════════════════════════════════════════════════════════════
   const FRANCHISE_BLACKLIST = [
-    // Sport / fitness
+    // Sport / fitness (mega, 0 autonomie locale)
     "basic-fit", "basic fit", "basicfit", "fitness park", "on air fitness",
     "l'orange bleue", "keepcool", "keep cool", "magic form", "club med gym",
     "gymlib", "neoness", "cmg sports", "planet fitness",
-    // Food chaînes
+    // Fast-food chaînes internationales
     "mcdonald", "mcdo", "burger king", "kfc", "quick", "subway", "starbucks",
-    "paul", "brioche dorée", "la mie caline", "five guys", "la pataterie",
-    "courtepaille", "buffalo grill", "la boucherie", "memphis", "hippopotamus",
-    "léon de bruxelles", "flunch", "bistro régent", "del arte", "pizza hut",
-    "domino", "la pizza de nico", "basilic & co", "pomme de pain",
-    "columbus café", "pret a manger", "pret manger", "exki", "franprix",
-    "carrefour express", "carrefour city", "carrefour market", "monoprix",
-    "casino shop", "spar", "vival", "utile", "g20", "lidl", "aldi",
-    "leader price", "picard", "grand frais", "naturalia", "biocoop",
-    // Beauté / coiffure
-    "jean louis david", "saint algue", "franck provost", "camille albane",
-    "dessange", "coiff & co", "coiff&co", "coiff and co", "tchip",
+    "five guys", "pizza hut", "domino", "pret a manger", "pret manger",
+    "columbus café", "exki", "pomme de pain",
+    // Restaurants chaînes intégrées (pas franchises locales)
+    "courtepaille", "buffalo grill", "memphis", "hippopotamus",
+    "léon de bruxelles", "flunch", "bistro régent", "del arte",
+    "la pizza de nico", "basilic & co", "la pataterie",
+    // Supermarchés intégrés (Carrefour/Monoprix/Lidl/etc.)
+    "franprix", "carrefour express", "carrefour city", "carrefour market",
+    "monoprix", "lidl", "aldi", "leader price",
+    "picard", "grand frais", "naturalia", "biocoop",
+    // Beauté / parfumerie chaînes
     "yves rocher", "l'occitane", "marionnaud", "sephora", "nocibé",
     "body minute", "séphora", "the body shop", "lush", "kiko",
-    // Auto
+    // Coiffure chaînes nationales
+    "jean louis david", "saint algue", "franck provost", "camille albane",
+    "dessange", "coiff & co", "coiff&co", "coiff and co", "tchip",
+    // Auto (chaînes nationales)
     "speedy", "midas", "feu vert", "point s", "norauto", "roady", "euromaster",
     "vulco", "first stop", "ad expert", "carglass", "mondial pare-brise",
-    // Auto-école
+    // Auto-école grands réseaux
     "ecf", "auto école.com", "permisecolenet", "codes rousseau",
     "ornikar", "en voiture simone",
-    // Retail
+    // Optique chaînes
     "phone house", "generale optique", "optic 2000", "krys", "afflelou",
     "optical center", "grandoptical", "ekotiq", "acuitis",
-    // Santé chaînes
-    "dentilibre", "dentego", "centre dentaire", "générations dentaire",
-    // Plombier / électricien franchise
+    // Dentaire chaînes
+    "dentilibre", "dentego", "générations dentaire",
+    // Services franchisés multi-sites
     "elek maison", "plomberie.com", "ménage service",
   ];
   // Matching par MOT ENTIER pour éviter les faux positifs type :
