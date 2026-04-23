@@ -969,12 +969,18 @@ export default function AdminProspectsPage() {
           const callTargets = prospects.filter((p) => {
             if (!p.phone) return false;
             if (p.status === "converted" || p.status === "error") return false;
-            // Hot leads (opened/replied) + prospects récemment contactés = priorité appel
-            return ["sent", "opened", "replied", "ready", "no_email"].includes(p.status);
+            if (p.unsubscribed_at) return false; // respecte la purge premium + franchises
+            // Inclut "found" pour les cold call (pas encore de mail envoyé)
+            return ["sent", "opened", "replied", "ready", "no_email", "found"].includes(p.status);
           });
-          // Ordre : opened > replied > sent > ready > no_email (avec phone)
-          const priority: Record<string, number> = { opened: 0, replied: 1, sent: 2, ready: 3, no_email: 4 };
-          callTargets.sort((a, b) => (priority[a.status] ?? 9) - (priority[b.status] ?? 9));
+          // Tri : verdict GO d'abord (site none/poor) > CHECK > STOP, puis par statut à l'intérieur
+          const verdictRank: Record<string, number> = { GO: 0, CHECK: 1, STOP: 2 };
+          const statusRank: Record<string, number> = { opened: 0, replied: 1, sent: 2, ready: 3, found: 4, no_email: 5 };
+          callTargets.sort((a, b) => {
+            const dv = verdictRank[getCallVerdict(a).level] - verdictRank[getCallVerdict(b).level];
+            if (dv !== 0) return dv;
+            return (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9);
+          });
           const todo = callTargets.filter((p) => !wasCalledToday(p.notes));
           const done = callTargets.filter((p) => wasCalledToday(p.notes));
           const total = callTargets.length;
@@ -1021,10 +1027,16 @@ export default function AdminProspectsPage() {
                     const emoji = metierEmoji[metier] || "📞";
                     const telLink = p.phone.replace(/[^0-9+]/g, "");
                     const isHot = p.status === "opened" || p.status === "replied";
+                    const v = getCallVerdict(p);
+                    // Row tint selon verdict : vert (GO) / rouge (STOP) / jaune (CHECK)
+                    const verdictBg =
+                      v.level === "GO" ? "border-l-4 border-l-emerald-500 bg-emerald-50"
+                      : v.level === "STOP" ? "border-l-4 border-l-red-500 bg-red-50 opacity-70"
+                      : "border-l-4 border-l-amber-400 bg-amber-50";
                     return (
                       <div
                         key={p.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${isHot ? "border-red-300 bg-red-50" : "border-gray-200 bg-gray-50"} hover:bg-white hover:shadow-sm transition`}
+                        className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 ${verdictBg} hover:shadow-sm transition`}
                       >
                         <input
                           type="checkbox"
@@ -1034,9 +1046,12 @@ export default function AdminProspectsPage() {
                           title="Cocher quand appelé"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[14px]">{emoji}</span>
                             <span className="font-semibold text-[14px] text-[#0a0a0a] truncate">{p.name}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${v.bg} ${v.color}`} title={v.label}>
+                              {v.emoji} {v.level === "GO" ? "APPELER" : v.level === "STOP" ? "NE PAS APPELER" : "À VÉRIFIER"}
+                            </span>
                             {isHot && <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider px-1.5 py-0.5 bg-red-100 rounded">🔥 Ouvert</span>}
                             {p.google_rating ? <span className="text-[11px] text-gray-500">⭐ {p.google_rating}</span> : null}
                           </div>
