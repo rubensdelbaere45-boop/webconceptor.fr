@@ -645,7 +645,7 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">
                 <p className="text-[12px] text-white/40 mb-1">À partir de</p>
-                <p className="text-5xl font-extrabold tracking-tight mb-1">320 <span className="text-xl font-medium text-white/50">&euro;</span></p>
+                <p className="text-5xl font-extrabold tracking-tight mb-1">199 <span className="text-xl font-medium text-white/50">&euro;</span></p>
                 <p className="text-[13px] text-white/40 mb-8">Paiement unique &middot; Livraison 5 jours</p>
                 <div className="space-y-2.5 mb-8">
                   {included.map((i) => (
@@ -658,7 +658,7 @@ export default function Home() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link href="/demande" className="block w-full py-3 bg-white text-[#0a0a0a] text-[13px] font-semibold rounded-full text-center">Démarrer mon projet</Link>
                 </motion.div>
-                <p className="text-[11px] text-white/20 text-center mt-3">Sans Formule Sérénité, aucune modification après livraison.</p>
+                <p className="text-[11px] text-white/20 text-center mt-3">Paiement en 3× sans frais disponible via Klarna.</p>
               </div>
             </motion.div>
 
@@ -747,11 +747,11 @@ export default function Home() {
               <p className="text-white/80 text-lg mb-8 max-w-md mx-auto">Décrivez votre projet en 5 minutes. Réponse garantie sous 48h.</p>
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} className="inline-block">
                 <Link href="/demande" className="px-8 py-4 bg-white text-[#0066ff] text-[15px] font-semibold rounded-full hover:bg-white/90 transition-colors inline-flex items-center gap-2 shadow-xl">
-                  Créer mon site gratuitement
+                  Démarrer mon projet — 199€
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                 </Link>
               </motion.div>
-              <p className="text-white/60 text-[12px] mt-5">Gratuit &middot; Sans engagement &middot; Réponse sous 48h</p>
+              <p className="text-white/60 text-[12px] mt-5">199€ TTC &middot; Klarna 3× sans frais &middot; Livraison 5 jours</p>
             </div>
           </div>
         </motion.div>

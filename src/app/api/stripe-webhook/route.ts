@@ -59,23 +59,36 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
       body: JSON.stringify({
         sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
-        subject: "Paiement recu — votre site WebConceptor arrive",
+        subject: "Paiement reçu — votre site WebConceptor arrive 🎉",
         htmlContent: `
-          <div style="font-family:Inter,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
-            <h1 style="font-size:24px;font-weight:800;margin-bottom:16px">Merci ${name.split(" ")[0]} !</h1>
-            <p style="font-size:15px;line-height:1.6;color:#525252">Votre paiement a bien ete recu. Nous lancons la creation de votre site maintenant.</p>
-            <div style="background:#fafafa;border-radius:12px;padding:20px;margin:24px 0">
-              <p style="font-size:13px;color:#737373;margin:0 0 4px">Domaine reserve</p>
-              <p style="font-size:18px;font-weight:700;margin:0">${domain}</p>
+          <div style="font-family:Inter,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:40px 32px;color:#0a0a0a;background:#ffffff">
+            <div style="margin-bottom:28px">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#0066ff;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:0.05em">W WebConceptor</span>
             </div>
-            <p style="font-size:15px;line-height:1.6;color:#525252">
-              <strong>Prochaines etapes :</strong><br>
-              1. Nous achetons votre nom de domaine dans les 24h<br>
-              2. Nous finalisons votre site (delai 5 jours)<br>
-              3. Mise en ligne sur votre domaine
-            </p>
-            <p style="font-size:15px;line-height:1.6;color:#525252">Code projet : <strong>${code}</strong> — suivez l'avancement sur <a href="https://webconceptor.fr/code" style="color:#0066ff">votre espace</a>.</p>
-            <p style="font-size:13px;color:#a3a3a3;margin-top:32px">L'equipe WebConceptor</p>
+            <h1 style="font-size:26px;font-weight:800;margin:0 0 12px;line-height:1.2">Merci ${name.split(" ")[0]} ! 🙌</h1>
+            <p style="font-size:15px;line-height:1.7;color:#525252;margin:0 0 24px">Votre paiement a bien été reçu. Nous lançons la création de votre site <strong>immédiatement</strong>.</p>
+            <div style="background:#f0f7ff;border:1px solid #cce0ff;border-radius:12px;padding:20px 24px;margin:0 0 24px">
+              <p style="font-size:12px;color:#0066ff;font-weight:600;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.08em">Domaine réservé</p>
+              <p style="font-size:20px;font-weight:800;margin:0;color:#0a0a0a">${domain}</p>
+            </div>
+            <div style="background:#fafafa;border-radius:12px;padding:20px 24px;margin:0 0 24px">
+              <p style="font-size:14px;font-weight:700;margin:0 0 12px;color:#0a0a0a">Prochaines étapes :</p>
+              <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+                <span style="background:#0066ff;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center">1</span>
+                <p style="font-size:14px;color:#525252;margin:0;line-height:1.5">Achat de votre nom de domaine dans les <strong>24h</strong></p>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+                <span style="background:#0066ff;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center">2</span>
+                <p style="font-size:14px;color:#525252;margin:0;line-height:1.5">Finalisation de votre site (délai <strong>5 jours ouvrés</strong>)</p>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px">
+                <span style="background:#0066ff;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center">3</span>
+                <p style="font-size:14px;color:#525252;margin:0;line-height:1.5">Mise en ligne sur <strong>${domain}</strong> et remise des accès</p>
+              </div>
+            </div>
+            <p style="font-size:14px;line-height:1.6;color:#525252;margin:0 0 8px">Votre code projet : <strong style="color:#0a0a0a;font-size:18px;letter-spacing:0.1em">${code}</strong></p>
+            <a href="https://webconceptor.fr/code?c=${code}" style="display:inline-block;background:#0a0a0a;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;text-decoration:none;margin:12px 0 28px">Suivre mon projet →</a>
+            <p style="font-size:13px;color:#a3a3a3;border-top:1px solid #f0f0f0;padding-top:20px;margin:0">Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none">contact@webconceptor.fr</a><br>L'équipe WebConceptor</p>
           </div>
         `,
       }),
