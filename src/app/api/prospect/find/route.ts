@@ -840,7 +840,7 @@ export async function POST(req: NextRequest) {
   // Hard deadline — Render free tier coupe les requêtes à ~100 s.
   // On fixe 80 s pour laisser une marge confortable et garantir une réponse
   // 200 propre plutôt qu'un 502 qui tue le workflow n8n.
-  const DEADLINE_MS = 80_000; // 80 s (Render coupe vers 100 s)
+  const DEADLINE_MS = 50_000; // 50 s (Vercel free coupe à 60 s)
   const startedAt = Date.now();
   const timeLeft = () => DEADLINE_MS - (Date.now() - startedAt);
 

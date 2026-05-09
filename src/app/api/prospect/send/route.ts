@@ -1000,7 +1000,7 @@ async function handleSend(req: NextRequest) {
   // garantir une réponse 200 propre plutôt qu'un 502 qui tuerait le workflow n8n.
   // On traite autant de prospects que possible dans ce budget, les autres
   // resteront 'found' en DB et seront pris au prochain run.
-  const SEND_DEADLINE_MS = 80_000;
+  const SEND_DEADLINE_MS = 50_000; // 50 s (Vercel free coupe à 60 s)
   const sendStartedAt = Date.now();
   const sendTimeLeft = () => SEND_DEADLINE_MS - (Date.now() - sendStartedAt);
   let timedOut = 0;
