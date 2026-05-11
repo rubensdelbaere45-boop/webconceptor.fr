@@ -34,7 +34,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to }],
         subject,
         htmlContent: html,

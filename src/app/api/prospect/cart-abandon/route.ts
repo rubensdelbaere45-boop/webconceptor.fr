@@ -67,7 +67,7 @@ async function sendEmail(to: string, name: string, subject: string, html: string
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer - WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

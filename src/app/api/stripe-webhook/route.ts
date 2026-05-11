@@ -57,7 +57,7 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
         subject: "Paiement reçu — votre site WebConceptor arrive 🎉",
         htmlContent: `

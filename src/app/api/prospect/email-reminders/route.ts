@@ -81,7 +81,7 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer - WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

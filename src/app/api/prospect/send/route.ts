@@ -763,7 +763,7 @@ async function sendEmail(to: string, toName: string, subject: string, htmlBody: 
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name: toName || to }],
         subject,
         htmlContent: htmlBody,

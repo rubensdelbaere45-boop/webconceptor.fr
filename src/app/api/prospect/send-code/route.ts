@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "api-key": brevoKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: prospect.email, name: prospect.name }],
         subject: `Votre code d'accès pour ${prospect.name} — WebConceptor`,
         htmlContent: emailHtml,
