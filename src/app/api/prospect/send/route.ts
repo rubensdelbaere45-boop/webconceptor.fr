@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram, safeCompare, isWithinSendingHours } from "@/lib/security";
 import {
   generateRestaurantMockupHtml,
+  BUSINESS_TYPE_VIBE,
   type RestaurantProspect,
   type RestaurantContent,
 } from "@/lib/mockup-restaurant";
@@ -308,89 +309,68 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
       : "",
   ].filter(Boolean).join("\n");
 
-  // If we already have a scraped real menu, we don't need Claude to invent dishes
+  // Si on a un menu scrapé en DB → on le passe directement à la template, Claude n'a pas
+  // besoin d'inventer des plats. Gain de tokens + items 100% réels.
   const hasScrapedMenu = Array.isArray(prospect.menu_items) && prospect.menu_items.length >= 4;
 
-  const prompt = `Tu prépares une maquette de site web premium pour un établissement français que nous prospectons. Ça peut être :
-- FOOD : restaurant, brasserie, bistrot, pizzeria, crêperie, boulangerie, pâtisserie, chocolatier, glacier, café, salon de thé, food truck
-- SERVICES BEAUTÉ : coiffeur, institut de beauté, spa, barbier, manucure
-- SERVICES TECHNIQUES : plombier, électricien, chauffagiste, mécanicien/garage auto
-- SANTÉ : dentiste, orthodontiste, ostéopathe, kiné
-- SPORT/LOISIRS : salle de sport, coach sportif, école de danse
-- COMMERCE : fleuriste, librairie, boutique mode
-- FORMATION : auto-école
+  // Vibe déjà connu par business_type → on le dit à Claude pour cohérence du texte
+  const forcedVibe = prospect.business_type ? BUSINESS_TYPE_VIBE[prospect.business_type] : undefined;
+  const vibeHint = forcedVibe
+    ? `\n⚠️ VIBE IMPOSÉ : le design de cette maquette sera "${forcedVibe}" (imposé par le métier "${prospect.business_type}"). Adapte le ton, le heroTitle et l'aboutText à cette ambiance.`
+    : "";
+
+  const prompt = `Tu génères le TEXTE (JSON) d'une maquette de site web pour un établissement français.
+Type de métier détecté : ${prospect.business_type || "non précisé"} — ${label.descriptor}.${vibeHint}
 
 Infos de l'établissement :
 ${infoLines}
-
-INFÈRE le type précis depuis le nom + le business_type passé en contexte (ex: "Le Pain Quotidien" → boulangerie, "Salon Mirror Mirror" → coiffeur, "Plomberie Martin" → plombier, "Cabinet Dr Durand" → dentiste).
+${prospect.reviews && prospect.reviews.length > 0 ? `\nAvis clients RÉELS (utilise-les pour personnaliser heroTitle/aboutText) :\n${(prospect.reviews as Array<{rating:number;author:string;text:string}>).slice(0,3).map((r) => `- ${r.rating}★ "${r.text.slice(0,200)}"`).join("\n")}` : ""}
 
 Génère un objet JSON avec ces clés EXACTEMENT :
 {
-  "heroTitle": "titre hero élégant et court (4-8 mots), évoque l'adresse/l'établissement, PAS le nom (déjà dans le header)",
-  "heroSubtitle": "phrase d'accroche 12-18 mots, évoque l'ambiance, la spécialité ou le savoir-faire",
-  "aboutText": "paragraphe 50-80 mots 'À propos', chaleureux, évoque les produits/l'ambiance/la philosophie. Reste plausible, n'invente rien de spécifique.",${
+  "heroTitle": "titre hero court (4-8 mots) — évoque LE MÉTIER PRÉCIS (glacier → glaces/sorbets, boulangerie → pain/viennoiseries), PAS le nom du lieu (déjà dans le header). Spécifique, jamais générique.",
+  "heroSubtitle": "accroche 12-18 mots, spécifique au métier et à la ville",
+  "aboutText": "paragraphe 50-80 mots — SPÉCIFIQUE AU MÉTIER. Pour un glacier : parle de parfums artisanaux, sorbets, crèmes glacées. Pour une boulangerie : levain, farine, cuisson au four. NE JAMAIS écrire 'cuisine généreuse' ou 'produits de saison' pour un glacier ou une boulangerie.",${
     hasScrapedMenu
       ? ""
       : `
-  "menuItems": [8 à 12 items ADAPTÉS au type d'établissement avec des catégories pertinentes] :
-    - Pour RESTAURANT / brasserie / bistrot → 3 catégories "entrée" / "plat" / "dessert"
-    - Pour PIZZERIA → "entrée" / "pizza" / "dessert"
-    - Pour BOULANGERIE → "pains" / "viennoiseries" / "pâtisseries"
-    - Pour PÂTISSERIE / chocolatier → "pâtisseries" / "chocolats" / "gâteaux sur commande"
-    - Pour CRÊPERIE → "crêpes salées" / "crêpes sucrées" / "boissons"
-    - Pour GLACIER → "glaces" / "sorbets" / "coupes"
-    - Pour CAFÉ / salon de thé → "boissons" / "douceurs" / "en-cas salés"
-    - Pour COIFFEUR → "coupes" / "colorations" / "soins"
-    - Pour INSTITUT BEAUTÉ / spa → "soins visage" / "épilations" / "massages"
-    - Pour PLOMBIER / électricien / chauffagiste → "urgences" / "installations" / "entretien"
-    - Pour GARAGE AUTO → "entretien" / "réparations" / "révisions"
-    - Pour DENTISTE / orthodontiste → "consultations" / "soins" / "esthétique"
-    - Pour OSTÉO / kiné → "consultations" / "rééducation" / "bien-être"
-    - Pour SALLE DE SPORT / coach → "abonnements" / "cours collectifs" / "coaching privé"
-    - Pour FLEURISTE → "bouquets" / "compositions" / "événements"
-    - Pour AUTO-ÉCOLE → "permis B" / "accompagné" / "code accéléré"
-
-    Chaque item = { "category": "nom de catégorie en minuscules", "name": "nom du service/produit", "description": "5-10 mots", "price": "" }.
-
-    RÈGLE PRIX ABSOLUE : tu ne dois JAMAIS inventer de prix. Laisse TOUJOURS le champ "price" VIDE (chaîne vide ""). Inventer des prix fait faux et décrédibilise la maquette. Un bandeau sera affiché à la place pour inviter le restaurateur à nous envoyer ses vrais prix.`
+  "menuItems": [8 à 12 items OBLIGATOIREMENT adaptés au type "${prospect.business_type || "restaurant"}"] :
+    ● restaurant / brasserie / bistrot → catégories : "entrée" / "plat" / "dessert"
+    ● pizzeria → "antipasti" / "pizzas" / "desserts"
+    ● boulangerie → "pains" / "viennoiseries" / "pâtisseries"
+    ● patisserie / chocolatier → "entremets" / "chocolats" / "commandes"
+    ● creperie → "galettes salées" / "crêpes sucrées" / "boissons"
+    ● glacier → "crèmes glacées" / "sorbets" / "coupes spéciales"  ← OBLIGATOIRE pour type glacier
+    ● cafe / salon_de_the → "cafés & thés" / "douceurs" / "formules"
+    ● coiffeur → "coupes" / "colorations" / "soins"
+    ● spa / institut → "soins visage" / "massages" / "épilations"
+    ● INTERDICTION ABSOLUE : ne JAMAIS mettre "Entrée du jour", "Plat signature", "Dessert maison" pour un glacier, boulangerie, café ou tout autre métier non-restaurant.
+    Chaque item = { "category": "catégorie exacte ci-dessus", "name": "nom réaliste", "description": "5-10 mots spécifiques", "price": "" }
+    PRIX : toujours "" (vide) — on affichera un bandeau d'invitation.`
   }
-  "cuisineType": "type d'établissement en 3-6 mots (ex: 'brasserie française', 'boulangerie artisanale', 'pâtisserie fine', 'glacier artisanal', 'pizzeria napolitaine')",
-  "vibe": "UN SEUL parmi ces 5, choisi selon le CARACTÈRE de l'établissement :
-    - 'classic' : brasseries classiques, gastro française traditionnelle, bistros élégants → palette or/bordeaux + Cormorant Garamond
-    - 'rustic' : VIEILLES MAISONS (famille depuis X générations, adresses 'fondée en 18XX', boulangeries artisanales terroir) → palette olive/sable + Libre Caslon (police héritage)
-    - 'coastal' : fruits de mer, crêperies Bretagne, adresses méditerranéennes, Nice, côte → palette bleu canard/cuivre
-    - 'modern' : gastronomie contemporaine, pâtisseries haute couture, urbain trendy, chef qui fait du moléculaire → palette anthracite/rose
-    - 'sunny' : GLACIERS, bars de plage, salons de thé ensoleillés, crêpes sucrées festives, food trucks estivaux → palette orange/ambre (ambiance été)
-
-    🎯 RÈGLE CRITIQUE — MATCHER LE STYLE EXISTANT : si 'Ambiance détectée sur leur site' est fournie plus haut, tu DOIS choisir le vibe qui se rapproche LE PLUS de leur univers actuel. Exemples :
-    - Site actuel avec ambiance 'maritime', 'plage', 'ensoleillé' → JAMAIS 'classic' ou 'rustic'. Soit 'coastal' soit 'sunny'.
-    - Site actuel 'traditionnel', 'familial', 'historique', 'terroir' → 'rustic' uniquement.
-    - Site actuel 'moderne', 'jeune', 'branché', 'festif' → 'modern' ou 'sunny'.
-    - Site actuel 'élégant', 'raffiné', 'gastronomique' → 'classic'.
-    Le prospect doit se dire 'c'est MON établissement' en voyant la maquette, pas 'ça ne me ressemble pas'. Les couleurs dominantes (si fournies) doivent t'aider à confirmer ton choix de vibe.",
-  "talkingPoints": [5 bullets courts (max 12 mots chacun) pour l'appel téléphonique. Focus bénéfices WebConceptor : site sur-mesure 199€, livraison 5j, module commande/réservation intégré, espace admin simple, option Sérénité 50€/mois.],
-  "auditTeaser": "SI le prospect a un site 'poor' ou 'average' (donc un site qui existe mais qui peut être amélioré) : UNE SEULE phrase courte (max 15 mots), MYSTÉRIEUSE, qui évoque VAGUEMENT 1-2 axes d'amélioration sans tout révéler. Ex: 'notamment sur votre visibilité dans les recherches Google locales et l'affichage sur mobile' ou 'notamment sur la structure SEO et l'expérience des visiteurs mobiles'. Ne JAMAIS lister tous les problèmes, rester dans le teaser. Si le prospect n'a pas de site (site_quality='none'), retourne une chaîne vide ''.",
-  "emailSubject": "Objet d'email COURT (max 55 chars) et PERCUTANT → doit déclencher le clic. DOIT inclure le NOM DE L'ÉTABLISSEMENT (= personnalisation, déjoue les filtres anti-spam génériques). DOIT évoquer quelque chose de TANGIBLE (pas 'offre commerciale'). 5 formats gagnants possibles, pick ONE au hasard selon le ressenti : 1) '✨ [Nom], votre site web est prêt' — 2) 'Maquette [Nom] à valider (5 jours max)' — 3) '[Nom] — une maquette pour vous' — 4) 'J'ai préparé le site de [Nom]' — 5) '[Nom] : votre vitrine en ligne'. ❌ INTERDITS : 'offre', 'promotion', 'opportunité', 'exclusif', '50%', toutes majuscules, points d'exclamation multiples.",
-  "emailOpening": "Bonjour [prénom si on l'a, sinon neutre], (avec virgule)",
-  "emailPitch": "2-3 phrases MAX, punchy, axées BÉNÉFICES pour le prospect : (1) On a pris le temps de créer une maquette rien que pour [nom établissement] (avec 1 détail concret qui prouve la personnalisation : ville, note Google, type cuisine, avis client cité, etc.) ; (2) Ce que la maquette apporte de concret (ex: module de réservation sans commission, vitrine pro en 5 jours, +30% de visibilité Google, etc.) ; (3) Invitation claire à cliquer avec CTA. Si site existant poor/average → évoquer mystérieusement un axe d'amélioration détecté. Ton CHALEUREUX mais PROFESSIONNEL. Vouvoiement. JAMAIS de mot 'opportunité' ou 'offre promotionnelle'."
+  "cuisineType": "type exact en 3-5 mots (ex: 'glacerie artisanale', 'boulangerie de quartier', 'pizzeria napolitaine')",
+  "vibe": "${forcedVibe ?? `UN SEUL parmi: classic/rustic/coastal/modern/sunny — selon le caractère du lieu`}",
+  "talkingPoints": ["5 bullets ≤12 mots chacun pour l'appel téléphonique — bénéfices WebConceptor"],
+  "auditTeaser": "SI site poor/average : 1 phrase courte mystérieuse sur l'axe d'amélioration. Sinon chaîne vide.",
+  "emailSubject": "Objet ≤55 chars percutant avec le nom de l'établissement",
+  "emailOpening": "Bonjour, (ou prénom si connu)",
+  "emailPitch": "2-3 phrases punchy : personnalisation prouvée (ville/note Google/avis cité) + bénéfice concret + CTA. Vouvoiement, JAMAIS 'opportunité'."
 }
 
-Ton : COPYWRITER SENIOR ÉLÉGANT. Chaque mot compte. Phrases courtes, percutantes, avec une vraie plume française. Évite les clichés ('passion', 'savoir-faire' sans contexte). Préfère la SPÉCIFICITÉ à la généralité. Si tu ne sais pas → reste vague plutôt qu'inventer. Le prospect doit lire ta maquette et se dire 'c'est EXACTEMENT MON ÉTABLISSEMENT'. Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
+RÈGLES ABSOLUES : JSON valide uniquement, aucun commentaire. Spécificité > généralité. Le prospect doit voir SA glacerie / SA boulangerie, pas un restaurant générique.`;
 
   try {
-    // Claude Sonnet 4.6 (meilleur modèle disponible) — pour que la maquette soit
-    // un vrai travail de copywriter senior, pas du texte générique. La qualité
-    // du texte = le facteur n°1 de conversion.
+    // Claude Haiku — rapide, ~0,1 ct par appel (vs 1,5 ct Sonnet).
+    // Suffisant pour générer du texte JSON structuré avec un bon prompt.
     const body = isOpenRouter
       ? {
-          model: "anthropic/claude-sonnet-4.6",
+          model: "anthropic/claude-haiku-4.5",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 2000,
           response_format: { type: "json_object" },
         }
       : {
-          model: "claude-sonnet-4-6",
+          model: "claude-haiku-4-5",
           max_tokens: 2000,
           messages: [{ role: "user", content: prompt }],
         };
@@ -450,11 +430,13 @@ Ton : COPYWRITER SENIOR ÉLÉGANT. Chaque mot compte. Phrases courtes, percutant
       if (tp.length >= 2) talkingPoints = tp;
     }
 
-    // Valide le vibe
+    // Vibe final : business_type override > Claude > "classic"
+    // Le override BUSINESS_TYPE_VIBE garantit que glacier=sunny même si Claude s'est trompé.
     const allowedVibes = ["classic", "rustic", "modern", "coastal", "sunny"];
-    const vibe = typeof parsed.vibe === "string" && allowedVibes.includes(parsed.vibe)
-      ? (parsed.vibe as "classic" | "rustic" | "modern" | "coastal" | "sunny")
+    const claudeVibe = typeof parsed.vibe === "string" && allowedVibes.includes(parsed.vibe)
+      ? parsed.vibe as "classic" | "rustic" | "modern" | "coastal" | "sunny"
       : "classic";
+    const vibe = (forcedVibe ?? claudeVibe) as "classic" | "rustic" | "modern" | "coastal" | "sunny";
 
     return {
       heroTitle: String(parsed.heroTitle || fallback.heroTitle).slice(0, 100),

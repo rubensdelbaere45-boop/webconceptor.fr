@@ -187,6 +187,97 @@ const VIBE_TO_FONT_INDEX: Record<RestaurantVibe, number> = {
   sunny: 1,     // Playfair Display + Montserrat + Dancing Script (festif)
 };
 
+// ── Vibe FORCÉ par business_type ──────────────────────────────────────────
+// Priorité absolue sur le choix de Claude — garantit que chaque métier reçoit
+// le bon design (glacier → sunny, boulangerie → rustic, etc.)
+export const BUSINESS_TYPE_VIBE: Record<string, RestaurantVibe> = {
+  restaurant:    "classic",
+  brasserie:     "classic",
+  gastronomique: "classic",
+  bistrot:       "rustic",
+  boulangerie:   "rustic",
+  pizzeria:      "rustic",
+  patisserie:    "modern",
+  chocolatier:   "modern",
+  glacier:       "sunny",
+  cafe:          "sunny",
+  salon_de_the:  "sunny",
+  creperie:      "coastal",
+  food_truck:    "sunny",
+  bar:           "modern",
+  coiffeur:      "modern",
+  spa:           "modern",
+};
+
+// ── Photos Unsplash THÉMATIQUES par business_type ─────────────────────────
+// Fallback si le prospect n'a pas de photos Google Places.
+// Chaque métier a ses propres images — plus jamais de cave à vins pour un glacier.
+const FALLBACK_PHOTOS_BY_TYPE: Record<string, string[]> = {
+  glacier: [
+    "https://images.unsplash.com/photo-1567206563114-c179900d7065?w=1600&q=80&auto=format&fit=crop",  // gelato coloré
+    "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=1600&q=80&auto=format&fit=crop",  // cone glace
+    "https://images.unsplash.com/photo-1576506542790-51244b486a6b?w=1600&q=80&auto=format&fit=crop",  // sorbets
+    "https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=1600&q=80&auto=format&fit=crop",  // coupe glace
+    "https://images.unsplash.com/photo-1488900128323-21503983a07e?w=1600&q=80&auto=format&fit=crop",  // glace artisanale
+  ],
+  boulangerie: [
+    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1600&q=80&auto=format&fit=crop",  // pains
+    "https://images.unsplash.com/photo-1555507036-ab794f4afe5a?w=1600&q=80&auto=format&fit=crop",  // baguette
+    "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=1600&q=80&auto=format&fit=crop",  // viennoiseries
+    "https://images.unsplash.com/photo-1585478259715-4d3db5d97f74?w=1600&q=80&auto=format&fit=crop",  // croissants
+    "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=1600&q=80&auto=format&fit=crop",  // four
+  ],
+  patisserie: [
+    "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=1600&q=80&auto=format&fit=crop",  // gâteaux
+    "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=1600&q=80&auto=format&fit=crop",  // macarons
+    "https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?w=1600&q=80&auto=format&fit=crop",  // entremets
+    "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=1600&q=80&auto=format&fit=crop",  // pâtisseries
+    "https://images.unsplash.com/photo-1579740765855-71bb79656e97?w=1600&q=80&auto=format&fit=crop",  // éclairs
+  ],
+  cafe: [
+    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&q=80&auto=format&fit=crop",  // café latte
+    "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=80&auto=format&fit=crop",  // comptoir café
+    "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1600&q=80&auto=format&fit=crop",  // café intérieur
+    "https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=1600&q=80&auto=format&fit=crop",  // espresso
+    "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=1600&q=80&auto=format&fit=crop",  // barista
+  ],
+  creperie: [
+    "https://images.unsplash.com/photo-1519676867240-f03562e64548?w=1600&q=80&auto=format&fit=crop",  // crêpes
+    "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=1600&q=80&auto=format&fit=crop",  // galette
+    "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?w=1600&q=80&auto=format&fit=crop",  // crêpière
+    "https://images.unsplash.com/photo-1627308595229-7830a5c18605?w=1600&q=80&auto=format&fit=crop",  // crêpe pliée
+    "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1600&q=80&auto=format&fit=crop",  // crêpe sucrée
+  ],
+  pizzeria: [
+    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600&q=80&auto=format&fit=crop",  // pizza
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=80&auto=format&fit=crop",  // pizza four à bois
+    "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=1600&q=80&auto=format&fit=crop",  // pizza close-up
+    "https://images.unsplash.com/photo-1548369937-47519962c11a?w=1600&q=80&auto=format&fit=crop",  // margherita
+    "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=1600&q=80&auto=format&fit=crop",  // cuisine
+  ],
+  coiffeur: [
+    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&q=80&auto=format&fit=crop",  // salon coiffure
+    "https://images.unsplash.com/photo-1560066984-138daaa4e6fb?w=1600&q=80&auto=format&fit=crop",  // coupe
+    "https://images.unsplash.com/photo-1562322140-8baeebebf3df?w=1600&q=80&auto=format&fit=crop",  // coiffeur miroir
+    "https://images.unsplash.com/photo-1582095133179-bfd08e2fb6b7?w=1600&q=80&auto=format&fit=crop",  // shampooing
+    "https://images.unsplash.com/photo-1633681926035-ec1ac984418a?w=1600&q=80&auto=format&fit=crop",  // coupe femme
+  ],
+  spa: [
+    "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=1600&q=80&auto=format&fit=crop",
+  ],
+};
+const FALLBACK_PHOTOS_DEFAULT = [
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1544025162-d76694265947?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=80&auto=format&fit=crop",
+];
+
 /* ══════════════════════════════════════════
    4 paires de polices (Google Fonts)
    ══════════════════════════════════════════ */
@@ -254,14 +345,19 @@ export function generateRestaurantMockupHtml(
   content: RestaurantContent,
   origin: string
 ): string {
-  // 1) Si Claude a choisi un vibe → thème + fonts MAPPÉS pour cohérence
-  // 2) Sinon → choix déterministe par hash (5 thèmes × 4 polices = 20 combos)
+  // Sélection du vibe (priorité décroissante) :
+  // 1. BUSINESS_TYPE_VIBE (override absolu par métier) — garantit glacier=sunny, etc.
+  // 2. Vibe choisi par Claude (si pas de mapping métier)
+  // 3. Hash déterministe par slug (fallback ultime)
   const hash = hashString(prospect.slug || prospect.id);
   let theme = THEMES[hash % THEMES.length];
   let fontPair = FONT_PAIRS[(hash >> 4) % FONT_PAIRS.length];
-  if (content.vibe && VIBE_TO_THEME[content.vibe]) {
-    const themeId = VIBE_TO_THEME[content.vibe];
-    const fontIdx = VIBE_TO_FONT_INDEX[content.vibe];
+  const businessTypeVibe: RestaurantVibe | undefined =
+    prospect.business_type ? (BUSINESS_TYPE_VIBE[prospect.business_type] as RestaurantVibe | undefined) : undefined;
+  const effectiveVibe = businessTypeVibe ?? content.vibe;
+  if (effectiveVibe && VIBE_TO_THEME[effectiveVibe]) {
+    const themeId = VIBE_TO_THEME[effectiveVibe];
+    const fontIdx = VIBE_TO_FONT_INDEX[effectiveVibe];
     const pickedTheme = THEMES.find((t) => t.id === themeId);
     if (pickedTheme) theme = pickedTheme;
     if (FONT_PAIRS[fontIdx]) fontPair = FONT_PAIRS[fontIdx];
@@ -281,16 +377,12 @@ export function generateRestaurantMockupHtml(
   // Menu columns : 1 ou 2
   const menuCols: number = (hash >> 20) % 2 === 0 ? 1 : 2;
 
-  // Robust fallback photos — URLs testées qui servent des vraies images restaurant.
-  // Utilise images.weserv.nl comme proxy-CDN stable (cache + resize) pointant sur
-  // Unsplash pour éviter les problèmes d'expiration ou de 403 CORS.
-  const FALLBACK_PHOTOS = [
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1544025162-d76694265947?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=80&auto=format&fit=crop",
-  ];
+  // Photos fallback thématiques — sélectionnées par business_type.
+  // Un glacier reçoit des photos de glaces, une boulangerie des photos de pain, etc.
+  // Si pas de mapping, on utilise des photos restaurant génériques.
+  const FALLBACK_PHOTOS = (prospect.business_type && FALLBACK_PHOTOS_BY_TYPE[prospect.business_type])
+    ? FALLBACK_PHOTOS_BY_TYPE[prospect.business_type]
+    : FALLBACK_PHOTOS_DEFAULT;
 
   // Stratégie photos (priorité) :
   // 1. Photos Google Places (photos RÉELLES du resto prises par les clients) ← PRIO

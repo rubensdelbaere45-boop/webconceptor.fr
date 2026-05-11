@@ -215,25 +215,31 @@ async function scrapeRestaurantMenu(website: string): Promise<ScrapedMenuItem[] 
       ? "https://openrouter.ai/api/v1/chat/completions"
       : "https://api.anthropic.com/v1/messages";
 
-    const prompt = `Voici le texte brut extrait d'une page de menu de restaurant français. Extrait les plats dans un format JSON structuré.
+    const prompt = `Voici le texte brut d'une page de carte/menu d'un établissement français (peut être un restaurant, glacier, boulangerie, pizzeria, crêperie, café, etc.).
 
-Texte du menu (peut contenir du bruit) :
+Texte (peut contenir du bruit) :
 """
 ${bestMenuText}
 """
 
-Retourne un JSON tableau de 8 à 12 plats RÉELS trouvés dans ce texte. Format :
+Retourne un JSON tableau de 6 à 14 items RÉELS trouvés dans ce texte. Format :
 [
-  { "category": "entrée" | "plat" | "dessert", "name": "nom du plat", "description": "courte description 5-12 mots", "price": "XX€" }
+  { "category": "nom de catégorie adapté au type d'établissement", "name": "nom du produit", "description": "courte description 5-12 mots", "price": "XX€ ou XX,XX€" }
 ]
 
 Règles STRICTES :
-- N'invente AUCUN plat : si tu n'es pas sûr, ignore.
-- Prix : extrait le prix exact du texte, format "24€" ou "24,50€".
-- Catégorise correctement (entrée / plat / dessert).
+- N'invente RIEN : si tu n'es pas sûr qu'un item existe réellement, ignore-le.
+- Catégories adaptées au type réel (exemples) :
+    • Glacier/glace → "crèmes glacées", "sorbets", "coupes"
+    • Boulangerie → "pains", "viennoiseries", "pâtisseries"
+    • Crêperie → "galettes salées", "crêpes sucrées", "boissons"
+    • Pizzeria → "antipasti", "pizzas", "desserts"
+    • Café → "cafés & thés", "douceurs", "formules"
+    • Restaurant → "entrée", "plat", "dessert"
+- Prix : extrait le prix exact du texte. Si pas de prix trouvé → chaîne vide "".
 - Description : prends celle du site si présente, sinon résume en 5-10 mots.
-- Si moins de 4 plats identifiables → retourne un tableau vide [].
-- Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
+- Si moins de 4 items identifiables → retourne [].
+- Réponds UNIQUEMENT avec le JSON valide, rien d'autre.`;
 
     const body = isOpenRouter
       ? {
@@ -271,9 +277,10 @@ Règles STRICTES :
     return parsed
       .filter((m: unknown) =>
         typeof m === "object" && m !== null &&
-        ["entrée", "plat", "dessert"].includes((m as { category?: string }).category || "") &&
+        typeof (m as { category?: string }).category === "string" &&
+        (m as { category: string }).category.trim().length > 0 &&
         typeof (m as { name?: string }).name === "string" &&
-        typeof (m as { price?: string }).price === "string"
+        (m as { name: string }).name.trim().length > 0
       )
       .slice(0, 12)
       .map((m: unknown) => {
