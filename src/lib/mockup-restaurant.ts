@@ -536,29 +536,29 @@ export function generateRestaurantMockupHtml(
     : FALLBACK_PHOTOS_DEFAULT;
 
   // Stratégie photos (priorité) :
-  // 1. Photos Google Places (photos RÉELLES du resto prises par les clients) ← PRIO
-  // 2. Photos scrapées du site (fallback seulement — peuvent contenir des logos sociaux)
-  // 3. Fallback Unsplash thématique
+  // 1. Photos scrapées du SITE du prospect (URLs directes, toujours valides) ← PRIO 1
+  // 2. Photos Google Places via proxy (peuvent expirer/retourner 400)          ← PRIO 2
+  // 3. Fallback Unsplash thématique                                            ← PRIO 3
   const photoUrls: string[] = [];
   const websitePhotosArr = Array.isArray(prospect.website_photos) ? prospect.website_photos : [];
   const googlePhotosArr = Array.isArray(prospect.photos) ? prospect.photos : [];
 
-  // Filtre anti-logos sociaux à la volée (pour les anciens prospects déjà en DB
-  // avec des URLs contenant "tripadvisor", "facebook", "instagram" etc.)
+  // Filtre anti-logos sociaux à la volée
   const isSocialLogo = (u: string): boolean =>
     /(tripadvisor|instagram|fbcdn|facebook|twimg|twitter|youtube|ytimg|pinterest|linkedin|yelp|trustpilot|gstatic|doubleclick|adservice|widgets\.|logo|icon|favicon|sprite|avatar|button|\/btn|social)/i.test(u);
 
-  // On récupère d'abord les Google Places photos (fiables)
   const allSources: string[] = [];
-  for (const ref of googlePhotosArr) {
-    if (typeof ref === "string" && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(ref)) {
-      allSources.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
-    }
-  }
-  // Puis les website photos SI elles ne sont pas des logos sociaux (complément)
+
+  // PRIORITÉ 1 : photos scrapées du site (URLs directes = toujours accessibles)
   for (const wp of websitePhotosArr) {
     if (typeof wp === "string" && /^https?:\/\//.test(wp) && !isSocialLogo(wp)) {
       allSources.push(wp);
+    }
+  }
+  // PRIORITÉ 2 : Google Places proxy (en fallback — référence peut expirer)
+  for (const ref of googlePhotosArr) {
+    if (typeof ref === "string" && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(ref)) {
+      allSources.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
     }
   }
 
