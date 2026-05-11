@@ -27,19 +27,42 @@ export interface RestaurantProspect {
 /* Libellés CTA adaptés au métier (évite "Réserver une table" chez un coiffeur) */
 export function getBusinessLabels(businessType?: string) {
   const t = (businessType || "restaurant").toLowerCase();
-  // FOOD avec table / service sur place
-  if (["restaurant", "cafe", "glacier"].includes(t)) {
+
+  // ── RESTAURATION sur place (table + service) ──────────────────────────────
+  if (["restaurant", "brasserie", "bistrot", "gastronomique", "bar", "cafe"].includes(t)) {
     return {
       ctaVerb: "Réserver une table",
       ctaShort: "Réserver",
-      menuSectionTitle: "Quelques suggestions",
+      menuSectionTitle: "Notre carte",
       aboutHeadline: "Une cuisine de <em>caractère</em>",
       navItems: ["L'adresse", "La carte", "Ambiance", "Nous trouver"],
       topStrip: "Cuisine authentique",
     };
   }
-  // FOOD à emporter
-  if (["boulangerie", "patisserie"].includes(t)) {
+  // ── GLACIER ───────────────────────────────────────────────────────────────
+  if (t === "glacier") {
+    return {
+      ctaVerb: "Voir nos parfums",
+      ctaShort: "Nos parfums",
+      menuSectionTitle: "Nos parfums du moment",
+      aboutHeadline: "La glace artisanale à l'<em>état pur</em>",
+      navItems: ["La glacerie", "Nos parfums", "Ambiance", "Nous trouver"],
+      topStrip: "Glaces & sorbets artisanaux",
+    };
+  }
+  // ── SALON DE THÉ ──────────────────────────────────────────────────────────
+  if (t === "salon_de_the") {
+    return {
+      ctaVerb: "Réserver une table",
+      ctaShort: "Réserver",
+      menuSectionTitle: "Notre sélection",
+      aboutHeadline: "Un instant de <em>douceur</em>",
+      navItems: ["Le salon", "La carte", "Ambiance", "Nous trouver"],
+      topStrip: "Thés & pâtisseries maison",
+    };
+  }
+  // ── BOULANGERIE / PÂTISSERIE / CHOCOLATIER ───────────────────────────────
+  if (["boulangerie", "patisserie", "chocolatier"].includes(t)) {
     return {
       ctaVerb: "Commander",
       ctaShort: "Commander",
@@ -49,6 +72,18 @@ export function getBusinessLabels(businessType?: string) {
       topStrip: "Artisan passionné",
     };
   }
+  // ── PIZZERIA / CRÊPERIE / FOOD TRUCK ─────────────────────────────────────
+  if (["pizzeria", "creperie", "food_truck"].includes(t)) {
+    return {
+      ctaVerb: "Commander",
+      ctaShort: "Commander",
+      menuSectionTitle: "Notre spécialité",
+      aboutHeadline: "L'<em>authenticité</em> dans chaque assiette",
+      navItems: ["La maison", "La carte", "Ambiance", "Nous trouver"],
+      topStrip: "Fait maison",
+    };
+  }
+  // ── FLEURISTE ─────────────────────────────────────────────────────────────
   if (t === "fleuriste") {
     return {
       ctaVerb: "Commander un bouquet",
@@ -59,47 +94,69 @@ export function getBusinessLabels(businessType?: string) {
       topStrip: "Fleuriste artisan",
     };
   }
-  // SERVICES avec RDV (beauté, santé)
-  if (["coiffeur", "institut", "dentiste", "osteo"].includes(t)) {
+  // ── BEAUTÉ & BIEN-ÊTRE avec RDV ──────────────────────────────────────────
+  if (["coiffeur", "institut", "spa", "fitness"].includes(t)) {
     return {
       ctaVerb: "Prendre rendez-vous",
       ctaShort: "Rendez-vous",
       menuSectionTitle: "Nos prestations",
       aboutHeadline: "Un <em>savoir-faire</em> d'exception",
-      navItems: ["La maison", "Prestations", "Ambiance", "Nous trouver"],
+      navItems: ["Le salon", "Prestations", "Ambiance", "Nous trouver"],
       topStrip: "Sur rendez-vous",
     };
   }
-  // SERVICES techniques (devis)
-  if (["plombier", "electricien", "garage"].includes(t)) {
+  // ── SANTÉ ─────────────────────────────────────────────────────────────────
+  if (["dentiste", "osteo", "kine"].includes(t)) {
+    return {
+      ctaVerb: "Prendre rendez-vous",
+      ctaShort: "Rendez-vous",
+      menuSectionTitle: "Nos soins",
+      aboutHeadline: "Votre <em>santé</em>, notre priorité",
+      navItems: ["Le cabinet", "Soins", "Équipe", "Nous trouver"],
+      topStrip: "Prise de rendez-vous en ligne",
+    };
+  }
+  // ── ARTISANS / SERVICES TECHNIQUES ────────────────────────────────────────
+  if (["plombier", "electricien", "garage", "menuisier", "peintre"].includes(t)) {
     return {
       ctaVerb: "Demander un devis",
-      ctaShort: "Devis",
+      ctaShort: "Devis gratuit",
       menuSectionTitle: "Nos prestations",
       aboutHeadline: "Un <em>savoir-faire</em> reconnu",
       navItems: ["Présentation", "Prestations", "Réalisations", "Nous trouver"],
-      topStrip: "Intervention rapide",
+      topStrip: "Devis gratuit — Intervention rapide",
     };
   }
-  // SPORT / Formation
+  // ── SPORT / FORMATION ────────────────────────────────────────────────────
   if (["salle_sport", "auto_ecole"].includes(t)) {
     return {
       ctaVerb: "Réserver un créneau",
-      ctaShort: "Réserver",
+      ctaShort: "S'inscrire",
       menuSectionTitle: "Nos formules",
       aboutHeadline: "Votre <em>objectif</em>, notre priorité",
       navItems: ["Présentation", "Formules", "Ambiance", "Nous trouver"],
-      topStrip: "Place dispo cette semaine",
+      topStrip: "Places disponibles cette semaine",
     };
   }
-  // Default = restaurant
+  // ── Épicerie / Commerce de proximité ────────────────────────────────────
+  if (["epicerie", "superette"].includes(t)) {
+    return {
+      ctaVerb: "Nous rendre visite",
+      ctaShort: "Venir",
+      menuSectionTitle: "Nos rayons",
+      aboutHeadline: "Le commerce de <em>proximité</em> à votre service",
+      navItems: ["Le magasin", "Rayons", "Promotions", "Nous trouver"],
+      topStrip: "Ouvert 7j/7",
+    };
+  }
+  // ── Défaut ───────────────────────────────────────────────────────────────
   return {
-    ctaVerb: "Réserver une table",
-    ctaShort: "Réserver",
-    menuSectionTitle: "Quelques suggestions",
-    aboutHeadline: "Une cuisine de <em>caractère</em>",
-    navItems: ["L'adresse", "La carte", "Ambiance", "Nous trouver"],
-    topStrip: "Cuisine authentique",
+    ctaVerb: "Nous contacter",
+    ctaShort: "Contact",
+    menuSectionTitle: "Nos services",
+    aboutHeadline: "À votre <em>service</em>",
+    navItems: ["Présentation", "Services", "Réalisations", "Nous trouver"],
+    topStrip: "À votre service",
   };
 }
 
@@ -191,22 +248,44 @@ const VIBE_TO_FONT_INDEX: Record<RestaurantVibe, number> = {
 // Priorité absolue sur le choix de Claude — garantit que chaque métier reçoit
 // le bon design (glacier → sunny, boulangerie → rustic, etc.)
 export const BUSINESS_TYPE_VIBE: Record<string, RestaurantVibe> = {
+  // ── Restauration ───────────────────────────────────────────────────────────
   restaurant:    "classic",
   brasserie:     "classic",
   gastronomique: "classic",
   bistrot:       "rustic",
-  boulangerie:   "rustic",
   pizzeria:      "rustic",
-  patisserie:    "modern",
-  chocolatier:   "modern",
+  creperie:      "coastal",
+  bar:           "modern",
+  food_truck:    "sunny",
+  // ── Café / Thé / Glacier ───────────────────────────────────────────────────
   glacier:       "sunny",
   cafe:          "sunny",
   salon_de_the:  "sunny",
-  creperie:      "coastal",
-  food_truck:    "sunny",
-  bar:           "modern",
+  // ── Artisanat alimentaire ─────────────────────────────────────────────────
+  boulangerie:   "rustic",
+  patisserie:    "modern",
+  chocolatier:   "modern",
+  // ── Beauté & bien-être ────────────────────────────────────────────────────
   coiffeur:      "modern",
   spa:           "modern",
+  institut:      "modern",
+  fitness:       "modern",
+  // ── Santé ─────────────────────────────────────────────────────────────────
+  dentiste:      "modern",
+  osteo:         "modern",
+  kine:          "modern",
+  // ── Commerce ─────────────────────────────────────────────────────────────
+  fleuriste:     "sunny",
+  epicerie:      "rustic",
+  // ── Artisans / Services techniques ───────────────────────────────────────
+  plombier:      "classic",
+  electricien:   "classic",
+  garage:        "classic",
+  menuisier:     "rustic",
+  peintre:       "modern",
+  // ── Formation / Sport ────────────────────────────────────────────────────
+  salle_sport:   "modern",
+  auto_ecole:    "classic",
 };
 
 // ── Photos Unsplash THÉMATIQUES par business_type ─────────────────────────
@@ -268,6 +347,78 @@ const FALLBACK_PHOTOS_BY_TYPE: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=1600&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1600&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=1600&q=80&auto=format&fit=crop",
+  ],
+  institut: [
+    "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=1600&q=80&auto=format&fit=crop",
+  ],
+  fitness: [
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80&auto=format&fit=crop",
+  ],
+  brasserie: [
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=1600&q=80&auto=format&fit=crop",
+  ],
+  bistrot: [
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1600&q=80&auto=format&fit=crop",
+  ],
+  salon_de_the: [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&q=80&auto=format&fit=crop",
+  ],
+  chocolatier: [
+    "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1511381939415-e44015466834?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1516684733450-c51e4d3e4985?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1580461763344-c4b8bdbda1ce?w=1600&q=80&auto=format&fit=crop",
+  ],
+  food_truck: [
+    "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1609780447631-05b93e5a88ea?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1556742031-c6961e8560b0?w=1600&q=80&auto=format&fit=crop",
+  ],
+  fleuriste: [
+    "https://images.unsplash.com/photo-1490750967868-88df5691cc69?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1444021465936-c6ca81d39b84?w=1600&q=80&auto=format&fit=crop",
+  ],
+  plombier: [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=1600&q=80&auto=format&fit=crop",
+  ],
+  electricien: [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1573607217032-18299406d100?w=1600&q=80&auto=format&fit=crop",
+  ],
+  garage: [
+    "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1562504208-03d85cc8c23e?w=1600&q=80&auto=format&fit=crop",
+  ],
+  salle_sport: [
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=1600&q=80&auto=format&fit=crop",
   ],
 };
 const FALLBACK_PHOTOS_DEFAULT = [

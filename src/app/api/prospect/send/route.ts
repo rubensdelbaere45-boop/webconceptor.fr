@@ -7,7 +7,7 @@ import {
   type RestaurantProspect,
   type RestaurantContent,
 } from "@/lib/mockup-restaurant";
-import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
+// generateAdaptiveMockupHtml supprimé — tous les métiers passent par generateRestaurantMockupHtml
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
 import type { DeepAudit } from "@/lib/deep-audit";
 
@@ -51,160 +51,55 @@ interface Prospect {
   rich_audit?: DeepAudit | null;
 }
 
-interface PersonalizedContent {
-  heroTitle: string;
-  heroSubtitle: string;
-  aboutText: string;
-  emailSubject: string;
-  emailOpening: string;
-  emailPitch: string;
-}
-
-// Libellés naturels par business_type pour que le prompt Claude ne parle
-// plus jamais d'une "épicerie de proximité" quand c'est un chocolatier ou
-// un plombier. Évite aussi au fallback de déraper ("L'épicerie de proximité
-// à Paris" alors que c'est un coiffeur) — bug historique qui faisait IA.
+// Libellés naturels par business_type — utilisés dans les prompts Claude et fallbacks.
+// Couvre TOUS les métiers pris en charge par WebConceptor.
 const BUSINESS_LABELS: Record<string, { name: string; descriptor: string; sector: string }> = {
-  restaurant:   { name: "restaurant",                descriptor: "une table chaleureuse",             sector: "restauration" },
-  boulangerie:  { name: "boulangerie artisanale",    descriptor: "une boulangerie de quartier",       sector: "boulangerie" },
-  patisserie:   { name: "pâtisserie / chocolaterie", descriptor: "une maison de créations sucrées",   sector: "pâtisserie artisanale" },
-  cafe:         { name: "café",                      descriptor: "un café de proximité",              sector: "café / restauration" },
-  glacier:      { name: "glacier artisanal",         descriptor: "un glacier artisanal",              sector: "glace artisanale" },
-  coiffeur:     { name: "salon de coiffure",         descriptor: "un salon de coiffure",              sector: "coiffure" },
-  institut:     { name: "institut de beauté",        descriptor: "un institut de beauté",             sector: "esthétique et bien-être" },
-  fleuriste:    { name: "fleuriste",                 descriptor: "une boutique de fleurs",            sector: "fleuriste" },
-  plombier:     { name: "entreprise de plomberie",   descriptor: "un artisan plombier de confiance",  sector: "plomberie / chauffage" },
-  electricien:  { name: "entreprise d'électricité",  descriptor: "un artisan électricien",            sector: "électricité" },
-  dentiste:     { name: "cabinet dentaire",          descriptor: "un cabinet dentaire",               sector: "soins dentaires" },
-  osteo:        { name: "cabinet d'ostéopathie",     descriptor: "un cabinet d'ostéopathie",          sector: "ostéopathie" },
-  salle_sport:  { name: "salle de sport",            descriptor: "une salle de sport",                sector: "fitness / sport" },
-  fitness:      { name: "salle de sport",            descriptor: "une salle de sport",                sector: "fitness / sport" },
-  auto_ecole:   { name: "auto-école",                descriptor: "une auto-école locale",             sector: "permis de conduire" },
-  garage:       { name: "garage automobile",         descriptor: "un garage indépendant",             sector: "mécanique auto" },
-  epicerie:     { name: "épicerie de proximité",     descriptor: "une épicerie de proximité",         sector: "commerce de proximité" },
+  // ── Restauration ──────────────────────────────────────────────────────────
+  restaurant:    { name: "restaurant",                descriptor: "une table chaleureuse",                sector: "restauration" },
+  brasserie:     { name: "brasserie",                  descriptor: "une brasserie conviviale",             sector: "restauration" },
+  bistrot:       { name: "bistrot",                    descriptor: "un bistrot de quartier",               sector: "restauration" },
+  gastronomique: { name: "restaurant gastronomique",   descriptor: "une table gastronomique",              sector: "gastronomie" },
+  pizzeria:      { name: "pizzeria",                   descriptor: "une pizzeria authentique",              sector: "restauration italienne" },
+  creperie:      { name: "crêperie",                   descriptor: "une crêperie bretonne",                sector: "restauration bretonne" },
+  food_truck:    { name: "food truck",                 descriptor: "un food truck gourmand",               sector: "restauration mobile" },
+  bar:           { name: "bar",                        descriptor: "un bar convivial",                     sector: "bar / restauration" },
+  // ── Café / Salon de thé / Glacier ────────────────────────────────────────
+  cafe:          { name: "café",                       descriptor: "un café de proximité",                 sector: "café / restauration" },
+  salon_de_the:  { name: "salon de thé",               descriptor: "un salon de thé",                     sector: "salon de thé" },
+  glacier:       { name: "glacier artisanal",          descriptor: "un glacier artisanal",                 sector: "glace artisanale" },
+  // ── Artisanat alimentaire ─────────────────────────────────────────────────
+  boulangerie:   { name: "boulangerie artisanale",     descriptor: "une boulangerie de quartier",          sector: "boulangerie" },
+  patisserie:    { name: "pâtisserie artisanale",      descriptor: "une maison de créations sucrées",      sector: "pâtisserie artisanale" },
+  chocolatier:   { name: "chocolatier artisan",        descriptor: "une maison de chocolat",               sector: "chocolaterie artisanale" },
+  // ── Beauté & bien-être ───────────────────────────────────────────────────
+  coiffeur:      { name: "salon de coiffure",          descriptor: "un salon de coiffure",                 sector: "coiffure" },
+  institut:      { name: "institut de beauté",         descriptor: "un institut de beauté",                sector: "esthétique et bien-être" },
+  spa:           { name: "spa",                        descriptor: "un spa",                               sector: "spa et bien-être" },
+  fitness:       { name: "salle de fitness",           descriptor: "une salle de fitness",                 sector: "fitness / sport" },
+  // ── Santé ─────────────────────────────────────────────────────────────────
+  dentiste:      { name: "cabinet dentaire",           descriptor: "un cabinet dentaire",                  sector: "soins dentaires" },
+  osteo:         { name: "cabinet d'ostéopathie",      descriptor: "un cabinet d'ostéopathie",             sector: "ostéopathie" },
+  kine:          { name: "cabinet de kinésithérapie",  descriptor: "un cabinet de kiné",                   sector: "kinésithérapie" },
+  // ── Commerce ─────────────────────────────────────────────────────────────
+  fleuriste:     { name: "fleuriste",                  descriptor: "une boutique de fleurs",               sector: "fleuriste" },
+  epicerie:      { name: "épicerie de proximité",      descriptor: "une épicerie de proximité",            sector: "commerce de proximité" },
+  // ── Artisans / Services techniques ──────────────────────────────────────
+  plombier:      { name: "entreprise de plomberie",    descriptor: "un artisan plombier de confiance",     sector: "plomberie / chauffage" },
+  electricien:   { name: "entreprise d'électricité",   descriptor: "un artisan électricien",               sector: "électricité" },
+  garage:        { name: "garage automobile",          descriptor: "un garage indépendant",                sector: "mécanique auto" },
+  menuisier:     { name: "menuiserie artisanale",      descriptor: "un menuisier artisan",                 sector: "menuiserie" },
+  peintre:       { name: "peintre en bâtiment",        descriptor: "un peintre professionnel",             sector: "peinture bâtiment" },
+  // ── Formation / Sport ────────────────────────────────────────────────────
+  salle_sport:   { name: "salle de sport",             descriptor: "une salle de sport",                   sector: "fitness / sport" },
+  auto_ecole:    { name: "auto-école",                  descriptor: "une auto-école locale",               sector: "permis de conduire" },
 };
 
 function getBusinessLabel(bt?: string) {
   return BUSINESS_LABELS[bt || ""] || { name: "commerce local", descriptor: "un commerce local", sector: "activité locale" };
 }
 
-async function personalizeWithClaude(prospect: Prospect): Promise<PersonalizedContent> {
-  const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
-  const label = getBusinessLabel(prospect.business_type);
-
-  const fallback: PersonalizedContent = {
-    heroTitle: `${prospect.name}`,
-    heroSubtitle: `${label.descriptor.charAt(0).toUpperCase() + label.descriptor.slice(1)}${prospect.city ? ` à ${prospect.city}` : ""}`,
-    aboutText: `Notre équipe vous accueille${prospect.city ? ` à ${prospect.city}` : ""} avec un service attentionné et un savoir-faire reconnu. Nous sommes fiers de faire partie de votre quotidien.`,
-    emailSubject: `Maquette de votre site web pour ${prospect.name}`,
-    emailOpening: `Bonjour,`,
-    emailPitch: `J'ai pris l'initiative de réaliser une maquette complète du site web de ${prospect.name}, en m'appuyant sur les informations publiques disponibles.`,
-  };
-
-  if (!key) return fallback;
-
-  const isOpenRouter = key.startsWith("sk-or-");
-  const endpoint = isOpenRouter
-    ? "https://openrouter.ai/api/v1/chat/completions"
-    : "https://api.anthropic.com/v1/messages";
-
-  // Si on a scrapé le "à propos" du site, on le donne à Claude comme matière
-  // première pour qu'il génère un texte qui SONNE comme le prospect, pas comme
-  // un template générique. C'est le levier principal d'authenticité.
-  const aboutExcerpt = (prospect.about_scraped || "").slice(0, 800);
-  // Même chose pour les keywords d'ambiance extraits du site (traditionnel, moderne…)
-  const keywords = (prospect.site_style_dna?.keywords || []).slice(0, 5).join(", ");
-  // Liste des produits/services déjà scrapés (si menu_items rempli)
-  const itemsSample = Array.isArray(prospect.menu_items)
-    ? prospect.menu_items.slice(0, 6).map((i) => i.name).filter(Boolean).join(", ")
-    : "";
-
-  const infoLines = [
-    `Nom : ${prospect.name}`,
-    `Activité : ${label.name}`,
-    prospect.city ? `Ville : ${prospect.city}` : "",
-    prospect.address ? `Adresse : ${prospect.address}` : "",
-    prospect.google_rating ? `Note Google : ${prospect.google_rating}/5 (${prospect.google_reviews_count || 0} avis)` : "",
-    prospect.website ? `Site web actuel : ${prospect.website}` : "Pas de site web",
-    prospect.hours ? `Horaires : ${prospect.hours.slice(0, 200)}` : "",
-    keywords ? `Ambiance détectée (du site actuel) : ${keywords}` : "",
-    itemsSample ? `Produits/services connus : ${itemsSample}` : "",
-    aboutExcerpt ? `Texte "à propos" du site actuel (à reprendre dans ton propre style) :\n"${aboutExcerpt}"` : "",
-  ].filter(Boolean).join("\n");
-
-  const prompt = `Tu prépares une maquette de site web et un email professionnel pour ${label.descriptor} que nous prospectons. Secteur : ${label.sector}.
-
-RÈGLES CRUCIALES :
-- Le texte doit refléter CE métier précisément — JAMAIS de formulation générique qui pourrait s'appliquer à n'importe quel commerce.
-- Si un texte "à propos" du site actuel est fourni, INSPIRE-TOI-EN (ton, valeurs, vocabulaire) sans le recopier mot pour mot.
-- Si des keywords d'ambiance sont détectés, respecte-les (traditionnel ≠ moderne).
-- N'invente JAMAIS une info fausse (pas de date de création, pas de nombre d'employés).
-
-Infos de l'entreprise :
-${infoLines}
-
-Génère un objet JSON avec ces 6 clés EXACTEMENT :
-{
-  "heroTitle": "titre du hero site, court (5-9 mots), évoque clairement le métier (${label.name}) et/ou le nom de l'entreprise",
-  "heroSubtitle": "sous-titre hero, 10-18 mots, évoque la ville/quartier + 1 point fort du métier (savoir-faire, rapidité, tradition…)",
-  "aboutText": "paragraphe À propos de 45-70 mots, s'inspire du texte du site si fourni, évoque le métier, l'équipe, l'ambiance. JAMAIS de mots génériques comme 'produits frais' si c'est pas un commerce alimentaire.",
-  "emailSubject": "objet de l'email, 45-60 caractères max, personnalisé avec nom + activité (ex: 'Maquette site pour [nom] — [ville]')",
-  "emailOpening": "salutation polie (Bonjour, ...), sans nom si inconnu",
-  "emailPitch": "2 phrases maximum. Mentionne que tu as préparé une maquette adaptée à LEUR métier spécifique (cite le métier). Cite 1 détail réel (ville, note Google si >= 4.3, ancienneté si dispo)."
-}
-
-Ton : professionnel francophone France, adapté au secteur. Pas d'emojis. Réponds UNIQUEMENT avec le JSON valide.`;
-
-  try {
-    const body = isOpenRouter
-      ? {
-          model: "anthropic/claude-haiku-4.5",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 600,
-          response_format: { type: "json_object" },
-        }
-      : {
-          model: "claude-haiku-4-5",
-          max_tokens: 600,
-          messages: [{ role: "user", content: prompt }],
-        };
-
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: isOpenRouter
-        ? { "Content-Type": "application/json", "Authorization": `Bearer ${key}` }
-        : { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (!res.ok) return fallback;
-
-    const data = await res.json();
-    const raw = isOpenRouter
-      ? data.choices?.[0]?.message?.content
-      : data.content?.[0]?.text;
-    if (!raw) return fallback;
-
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return fallback;
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      heroTitle: parsed.heroTitle || fallback.heroTitle,
-      heroSubtitle: parsed.heroSubtitle || fallback.heroSubtitle,
-      aboutText: parsed.aboutText || fallback.aboutText,
-      emailSubject: parsed.emailSubject || fallback.emailSubject,
-      emailOpening: parsed.emailOpening || fallback.emailOpening,
-      emailPitch: parsed.emailPitch || fallback.emailPitch,
-    };
-  } catch {
-    return fallback;
-  }
-}
-
 /* ══════════════════════════════════════════
-   Restaurant personalization — menu + content
+   Personalisation Haiku — tous les métiers
    ══════════════════════════════════════════ */
 
 // Menu fallback par type de métier — sans prix (on n'invente jamais de tarifs).
@@ -610,7 +505,7 @@ JSON valide uniquement, aucun commentaire.`;
 }
 
 /* ══════════════════════════════════════════
-   Mockup HTML template (Proxi style, personnalisé)
+   Brevo email helpers
    ══════════════════════════════════════════ */
 
 function escape(s: string): string {
@@ -620,270 +515,6 @@ function escape(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function generateMockupHtml(prospect: Prospect, content: PersonalizedContent, origin: string): string {
-  // Photos: either a Google Places reference (proxied server-side) or fallback Unsplash.
-  // Older records may still contain full URLs — we detect and re-proxy safely.
-  const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1600&q=80&auto=format&fit=crop";
-  let rawPhoto = prospect.photos?.[0] || "";
-  let photoUrl = FALLBACK_PHOTO;
-  if (rawPhoto) {
-    if (/^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(rawPhoto)) {
-      // Clean reference -> proxy (no key exposed)
-      photoUrl = `${origin}/api/prospect/photo?ref=${encodeURIComponent(rawPhoto)}`;
-    } else if (/^https:\/\/images\.unsplash\.com\//.test(rawPhoto)) {
-      // Safe external source
-      photoUrl = rawPhoto;
-    }
-    // Any other shape (including legacy URLs with embedded API keys) falls back to the generic photo.
-  }
-  // Escape for safe HTML attribute embedding
-  const photo = escape(photoUrl);
-  const cityStr = prospect.city ? escape(prospect.city) : "";
-  const addressStr = escape(prospect.address || "");
-  const phoneStr = escape(prospect.phone || "");
-  const websiteStr = escape(prospect.website || "");
-
-  return `<!DOCTYPE html>
-<!--
-  ─────────────────────────────────────────────────────
-  Design, code et intégration : WebConceptor
-  https://webconceptor.fr
-  Maquette générée pour ${escape(prospect.name)}
-  Toute reproduction, même partielle, est interdite.
-  ─────────────────────────────────────────────────────
--->
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="WebConceptor — https://webconceptor.fr">
-<meta name="copyright" content="© WebConceptor — Reproduction interdite">
-<meta name="robots" content="noindex,noarchive">
-<title>${escape(prospect.name)} — Épicerie de proximité</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--purple:#872175;--purple-dark:#6b1a5d;--green:#4CAF50;--green-light:#B5CC18;--cream:#FBF7F2;--warm:#FFFDF8;--ink:#2A1B26;--gray:#8B8089;--serif:'Fraunces',Georgia,serif;--sans:'Plus Jakarta Sans',system-ui,sans-serif;--brand:'Lilita One',sans-serif}
-html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--warm);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;position:relative}
-::selection{background:var(--purple);color:#fff}
-body::after{content:'WEBCONCEPTOR · DÉMO';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(135,33,117,0.02);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
-img{display:block;max-width:100%}
-a{color:inherit;text-decoration:none}
-
-.wc-demo-badge{position:fixed;top:14px;right:14px;z-index:9998;background:rgba(10,10,10,0.92);color:#fff;padding:7px 14px;border-radius:100px;font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;backdrop-filter:blur(10px);pointer-events:none;display:inline-flex;align-items:center;gap:6px}
-.wc-demo-badge::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
-.wc-home-btn{position:fixed;top:14px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);transition:all 0.2s;font-family:var(--sans)}
-.wc-home-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.18)}
-.wc-home-btn-logo{width:22px;height:22px;background:#0066ff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px}
-.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#2A1B26,#872175);padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;font-family:var(--sans)}
-.wc-watermark strong{color:#fff;letter-spacing:0.15em}
-.wc-watermark a{color:#FFD700;font-weight:700}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-
-.top-strip{background:var(--purple);color:#fff;text-align:center;padding:8px 20px;font-size:12px;font-weight:500;position:relative;z-index:2}
-nav{position:sticky;top:0;z-index:100;height:76px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,253,248,0.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(135,33,117,0.08)}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--brand);font-size:22px;color:var(--purple)}
-.logo-badge{background:var(--purple);color:#fff;padding:6px 14px 6px 18px;border-radius:12px;font-family:var(--brand);font-size:20px;position:relative}
-.logo-badge::after{content:'';position:absolute;top:-5px;right:-5px;width:12px;height:12px;background:var(--green-light);border-radius:50%;border:2px solid var(--warm)}
-.logo-name{font-family:var(--serif);font-size:14px;color:var(--ink);font-weight:600}
-.nav-links{display:flex;gap:28px;list-style:none}
-.nav-links a{color:var(--ink);font-size:14px;font-weight:500;transition:color 0.2s}
-.nav-links a:hover{color:var(--purple)}
-.nav-cta{padding:10px 24px;background:var(--ink);color:#fff;font-size:13px;font-weight:600;border-radius:100px;transition:background 0.2s}
-.nav-cta:hover{background:var(--purple)}
-
-.hero{position:relative;padding:80px 40px 100px;background:linear-gradient(180deg,var(--cream),var(--warm));overflow:hidden}
-.hero::before{content:'';position:absolute;top:-150px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(135,33,117,0.15),transparent 70%);border-radius:50%}
-.hero::after{content:'';position:absolute;bottom:-100px;left:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(76,175,80,0.12),transparent 70%);border-radius:50%}
-.hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center;position:relative;z-index:2}
-.hero-tag{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(135,33,117,0.1);color:var(--purple-dark);border-radius:100px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:24px}
-.hero-tag .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
-.hero h1{font-family:var(--serif);font-size:clamp(2.2rem,4.5vw,4rem);font-weight:600;line-height:1.05;letter-spacing:-0.035em;margin-bottom:24px}
-.hero h1 em{font-style:italic;color:var(--purple)}
-.hero p{font-size:17px;color:var(--gray);line-height:1.6;margin-bottom:36px;max-width:480px}
-.hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
-.btn-primary{padding:14px 32px;background:var(--purple);color:#fff;font-weight:700;font-size:14px;border-radius:100px;transition:all 0.25s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary:hover{background:var(--purple-dark);transform:translateY(-2px)}
-.btn-outline{padding:14px 32px;background:transparent;color:var(--ink);border:1.5px solid rgba(42,27,38,0.15);font-weight:600;font-size:14px;border-radius:100px;transition:all 0.25s}
-.btn-outline:hover{border-color:var(--ink);background:var(--ink);color:#fff}
-.hero-photo{width:100%;aspect-ratio:4/5;border-radius:24px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(135,33,117,0.2)}
-.hero-photo img{width:100%;height:100%;object-fit:cover}
-
-.about{padding:100px 40px;max-width:1000px;margin:0 auto;text-align:center}
-.about .section-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--purple);margin-bottom:16px}
-.about h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:500;line-height:1.15;margin-bottom:24px}
-.about p{font-size:17px;color:var(--gray);line-height:1.7;max-width:680px;margin:0 auto}
-.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;max-width:700px;margin:56px auto 0;padding-top:48px;border-top:1px solid rgba(135,33,117,0.1)}
-.stat-num{font-family:var(--serif);font-size:36px;color:var(--purple);font-weight:600;line-height:1}
-.stat-label{font-size:12px;color:var(--gray);letter-spacing:0.05em;margin-top:8px}
-
-.categories{padding:80px 40px;background:var(--cream)}
-.cat-inner{max-width:1100px;margin:0 auto}
-.cat-header{text-align:center;margin-bottom:48px}
-.cat-header h2{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:500}
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.cat-item{background:#fff;padding:28px 20px;border-radius:16px;text-align:center;border:1px solid rgba(135,33,117,0.06);transition:all 0.3s}
-.cat-item:hover{transform:translateY(-4px);border-color:var(--purple);box-shadow:0 12px 32px rgba(135,33,117,0.08)}
-.cat-emoji{font-size:36px;margin-bottom:12px;display:block;filter:grayscale(0.1)}
-.cat-item h3{font-family:var(--serif);font-size:16px;font-weight:500;margin-bottom:4px}
-.cat-item p{font-size:12px;color:var(--gray)}
-
-.info{padding:100px 40px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.info-visual{aspect-ratio:4/3;background:linear-gradient(135deg,var(--purple),var(--green));border-radius:24px;display:flex;align-items:center;justify-content:center;padding:40px;color:#fff;position:relative;overflow:hidden}
-.info-visual::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:radial-gradient(circle,rgba(255,255,255,0.2),transparent 70%);border-radius:50%}
-.info-visual-content{position:relative;z-index:1;text-align:center}
-.info-visual-tag{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;opacity:0.85}
-.info-visual h3{font-family:var(--serif);font-size:28px;font-weight:500;margin-bottom:8px}
-.info-visual p{font-size:14px;opacity:0.9}
-.info-text .section-tag{color:var(--purple);font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;margin-bottom:16px;display:inline-block}
-.info-text h2{font-family:var(--serif);font-size:clamp(1.8rem,3vw,2.4rem);font-weight:500;line-height:1.15;margin-bottom:20px}
-.info-grid{display:grid;gap:16px;margin-top:24px}
-.info-item{display:flex;gap:14px;align-items:flex-start}
-.info-item-icon{width:36px;height:36px;background:rgba(135,33,117,0.08);color:var(--purple);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.info-item-text{font-size:14px;line-height:1.6}
-.info-item-text strong{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
-.info-item-text span{color:var(--gray)}
-
-.cta{padding:80px 40px 120px;background:var(--ink);color:#fff;text-align:center;position:relative;overflow:hidden}
-.cta::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(135,33,117,0.3),transparent 60%);border-radius:50%}
-.cta-inner{position:relative;z-index:1;max-width:700px;margin:0 auto}
-.cta .section-tag{color:var(--green-light);font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;margin-bottom:16px;display:inline-block}
-.cta h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:500;margin-bottom:16px}
-.cta p{font-size:16px;opacity:0.7;margin-bottom:32px}
-.cta .btn-primary{background:#fff;color:var(--ink)}
-.cta .btn-primary:hover{background:var(--cream);color:var(--purple)}
-
-footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);text-align:center;font-size:12px}
-
-@media(max-width:900px){
-  nav{padding:0 20px;height:64px}.nav-links{display:none}
-  .hero{padding:50px 20px 80px}.hero-inner{grid-template-columns:1fr;gap:32px}
-  .about{padding:60px 20px}.about-stats{grid-template-columns:1fr;gap:20px}
-  .categories{padding:60px 20px}.cat-grid{grid-template-columns:repeat(2,1fr)}
-  .info{padding:60px 20px;grid-template-columns:1fr;gap:32px}
-  .cta{padding:60px 20px 100px}
-  body::after{font-size:60px}
-}
-</style>
-</head>
-<body>
-
-<a href="https://webconceptor.fr" class="wc-home-btn" title="Retour WebConceptor">
-  <span class="wc-home-btn-logo">W</span>
-  <span>WebConceptor</span>
-</a>
-<div class="wc-demo-badge">Maquette</div>
-
-<div class="top-strip">Arrivage de la semaine : fruits de saison · fromages régionaux · spécialités</div>
-
-<nav>
-  <div class="logo">
-    <span class="logo-badge">Proxi</span>
-    <span class="logo-name">${escape(prospect.name)}</span>
-  </div>
-  <ul class="nav-links">
-    <li><a href="#propos">À propos</a></li>
-    <li><a href="#categories">Rayons</a></li>
-    <li><a href="#info">Nous trouver</a></li>
-  </ul>
-  <a href="#info" class="nav-cta">Nous contacter</a>
-</nav>
-
-<section class="hero">
-  <div class="hero-inner">
-    <div>
-      <div class="hero-tag"><span class="dot"></span>Votre commerce de proximité${cityStr ? " &middot; " + cityStr : ""}</div>
-      <h1>${escape(content.heroTitle)}</h1>
-      <p>${escape(content.heroSubtitle)}</p>
-      <div class="hero-ctas">
-        <a href="#categories" class="btn-primary">Découvrir le magasin</a>
-        <a href="#info" class="btn-outline">Horaires &amp; accès</a>
-      </div>
-    </div>
-    <div class="hero-photo">
-      <img src="${photo}" alt="${escape(prospect.name)}" loading="lazy">
-    </div>
-  </div>
-</section>
-
-<section id="propos" class="about">
-  <span class="section-tag">Le magasin</span>
-  <h2>${escape(prospect.name)}</h2>
-  <p>${escape(content.aboutText)}</p>
-  ${prospect.google_rating ? `
-  <div class="about-stats">
-    <div><div class="stat-num">${prospect.google_rating.toFixed(1)}/5</div><div class="stat-label">Note Google</div></div>
-    <div><div class="stat-num">${prospect.google_reviews_count || 0}</div><div class="stat-label">Avis clients</div></div>
-    <div><div class="stat-num">6j/7</div><div class="stat-label">Ouvert</div></div>
-  </div>` : ""}
-</section>
-
-<section id="categories" class="categories">
-  <div class="cat-inner">
-    <div class="cat-header">
-      <h2>Nos rayons</h2>
-    </div>
-    <div class="cat-grid">
-      <div class="cat-item"><span class="cat-emoji">🧀</span><h3>Fromagerie</h3><p>Sélection locale</p></div>
-      <div class="cat-item"><span class="cat-emoji">🥖</span><h3>Boulangerie</h3><p>Pain &amp; pâtisseries</p></div>
-      <div class="cat-item"><span class="cat-emoji">🥩</span><h3>Boucherie</h3><p>Viandes sélectionnées</p></div>
-      <div class="cat-item"><span class="cat-emoji">🍎</span><h3>Fruits &amp; Légumes</h3><p>De saison</p></div>
-      <div class="cat-item"><span class="cat-emoji">🍷</span><h3>Cave à vins</h3><p>Vins &amp; spiritueux</p></div>
-      <div class="cat-item"><span class="cat-emoji">🧺</span><h3>Épicerie</h3><p>Produits du quotidien</p></div>
-      <div class="cat-item"><span class="cat-emoji">🥤</span><h3>Boissons</h3><p>Jus, sodas, eaux</p></div>
-      <div class="cat-item"><span class="cat-emoji">🧼</span><h3>Entretien</h3><p>Maison &amp; hygiène</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="info" class="info">
-  <div class="info-visual">
-    <div class="info-visual-content">
-      <div class="info-visual-tag">Venez nous voir</div>
-      <h3>À deux pas de chez vous</h3>
-      <p>Un accueil chaleureux, des produits choisis</p>
-    </div>
-  </div>
-  <div class="info-text">
-    <span class="section-tag">Informations pratiques</span>
-    <h2>Votre magasin${cityStr ? ` à ${cityStr}` : ""}</h2>
-    <div class="info-grid">
-      ${addressStr ? `<div class="info-item"><div class="info-item-icon">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-      </div><div class="info-item-text"><strong>Adresse</strong><span>${addressStr}</span></div></div>` : ""}
-      ${phoneStr ? `<div class="info-item"><div class="info-item-icon">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
-      </div><div class="info-item-text"><strong>Téléphone</strong><span>${phoneStr}</span></div></div>` : ""}
-      ${websiteStr ? `<div class="info-item"><div class="info-item-icon">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"/></svg>
-      </div><div class="info-item-text"><strong>Site actuel</strong><span>${websiteStr}</span></div></div>` : ""}
-    </div>
-  </div>
-</section>
-
-<section class="cta">
-  <div class="cta-inner">
-    <span class="section-tag">Rencontrons-nous</span>
-    <h2>À très vite, au magasin</h2>
-    <p>L&rsquo;équipe vous accueille avec le sourire.</p>
-    <a href="#info" class="btn-primary">Voir nos horaires</a>
-  </div>
-</section>
-
-<footer>&copy; 2026 — Maquette générée par WebConceptor</footer>
-
-<div class="wc-watermark">
-  Maquette conçue par <strong>WEBCONCEPTOR</strong> &middot;
-  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a> &middot;
-  Toute reproduction interdite
-</div>
-
-</body>
-</html>`;
 }
 
 /* ══════════════════════════════════════════
@@ -925,49 +556,144 @@ async function notifyTelegram(message: string) {
   } catch { /* silent */ }
 }
 
-function buildEmailBody(prospect: Prospect, content: PersonalizedContent, mockupUrl: string): string {
-  return `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a;line-height:1.6">
-  <p style="font-size:15px;margin-bottom:16px">${escape(content.emailOpening)}</p>
-  <p style="font-size:15px;margin-bottom:16px">${escape(content.emailPitch)}</p>
-  <div style="background:#fafafa;border-left:3px solid #872175;padding:20px;margin:24px 0;border-radius:6px">
-    <p style="font-size:13px;color:#525252;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700">Votre maquette est prête</p>
-    <p style="font-size:18px;font-weight:700;color:#0a0a0a;margin-bottom:16px">${escape(prospect.name)}</p>
-    <a href="${mockupUrl}" style="display:inline-block;padding:12px 24px;background:#0066ff;color:#fff;text-decoration:none;border-radius:100px;font-weight:600;font-size:14px">Voir ma maquette →</a>
-  </div>
-  <p style="font-size:14px;color:#525252;margin-bottom:16px"><strong>Ce qu&rsquo;elle contient</strong> :</p>
-  <ul style="font-size:14px;color:#525252;padding-left:20px;margin-bottom:20px">
-    <li>Une page d&rsquo;accueil avec vos infos</li>
-    <li>Une section rayons &amp; produits</li>
-    <li>Vos horaires, adresse et contact</li>
-    <li>Un design responsive (PC, tablette, téléphone)</li>
-  </ul>
-  <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #0066ff;border-radius:6px;padding:20px 24px;margin:24px 0;text-align:center">
-    <p style="font-size:11px;color:#1e40af;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
-    <p style="font-size:22px;color:#0a0a0a;margin:0 0 4px;font-weight:700">199 € TTC tout compris</p>
-    <p style="font-size:13px;color:#1e3a8a;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 66,33 €</p>
-    <p style="font-size:12px;color:#1e40af;margin:0;font-style:italic">✓ Livraison 5 jours • ✓ Site à vous à vie • ✓ Satisfait ou remboursé 14 jours</p>
-  </div>
 
-  <p style="font-size:14px;color:#525252;margin-bottom:24px">Ouvrez la maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions. Si vous voulez modifier un détail (texte, photo, couleurs), cliquez sur <em>"Demander une modification"</em> — je vous réponds dans la journée.</p>
+/* ── Bullets email adaptés par famille de métier ──────────────────────────── */
+function getEmailFeatureBullets(businessType?: string): string[] {
+  const t = (businessType || "restaurant").toLowerCase();
+  if (["restaurant", "brasserie", "bistrot", "gastronomique", "bar"].includes(t)) return [
+    "<strong>Page d'accueil premium</strong> avec photos et ambiance",
+    "<strong>Carte complète</strong> avec vos plats et suggestions",
+    "<strong style='color:#c19a56;font-weight:600'>Réservation en ligne intégrée</strong> (sans commission TheFork)",
+    "Galerie d'ambiance et informations pratiques",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (t === "glacier") return [
+    "<strong>Vitrine de vos parfums du moment</strong> mise à jour en 1 clic",
+    "<strong>Coupes & spécialités</strong> présentées avec photos appétissantes",
+    "<strong style='color:#c19a56;font-weight:600'>Formulaire de commande</strong> pour anniversaires et événements",
+    "Horaires, adresse et plan intégrés",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["boulangerie", "patisserie", "chocolatier"].includes(t)) return [
+    "<strong>Vitrine de vos créations</strong> (pains, viennoiseries, pâtisseries)",
+    "<strong>Mise à jour autonome</strong> des produits depuis votre téléphone",
+    "<strong style='color:#c19a56;font-weight:600'>Commandes spéciales</strong> (gâteaux, pièces montées, occasions)",
+    "Horaires, adresse et contact mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["cafe", "salon_de_the"].includes(t)) return [
+    "<strong>Carte des boissons et formules</strong> présentée avec soin",
+    "<strong>Présentation du lieu</strong> avec photos et ambiance",
+    "<strong style='color:#c19a56;font-weight:600'>Événements & privatisations</strong> faciles à gérer",
+    "Horaires, adresse et contact mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["pizzeria", "creperie", "food_truck"].includes(t)) return [
+    "<strong>Carte complète</strong> avec vos spécialités et options",
+    "<strong>Commande en ligne</strong> ou réservation à emporter",
+    "<strong style='color:#c19a56;font-weight:600'>Mise à jour de la carte</strong> en 2 minutes",
+    "Horaires, adresse et contact mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["coiffeur", "spa", "institut", "fitness"].includes(t)) return [
+    "<strong>Prise de rendez-vous en ligne</strong> 24h/24, 7j/7",
+    "<strong>Présentation de vos prestations</strong> avec photos",
+    "<strong style='color:#c19a56;font-weight:600'>Galerie avant/après</strong> pour rassurer les nouveaux clients",
+    "Présentation de l'équipe et de l'ambiance",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["dentiste", "osteo", "kine"].includes(t)) return [
+    "<strong>Prise de rendez-vous en ligne</strong> 24h/24",
+    "<strong>Présentation des soins</strong> et du cabinet",
+    "<strong style='color:#c19a56;font-weight:600'>Espace patient</strong> avec infos pratiques",
+    "Adresse, horaires et accès mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["plombier", "electricien", "garage", "menuisier", "peintre"].includes(t)) return [
+    "<strong>Formulaire de devis</strong> en ligne disponible 24h/24",
+    "<strong>Présentation de vos interventions</strong> et zones géographiques",
+    "<strong style='color:#c19a56;font-weight:600'>Avis Google intégrés</strong> pour renforcer la confiance",
+    "Contact direct et numéro mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  if (["salle_sport", "auto_ecole"].includes(t)) return [
+    "<strong>Présentation de vos formules</strong> et tarifs",
+    "<strong>Réservation de créneaux</strong> en ligne",
+    "<strong style='color:#c19a56;font-weight:600'>Suivi et coaching</strong> intégrés",
+    "Adresse, horaires et contact mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+  // Default
+  return [
+    "<strong>Page d'accueil</strong> personnalisée avec vos informations",
+    "<strong>Présentation de vos services/produits</strong>",
+    "<strong style='color:#c19a56;font-weight:600'>Formulaire de contact</strong> intégré",
+    "Horaires, adresse et contact mis en avant",
+    "Design responsive mobile, tablette, ordinateur",
+  ];
+}
 
-  <div style="background:#f8f9fa;border-left:3px solid #0066ff;padding:18px 20px;margin:24px 0;border-radius:6px">
-    <p style="font-size:14px;color:#0a0a0a;margin-bottom:10px;font-weight:600">Une question ? Contactez-moi directement :</p>
-    <p style="font-size:14px;color:#525252;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
-    <p style="font-size:14px;color:#525252;margin-bottom:10px">📞 <a href="tel:+33635592471" style="color:#0066ff;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
-    <p style="font-size:13px;color:#737373;margin:0;font-style:italic">Merci de signaler à l&rsquo;opérateur votre nom, prénom et le nom de votre enseigne (<strong style="color:#0a0a0a">${escape(prospect.name)}</strong>) afin que votre dossier soit retrouvé rapidement.</p>
-  </div>
+/* ── Bloc admin adapté au métier ────────────────────────────────────────── */
+function getEmailAdminBlock(businessType?: string): string {
+  const t = (businessType || "restaurant").toLowerCase();
+  if (["restaurant", "brasserie", "bistrot", "gastronomique", "bar"].includes(t)) {
+    return `<div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
+    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
+    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque réservation vous arrive par email + notification. Vous confirmez d'un clic. Modifiez la carte en 2 minutes depuis votre téléphone, et suivez la fréquentation dans votre tableau de bord privé.</p>
+  </div>`;
+  }
+  if (["coiffeur", "spa", "institut", "dentiste", "osteo", "kine", "fitness", "salle_sport", "auto_ecole"].includes(t)) {
+    return `<div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
+    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
+    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque demande de rendez-vous vous arrive par email. Vous acceptez ou proposez un autre créneau en un clic. Vos disponibilités sont toujours à jour sur le site.</p>
+  </div>`;
+  }
+  if (["plombier", "electricien", "garage", "menuisier", "peintre"].includes(t)) {
+    return `<div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
+    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
+    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque demande de devis vous arrive directement par email. Vous répondez depuis votre téléphone. Vos nouvelles réalisations sont ajoutées en 2 minutes.</p>
+  </div>`;
+  }
+  // Fallback minimal
+  return `<div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
+    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
+    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Mettez à jour votre site en autonomie depuis votre téléphone : textes, photos, horaires. Chaque demande client vous arrive par email.</p>
+  </div>`;
+}
 
-  <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
-    <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
-    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
-    <p><a href="https://webconceptor.fr" style="color:#0066ff;text-decoration:none">webconceptor.fr</a></p>
-  </div>
-  <p style="font-size:11px;color:#a3a3a3;margin-top:24px;border-top:1px solid #f5f5f5;padding-top:16px">Vous recevez cet email car votre commerce est référencé publiquement sur Google. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
-</div>`;
+/* ── Bullets "vous gagnez" adaptés au métier ────────────────────────────── */
+function getEmailGainBullets(businessType?: string): string[] {
+  const t = (businessType || "restaurant").toLowerCase();
+  if (["restaurant", "brasserie", "bistrot", "gastronomique", "bar"].includes(t)) return [
+    "Des <strong>réservations directes 24/7</strong> sans commission (0 € vs 2,50 € / couvert sur TheFork)",
+    "Une <strong>première impression pro</strong> sur Google (75 % de vos clients cherchent en ligne)",
+    "Un <strong>outil simple</strong> pour changer votre carte en 2 min depuis votre téléphone",
+  ];
+  if (["coiffeur", "spa", "institut", "fitness", "salle_sport"].includes(t)) return [
+    "Des <strong>rendez-vous en ligne 24/7</strong> même quand vous êtes en cabine ou sur le sol",
+    "Moins de temps au téléphone pour l'agenda, <strong>plus de temps pour vos clients</strong>",
+    "De <strong>nouveaux clients</strong> qui vous trouvent en cherchant votre activité sur Google",
+  ];
+  if (["plombier", "electricien", "garage", "menuisier"].includes(t)) return [
+    "Des <strong>demandes de devis automatiques</strong> directement dans votre boîte email",
+    "Une <strong>crédibilité renforcée</strong> — les artisans avec un site pro convertissent 3× plus",
+    "Du temps gagné : <strong>les clients qualifiés arrivent à vous</strong> sans démarchage",
+  ];
+  if (["boulangerie", "patisserie", "glacier"].includes(t)) return [
+    "Des <strong>commandes spéciales</strong> (gâteaux, événements) reçues directement en ligne",
+    "Une <strong>visibilité accrue</strong> dans les recherches Google Maps du quartier",
+    "Un outil simple pour <strong>annoncer vos nouveautés</strong> et spécialités du moment",
+  ];
+  return [
+    "Une <strong>présence professionnelle</strong> sur internet qui renvoie confiance",
+    "De <strong>nouveaux clients</strong> qui vous trouvent en cherchant votre activité",
+    "Un site que vous <strong>gérez en autonomie</strong> depuis votre téléphone",
+  ];
 }
 
 function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
+  const bt = prospect.business_type || "restaurant";
+
   // Bloc "audit mystérieux" uniquement si le site existe ET qualité poor/average
   const hasOutdatedSite = prospect.website
     && (prospect.site_quality === "poor" || prospect.site_quality === "average")
@@ -981,6 +707,10 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
     <p style="font-size:13px;color:#92400e;margin:0;font-style:italic">Je ne détaille pas tout ici par souci de clarté — j'ai directement appliqué plusieurs de ces axes dans la maquette ci-dessous. Vous verrez la différence.</p>
   </div>`
     : "";
+
+  const featureBullets = getEmailFeatureBullets(bt);
+  const gainBullets = getEmailGainBullets(bt);
+  const adminBlock = getEmailAdminBlock(bt);
 
   return `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#1a1310;line-height:1.6;background:#fdfaf5">
   <p style="font-size:15px;margin-bottom:16px">${escape(content.emailOpening)}</p>
@@ -997,17 +727,10 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <p style="font-size:14px;color:#4a4340;margin-bottom:12px"><strong style="color:#1a1310">Ce que votre site inclut :</strong></p>
   <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px">
-    <li><strong>Page d'accueil premium</strong> avec photos et ambiance</li>
-    <li><strong>Carte complète</strong> avec entrées, plats et desserts</li>
-    <li style="color:#c19a56;font-weight:600">Système de réservation en ligne intégré (le client choisit sa date, son heure, le nombre de couverts)</li>
-    <li>Galerie d'ambiance et informations pratiques</li>
-    <li>Design responsive mobile, tablette, ordinateur</li>
+    ${featureBullets.map(b => `<li>${b}</li>`).join("\n    ")}
   </ul>
 
-  <div style="background:#1a1310;color:#f9f5ef;padding:24px;border-radius:4px;margin:24px 0">
-    <p style="font-size:13px;color:#c19a56;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre espace admin</p>
-    <p style="font-size:14px;line-height:1.7;color:rgba(249,245,239,0.9)">Chaque réservation vous arrive par email + notification. Vous confirmez d'un clic. Un tableau de bord privé vous permet de voir vos réservations à venir, modifier la carte en 2 minutes, et suivre la fréquentation.</p>
-  </div>
+  ${adminBlock}
 
   <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
     <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
@@ -1020,12 +743,10 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <p style="font-size:14px;color:#4a4340;margin-bottom:14px;line-height:1.7"><strong>Concrètement, avec ce site vous gagnez :</strong></p>
   <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px;line-height:1.8">
-    <li>Des <strong>réservations directes 24/7</strong> (0 commission vs 2,50 € / couvert sur TheFork)</li>
-    <li>Une <strong>première impression pro</strong> sur Google (75 % de vos nouveaux clients vous cherchent en ligne)</li>
-    <li>Un <strong>outil simple</strong> pour mettre à jour votre carte en 2 min depuis votre téléphone</li>
+    ${gainBullets.map(b => `<li>${b}</li>`).join("\n    ")}
   </ul>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Ouvrez votre maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions instantanément. Si un détail ne vous convient pas (photo, couleur, texte), utilisez le bouton <em>"Demander une modification"</em> — je reçois votre message directement et je vous réponds dans la journée.</p>
+  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Ouvrez votre maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions. Si un détail ne vous convient pas (photo, couleur, texte), utilisez le bouton <em>"Demander une modification"</em> — je vous réponds dans la journée.</p>
 
   <div style="background:#fff;border-left:3px solid #c19a56;padding:20px 24px;margin:24px 0;border-radius:4px">
     <p style="font-size:14px;color:#1a1310;margin-bottom:12px;font-weight:600">Une question ? Contactez-moi directement :</p>
@@ -1161,73 +882,48 @@ async function handleSend(req: NextRequest) {
     // 3× sans frais, et un design premium reste un argument.
 
     try {
-      // Branch by business_type
-      // Template RESTAURANT (hero + about + menu + galerie + réservation) :
-      //   uniquement pour les métiers FOOD où la carte + la résa ont du sens.
-      // Template ÉPICERIE (générique, épuré, sans menu/résa) : pour TOUS les
-      //   autres métiers (services beauté/santé/artisans/commerces).
-      // → Évite de voir une salle de sport avec un template "menu entrée/plat/dessert".
-      const FOOD_METIERS = new Set(["restaurant", "boulangerie", "patisserie", "cafe", "glacier"]);
-      const isRestaurant = FOOD_METIERS.has(p.business_type || "");
       const mockupUrl = `${origin}/prospects/${p.slug}`;
 
-      let html: string;
-      let emailBody: string;
-      let emailSubject: string;
+      // Personnalisation texte via Haiku — valable pour TOUS les métiers.
+      // La fonction calcule vibe/cuisineType/talkingPoints localement (0 token),
+      // ne demande à Claude que : heroTitle, heroSubtitle, aboutText, menuItems, emailSubject, emailPitch.
+      const restoContent = await personalizeRestaurantWithClaude(p);
 
-      if (isRestaurant) {
-        const restoContent = await personalizeRestaurantWithClaude(p);
-        const restoProspect: RestaurantProspect = {
+      const restoProspect: RestaurantProspect = {
+        id: p.id, slug: p.slug, name: p.name,
+        city: p.city, address: p.address, phone: p.phone,
+        website: p.website, email: p.email,
+        google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+        photos: p.photos, hours: p.hours,
+        website_photos: p.website_photos || undefined,
+        business_type: p.business_type, // CTAs adaptés au métier via getBusinessLabels()
+      };
+
+      // Maquette HTML : priorité au rich_audit (couleurs/sections custom extraites du site actuel)
+      // sinon on utilise le template 5-thèmes × business_type de mockup-restaurant.ts.
+      let html: string;
+      if (p.rich_audit) {
+        const custom: CustomProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,
           website: p.website, email: p.email,
           google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-          photos: p.photos, hours: p.hours,
-          website_photos: p.website_photos || undefined,
-          business_type: p.business_type, // important : détermine les labels CTAs
+          photos: p.photos, hours: p.hours, business_type: p.business_type,
+          reviews: p.reviews,
         };
-        // Ajoute les Google reviews au content pour affichage dans la maquette
+        html = generateCustomMockupHtml(custom, p.rich_audit, origin);
+      } else {
+        // Template principal : 5 thèmes visuels, CTAs adaptés au métier,
+        // menus/services, reviews Google — couvre TOUS les business_type.
         const contentWithReviews = {
           ...restoContent,
           reviews: p.reviews || undefined,
         };
         html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
-        emailBody = buildRestaurantEmailBody(p, restoContent, mockupUrl);
-        emailSubject = restoContent.emailSubject;
-      } else {
-        const content = await personalizeWithClaude(p);
-        // Priorité : si on a un rich_audit Claude-assisté en DB, on utilise
-        // mockup-custom qui génère une maquette VRAIMENT sur-mesure (couleurs,
-        // photos, sections, brief d'amélioration → tout personnalisé). Sinon
-        // fallback sur mockup-adaptive (template adaptatif legacy).
-        if (p.rich_audit) {
-          const custom: CustomProspect = {
-            id: p.id, slug: p.slug, name: p.name,
-            city: p.city, address: p.address, phone: p.phone,
-            website: p.website, email: p.email,
-            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-            photos: p.photos, hours: p.hours, business_type: p.business_type,
-            reviews: p.reviews,
-          };
-          html = generateCustomMockupHtml(custom, p.rich_audit, origin);
-        } else {
-          // Legacy fallback : prospect scrappé avant la Phase 2 du refactor
-          const adaptive: AdaptiveProspect = {
-            id: p.id, slug: p.slug, name: p.name,
-            city: p.city, address: p.address, phone: p.phone,
-            website: p.website, email: p.email,
-            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-            photos: p.photos, hours: p.hours, business_type: p.business_type,
-            menu_items: p.menu_items, reviews: p.reviews,
-            about_scraped: p.about_scraped,
-            website_photos: p.website_photos,
-            site_style_dna: p.site_style_dna,
-          };
-          html = generateAdaptiveMockupHtml(adaptive, content, origin);
-        }
-        emailBody = buildEmailBody(p, content, mockupUrl);
-        emailSubject = content.emailSubject;
       }
+
+      const emailBody = buildRestaurantEmailBody(p, restoContent, mockupUrl);
+      const emailSubject = restoContent.emailSubject;
 
       // Save mockup + email content to DB
       await supabase
