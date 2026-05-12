@@ -109,6 +109,23 @@ STRATÉGIE DE CLOSING (IMPORTANT) :
 - Mentionne UNE FOIS le compteur 48h : "L'offre -47% (199€ au lieu de 599€) est valable 48h, après elle repasse à 599€."
 - Si le prospect revient sur des objections déjà traitées → propose de contacter Tom directement plutôt que de tourner en rond.
 
+MODIFICATION EN DIRECT DE LA MAQUETTE :
+Si le prospect demande de changer un texte simple (titre, sous-titre, description, téléphone, bouton), réponds UNIQUEMENT avec ce JSON strict (pas de texte autour) :
+{"reply":"Message de confirmation court, 1 phrase max","edit":{"selector":"NOM_SELECTEUR","newText":"Le nouveau texte exact tel que demandé"}}
+
+Sélecteurs disponibles :
+- "hero-h1"    → le grand titre principal (h1) de la maquette
+- "hero-sub"   → le sous-titre / accroche courte sous le titre
+- "about-p"    → le texte de présentation (section À propos)
+- "phone"      → le numéro de téléphone affiché
+- "strip-text" → le bandeau message en haut de page
+- "cta-verb"   → le texte du bouton d'action principal
+
+Si la modification est COMPLEXE (couleurs, photos, nouvelles sections, restructuration), réponds avec ce JSON :
+{"reply":"Message chaleureux : Tom s'en occupe personnellement sous 24h","shouldEscalate":true,"complexRequest":"Description précise de ce que le prospect souhaite modifier"}
+
+Pour TOUTES LES AUTRES réponses (questions, hésitations, objections prix, etc.), réponds en TEXTE SIMPLE — PAS de JSON.
+
 RÈGLES STRICTES :
 1. JAMAIS inventer une fonctionnalité qui n'est pas dans l'offre
 2. TOUJOURS vouvoyer
@@ -170,12 +187,51 @@ RÈGLES STRICTES :
       ? data.choices?.[0]?.message?.content
       : data.content?.[0]?.text;
 
-    const reply = typeof raw === "string" ? raw.trim().slice(0, 1200) : "Je n'ai pas bien compris, pouvez-vous reformuler ?";
+    const rawText = typeof raw === "string" ? raw.trim() : "";
 
-    // Détection simple d'une escalade (modif complexe, question hors sujet)
-    const shouldEscalate = /formulaire|demander une modification|contact@webconceptor/i.test(reply);
+    let reply = "Je n'ai pas bien compris, pouvez-vous reformuler ?";
+    let editInstruction: { selector: string; newText: string } | null = null;
+    let shouldEscalate = false;
+    let complexRequest: string | null = null;
 
-    return NextResponse.json({ reply, shouldEscalate });
+    // Claude répond en JSON pour les demandes de modif, en texte plat sinon
+    if (rawText.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(rawText);
+        reply = String(parsed.reply || "").trim().slice(0, 1200);
+
+        // Modif simple → edit instruction
+        if (parsed.edit?.selector && parsed.edit?.newText) {
+          const VALID_SELECTORS = ["hero-h1", "hero-sub", "about-p", "phone", "strip-text", "cta-verb"];
+          if (VALID_SELECTORS.includes(parsed.edit.selector)) {
+            editInstruction = {
+              selector: parsed.edit.selector,
+              newText: String(parsed.edit.newText).replace(/<[^>]*>/g, "").slice(0, 600).trim(),
+            };
+          }
+        }
+
+        // Modif complexe → escalade vers Tom
+        if (parsed.shouldEscalate) {
+          shouldEscalate = true;
+          complexRequest = String(parsed.complexRequest || "").slice(0, 500);
+        }
+      } catch {
+        // JSON malformé → traiter comme texte brut
+        reply = rawText.slice(0, 1200);
+      }
+    } else {
+      reply = rawText.slice(0, 1200) || "Je n'ai pas bien compris, pouvez-vous reformuler ?";
+      // Détection fallback escalade sur texte brut
+      shouldEscalate = /formulaire|demander une modification|contact@webconceptor/i.test(reply);
+    }
+
+    return NextResponse.json({
+      reply,
+      shouldEscalate,
+      ...(editInstruction && { edit: editInstruction }),
+      ...(complexRequest && { complexRequest }),
+    });
   } catch {
     return NextResponse.json({
       reply: "Désolé, petite coupure. Cliquez sur 'Demander une modification' ou écrivez à contact@webconceptor.fr.",

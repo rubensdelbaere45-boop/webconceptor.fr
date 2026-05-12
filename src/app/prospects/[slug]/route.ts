@@ -446,7 +446,109 @@ export async function GET(
 })();
 </script>`;
 
-  const finalHtml = withSalesUi.replace(/<\/body>/i, beaconScript + "</body>");
+  // ═══════════════════════════════════════════════════════════════════
+  // LIVE EDIT — intercept chat API responses pour modifier la maquette
+  // en direct quand le prospect demande un changement de texte simple.
+  // Works sur TOUS les mockups (anciens et nouveaux) via fetch monkey-patch.
+  // Le script ne fait rien si la réponse ne contient pas de champ "edit".
+  // ═══════════════════════════════════════════════════════════════════
+  const liveEditScript = `<script>
+(function wcLiveEditInit() {
+  try {
+    var SLUG = ${JSON.stringify(mockupSlug)};
+    var SELECTOR_MAP = {
+      'hero-h1':    '.hero-inner h1, section.hero h1, .hero h1, h1.hero-title',
+      'hero-sub':   '.hero-desc, .hero-subtitle, section.hero p.lead, .hero-inner p',
+      'about-p':    '.about-text p, .about p, section.about p, .about-body p',
+      'phone':      'a[href^="tel:"]',
+      'strip-text': '.top-strip, .wc-strip, .strip-bar',
+      'cta-verb':   '.btn-primary, a.btn-primary, button.btn-primary',
+    };
+
+    // Monkey-patch window.fetch pour intercepter les réponses du chat
+    var _origFetch = window.fetch;
+    window.fetch = function(resource, init) {
+      var url = typeof resource === 'string' ? resource :
+                (resource && typeof resource.url === 'string' ? resource.url : '');
+      if (url.indexOf('/api/prospect/chat') !== -1) {
+        return _origFetch.apply(this, arguments).then(function(res) {
+          var clone = res.clone();
+          clone.json().then(function(data) {
+            if (data && data.edit && data.edit.selector && data.edit.newText) {
+              wcApplyEdit(data.edit.selector, data.edit.newText);
+            }
+            if (data && data.shouldEscalate && data.complexRequest) {
+              wcSendComplexRequest(data.complexRequest);
+            }
+          }).catch(function() {});
+          return res; // le caller consomme l'original
+        });
+      }
+      return _origFetch.apply(this, arguments);
+    };
+
+    function wcApplyEdit(selector, newText) {
+      var css = SELECTOR_MAP[selector];
+      if (!css) return;
+      var el = document.querySelector(css);
+      if (!el) return;
+
+      // Animation : flash doré → update texte → flash vert → retour normal
+      var prevTransition = el.style.transition;
+      el.style.transition = 'background-color 0.35s ease, box-shadow 0.35s ease';
+      el.style.backgroundColor = 'rgba(193,154,86,0.28)';
+      el.style.boxShadow = '0 0 0 3px rgba(193,154,86,0.55)';
+      el.style.borderRadius = '6px';
+
+      setTimeout(function() {
+        // Appliquer le nouveau texte
+        el.textContent = newText;
+
+        // Confirmation verte
+        el.style.backgroundColor = 'rgba(16,185,129,0.22)';
+        el.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.45)';
+
+        // Badge "✓ Modifié"
+        var badge = document.createElement('span');
+        badge.textContent = ' ✓';
+        badge.style.cssText = 'color:#10b981;font-weight:800;font-size:0.78em;vertical-align:middle;margin-left:4px';
+        el.appendChild(badge);
+
+        setTimeout(function() {
+          el.style.backgroundColor = '';
+          el.style.boxShadow = '';
+          el.style.borderRadius = '';
+          el.style.transition = prevTransition || '';
+          if (badge.parentNode === el) el.removeChild(badge);
+        }, 1800);
+      }, 380);
+
+      // Persister en base
+      try {
+        fetch('/api/prospect/save-edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: SLUG, selector: selector, newText: newText }),
+          keepalive: true,
+        }).catch(function() {});
+      } catch(e) {}
+    }
+
+    function wcSendComplexRequest(request) {
+      try {
+        fetch('/api/prospect/request-edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: SLUG, request: request }),
+          keepalive: true,
+        }).catch(function() {});
+      } catch(e) {}
+    }
+  } catch(e) {}
+})();
+</script>`;
+
+  const finalHtml = withSalesUi.replace(/<\/body>/i, liveEditScript + beaconScript + "</body>");
 
   return new NextResponse(finalHtml, {
     headers: {
