@@ -275,19 +275,19 @@ export async function GET(
       "<li>Sauvegardes automatiques + monitoring</li>"
     )
     // ═══════════════════════════════════════════════════════════════════
-    // PATCH PRIX 599€ → 199€ TTC
+    // PATCH PRIX 599€ → 320€ TTC
     // Les maquettes stockées en DB avant le changement de prix affichent
     // encore 599€. On remplace à la volée pour que les prospects voient
     // le nouveau prix quel que soit l'ancienneté de la maquette.
     // ═══════════════════════════════════════════════════════════════════
-    .replace(/599\s*€\s*TTC/g, "199 € TTC")
-    .replace(/599\s*€(?!\w)/g, "199 €")
-    .replace(/599,00\s*€/g, "199,00 €")
-    .replace(/599\s*€/g, "199 €")
-    .replace(/3\s*×\s*199,67\s*€/g, "3 × 66,33 €")
-    .replace(/199,67\s*€/g, "66,33 €")
-    .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 199")
-    .replace(/prix\s*[:=]\s*599/gi, "prix: 199");
+    .replace(/599\s*€\s*TTC/g, "320 € TTC")
+    .replace(/599\s*€(?!\w)/g, "320 €")
+    .replace(/599,00\s*€/g, "320,00 €")
+    .replace(/599\s*€/g, "320 €")
+    .replace(/3\s*×\s*199,67\s*€/g, "3 × 106,67 €")
+    .replace(/199,67\s*€/g, "106,67 €")
+    .replace(/Obtenez-le pour 599/g, "Obtenez-le pour 320")
+    .replace(/prix\s*[:=]\s*599/gi, "prix: 320");
 
   // ═══════════════════════════════════════════════════════════════════
   // PATCH RUNTIME : retirer le bouton "Réserver une table" pour les métiers
@@ -340,33 +340,6 @@ export async function GET(
         `<script>
 (function wcInjectLevers() {
   var SLUG = ${JSON.stringify(mockupSlug)};
-
-  // LEVIER 1a : compteur 48h dans la CTA bar
-  var ctaText = document.querySelector('.wc-cta-bar-text');
-  if (ctaText && ctaText.innerHTML.indexOf('320') !== -1 && ctaText.innerHTML.indexOf('Offre expire') === -1) {
-    try {
-      var SKEY = 'wc_mockup_deadline_' + SLUG;
-      var deadline = Number(localStorage.getItem(SKEY));
-      if (!deadline || isNaN(deadline) || deadline < Date.now()) {
-        deadline = Date.now() + 48 * 60 * 60 * 1000;
-        localStorage.setItem(SKEY, String(deadline));
-      }
-      ctaText.innerHTML = '🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong style="color:#c19a56">199 € TTC</strong> — <span id="wc-cd-inj">Offre expire dans <strong>--:--:--</strong></span>';
-      var update = function() {
-        var el = document.getElementById('wc-cd-inj');
-        if (!el) return;
-        var diff = deadline - Date.now();
-        if (diff <= 0) { el.innerHTML = '<strong style="color:#ef4444">Offre expirée — contactez-nous</strong>'; return; }
-        var h = Math.floor(diff / 3600000);
-        var m = Math.floor((diff % 3600000) / 60000);
-        var s = Math.floor((diff % 60000) / 1000);
-        var pad = function(n) { return String(n).padStart(2, '0'); };
-        el.innerHTML = 'Offre expire dans <strong>' + pad(h) + ':' + pad(m) + ':' + pad(s) + '</strong>';
-      };
-      update();
-      setInterval(update, 1000);
-    } catch (e) {}
-  }
 
   // LEVIER 2 : cart abandon tracking sur le bouton "J'achète"
   var ctaBtn = document.querySelector('.wc-cta-bar-btn');

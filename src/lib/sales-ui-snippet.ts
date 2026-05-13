@@ -90,8 +90,7 @@ body{padding-top:56px !important}
 <div class="wc-sx-cta" id="wc-sx-cta" role="region" aria-label="Offre site web WebConceptor">
   <span class="wc-sx-cta-text">
     <span style="font-size:18px">⚡</span>
-    <span><span class="wc-sx-cta-price-old">599&nbsp;€</span> <span class="wc-sx-cta-price">199&nbsp;€ TTC</span></span>
-    <span class="wc-sx-cta-countdown">· <span id="wc-sx-cd">Expire dans --:--:--</span></span>
+    <span class="wc-sx-cta-price">320&nbsp;€ TTC</span>
   </span>
   <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande ce site →</button>
 </div>
@@ -113,8 +112,8 @@ body{padding-top:56px !important}
     <div class="wc-sx-plans">
       <div class="wc-sx-plan selected" data-plan="simple" onclick="wcSxSelectPlan('simple')">
         <div class="wc-sx-plan-title">Simple</div>
-        <div class="wc-sx-plan-price"><span>599€</span>199&nbsp;€</div>
-        <div class="wc-sx-plan-sub">ou 3× sans frais (66,33 €)</div>
+        <div class="wc-sx-plan-price">320&nbsp;€</div>
+        <div class="wc-sx-plan-sub">ou 3× sans frais (106,67&nbsp;€)</div>
         <ul>
           <li>Livré sous 5 jours</li>
           <li>Design premium responsive</li>
@@ -124,7 +123,7 @@ body{padding-top:56px !important}
       </div>
       <div class="wc-sx-plan recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
         <div class="wc-sx-plan-title">Sérénité</div>
-        <div class="wc-sx-plan-price">199&nbsp;€ <span style="font-size:11px;opacity:0.7;text-decoration:none">+ 50€/mois</span></div>
+        <div class="wc-sx-plan-price">320&nbsp;€ <span style="font-size:11px;opacity:0.7;text-decoration:none">+ 50€/mois</span></div>
         <div class="wc-sx-plan-sub">Tout compris, zéro prise de tête</div>
         <ul>
           <li><strong>Votre nom de domaine</strong> inclus</li>
@@ -163,29 +162,6 @@ body{padding-top:56px !important}
 <script>
 (function wcSxInit() {
   var SLUG = ${JSON.stringify(safeSlug)};
-
-  // Deadline countdown 24h, persistée en localStorage pour la continuité
-  try {
-    var KEY = 'wc_sx_deadline_' + SLUG;
-    var deadline = Number(localStorage.getItem(KEY));
-    if (!deadline || isNaN(deadline) || deadline < Date.now()) {
-      deadline = Date.now() + 24 * 60 * 60 * 1000;
-      localStorage.setItem(KEY, String(deadline));
-    }
-    var cd = document.getElementById('wc-sx-cd');
-    var upd = function() {
-      if (!cd) return;
-      var diff = deadline - Date.now();
-      if (diff <= 0) { cd.innerHTML = '<strong>Offre expirée — contactez-nous</strong>'; return; }
-      var h = Math.floor(diff / 3600000);
-      var m = Math.floor((diff % 3600000) / 60000);
-      var s = Math.floor((diff % 60000) / 1000);
-      var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
-      cd.innerHTML = 'Expire dans <strong>' + pad(h) + ':' + pad(m) + ':' + pad(s) + '</strong>';
-    };
-    upd();
-    setInterval(upd, 1000);
-  } catch (e) {}
 
   window.wcSxOpen = function() {
     var ov = document.getElementById('wc-sx-overlay');
