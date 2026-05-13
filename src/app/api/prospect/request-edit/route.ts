@@ -51,14 +51,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Sauvegarder la demande dans la DB (champ notes)
-  await supabase
-    .from("prospects")
-    .update({
-      notes: `[MODIF COMPLEXE ${new Date().toISOString().slice(0, 16)}] ${request.slice(0, 200)}`,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", prospect.id)
-    .catch(() => {});
+  try {
+    await supabase
+      .from("prospects")
+      .update({
+        notes: `[MODIF COMPLEXE ${new Date().toISOString().slice(0, 16)}] ${request.slice(0, 200)}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", prospect.id);
+  } catch { /* silent — mise à jour optionnelle */ }
 
   // Envoyer un email à Tom via Brevo
   const brevoKey = process.env.BREVO_API_KEY;
