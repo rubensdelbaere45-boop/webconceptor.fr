@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { rateLimit, getClientIp, safeCompare } from "@/lib/security";
+import { rateLimit, getClientIp } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    POST /api/prospect/save-edit
