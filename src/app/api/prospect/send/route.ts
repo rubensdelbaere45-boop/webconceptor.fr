@@ -1009,6 +1009,7 @@ async function handleSend(req: NextRequest) {
           epicerie:      { emoji: "🛒", label: "Épicerie contactée" },
         };
         const metierInfo = metierMap[p.business_type || ""] || { emoji: "📧", label: "Prospect contacté" };
+        const isRestaurant = ["restaurant", "brasserie", "bistrot", "pizzeria", "creperie", "food_truck", "glacier", "boulangerie", "patisserie", "cafe"].includes(p.business_type || "");
 
         if (isRestaurant) {
           // Rich restaurant notif with cuisine + talking points for phone follow-up
