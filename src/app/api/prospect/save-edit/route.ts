@@ -48,8 +48,24 @@ const PATCH_RULES: Record<string, { pattern: RegExp; replacement: (v: string) =>
     replacement: (v) => `$1${v}$3`,
   },
   "cta-verb": {
-    // Texte du bouton CTA principal
+    // Texte du bouton CTA principal (balise <a>)
     pattern: /(<a class="btn-primary[^"]*"[^>]*>)([^<]{3,60})(<\/a>)/,
+    replacement: (v) => `$1${v}$3`,
+  },
+  "nav-cta": {
+    // Bouton nav (ex: "Réserver une table") — remplace TOUT le bouton par un lien tel:
+    // Le numéro est injecté via le champ phone du prospect dans applyPatch
+    pattern: /<button class="nav-cta"[^>]*>[^<]{3,60}<\/button>/,
+    replacement: (v) => `<a href="#contact" class="nav-cta">${v}</a>`,
+  },
+  "hero-btn": {
+    // Bouton hero qui appelle bkOpen() — remplace par lien tel: ou contact
+    pattern: /(<button class="btn-primary"[^>]*onclick="bkOpen\(\)"[^>]*>)([^<]{3,80})(<\/button>)/,
+    replacement: (v) => `<a href="#contact" class="btn-primary">${v} →</a>`,
+  },
+  "menu-coupes": {
+    // Renomme spécifiquement la section "Coupes spéciales" (non adapté à certains glaciers)
+    pattern: /(<div class="menu-section-title">)(Coupes spéciales)(<\/div>)/,
     replacement: (v) => `$1${v}$3`,
   },
 };

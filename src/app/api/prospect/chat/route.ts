@@ -114,12 +114,15 @@ Si le prospect demande de changer un texte simple (titre, sous-titre, descriptio
 {"reply":"Message de confirmation court, 1 phrase max","edit":{"selector":"NOM_SELECTEUR","newText":"Le nouveau texte exact tel que demandé"}}
 
 Sélecteurs disponibles :
-- "hero-h1"    → le grand titre principal (h1) de la maquette
-- "hero-sub"   → le sous-titre / accroche courte sous le titre
-- "about-p"    → le texte de présentation (section À propos)
-- "phone"      → le numéro de téléphone affiché
-- "strip-text" → le bandeau message en haut de page
-- "cta-verb"   → le texte du bouton d'action principal
+- "hero-h1"          → le grand titre principal (h1) de la maquette
+- "hero-sub"         → le sous-titre / accroche courte sous le titre
+- "about-p"          → le texte de présentation (section À propos)
+- "phone"            → le numéro de téléphone affiché
+- "strip-text"       → le bandeau message en haut de page
+- "cta-verb"         → le texte du bouton d'action principal
+- "nav-cta"          → le bouton de navigation principal (ex : "Réserver une table")
+- "hero-btn"         → le bouton hero secondaire (ex : "Réserver maintenant")
+- "menu-coupes"      → renommer la section "Coupes spéciales" du menu
 
 Si la modification est COMPLEXE (couleurs, photos, nouvelles sections, restructuration), réponds avec ce JSON :
 {"reply":"Message chaleureux : Tom s'en occupe personnellement sous 24h","shouldEscalate":true,"complexRequest":"Description précise de ce que le prospect souhaite modifier"}
