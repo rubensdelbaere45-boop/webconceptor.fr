@@ -290,6 +290,39 @@ export async function GET(
     .replace(/prix\s*[:=]\s*599/gi, "prix: 199");
 
   // ═══════════════════════════════════════════════════════════════════
+  // PATCH RUNTIME : retirer le bouton "Réserver une table" pour les métiers
+  // qui ne font pas de réservation (glaciers, boulangeries, etc.)
+  // Le template génère systématiquement un bouton bkOpen() — on le remplace
+  // ici à la volée pour éviter de régénérer toutes les maquettes.
+  // ═══════════════════════════════════════════════════════════════════
+  const NO_BOOKING_TYPES = new Set(["glacier", "boulangerie", "patisserie", "cafe", "epicerie", "fleuriste"]);
+  const phoneLink = data.phone ? `tel:+33${data.phone.replace(/^0/, "").replace(/[^0-9]/g, "")}` : "#contact";
+  const phoneLabel = data.phone || "Nous appeler";
+  const noBookingHtml = NO_BOOKING_TYPES.has(data.business_type || "")
+    ? patchedHtml
+        // Bouton nav (petit)
+        .replace(
+          /<button class="nav-cta"[^>]*onclick="bkOpen\(\)"[^>]*>[^<]*<\/button>/g,
+          `<a href="${phoneLink}" class="nav-cta">${phoneLabel}</a>`
+        )
+        // Boutons hero / CTA (grands)
+        .replace(
+          /<button class="btn-primary"[^>]*onclick="bkOpen\(\)"[^>]*>[^<]*<\/button>/g,
+          `<a href="${phoneLink}" class="btn-primary">Nous appeler →</a>`
+        )
+        // Section "Coupes spéciales"
+        .replace(
+          /<div class="menu-section-title">Coupes spéciales<\/div>/g,
+          `<div class="menu-section-title">Nos spécialités</div>`
+        )
+        // Masquer le widget de réservation (calendrier)
+        .replace(
+          /<div[^>]*id="wc-booking-modal"[^>]*>[\s\S]*?<\/div>\s*<!-- \/booking/,
+          "<!-- booking-modal masqué pour ce type de commerce -->"
+        )
+    : patchedHtml;
+
+  // ═══════════════════════════════════════════════════════════════════
   // INJECTION LEVIERS DE CONVERSION (pour les anciennes maquettes)
   // Les maquettes générées AVANT le commit 3eb4e0c n'ont pas :
   //   - compteur 48h dans la CTA bar
@@ -300,9 +333,9 @@ export async function GET(
   // Les nouvelles maquettes les ont déjà → le script détecte et skip.
   // ═══════════════════════════════════════════════════════════════════
   const mockupSlug = slug.replace(/[^a-z0-9_-]/gi, "").slice(0, 100);
-  const injectedHtml = patchedHtml.includes("wc-countdown")
-    ? patchedHtml // déjà les nouveaux features
-    : patchedHtml.replace(
+  const injectedHtml = noBookingHtml.includes("wc-countdown")
+    ? noBookingHtml // déjà les nouveaux features
+    : noBookingHtml.replace(
         /<\/body>/i,
         `<script>
 (function wcInjectLevers() {
