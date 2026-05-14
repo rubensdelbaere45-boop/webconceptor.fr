@@ -144,101 +144,125 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cette maquette n'est pas finalisée" }, { status: 400 });
   }
 
-  // Construct line items
-  type LineItem = NonNullable<NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]>["line_items"]>[number];
-  const lineItems: LineItem[] = [
-    {
-      price_data: {
-        currency: "eur",
-        product_data: {
-          name: `Site web WebConceptor — ${prospect.name}`,
-          description: plan === "serenite"
-            ? "Création sur-mesure + hébergement + modifications illimitées"
-            : "Création sur-mesure, livraison 5 jours",
-        },
-        unit_amount: 32000,
-      },
-      quantity: 1,
-    },
-  ];
-
-  if (plan === "serenite" && domainFull && domainPriceCents > 0) {
-    lineItems.push({
-      price_data: {
-        currency: "eur",
-        product_data: {
-          name: `Nom de domaine ${domainFull}`,
-          description: "Enregistrement pour 1 an",
-        },
-        unit_amount: domainPriceCents,
-      },
-      quantity: 1,
-    });
-    lineItems.push({
-      price_data: {
-        currency: "eur",
-        product_data: {
-          name: "Formule Sérénité — 1er mois",
-          description: "Hébergement + mises à jour illimitées + support",
-        },
-        unit_amount: 5000,
-      },
-      quantity: 1,
-    });
-  }
-
   // Origin allow-list (empêche qu'un attaquant forge le success_url)
   const reqOrigin = req.headers.get("origin") || "";
   const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
 
-  try {
-    // Si le plan est Sérénité → on impose la carte bancaire (nécessaire pour
-    // sauvegarder la PaymentMethod et créer l'abonnement récurrent 50€/mois).
-    // Klarna / PayPal ne sauvegardent pas la PM pour off-session charging.
-    // On utilise un type inline pour éviter les problèmes de namespace Stripe
-    // qui peuvent varier selon la version du SDK.
-    const paymentMethods: Array<"card" | "klarna" | "paypal"> = plan === "serenite"
-      ? ["card"]
-      : ["card", "klarna", "paypal"];
+  // Métadonnées communes aux deux plans
+  const sharedMeta = {
+    source: "self_serve_mockup",
+    prospect_id: prospect.id,
+    prospect_slug: prospect.slug,
+    prospect_name: prospect.name.slice(0, 200),
+    plan,
+    domain: domainFull || "",
+    has_serenite: plan === "serenite" ? "true" : "false",
+    buyer_prenom: buyer.prenom,
+    buyer_nom: buyer.nom,
+    buyer_nom_complet: `${buyer.prenom} ${buyer.nom}`.slice(0, 200),
+    buyer_entreprise: buyer.entreprise.slice(0, 200),
+    buyer_email: buyer.email,
+    buyer_tel: buyer.telephone,
+    buyer_adresse: buyer.adresse.slice(0, 200),
+    buyer_cp: buyer.cp,
+    buyer_ville: buyer.ville,
+  };
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: paymentMethods,
-      line_items: lineItems,
-      customer_email: buyer.email,
-      // Toujours créer un Customer Stripe (nécessaire pour l'abonnement récurrent)
-      customer_creation: "always",
-      // Pour Sérénité : sauvegarde la CB pour pouvoir prélever les 50€/mois ensuite
-      ...(plan === "serenite"
-        ? {
-            payment_intent_data: {
-              setup_future_usage: "off_session",
+  const successUrl = `${origin}/prospect/success?slug=${encodeURIComponent(prospect.slug)}&s={CHECKOUT_SESSION_ID}`;
+  const cancelUrl  = `${origin}/prospects/${encodeURIComponent(prospect.slug)}`;
+
+  try {
+    let session: Stripe.Checkout.Session;
+
+    if (plan === "serenite") {
+      /* ══════════════════════════════════════════════════════════════════════
+         SÉRÉNITÉ → mode: "subscription"
+         ─ line_items : abonnement récurrent 50€/mois (price ID Stripe)
+         ─ subscription_data.add_invoice_items : 320€ création (one-shot)
+           + domaine si renseigné
+         ─ trial_period_days: 30 → 1er mois déjà compris dans les 320€,
+           le prélèvement 50€/mois démarre après 30 jours.
+         Stripe affiche ainsi clairement les deux lignes au checkout.
+      ══════════════════════════════════════════════════════════════════════ */
+      const serenitePriceId =
+        process.env.STRIPE_SERENITE_PRICE_ID || "price_1TOjkfBsbfiZwhRuq0YodxTP";
+
+      // Items facturés sur la 1ère facture (aujourd'hui)
+      type AddItem = { price_data: { currency: string; product_data: { name: string; description: string }; unit_amount: number }; quantity: number };
+      const addInvoiceItems: AddItem[] = [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Création — ${prospect.name}`,
+              description: "Site web sur-mesure, livraison 5 jours ouvrables",
             },
-          }
-        : {}),
-      success_url: `${origin}/prospect/success?slug=${encodeURIComponent(prospect.slug)}&s={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/prospects/${encodeURIComponent(prospect.slug)}`,
-      locale: "fr",
-      metadata: {
-        source: "self_serve_mockup",
-        prospect_id: prospect.id,
-        prospect_slug: prospect.slug,
-        prospect_name: prospect.name.slice(0, 200),
-        plan,
-        domain: domainFull || "",
-        has_serenite: plan === "serenite" ? "true" : "false",
-        // Infos acheteur complètes (utilisées par l'automatisation IONOS)
-        buyer_prenom: buyer.prenom,
-        buyer_nom: buyer.nom,
-        buyer_nom_complet: `${buyer.prenom} ${buyer.nom}`.slice(0, 200),
-        buyer_entreprise: buyer.entreprise.slice(0, 200),
-        buyer_email: buyer.email,
-        buyer_tel: buyer.telephone,
-        buyer_adresse: buyer.adresse.slice(0, 200),
-        buyer_cp: buyer.cp,
-        buyer_ville: buyer.ville,
-      },
-    });
+            unit_amount: 32000, // 320 €
+          },
+          quantity: 1,
+        },
+      ];
+      if (domainFull && domainPriceCents > 0) {
+        addInvoiceItems.push({
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Domaine ${domainFull}`,
+              description: "Enregistrement pour 1 an",
+            },
+            unit_amount: domainPriceCents,
+          },
+          quantity: 1,
+        });
+      }
+
+      session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [{ price: serenitePriceId, quantity: 1 }],
+        subscription_data: {
+          trial_period_days: 30,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          add_invoice_items: addInvoiceItems as any,
+          metadata: {
+            source: "self_serve_mockup",
+            prospect_id: prospect.id,
+            prospect_slug: prospect.slug,
+          },
+        },
+        customer_email: buyer.email,
+        success_url: successUrl,
+        cancel_url:  cancelUrl,
+        locale: "fr",
+        metadata: sharedMeta,
+      });
+    } else {
+      /* ══════════════════════════════════════════════════════════════════════
+         SIMPLE → mode: "payment" one-shot 320 €
+         Klarna + PayPal acceptés.
+      ══════════════════════════════════════════════════════════════════════ */
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card", "klarna", "paypal"],
+        line_items: [{
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Site web WebConceptor — ${prospect.name}`,
+              description: "Création sur-mesure, livraison 5 jours ouvrables",
+            },
+            unit_amount: 32000, // 320 €
+          },
+          quantity: 1,
+        }],
+        customer_email: buyer.email,
+        customer_creation: "always",
+        success_url: successUrl,
+        cancel_url:  cancelUrl,
+        locale: "fr",
+        metadata: sharedMeta,
+      });
+    }
 
     // Log la tentative de paiement en DB (prospect → status="payment_initiated")
     // On ne change pas "status" (il a un CHECK constraint) mais on log en notes.

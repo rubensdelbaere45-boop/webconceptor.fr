@@ -205,42 +205,18 @@ export async function POST(req: NextRequest) {
       }
 
       // ═══════════════════════════════════════════════════════
-      // CRÉATION AUTO DE L'ABONNEMENT SÉRÉNITÉ 50€/mois
-      // Trial 30 jours → le 1er mois déjà payé dans le checkout one-shot,
-      // les prélèvements récurrents démarrent 30 jours après.
+      // ABONNEMENT SÉRÉNITÉ 50€/mois
+      // Depuis la migration vers mode:"subscription", Stripe crée l'abonnement
+      // automatiquement lors du checkout. On ne le recrée PAS ici.
+      // Pour les anciens checkouts (mode:"payment"), on le crée manuellement.
       // ═══════════════════════════════════════════════════════
-      if (hasSerenite) {
-        const serenitePriceId = process.env.STRIPE_SERENITE_PRICE_ID;
-        const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+      if (hasSerenite && session.mode !== "subscription") {
+        // Ancien flow payment mode — création manuelle de l'abonnement
+        const serenitePriceId = process.env.STRIPE_SERENITE_PRICE_ID || "price_1TOjkfBsbfiZwhRuq0YodxTP";
+        const customerId = typeof session.customer === "string" ? session.customer : (session.customer as { id: string } | null)?.id;
 
-        if (!serenitePriceId) {
-          // Env var manquante : on prévient Rubens pour qu'il crée la sub manuellement
-          if (tgToken && chatId) {
-            fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: `⚠️ <b>STRIPE_SERENITE_PRICE_ID manquante dans Render</b>\n\nLe client ${escapeTelegram(buyerName)} a pris Sérénité mais l'abonnement 50€/mois n'a PAS été créé automatiquement.\n\n→ Crée-le manuellement dans Stripe.`,
-                parse_mode: "HTML",
-              }),
-            }).catch(() => { /* silent */ });
-          }
-        } else if (!customerId) {
-          if (tgToken && chatId) {
-            fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: `⚠️ <b>Customer Stripe introuvable</b>\n\nLe client ${escapeTelegram(buyerName)} a pris Sérénité mais on n'a pas récupéré son customer_id → abonnement PAS créé.\n\n→ Crée-le manuellement.`,
-                parse_mode: "HTML",
-              }),
-            }).catch(() => { /* silent */ });
-          }
-        } else {
+        if (customerId) {
           try {
-            // Récupère la PaymentMethod du Customer pour la marquer comme default
             const pmList = await stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 1 });
             const pm = pmList.data[0];
             if (pm) {
@@ -248,44 +224,53 @@ export async function POST(req: NextRequest) {
                 invoice_settings: { default_payment_method: pm.id },
               });
             }
-
-            // Crée l'abonnement avec trial 30 jours (le 1er mois est déjà payé via le checkout one-shot)
             const subscription = await stripe.subscriptions.create({
               customer: customerId,
               items: [{ price: serenitePriceId }],
               trial_period_days: 30,
-              metadata: {
-                source: "self_serve_mockup",
-                prospect_id: prospectId,
-                prospect_slug: metadata.prospect_slug || "",
-              },
+              metadata: { source: "self_serve_mockup", prospect_id: prospectId, prospect_slug: metadata.prospect_slug || "" },
             });
-
             if (tgToken && chatId) {
               fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: `✅ <b>ABONNEMENT SÉRÉNITÉ CRÉÉ</b>\n\nClient : ${escapeTelegram(buyerName)}\nID abonnement : <code>${escapeTelegram(subscription.id)}</code>\n\nPrélèvement mensuel 50€/mois démarre automatiquement dans 30 jours.`,
-                  parse_mode: "HTML",
-                }),
-              }).catch(() => { /* silent */ });
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text: `✅ <b>ABONNEMENT SÉRÉNITÉ CRÉÉ (legacy)</b>\n\nClient : ${escapeTelegram(buyerName)}\nID : <code>${escapeTelegram(subscription.id)}</code>`, parse_mode: "HTML" }),
+              }).catch(() => {});
             }
           } catch (err) {
             const msg = err instanceof Error ? err.message : "erreur inconnue";
             if (tgToken && chatId) {
               fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: `❌ <b>ABONNEMENT SÉRÉNITÉ ÉCHOUÉ</b>\n\nClient : ${escapeTelegram(buyerName)}\nRaison : ${escapeTelegram(msg.slice(0, 300))}\n\n→ Crée-le manuellement dans Stripe.`,
-                  parse_mode: "HTML",
-                }),
-              }).catch(() => { /* silent */ });
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text: `❌ <b>ABONNEMENT SÉRÉNITÉ ÉCHOUÉ</b>\n\n${escapeTelegram(msg.slice(0, 300))}`, parse_mode: "HTML" }),
+              }).catch(() => {});
             }
           }
+        }
+      }
+
+      // Notification Brevo à Rubens si domaine à acheter
+      if (hasSerenite && domain && domain !== "(aucun)") {
+        const brevoKey = process.env.BREVO_API_KEY;
+        if (brevoKey) {
+          fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: { "api-key": brevoKey, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender: { name: "WebConceptor Bot", email: "contact@webconceptor.fr" },
+              to: [{ email: "contact@webconceptor.fr", name: "Rubens" }],
+              subject: `🌐 Domaine à acheter sur IONOS — ${domain}`,
+              htmlContent: `<div style="font-family:sans-serif;padding:24px;color:#1a1a1a">
+                <h2 style="color:#003399">🌐 Nouveau paiement Sérénité — domaine à acheter</h2>
+                <p><strong>Client :</strong> ${buyerName} &lt;${buyerEmail}&gt; — ${buyerTel}</p>
+                <p><strong>Domaine souhaité :</strong> <code style="font-size:18px;background:#f0f4ff;padding:4px 10px;border-radius:6px">${domain}</code></p>
+                <p><strong>Adresse :</strong> ${metadata.buyer_adresse || "—"}, ${metadata.buyer_cp || ""} ${metadata.buyer_ville || ""}</p>
+                <p><strong>Montant payé :</strong> ${amountPaid} €</p>
+                <hr>
+                <p style="color:#c62828;font-weight:700">⚡ Achète le domaine sur IONOS dès que possible pour éviter qu'il soit pris !</p>
+                <a href="https://www.ionos.fr/domains/enregistrement-domaine" style="display:inline-block;background:#003399;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-top:8px">→ IONOS — Acheter le domaine</a>
+              </div>`,
+            }),
+          }).catch(() => {});
         }
       }
 
