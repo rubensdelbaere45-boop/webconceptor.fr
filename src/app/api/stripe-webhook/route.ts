@@ -42,6 +42,132 @@ async function notifyTelegram(message: string) {
 }
 
 /* ══════════════════════════════════════════
+   Brevo email notification to admin (Rubens)
+   ══════════════════════════════════════════ */
+
+async function sendAdminEmail({
+  buyerName,
+  buyerEmail,
+  buyerTel,
+  prospectName,
+  isSerenite,
+  domain,
+  amountPaid,
+  adresse,
+  cp,
+  ville,
+}: {
+  buyerName: string;
+  buyerEmail: string;
+  buyerTel: string;
+  prospectName: string;
+  isSerenite: boolean;
+  domain: string;
+  amountPaid: number;
+  adresse?: string;
+  cp?: string;
+  ville?: string;
+}) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "contact@webconceptor.fr";
+  if (!apiKey) return;
+
+  const hasDomain = isSerenite && domain && domain !== "(aucun)";
+  const now = new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "full", timeStyle: "short" });
+  const domainBase = hasDomain ? domain.split(".")[0] : "";
+  const domainTld  = hasDomain ? domain.split(".").slice(1).join(".") : "";
+
+  const subject = isSerenite
+    ? `💰 Paiement Sérénité — ${prospectName} — ${hasDomain ? `domaine ${domain} à acheter` : "sans domaine"}`
+    : `💰 Paiement Simple — ${prospectName} — ${amountPaid} €`;
+
+  const checklist = [
+    hasDomain ? `<li style="margin-bottom:8px">🌐 <strong>Acheter le domaine <code>${domain}</code> sur IONOS</strong> dès maintenant (avant qu'il soit pris)</li>` : "",
+    `<li style="margin-bottom:8px">📞 Appeler le client : <a href="tel:${buyerTel}" style="color:#00287a">${buyerTel}</a></li>`,
+    `<li style="margin-bottom:8px">🎨 Collecter logo, photos, contenus manquants</li>`,
+    `<li style="margin-bottom:8px">🚀 Finaliser et déployer le site</li>`,
+    isSerenite ? `<li style="margin-bottom:0">💳 Configurer l'abonnement Sérénité 50 €/mois dans Stripe</li>` : "",
+  ].filter(Boolean).join("\n");
+
+  const htmlContent = `
+<div style="font-family:Inter,Arial,sans-serif;max-width:580px;margin:0 auto;color:#1a1a18">
+  <!-- Header -->
+  <div style="background:${isSerenite ? "#00287a" : "#1a1a18"};padding:24px 28px;border-radius:8px 8px 0 0">
+    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${isSerenite ? "#e8a800" : "rgba(255,255,255,.5)"}">WebConceptor — Nouveau paiement</p>
+    <h1 style="margin:6px 0 0;font-size:22px;font-weight:800;color:#fff">${isSerenite ? "⭐ Formule Sérénité" : "📄 Formule Simple"}</h1>
+    <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.65)">${now}</p>
+  </div>
+
+  <!-- Body -->
+  <div style="border:1px solid #e8e4db;border-top:none;border-radius:0 0 8px 8px;padding:24px 28px;background:#fff">
+
+    <!-- Amount -->
+    <div style="display:inline-block;background:${isSerenite ? "#faf8f3" : "#f5f5f5"};border:1.5px solid ${isSerenite ? "#e8a800" : "#ddd"};border-radius:6px;padding:12px 24px;margin-bottom:20px">
+      <span style="font-size:28px;font-weight:800;color:${isSerenite ? "#00287a" : "#1a1a18"}">${amountPaid} €</span>
+      ${isSerenite ? `<span style="font-size:13px;color:#6b6b62;margin-left:6px">+ 50 €/mois</span>` : `<span style="font-size:13px;color:#6b6b62;margin-left:6px">TTC · paiement unique</span>`}
+    </div>
+
+    <!-- Client table -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:14px">
+      <tr style="border-bottom:1px solid #f0ece3">
+        <td style="padding:9px 0;color:#6b6b62;width:130px">Prospect</td>
+        <td style="padding:9px 0;font-weight:600">${prospectName}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0ece3">
+        <td style="padding:9px 0;color:#6b6b62">Client</td>
+        <td style="padding:9px 0;font-weight:600">${buyerName}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0ece3">
+        <td style="padding:9px 0;color:#6b6b62">Email</td>
+        <td style="padding:9px 0"><a href="mailto:${buyerEmail}" style="color:#00287a">${buyerEmail}</a></td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0ece3">
+        <td style="padding:9px 0;color:#6b6b62">Téléphone</td>
+        <td style="padding:9px 0"><a href="tel:${buyerTel}" style="color:#00287a;font-weight:600">${buyerTel}</a></td>
+      </tr>
+      ${adresse ? `<tr>
+        <td style="padding:9px 0;color:#6b6b62">Adresse</td>
+        <td style="padding:9px 0">${adresse}${cp ? `, ${cp}` : ""}${ville ? ` ${ville}` : ""}</td>
+      </tr>` : ""}
+    </table>
+
+    ${hasDomain ? `
+    <!-- Domain alert -->
+    <div style="background:#fffcf0;border:2px solid #e8a800;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8a800">🌐 Domaine à enregistrer maintenant</p>
+      <p style="margin:0 0 4px;font-size:24px;font-weight:800;color:#00287a">${domain}</p>
+      <p style="margin:0;font-size:12px;color:#856404">⚡ Agis rapidement — un concurrent pourrait le prendre !</p>
+    </div>
+    <a href="https://www.ionos.fr/domains/enregistrement-domaine?domain=${domainBase}&tld=${domainTld}" style="display:inline-block;background:#00287a;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">→ Acheter le domaine sur IONOS</a>
+    ` : ""}
+
+    <!-- Checklist -->
+    <div style="background:#faf8f3;border:1px solid #e8e4db;border-radius:8px;padding:16px 20px">
+      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#1a1a18">📋 À faire maintenant :</p>
+      <ul style="margin:0;padding:0 0 0 20px;font-size:14px;color:#2e2e2b;line-height:1.6">
+        ${checklist}
+      </ul>
+    </div>
+  </div>
+</div>`;
+
+  try {
+    await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "WebConceptor Bot", email: "contact@webconceptor.fr" },
+        to: [{ email: adminEmail, name: "Rubens" }],
+        subject,
+        htmlContent,
+      }),
+    });
+  } catch {
+    // silent
+  }
+}
+
+/* ══════════════════════════════════════════
    Brevo email notification to client
    ══════════════════════════════════════════ */
 
@@ -204,6 +330,20 @@ export async function POST(req: NextRequest) {
         await sendConfirmationEmail(buyerEmail, buyerName, `Commande ${prospect.name}`, domain);
       }
 
+      // ─── Email admin (Rubens) — pour TOUS les paiements ───────────────
+      await sendAdminEmail({
+        buyerName,
+        buyerEmail,
+        buyerTel,
+        prospectName: prospect.name,
+        isSerenite: hasSerenite,
+        domain,
+        amountPaid,
+        adresse: metadata.buyer_adresse,
+        cp: metadata.buyer_cp,
+        ville: metadata.buyer_ville,
+      });
+
       // ═══════════════════════════════════════════════════════
       // ABONNEMENT SÉRÉNITÉ 50€/mois
       // Depuis la migration vers mode:"subscription", Stripe crée l'abonnement
@@ -248,31 +388,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Notification Brevo à Rubens si domaine à acheter
-      if (hasSerenite && domain && domain !== "(aucun)") {
-        const brevoKey = process.env.BREVO_API_KEY;
-        if (brevoKey) {
-          fetch("https://api.brevo.com/v3/smtp/email", {
-            method: "POST",
-            headers: { "api-key": brevoKey, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sender: { name: "WebConceptor Bot", email: "contact@webconceptor.fr" },
-              to: [{ email: "contact@webconceptor.fr", name: "Rubens" }],
-              subject: `🌐 Domaine à acheter sur IONOS — ${domain}`,
-              htmlContent: `<div style="font-family:sans-serif;padding:24px;color:#1a1a1a">
-                <h2 style="color:#003399">🌐 Nouveau paiement Sérénité — domaine à acheter</h2>
-                <p><strong>Client :</strong> ${buyerName} &lt;${buyerEmail}&gt; — ${buyerTel}</p>
-                <p><strong>Domaine souhaité :</strong> <code style="font-size:18px;background:#f0f4ff;padding:4px 10px;border-radius:6px">${domain}</code></p>
-                <p><strong>Adresse :</strong> ${metadata.buyer_adresse || "—"}, ${metadata.buyer_cp || ""} ${metadata.buyer_ville || ""}</p>
-                <p><strong>Montant payé :</strong> ${amountPaid} €</p>
-                <hr>
-                <p style="color:#c62828;font-weight:700">⚡ Achète le domaine sur IONOS dès que possible pour éviter qu'il soit pris !</p>
-                <a href="https://www.ionos.fr/domains/enregistrement-domaine" style="display:inline-block;background:#003399;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-top:8px">→ IONOS — Acheter le domaine</a>
-              </div>`,
-            }),
-          }).catch(() => {});
-        }
-      }
+      // (email admin déjà envoyé via sendAdminEmail ci-dessus)
 
       // ═══════════════════════════════════════════════════════
       // AUTO-ACHAT DU DOMAINE via IONOS API (si Sérénité + domaine)
