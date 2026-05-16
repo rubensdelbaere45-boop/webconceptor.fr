@@ -390,57 +390,6 @@ export async function POST(req: NextRequest) {
 
       // (email admin déjà envoyé via sendAdminEmail ci-dessus)
 
-      // ═══════════════════════════════════════════════════════
-      // FORMULE SIMPLE → 2 MOIS SÉRÉNITÉ OFFERTS (trial automatique)
-      // Si le client a payé par CB, on crée un abonnement Sérénité
-      // avec 60 jours d'essai. Après 60 jours : 50€/mois ou résiliation.
-      // Si paiement Klarna/PayPal → pas de CB sauvegardée → on skip.
-      // ═══════════════════════════════════════════════════════
-      if (!hasSerenite) {
-        const serenitePriceId = process.env.STRIPE_SERENITE_PRICE_ID || "price_1TOjkfBsbfiZwhRuq0YodxTP";
-        const customerId = typeof session.customer === "string"
-          ? session.customer
-          : (session.customer as { id: string } | null)?.id;
-
-        if (customerId) {
-          try {
-            const pmList = await stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 1 });
-            const pm = pmList.data[0];
-            if (pm) {
-              // Définir la CB comme moyen de paiement par défaut
-              await stripe.customers.update(customerId, {
-                invoice_settings: { default_payment_method: pm.id },
-              });
-              // Créer l'abonnement Sérénité avec 60 jours d'essai
-              await stripe.subscriptions.create({
-                customer: customerId,
-                items: [{ price: serenitePriceId }],
-                trial_period_days: 60,
-                trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
-                metadata: {
-                  source: "simple_trial",
-                  prospect_id: prospectId,
-                  prospect_slug: metadata.prospect_slug || "",
-                  buyer_email: buyerEmail,
-                },
-              });
-              if (tgToken && chatId) {
-                fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    chat_id: chatId,
-                    text: `🎁 <b>TRIAL SÉRÉNITÉ 2 MOIS CRÉÉ</b>\n\n<b>Client :</b> ${escapeTelegram(buyerName)}\n<b>Email :</b> ${escapeTelegram(buyerEmail)}\n\nAbonnement Sérénité démarré (60 jours d'essai). Facturation automatique le ${new Date(Date.now() + 60 * 86400000).toLocaleDateString("fr-FR")} si non annulé.`,
-                    parse_mode: "HTML",
-                    disable_notification: true,
-                  }),
-                }).catch(() => {});
-              }
-            }
-          } catch {
-            // Si la création du trial échoue, ce n'est pas bloquant
-          }
-        }
-      }
 
       // ═══════════════════════════════════════════════════════
       // AUTO-ACHAT DU DOMAINE via IONOS API (si Sérénité + domaine)

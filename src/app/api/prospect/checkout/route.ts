@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
         payment_method_types: ["card"],
         line_items: [{ price: serenitePriceId, quantity: 1 }],
         subscription_data: {
-          trial_period_days: 90, // 3 mois offerts — engagement 6 mois ensuite
+          trial_period_days: 30, // 1 mois offert — sans engagement
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           add_invoice_items: addInvoiceItems as any,
           metadata: {
@@ -255,11 +255,6 @@ export async function POST(req: NextRequest) {
           },
           quantity: 1,
         }],
-        // setup_future_usage: permet de sauvegarder la CB pour créer
-        // automatiquement l'abonnement Sérénité 60 jours d'essai dans le webhook
-        payment_intent_data: {
-          setup_future_usage: "off_session",
-        },
         customer_email: buyer.email,
         customer_creation: "always",
         success_url: successUrl,

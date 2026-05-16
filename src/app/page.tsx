@@ -153,7 +153,7 @@ const faqs = [
   },
   {
     q: "C\u2019est quoi la Formule Sérénité ?",
-    a: "50€/mois pour des mises à jour illimitées sur simple email : promos, actualités, changements d\u2019horaires, nouvelles photos, bannières événementielles. Vous envoyez un email, on applique dans la journée. Sans engagement, résiliable à tout moment."
+    a: "50€/mois pour des mises à jour illimitées sur simple email : promos, actualités, changements d\u2019horaires, nouvelles photos, bannières événementielles. Vous envoyez un email, on applique dans la journée. 1er mois offert. Sans engagement, résiliable à tout moment. Option annuelle : 480€/an (économisez 120€)."
   },
   {
     q: "Je peux refondre un site existant ?",
@@ -355,7 +355,7 @@ export default function Home() {
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
             Nouveau site ou refonte d&apos;un site existant. Design premium, livré en 5 jours. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
-            <span className="text-[#a3a3a3] text-base">Inclus : 2 mois Sérénité offerts · Hébergement &amp; maintenance ensuite 50 €/mois.</span>
+            <span className="text-[#a3a3a3] text-base">1 mois Sérénité offert à l&apos;ouverture · Hébergement &amp; suivi ensuite 50 €/mois.</span>
           </motion.p>
 
           {/* CTAs */}
@@ -659,10 +659,10 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                {/* 2 mois Sérénité offerts */}
+                {/* 1 mois offert */}
                 <div className="bg-white/10 border border-white/20 rounded-xl p-3.5 mb-5">
-                  <p className="text-[12px] text-white font-semibold mb-0.5">🎁 2 mois Sérénité offerts</p>
-                  <p className="text-[11px] text-white/50 leading-relaxed">Hébergement, mises à jour &amp; support inclus 2 mois. Puis 50€/mois ou résiliation libre.</p>
+                  <p className="text-[12px] text-white font-semibold mb-0.5">🎁 1 mois Sérénité offert</p>
+                  <p className="text-[11px] text-white/50 leading-relaxed">Hébergement, mises à jour &amp; support inclus le 1er mois. Puis 50€/mois ou résiliation libre.</p>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link href="/demande" className="block w-full py-3 bg-white text-[#0a0a0a] text-[13px] font-semibold rounded-full text-center">Démarrer mon projet</Link>
@@ -694,8 +694,8 @@ export default function Home() {
                   <p className="text-[12px] text-[#525252]"><span className="font-semibold text-[#0a0a0a]">&ldquo;Un email et c&apos;est à jour dans la journée.&rdquo;</span><br /><span className="text-[#a3a3a3]">— Marie T., Lyon</span></p>
                 </div>
                 <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-xl p-3 mb-3">
-                  <p className="text-[12px] text-[#1d4ed8] font-semibold">⭐ 3 mois offerts · Engagement 6 mois</p>
-                  <p className="text-[11px] text-[#3b82f6] mt-0.5">Résiliable après 6 mois. 50€/mois à partir du 4ᵉ mois.</p>
+                  <p className="text-[12px] text-[#1d4ed8] font-semibold">🎁 1er mois offert · Sans engagement</p>
+                  <p className="text-[11px] text-[#3b82f6] mt-0.5">Ou 480€/an — économisez 120€ &amp; payez en une fois.</p>
                 </div>
               </div>
             </motion.div>
@@ -763,7 +763,7 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                 </Link>
               </motion.div>
-              <p className="text-white/60 text-[12px] mt-5">320€ TTC &middot; Klarna 3× sans frais &middot; 2 mois Sérénité offerts</p>
+              <p className="text-white/60 text-[12px] mt-5">320€ TTC &middot; Klarna 3× sans frais &middot; 1 mois Sérénité offert</p>
             </div>
           </div>
         </motion.div>
