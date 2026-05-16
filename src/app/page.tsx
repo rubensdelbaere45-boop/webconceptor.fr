@@ -141,7 +141,7 @@ const faqs = [
   },
   {
     q: "Que se passe-t-il si je n\u2019aime pas le résultat ?",
-    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 199€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
+    a: "Retours illimités jusqu\u2019à votre satisfaction — c\u2019est inclus dans les 320€. Vous ne payez que quand vous êtes 100% satisfait du rendu final."
   },
   {
     q: "Le site est-il vraiment à moi après paiement ?",
@@ -288,6 +288,10 @@ export default function Home() {
             <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
             <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors">Tarif</a>
             <a href="#faq" className="hover:text-[#0a0a0a] transition-colors">FAQ</a>
+            <Link href="/caissio" className="hover:text-[#0a0a0a] transition-colors font-semibold text-[#0a0a0a]">
+              Caissio
+              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#0066ff] text-white text-[9px] font-bold uppercase tracking-wide">NEW</span>
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/code" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
@@ -350,8 +354,8 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Nouveau site ou refonte d&apos;un site existant. Design premium, livré en 5 jours. <strong>À partir de 199 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
-            <span className="text-[#a3a3a3] text-base">Hébergement &amp; maintenance en option — 50 €/mois.</span>
+            Nouveau site ou refonte d&apos;un site existant. Design premium, livré en 5 jours. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
+            <span className="text-[#a3a3a3] text-base">Inclus : 2 mois Sérénité offerts · Hébergement &amp; maintenance ensuite 50 €/mois.</span>
           </motion.p>
 
           {/* CTAs */}
@@ -640,12 +644,12 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={stagger(0.15)} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="max-w-3xl mx-auto grid md:grid-cols-2 gap-5">
-            {/* 199€ */}
+            {/* 320€ */}
             <motion.div variants={scaleIn} whileHover={{ y: -4 }} className="bg-[#0a0a0a] rounded-2xl p-8 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">
                 <p className="text-[12px] text-white/40 mb-1">À partir de</p>
-                <p className="text-5xl font-extrabold tracking-tight mb-1">199 <span className="text-xl font-medium text-white/50">&euro;</span></p>
+                <p className="text-5xl font-extrabold tracking-tight mb-1">320 <span className="text-xl font-medium text-white/50">&euro;</span></p>
                 <p className="text-[13px] text-white/40 mb-8">Paiement unique &middot; Livraison 5 jours</p>
                 <div className="space-y-2.5 mb-8">
                   {included.map((i) => (
@@ -654,6 +658,11 @@ export default function Home() {
                       <span className="text-[13px] text-white/70">{i}</span>
                     </div>
                   ))}
+                </div>
+                {/* 2 mois Sérénité offerts */}
+                <div className="bg-white/10 border border-white/20 rounded-xl p-3.5 mb-5">
+                  <p className="text-[12px] text-white font-semibold mb-0.5">🎁 2 mois Sérénité offerts</p>
+                  <p className="text-[11px] text-white/50 leading-relaxed">Hébergement, mises à jour &amp; support inclus 2 mois. Puis 50€/mois ou résiliation libre.</p>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link href="/demande" className="block w-full py-3 bg-white text-[#0a0a0a] text-[13px] font-semibold rounded-full text-center">Démarrer mon projet</Link>
@@ -684,7 +693,10 @@ export default function Home() {
                 <div className="bg-[#fafafa] rounded-lg p-3 mb-4">
                   <p className="text-[12px] text-[#525252]"><span className="font-semibold text-[#0a0a0a]">&ldquo;Un email et c&apos;est à jour dans la journée.&rdquo;</span><br /><span className="text-[#a3a3a3]">— Marie T., Lyon</span></p>
                 </div>
-                <p className="text-[11px] text-[#a3a3a3] text-center">Sans engagement</p>
+                <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-xl p-3 mb-3">
+                  <p className="text-[12px] text-[#1d4ed8] font-semibold">⭐ 3 mois offerts · Engagement 6 mois</p>
+                  <p className="text-[11px] text-[#3b82f6] mt-0.5">Résiliable après 6 mois. 50€/mois à partir du 4ᵉ mois.</p>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -747,11 +759,11 @@ export default function Home() {
               <p className="text-white/80 text-lg mb-8 max-w-md mx-auto">Décrivez votre projet en 5 minutes. Réponse garantie sous 48h.</p>
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} className="inline-block">
                 <Link href="/demande" className="px-8 py-4 bg-white text-[#0066ff] text-[15px] font-semibold rounded-full hover:bg-white/90 transition-colors inline-flex items-center gap-2 shadow-xl">
-                  Démarrer mon projet — 199€
+                  Démarrer mon projet — 320€
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                 </Link>
               </motion.div>
-              <p className="text-white/60 text-[12px] mt-5">199€ TTC &middot; Klarna 3× sans frais &middot; Livraison 5 jours</p>
+              <p className="text-white/60 text-[12px] mt-5">320€ TTC &middot; Klarna 3× sans frais &middot; 2 mois Sérénité offerts</p>
             </div>
           </div>
         </motion.div>

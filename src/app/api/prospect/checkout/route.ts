@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
         payment_method_types: ["card"],
         line_items: [{ price: serenitePriceId, quantity: 1 }],
         subscription_data: {
-          trial_period_days: 30,
+          trial_period_days: 90, // 3 mois offerts — engagement 6 mois ensuite
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           add_invoice_items: addInvoiceItems as any,
           metadata: {
@@ -249,12 +249,17 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             product_data: {
               name: `Site web WebConceptor — ${prospect.name}`,
-              description: "Création sur-mesure, livraison 5 jours ouvrables",
+              description: "Création sur-mesure, livraison 5 jours ouvrables + 2 mois Sérénité offerts",
             },
             unit_amount: 32000, // 320 €
           },
           quantity: 1,
         }],
+        // setup_future_usage: permet de sauvegarder la CB pour créer
+        // automatiquement l'abonnement Sérénité 60 jours d'essai dans le webhook
+        payment_intent_data: {
+          setup_future_usage: "off_session",
+        },
         customer_email: buyer.email,
         customer_creation: "always",
         success_url: successUrl,
