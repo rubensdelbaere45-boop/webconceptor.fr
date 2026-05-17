@@ -4,8 +4,7 @@ import Stripe from "stripe";
 import { rateLimit, getClientIp } from "@/lib/security";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apiVersion: "2023-10-16" as any, // 2026-03-25.dahlia a supprimé subscription_data.add_invoice_items
+  apiVersion: "2026-03-25.dahlia",
 });
 
 function getSupabaseAdmin() {
@@ -174,26 +173,22 @@ export async function POST(req: NextRequest) {
 
     if (plan === "serenite") {
       /* ══════════════════════════════════════════════════════════════════════
-         SÉRÉNITÉ → mode: "subscription"
-         ─ line_items : abonnement récurrent 50€/mois (price ID Stripe)
-         ─ subscription_data.add_invoice_items : 320€ création (one-shot)
-           + domaine si renseigné
-         ─ trial_period_days: 30 → 1er mois déjà compris dans les 320€,
-           le prélèvement 50€/mois démarre après 30 jours.
-         Stripe affiche ainsi clairement les deux lignes au checkout.
+         SÉRÉNITÉ → mode: "payment" + setup_future_usage: "off_session"
+         ─ Stripe Checkout n'accepte pas subscription_data.add_invoice_items
+         ─ On charge 320€ + domaine aujourd'hui en mode paiement unique
+         ─ La carte est sauvegardée via setup_future_usage:"off_session"
+         ─ Le webhook crée l'abonnement 50€/mois automatiquement après
+           paiement (trial 30 jours) avec la carte sauvegardée.
+         ─ Seule la carte est acceptée (nécessaire pour la récurrence).
       ══════════════════════════════════════════════════════════════════════ */
-      const serenitePriceId =
-        process.env.STRIPE_SERENITE_PRICE_ID || "price_1TOjkfBsbfiZwhRuq0YodxTP";
-
-      // Items facturés sur la 1ère facture (aujourd'hui)
-      type AddItem = { price_data: { currency: string; product_data: { name: string; description: string }; unit_amount: number }; quantity: number };
-      const addInvoiceItems: AddItem[] = [
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sereniteLineItems: any[] = [
         {
           price_data: {
             currency: "eur",
             product_data: {
-              name: `Création — ${prospect.name}`,
-              description: "Site web sur-mesure, livraison 5 jours ouvrables",
+              name: `Création + 1 mois Sérénité offert — ${prospect.name}`,
+              description: "Site web sur-mesure · livraison 5 jours · puis 50 €/mois sans engagement",
             },
             unit_amount: 32000, // 320 €
           },
@@ -201,12 +196,12 @@ export async function POST(req: NextRequest) {
         },
       ];
       if (domainFull && domainPriceCents > 0) {
-        addInvoiceItems.push({
+        sereniteLineItems.push({
           price_data: {
             currency: "eur",
             product_data: {
               name: `Domaine ${domainFull}`,
-              description: "Enregistrement pour 1 an",
+              description: "Enregistrement pour 1 an (renouvellement inclus dans Sérénité)",
             },
             unit_amount: domainPriceCents,
           },
@@ -215,20 +210,14 @@ export async function POST(req: NextRequest) {
       }
 
       session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        payment_method_types: ["card"],
-        line_items: [{ price: serenitePriceId, quantity: 1 }],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        subscription_data: {
-          trial_period_days: 30, // 1 mois offert — sans engagement
-          add_invoice_items: addInvoiceItems,
-          metadata: {
-            source: "self_serve_mockup",
-            prospect_id: prospect.id,
-            prospect_slug: prospect.slug,
-          },
-        } as any,
+        mode: "payment",
+        payment_method_types: ["card"], // card uniquement — nécessaire pour la récurrence
+        line_items: sereniteLineItems,
         customer_email: buyer.email,
+        customer_creation: "always", // nécessaire pour retrouver le customer dans le webhook
+        payment_intent_data: {
+          setup_future_usage: "off_session", // sauvegarde la carte pour l'abonnement
+        },
         success_url: successUrl,
         cancel_url:  cancelUrl,
         locale: "fr",
