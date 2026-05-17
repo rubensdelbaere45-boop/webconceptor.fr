@@ -650,7 +650,7 @@ export function generateRestaurantMockupHtml(
 <meta name="author" content="WebConceptor — https://webconceptor.fr">
 <meta name="copyright" content="© WebConceptor — Reproduction interdite">
 <meta name="robots" content="noindex,noarchive">
-<title>${esc(prospect.name)}${prospect.city ? " — " + esc(prospect.city) : ""} · Restaurant</title>
+<title>${esc(prospect.name)}${prospect.city ? " — " + esc(prospect.city) : ""} · ${esc(content.cuisineType || labels.topStrip)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${esc(fontUrl)}" rel="stylesheet">
@@ -1180,7 +1180,7 @@ body{padding-bottom:110px}
 <nav>
   <div class="logo">
     <span class="logo-name">${esc(prospect.name)}</span>
-    <span class="logo-sub">Restaurant</span>
+    <span class="logo-sub">${esc(content.cuisineType || labels.topStrip)}</span>
   </div>
   <ul class="nav-links">
     <li><a href="#about">L'adresse</a></li>
@@ -1284,8 +1284,8 @@ ${
 <section class="reserve-cta">
   <div class="reserve-cta-inner">
     <div class="reserve-kicker">Envie d'un bon moment ?</div>
-    <h2>Réservez votre table <em>en quelques clics</em></h2>
-    <p>Nous vous accueillons du mardi au samedi, midi et soir. Groupes et privatisations sur demande.</p>
+    <h2>${esc(labels.ctaVerb)} <em>en quelques clics</em></h2>
+    <p>${["restaurant","brasserie","bistrot","gastronomique","bar","cafe"].includes(prospect.business_type||"") ? "Nous vous accueillons toute la semaine, midi et soir. Groupes et privatisations sur demande." : ["coiffeur","institut","spa"].includes(prospect.business_type||"") ? "Disponible 6j/7, sur rendez-vous ou sans attente. Confirmez votre créneau en moins d'une minute." : ["glacier","boulangerie","patisserie"].includes(prospect.business_type||"") ? "Commandez vos créations à l'avance ou passez directement en boutique." : "Contactez-nous pour convenir d'un rendez-vous ou d'un devis personnalisé."}</p>
     <button class="btn-primary" onclick="bkOpen()">${esc(labels.ctaShort)} maintenant →</button>
   </div>
 </section>
@@ -1369,7 +1369,7 @@ ${
         ? `<div class="info-block">
       <div class="info-icon"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
       <h3>Horaires</h3>
-      <p>${esc(prospect.hours.split(" | ").slice(0, 3).join("<br>"))}</p>
+      <p style="white-space:pre-line">${esc(prospect.hours.split(" | ").join("\n"))}</p>
     </div>`
         : ""
     }
@@ -1558,7 +1558,7 @@ ${
 
 <!-- Sticky CTA Bar — 'Obtenir ce site' avec urgence -->
 <div class="wc-cta-bar">
-  <span class="wc-cta-bar-text">🔥 <strong style="text-decoration:line-through;opacity:0.5">599€</strong> <strong>199 € TTC</strong> — <span id="wc-countdown">Offre expire dans <strong>--:--:--</strong></span></span>
+  <span class="wc-cta-bar-text">🔥 <strong style="text-decoration:line-through;opacity:0.5">490€</strong> <strong>320 € TTC</strong> — <span id="wc-countdown">Offre expire dans <strong>--:--:--</strong></span></span>
   <button class="wc-cta-bar-btn" onclick="pmOpen()">J'achète ce site →</button>
 </div>
 
@@ -1585,9 +1585,9 @@ ${
       <div class="pm-plans">
         <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">Simple</div>
-          <div class="pm-plan-price"><span style="text-decoration:line-through;opacity:0.4;font-size:20px;font-weight:400;margin-right:8px">599€</span>199 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
-          <div class="pm-plan-price-sub" style="color:#c19a56;font-weight:600">⚡ -47% — Offre de lancement</div>
-          <div class="pm-plan-price-sub">ou 3× sans frais (3 × 66,33 €)</div>
+          <div class="pm-plan-price"><span style="text-decoration:line-through;opacity:0.4;font-size:20px;font-weight:400;margin-right:8px">490€</span>320 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price-sub" style="color:#c19a56;font-weight:600">⚡ -35% — Offre de lancement</div>
+          <div class="pm-plan-price-sub">ou 3× sans frais (3 × 106,67 €)</div>
           <ul>
             <li>✓ Livraison sous 5 jours</li>
             <li>✓ Design premium responsive</li>
@@ -1598,7 +1598,7 @@ ${
         </div>
         <div class="pm-plan selected recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
           <div class="pm-plan-title">Sérénité</div>
-          <div class="pm-plan-price">199 € <span style="font-size:13px;opacity:0.6">+ 50 €/mois</span></div>
+          <div class="pm-plan-price">320 € <span style="font-size:13px;opacity:0.6">+ 50 €/mois</span></div>
           <div class="pm-plan-price-sub">Tout inclus, zéro prise de tête</div>
           <ul>
             <li>✓ <strong>Votre nom de domaine</strong> (.fr, .com, .eu…)</li>
@@ -1685,10 +1685,10 @@ ${
       </div>
 
       <div class="pm-total">
-        <div class="pm-total-row"><span>Site web</span><span>199,00 €</span></div>
+        <div class="pm-total-row"><span>Site web</span><span>320,00 €</span></div>
         <div class="pm-total-row" id="pm-total-domain" style="display:none"><span id="pm-total-domain-label">Nom de domaine</span><span id="pm-total-domain-price">—</span></div>
         <div class="pm-total-row" id="pm-total-serenite" style="display:none"><span>Formule Sérénité (1er mois)</span><span>50,00 €</span></div>
-        <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">199,00 €</span></div>
+        <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">320,00 €</span></div>
       </div>
 
       <button class="pm-submit" id="pm-submit" onclick="pmSubmit()">Payer en ligne (Stripe)</button>
@@ -2012,7 +2012,7 @@ function pmSelectPlan(plan) {
 }
 
 function pmUpdateTotal() {
-  let cents = 19900;
+  let cents = 32000;
   if (PM.plan === "serenite") {
     cents += 5000;
     if (PM.domainAvailable) cents += PM.domainPriceCents;
@@ -2147,7 +2147,7 @@ async function pmSubmit() {
 }
 
 // Listeners pour la validation du form + domaine live
-["pm-nom", "pm-email", "pm-tel", "pm-adresse", "pm-ville", "pm-cp"].forEach((id) => {
+["pm-prenom", "pm-nom", "pm-email", "pm-tel", "pm-adresse", "pm-ville", "pm-cp"].forEach((id) => {
   const el = document.getElementById(id);
   if (el) el.addEventListener("input", pmUpdateSubmit);
 });

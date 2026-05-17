@@ -879,6 +879,7 @@ async function handleSend(req: NextRequest) {
           google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
           photos: p.photos, hours: p.hours, business_type: p.business_type,
           reviews: p.reviews,
+          website_photos: p.website_photos || undefined,
         };
         html = generateCustomMockupHtml(custom, p.rich_audit, origin);
       } else {

@@ -30,6 +30,7 @@ export interface CustomProspect {
   google_rating?: number;
   google_reviews_count?: number;
   photos?: string[];     // Google Places references (fallback)
+  website_photos?: string[] | null;
   hours?: string;
   business_type?: string;
   reviews?: Array<{ author: string; rating: number; text: string; timeAgo: string }> | null;
@@ -100,7 +101,12 @@ function resolvePhotos(audit: DeepAudit, prospect: CustomProspect, origin: strin
     const safe = safePhoto(u, prospect, origin);
     if (safe) out.push(safe);
   }
-  // 2. Fallback Google Places
+  // 2. Photos du site web du prospect (scrapées via website_photos)
+  for (const u of prospect.website_photos || []) {
+    if (out.length >= max) break;
+    if (u && u.startsWith("http") && !out.includes(u)) out.push(u);
+  }
+  // 3. Fallback Google Places
   for (const u of prospect.photos || []) {
     if (out.length >= max) break;
     const safe = safePhoto(u, prospect, origin);
@@ -257,13 +263,15 @@ function renderHero(ctx: RenderCtx): string {
   const hero = photos[0] || "";
   const title = audit.contentToKeep.headingsH1H2?.[0] || prospect.name;
   const subtitle = audit.improvementBrief.heroConcept || `${audit.brand.tone === "luxe" ? "L'excellence" : "La qualité"} artisanale${city}`;
+  const toneLabels: Record<string, string> = { luxe: "Haut de gamme", chaleureux: "Convivial", moderne: "Contemporain", artisanal: "Artisanal", pro: "Professionnel", simple: "Essentiel" };
+  const heroTag = toneLabels[audit.brand.tone] || audit.brand.tone;
 
   // Layout variant
   if (theme.heroLayout === "overlay" && hero) {
     return `<section class="hero hero-overlay">
   <div class="hero-bg"><img src="${escape(hero)}" alt="${name}" loading="eager"></div>
   <div class="hero-overlay-content">
-    <div class="hero-tag">${escape(audit.brand.tone)}${city}</div>
+    <div class="hero-tag">${escape(heroTag)}${city}</div>
     <h1>${escape(title)}</h1>
     <p class="hero-sub">${escape(subtitle)}</p>
     <div class="hero-ctas">
@@ -276,7 +284,7 @@ function renderHero(ctx: RenderCtx): string {
 
   if (theme.heroLayout === "centered") {
     return `<section class="hero hero-centered">
-  <div class="hero-tag">${escape(audit.brand.tone.toUpperCase())}${city}</div>
+  <div class="hero-tag">${escape(heroTag)}${city}</div>
   <h1>${escape(title)}</h1>
   <p class="hero-sub">${escape(subtitle)}</p>
   <div class="hero-ctas">
@@ -291,7 +299,7 @@ function renderHero(ctx: RenderCtx): string {
   const reverseOrder = theme.heroLayout === "split-right";
   return `<section class="hero hero-split ${reverseOrder ? "reverse" : ""}">
   <div class="hero-text">
-    <div class="hero-tag">${escape(audit.brand.tone.toUpperCase())}${city}</div>
+    <div class="hero-tag">${escape(heroTag)}${city}</div>
     <h1>${escape(title)}</h1>
     <p class="hero-sub">${escape(subtitle)}</p>
     <div class="hero-ctas">
@@ -352,15 +360,23 @@ function renderServices(ctx: RenderCtx): string {
     institut: ["Soins visage", "Massages", "Épilation", "Mains & pieds"],
     plombier: ["Sanitaire", "Chauffage", "Dépannage urgence", "Rénovation"],
     electricien: ["Installation", "Mise aux normes", "Dépannage", "Domotique"],
-    fleuriste: ["Bouquets", "Mariages", "Plantes", "Livraison"],
+    fleuriste: ["Bouquets", "Mariages & événements", "Compositions", "Livraison"],
     garage: ["Mécanique", "Pneumatiques", "Carrosserie", "Contrôle technique"],
     dentiste: ["Soins", "Esthétique", "Implants", "Orthodontie"],
     osteo: ["Adulte", "Nourrisson", "Sportif", "Périnatal"],
-    salle_sport: ["Musculation", "Cardio", "Cours collectifs", "Coaching"],
+    salle_sport: ["Musculation", "Cardio", "Cours collectifs", "Coaching perso"],
+    chocolatier: ["Tablettes & barres", "Coffrets cadeaux", "Ganaches", "Sur commande"],
+    creperie: ["Crêpes sucrées", "Galettes bretonnes", "Boissons", "Menus"],
+    food_truck: ["Burgers", "Sandwichs", "Spécialités", "Menus"],
+    epicerie: ["Fruits & légumes", "Produits locaux", "Épicerie fine", "Livraison"],
+    kine: ["Rééducation", "Massages", "Bilan postural", "Sport & prévention"],
+    auto_ecole: ["Permis B", "Code de la route", "Conduite accompagnée", "AAC"],
+    menuisier: ["Menuiserie bois", "Escaliers", "Placards sur mesure", "Pose"],
+    peintre: ["Peinture intérieure", "Extérieure", "Ravalement", "Décoration"],
   };
   const items = serviceHeadings.length >= 3
     ? serviceHeadings
-    : (fallbackPerType[prospect.business_type || ""] || ["Service 1", "Service 2", "Service 3", "Service 4"]);
+    : (fallbackPerType[prospect.business_type || ""] || ["Notre expertise", "Qualité & savoir-faire", "Service sur-mesure", "Satisfaction garantie"]);
 
   return `<section id="services" class="services">
   <div class="container">
@@ -426,9 +442,11 @@ function renderMenu(ctx: RenderCtx): string {
     </div>`;
   }
 
+  const menuKicker = ["boulangerie","patisserie","chocolatier"].includes(businessType) ? "Nos créations" : ["glacier"].includes(businessType) ? "Nos parfums" : "Notre carte";
+
   return `<section id="carte" class="menu-section">
   <div class="container">
-    <div class="section-kicker">Restauration</div>
+    <div class="section-kicker">${menuKicker}</div>
     <h2>Notre carte ${badge}</h2>
     ${!hasRealPrices ? `<p style="font-size:13px;color:#888;margin-bottom:24px;font-style:italic">Tarifs à titre indicatif — contactez-nous pour les prix actuels</p>` : ""}
     <div class="menu-grid">
@@ -564,7 +582,7 @@ function renderContact(ctx: RenderCtx): string {
       <div class="info-list">
         ${address ? `<div class="info-line"><span class="info-label">Adresse</span><span>${address}</span></div>` : ""}
         ${phone ? `<div class="info-line"><span class="info-label">Téléphone</span><span>${phone}</span></div>` : ""}
-        ${prospect.hours ? `<div class="info-line"><span class="info-label">Horaires</span><span>${escape(prospect.hours.slice(0, 200))}</span></div>` : ""}
+        ${prospect.hours ? `<div class="info-line"><span class="info-label">Horaires</span><span style="white-space:pre-line">${escape(prospect.hours.replace(/\s*\|\s*/g, "\n").slice(0, 400))}</span></div>` : ""}
       </div>
       ${hasNav ? `
       <div class="nav-btns">
