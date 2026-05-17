@@ -255,10 +255,9 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         });
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const simpleSessionParams: any = {
+      session = await stripe.checkout.sessions.create({
         mode: "payment",
-        automatic_payment_methods: { enabled: true }, // affiche seulement les méthodes activées dans Stripe
+        payment_method_types: ["card"],
         line_items: simpleLineItems,
         customer_email: buyer.email,
         customer_creation: "always",
@@ -266,8 +265,7 @@ export async function POST(req: NextRequest) {
         cancel_url:  cancelUrl,
         locale: "fr",
         metadata: sharedMeta,
-      };
-      session = await stripe.checkout.sessions.create(simpleSessionParams);
+      });
     }
 
     // Log la tentative de paiement en DB (prospect → status="payment_initiated")
