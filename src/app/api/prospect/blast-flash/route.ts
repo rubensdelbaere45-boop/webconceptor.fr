@@ -41,7 +41,7 @@ function buildBlastEmail(prospectName: string, mockupUrl: string, unsubscribeUrl
 
   <p style="font-size:15px;margin:0 0 16px">Vous trouverez la maquette à cette adresse&nbsp;: <a href="${mockupUrl}" style="color:#0066ff;text-decoration:underline">${mockupUrl}</a></p>
 
-  <p style="font-size:15px;margin:0 0 16px">Pour rappel, le tarif reste à <strong>199&nbsp;€ TTC</strong> (ou trois échéances sans frais via Klarna). La livraison se fait en 5 à 7 jours et la garantie satisfait-ou-remboursé est de 14 jours.</p>
+  <p style="font-size:15px;margin:0 0 16px">Pour rappel, le tarif reste à <strong>320&nbsp;€ TTC</strong> (ou trois échéances sans frais via Klarna). La livraison se fait en 5 à 7 jours et la garantie satisfait-ou-remboursé est de 14 jours.</p>
 
   <p style="font-size:15px;margin:0 0 16px">Si vous souhaitez avancer, des ajustements, ou simplement un devis écrit, répondez-moi directement à ce mail — je lis toutes les réponses personnellement.</p>
 
@@ -68,7 +68,7 @@ Je me permets de revenir vers vous au sujet de la maquette de site que je vous a
 Vous trouverez la maquette à cette adresse :
 ${mockupUrl}
 
-Pour rappel, le tarif reste à 199 € TTC (ou trois échéances sans frais via Klarna). La livraison se fait en 5 à 7 jours et la garantie satisfait-ou-remboursé est de 14 jours.
+Pour rappel, le tarif est de 320 € TTC tout compris. La livraison se fait en 5 jours ouvrés et la garantie satisfait-ou-remboursé est de 14 jours.
 
 Si vous souhaitez avancer, des ajustements, ou simplement un devis écrit, répondez-moi directement à ce mail — je lis toutes les réponses personnellement.
 
@@ -196,7 +196,7 @@ async function handler(req: NextRequest) {
   if (tgToken && chatId && sent > 0) {
     const msg =
       `⚡ <b>BLAST FLASH ENVOYÉ (${sent} emails)</b>\n\n` +
-      `Offre 24h à 199€ envoyée à tous les prospects existants — on maximise les chances de ventes aujourd'hui.\n\n` +
+      `Email de suivi à 320€ envoyé à tous les prospects existants — on maximise les chances de ventes aujourd'hui.\n\n` +
       `<b>Résultat :</b> ${sent} envoyés / ${errors} erreurs\n` +
       `<b>Prochaines étapes :</b>\n` +
       `- Relances J+2 à 10h30\n` +

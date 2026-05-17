@@ -45,7 +45,7 @@ function buildFinalPushEmail(prospectName: string, mockupUrl: string, unsubscrib
 
   <p style="font-size:15px;margin:0 0 16px">Si vous souhaitez jeter un dernier œil à la maquette, elle est toujours consultable ici&nbsp;: <a href="${mockupUrl}" style="color:#0066ff;text-decoration:underline">${mockupUrl}</a></p>
 
-  <p style="font-size:15px;margin:0 0 16px">Le tarif de 199&nbsp;€ TTC (ou 3 échéances sans frais) est toujours valable cette semaine. Livraison en 5 à 7 jours, 14 jours satisfait-ou-remboursé.</p>
+  <p style="font-size:15px;margin:0 0 16px">Le tarif de 320&nbsp;€ TTC est toujours valable cette semaine. Livraison en 5 à 7 jours, 14 jours satisfait-ou-remboursé.</p>
 
   <p style="font-size:15px;margin:0 0 16px">Si vous avez une question qui vous retient (prix, délais, aspect technique), répondez-moi simplement à ce mail, je vous réponds personnellement.</p>
 
@@ -71,7 +71,7 @@ Je comprends tout à fait si ce n'est pas le bon moment. Dans ce cas, ignorez si
 Si vous souhaitez jeter un dernier œil à la maquette, elle est toujours consultable ici :
 ${mockupUrl}
 
-Le tarif de 199 € TTC (ou 3 échéances sans frais) est toujours valable cette semaine. Livraison en 5 à 7 jours, 14 jours satisfait-ou-remboursé.
+Le tarif de 320 € TTC est toujours valable cette semaine. Livraison en 5 à 7 jours, 14 jours satisfait-ou-remboursé.
 
 Si vous avez une question qui vous retient (prix, délais, aspect technique), répondez-moi simplement à ce mail, je vous réponds personnellement.
 
