@@ -47,7 +47,7 @@ const ALLOWED_ORIGINS = new Set([
 export async function POST(req: NextRequest) {
   // Rate limit : 5 tentatives / 10 min / IP (protection contre abus)
   const ip = getClientIp(req.headers);
-  const rl = rateLimit(`prospect-checkout:${ip}`, 5, 600);
+  const rl = rateLimit(`prospect-checkout:${ip}`, 20, 600); // 20 tentatives / 10 min
   if (!rl.ok) {
     return NextResponse.json(
       { error: `Trop de tentatives. Reessayez dans ${rl.retryAfter}s.` },
