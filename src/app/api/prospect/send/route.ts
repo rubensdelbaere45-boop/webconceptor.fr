@@ -692,77 +692,46 @@ function getEmailGainBullets(businessType?: string): string[] {
 }
 
 function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
-  const bt = prospect.business_type || "restaurant";
+  // Prénom extrait du nom complet si possible (premier mot)
+  const firstName = prospect.name.split(/\s+/)[0];
+  const greeting = `Bonjour,`;
 
-  // Bloc "audit mystérieux" uniquement si le site existe ET qualité poor/average
+  // Bloc audit discret — uniquement si site existant et audit pertinent
   const hasOutdatedSite = prospect.website
     && (prospect.site_quality === "poor" || prospect.site_quality === "average")
     && content.auditTeaser && content.auditTeaser.trim().length > 0;
 
   const auditBlock = hasOutdatedSite
     ? `
-  <div style="background:linear-gradient(135deg,#fff4e6,#fef3c7);border:1px solid #fbbf24;border-radius:6px;padding:22px 24px;margin:24px 0">
-    <p style="font-size:11px;color:#92400e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:700">🔍 Audit de votre présence en ligne</p>
-    <p style="font-size:14px;color:#78350f;margin:0 0 10px;line-height:1.6">J'ai jeté un œil à votre site actuel et identifié quelques opportunités d'amélioration, <strong>${escape(content.auditTeaser || "")}</strong>.</p>
-    <p style="font-size:13px;color:#92400e;margin:0;font-style:italic">Je ne détaille pas tout ici par souci de clarté — j'ai directement appliqué plusieurs de ces axes dans la maquette ci-dessous. Vous verrez la différence.</p>
-  </div>`
+  <p style="font-size:14px;color:#4a4340;margin:16px 0;line-height:1.6;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">En jetant un œil à votre présence en ligne, j'ai noté ${escape(content.auditTeaser || "")}. J'ai appliqué ces axes directement dans la maquette.</p>`
     : "";
 
-  const featureBullets = getEmailFeatureBullets(bt);
-  const gainBullets = getEmailGainBullets(bt);
-  const adminBlock = getEmailAdminBlock(bt);
+  return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;padding:36px 28px;color:#1a1310;line-height:1.65;background:#ffffff">
 
-  return `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#1a1310;line-height:1.6;background:#fdfaf5">
-  <p style="font-size:15px;margin-bottom:16px">${escape(content.emailOpening)}</p>
-  <p style="font-size:15px;margin-bottom:20px">${escape(content.emailPitch)}</p>
+  <p style="font-size:15px;margin:0 0 18px">${greeting}</p>
+
+  <p style="font-size:15px;margin:0 0 18px">J'ai créé une maquette de site web pour <strong>${escape(prospect.name)}</strong>${prospect.city ? ` à ${escape(prospect.city)}` : ""} — vous pouvez la voir ici&nbsp;:</p>
 
   ${auditBlock}
 
-  <div style="background:#fff;border:1px solid #e8dfd0;padding:28px;margin:24px 0;border-radius:4px;text-align:center">
-    <p style="font-size:12px;color:#8b7e6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">Votre maquette</p>
-    <p style="font-family:Georgia,serif;font-size:24px;font-weight:500;color:#1a1310;margin-bottom:6px">${escape(prospect.name)}</p>
-    ${prospect.city ? `<p style="font-size:13px;color:#8b7e6e;margin-bottom:20px;font-style:italic">${escape(prospect.city)}</p>` : ""}
-    <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:2px;font-weight:600;font-size:13px;letter-spacing:0.15em;text-transform:uppercase">Découvrir ma maquette →</a>
+  <div style="text-align:center;margin:28px 0">
+    <a href="${mockupUrl}" style="display:inline-block;padding:15px 36px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:0.06em">Voir votre maquette →</a>
   </div>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:12px"><strong style="color:#1a1310">Ce que votre site inclut :</strong></p>
-  <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px">
-    ${featureBullets.map(b => `<li>${b}</li>`).join("\n    ")}
-  </ul>
+  <p style="font-size:14px;color:#4a4340;margin:0 0 10px;line-height:1.65">Site mobile-first, livré sous 5 jours, <strong>320&nbsp;€ TTC tout compris</strong>. Si vous souhaitez ajouter votre nom de domaine ou des mises à jour illimitées, c'est la formule Sérénité (320&nbsp;€ + 50&nbsp;€/mois).</p>
 
-  ${adminBlock}
+  <p style="font-size:14px;color:#4a4340;margin:0 0 24px;line-height:1.65">Si quelque chose ne vous convient pas dans la maquette — photo, texte, couleur — répondez à ce mail, je m'en occupe.</p>
 
-  <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #c19a56;border-radius:6px;padding:22px 26px;margin:24px 0;text-align:center">
-    <p style="font-size:11px;color:#92400e;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.2em;font-weight:800">🔥 -47% • Offre de lancement</p>
-    <p style="margin:0 0 4px"><span style="text-decoration:line-through;opacity:0.5;font-size:18px;color:#78350f">599 €</span> <span style="font-family:Georgia,serif;font-size:28px;color:#1a1310;font-weight:700">199 € TTC</span></p>
-    <p style="font-size:13px;color:#78350f;margin:0 0 10px">ou en <strong>3× sans frais</strong> via Klarna — 3 × 66,33 €</p>
-    <p style="font-size:12px;color:#92400e;margin:0 0 14px;font-style:italic">✓ Livraison 5 jours • ✓ Propriétaire à vie • ✓ Satisfait ou remboursé 14 jours</p>
-    <a href="${mockupUrl}" style="display:inline-block;padding:14px 32px;background:#c19a56;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;box-shadow:0 4px 12px rgba(193,154,86,0.4)">Voir ma maquette →</a>
-    <p style="font-size:11px;color:#92400e;margin:10px 0 0;font-weight:600">⏳ Offre valable 48 h</p>
+  <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#6b6b6b">
+    <p style="margin:0 0 3px"><strong style="color:#1a1310">Tom Bauer</strong></p>
+    <p style="margin:0 0 3px">WebConceptor</p>
+    <p style="margin:0 0 3px"><a href="mailto:contact@webconceptor.fr" style="color:#1a3a5c;text-decoration:none">contact@webconceptor.fr</a> &middot; <a href="tel:+33635592471" style="color:#1a3a5c;text-decoration:none">06 35 59 24 71</a></p>
+    <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
   </div>
 
-  <p style="font-size:14px;color:#4a4340;margin-bottom:14px;line-height:1.7"><strong>Concrètement, avec ce site vous gagnez :</strong></p>
-  <ul style="font-size:14px;color:#4a4340;padding-left:20px;margin-bottom:20px;line-height:1.8">
-    ${gainBullets.map(b => `<li>${b}</li>`).join("\n    ")}
-  </ul>
-
-  <p style="font-size:14px;color:#4a4340;margin-bottom:24px">Ouvrez votre maquette, un <strong>chat en bas à droite 💬</strong> répond à toutes vos questions. Si un détail ne vous convient pas (photo, couleur, texte), utilisez le bouton <em>"Demander une modification"</em> — je vous réponds dans la journée.</p>
-
-  <div style="background:#fff;border-left:3px solid #c19a56;padding:20px 24px;margin:24px 0;border-radius:4px">
-    <p style="font-size:14px;color:#1a1310;margin-bottom:12px;font-weight:600">Une question ? Contactez-moi directement :</p>
-    <p style="font-size:14px;color:#4a4340;margin-bottom:6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#c19a56;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
-    <p style="font-size:14px;color:#4a4340;margin-bottom:12px">📞 <a href="tel:+33635592471" style="color:#c19a56;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
-    <p style="font-size:13px;color:#8b7e6e;margin:0;font-style:italic">Merci de signaler à l&rsquo;opérateur votre nom, prénom et le nom de votre enseigne (<strong style="color:#1a1310">${escape(prospect.name)}</strong>) afin que votre dossier soit retrouvé rapidement.</p>
-  </div>
-
-  <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#8b7e6e">
-    <p style="margin-bottom:4px"><strong style="color:#1a1310">Tom Bauer</strong></p>
-    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
-    <p><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
-  </div>
-  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:16px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
+  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:14px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
 </div>`;
+  void firstName; // utilisé implicitement via greeting
 }
 
 /* ══════════════════════════════════════════
