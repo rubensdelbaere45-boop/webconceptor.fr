@@ -843,12 +843,12 @@ async function handleSend(req: NextRequest) {
       continue;
     }
 
-    // Note : on NE skip PLUS les "good" sites — le tri par priorité gère déjà
-    // l'ordre (no-site > poor > average > good), donc les bons prospects passent
-    // en premier. Skipper les "good" faisait 0 envoi sur les campagnes premium
-    // (ex : restaurants gastronomiques Paris où 99% ont un site moderne).
-    // Pitch valide même pour un site moderne : module réservation sans commission,
-    // 3× sans frais, et un design premium reste un argument.
+    // Skip les sites déjà bons (score >= 70) — inutile de pitcher quelqu'un
+    // qui a déjà un super site. On cible uniquement : no-site, poor, average.
+    if (p.site_quality === "good") {
+      results.push({ id: p.id, name: p.name, status: "skipped_good_site" });
+      continue;
+    }
 
     try {
       const mockupUrl = `${origin}/prospects/${p.slug}`;

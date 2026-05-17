@@ -457,6 +457,61 @@ body{padding-top:50px !important}
       });
   };
 })();
+
+/* ══════════════════════════════════════════════════
+   DÉMO RÉSERVATION — formulaire interactif
+   Injecté automatiquement si la page contient un
+   formulaire de réservation (.wc-booking-form, #wc-reservation, etc.)
+   ou si le prospect est un restaurant/café/glacier.
+   ══════════════════════════════════════════════════ */
+(function() {
+  var demoForms = document.querySelectorAll('[data-wc-demo-booking], .wc-reservation-form, .wc-booking-form, #wc-reservation');
+  demoForms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var f = form;
+      var nameEl   = f.querySelector('[name="guest_name"], [name="name"], [name="prenom"]');
+      var phoneEl  = f.querySelector('[name="guest_phone"], [name="phone"], [name="telephone"]');
+      var guestsEl = f.querySelector('[name="guests"], [name="couverts"], [name="personnes"]');
+      var dateEl   = f.querySelector('[name="date"]');
+      var timeEl   = f.querySelector('[name="time"], [name="heure"]');
+      var msgEl    = f.querySelector('[name="message"]');
+      var btn      = f.querySelector('button[type="submit"], input[type="submit"]');
+
+      var guestName = (nameEl && nameEl.value) ? nameEl.value.trim() : 'Un client';
+      var guests    = (guestsEl && guestsEl.value) ? parseInt(guestsEl.value) : 2;
+      var date      = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().split('T')[0];
+      var time      = (timeEl && timeEl.value) ? timeEl.value : '20:00';
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
+      fetch('/api/prospect/demo-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: '${safeSlug}',
+          guest_name: guestName,
+          guest_phone: phoneEl ? phoneEl.value : '',
+          guests: guests,
+          date: date,
+          time: time,
+          message: msgEl ? msgEl.value : ''
+        })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        // Show success message
+        var successDiv = document.createElement('div');
+        successDiv.style.cssText = 'background:#d4edda;border:1px solid #c3e6cb;border-radius:8px;padding:16px;margin-top:12px;color:#155724;font-size:14px;text-align:center;font-family:-apple-system,sans-serif';
+        successDiv.innerHTML = data.sms_sent
+          ? '✅ <strong>Réservation confirmée !</strong><br><small>Le propriétaire vient de recevoir une notification SMS sur son téléphone.</small>'
+          : '✅ <strong>Demande envoyée !</strong><br><small>Le propriétaire a bien été notifié.</small>';
+        form.appendChild(successDiv);
+        if (btn) { btn.disabled = false; btn.textContent = 'Réserver'; }
+      }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Réserver'; }
+      });
+    });
+  });
+})();
 </script>
 `;
 }
