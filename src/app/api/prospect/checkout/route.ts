@@ -255,9 +255,10 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         });
       }
-      session = await stripe.checkout.sessions.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const simpleSessionParams: any = {
         mode: "payment",
-        payment_method_types: ["card", "klarna", "paypal"],
+        automatic_payment_methods: { enabled: true }, // affiche seulement les méthodes activées dans Stripe
         line_items: simpleLineItems,
         customer_email: buyer.email,
         customer_creation: "always",
@@ -265,7 +266,8 @@ export async function POST(req: NextRequest) {
         cancel_url:  cancelUrl,
         locale: "fr",
         metadata: sharedMeta,
-      });
+      };
+      session = await stripe.checkout.sessions.create(simpleSessionParams);
     }
 
     // Log la tentative de paiement en DB (prospect → status="payment_initiated")
