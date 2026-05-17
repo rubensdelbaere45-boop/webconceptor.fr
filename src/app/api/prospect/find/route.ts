@@ -990,7 +990,10 @@ export async function POST(req: NextRequest) {
         photos: photos.length ? photos : null,
         hours: place.regularOpeningHours?.weekdayDescriptions?.join(" | ") || "",
         business_type: businessType,
-        menu_items: scrapedMenu && scrapedMenu.length >= 4 ? scrapedMenu : null,
+        // Priorité : scraper local > deep-audit Claude > null
+        menu_items: scrapedMenu && scrapedMenu.length >= 4
+          ? scrapedMenu
+          : (deepAudit?.menuItems && deepAudit.menuItems.length >= 3 ? deepAudit.menuItems : null),
         reviews: topReviews.length ? topReviews : null,
         about_scraped: aboutScraped,
         website_photos: websitePhotos.length ? websitePhotos : null,

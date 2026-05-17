@@ -63,6 +63,14 @@ export interface DeepAudit {
     confidence: "low" | "medium" | "high";
   };
 
+  // Plats/prix scrapés du site actuel → injectés dans la maquette
+  menuItems?: Array<{
+    name: string;
+    description: string;
+    price: string;
+    category: "entrée" | "plat" | "dessert" | "boisson" | "autre";
+  }>;
+
   // Meta (debug / coût)
   _meta?: {
     tokensIn?: number;
@@ -96,6 +104,7 @@ interface ParsedPages {
     menu: string[];            // liens vers PDF menu
   };
   forms: string[];             // action URLs des <form> (contact? résa?)
+  menuItems: Array<{ name: string; price: string; context: string }>; // plats scrapés localement
 }
 
 async function fetchKeyPages(siteUrl: string): Promise<{ html: string; subPages: Array<{ url: string; title: string; text: string }> } | null> {
@@ -251,6 +260,13 @@ function parseKeyData(siteUrl: string, html: string, subPages: Array<{ url: stri
   // Forms : présence de formulaires
   const formActions = Array.from(html.matchAll(/<form[^>]*action=["']([^"']*)["']/gi)).map((m) => m[1] || "(no action)");
 
+  // ── EXTRACTION LOCALE DE MENU AVEC PRIX ─────────────────────────────────
+  // On cherche les patterns prix dans toutes les pages scrapées : "12 €", "12,50€", "€12"
+  // On extrait le texte environnant comme nom de plat.
+  const menuItems = extractMenuItemsFromText(
+    [html, ...subPages.map((p) => p.text)].join("\n\n").slice(0, 50_000)
+  );
+
   return {
     mainHtml: html.slice(0, 20_000), // pour l'audit Claude, on pourra en envoyer un extrait
     subPages,
@@ -267,7 +283,48 @@ function parseKeyData(siteUrl: string, html: string, subPages: Array<{ url: stri
     hasOgImage,
     externalLinks,
     forms: formActions.slice(0, 3),
+    menuItems,
   };
+}
+
+// ── EXTRACTEUR PRIX/MENU LOCAL ──────────────────────────────────────────────
+// Cherche les patterns de prix dans le texte brut d'un site restaurant,
+// extrait le contexte comme nom de plat. Zéro API, instantané, gratuit.
+interface LocalMenuItem {
+  name: string;
+  price: string;
+  context: string;
+}
+
+function extractMenuItemsFromText(text: string): LocalMenuItem[] {
+  const found: LocalMenuItem[] = [];
+  const seen = new Set<string>();
+
+  // Pattern : "Magret de canard ......... 28 €" ou "Tiramisu 6,50€" ou "€ 18"
+  const priceRe = /([^.!?\n]{5,80}?)\s{0,5}(\d{1,2}[,.]?\d{0,2})\s*€(?![\d])/g;
+  const priceRe2 = /€\s*(\d{1,2}[,.]?\d{0,2})\s{0,5}([^.!?\n]{5,80})/g;
+
+  let m: RegExpExecArray | null;
+  while ((m = priceRe.exec(text)) !== null && found.length < 20) {
+    const rawName = m[1].replace(/[•\-–—*·|]+/g, " ").replace(/\s+/g, " ").trim();
+    const price = m[2] + " €";
+    if (rawName.length < 4 || rawName.length > 80) continue;
+    if (/accueil|bienvenue|menu|carte|contact|email|tél|facebook|instagram|http/i.test(rawName)) continue;
+    if (seen.has(rawName.toLowerCase())) continue;
+    seen.add(rawName.toLowerCase());
+    found.push({ name: rawName, price, context: m[0].trim() });
+  }
+
+  while ((m = priceRe2.exec(text)) !== null && found.length < 20) {
+    const rawName = m[2].replace(/[•\-–—*·|]+/g, " ").replace(/\s+/g, " ").trim();
+    const price = "€ " + m[1];
+    if (rawName.length < 4 || rawName.length > 80) continue;
+    if (seen.has(rawName.toLowerCase())) continue;
+    seen.add(rawName.toLowerCase());
+    found.push({ name: rawName, price, context: m[0].trim() });
+  }
+
+  return found.slice(0, 12);
 }
 
 // ─── 2. APPEL CLAUDE AVEC PROMPT CACHING ─────────────────────
@@ -345,6 +402,10 @@ async function callClaudeAudit(input: ClaudeAuditInput): Promise<DeepAudit | nul
     input.parsed.externalLinks.menu.length ? `Menu/carte PDF : ${input.parsed.externalLinks.menu[0]}` : "Pas de PDF menu détecté",
     input.parsed.forms.length ? `${input.parsed.forms.length} formulaire(s) détecté(s)` : "Aucun formulaire",
     "",
+    input.parsed.menuItems.length
+      ? `═══ PLATS / PRIX SCRAPÉS (à réutiliser dans la maquette) ═══\n${input.parsed.menuItems.slice(0, 10).map((m) => `  • ${m.name} — ${m.price}`).join("\n")}`
+      : "Aucun prix détecté sur le site (menu générique à utiliser)",
+    "",
     "Produis maintenant le JSON d'audit selon le schema demandé.",
   ].filter(Boolean).join("\n");
 
@@ -374,6 +435,10 @@ async function callClaudeAudit(input: ClaudeAuditInput): Promise<DeepAudit | nul
     "featuresToAdd": ["feature à ajouter 1", "feature à ajouter 2"],
     "ctaStrategy": "ce que le CTA principal doit viser"
   },
+  "menuItems": [
+    {"name": "Nom du plat tel que scrapé", "description": "description courte (inventer si absent)", "price": "XX €", "category": "entrée|plat|dessert|boisson|autre"},
+    {"name": "...", "description": "...", "price": "...", "category": "..."}
+  ],
   "verdict": {
     "quality": "none|poor|average|good",
     "summary": "phrase courte",

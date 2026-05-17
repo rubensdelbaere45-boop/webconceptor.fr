@@ -375,6 +375,81 @@ function renderServices(ctx: RenderCtx): string {
 </section>`;
 }
 
+// ── MENU AVEC VRAIS PRIX ────────────────────────────────────────────────────
+// Utilisé pour les restaurants quand on a des plats scrapés avec prix réels.
+const FOOD_TYPES = new Set(["restaurant","brasserie","bistrot","gastronomique","pizzeria","creperie","food_truck","bar","cafe","glacier","boulangerie","patisserie","traiteur","sushi","kebab","burger","salon_de_the","chocolatier"]);
+
+function renderMenu(ctx: RenderCtx): string {
+  const { audit, prospect, primary } = ctx;
+  const businessType = prospect.business_type || "";
+  if (!FOOD_TYPES.has(businessType)) return "";
+
+  const items = audit.menuItems || [];
+  if (items.length === 0) return ""; // pas de plats scrapés → on n'affiche pas
+
+  // Grouper par catégorie
+  const grouped = new Map<string, typeof items>();
+  for (const item of items) {
+    const cat = (item.category || "plat").toLowerCase();
+    if (!grouped.has(cat)) grouped.set(cat, []);
+    grouped.get(cat)!.push(item);
+  }
+
+  const catLabels: Record<string, string> = {
+    "entrée": "Entrées",
+    "entree": "Entrées",
+    "plat": "Plats",
+    "dessert": "Desserts",
+    "boisson": "Boissons",
+    "autre": "À la carte",
+  };
+
+  const hasRealPrices = items.some((m) => m.price && m.price !== "");
+  const badge = hasRealPrices
+    ? `<span style="display:inline-block;background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;margin-left:8px;vertical-align:middle;letter-spacing:0.1em">TARIFS RÉELS</span>`
+    : "";
+
+  let sectionsHtml = "";
+  for (const [cat, catItems] of grouped) {
+    const label = catLabels[cat] || cat;
+    sectionsHtml += `
+    <div class="menu-cat">
+      <h3 class="menu-cat-title">${escape(label)}</h3>
+      ${catItems.map((item) => `
+      <div class="menu-item">
+        <div class="menu-item-left">
+          <span class="menu-item-name">${escape(item.name)}</span>
+          ${item.description ? `<span class="menu-item-desc">${escape(item.description)}</span>` : ""}
+        </div>
+        ${item.price ? `<span class="menu-item-price">${escape(item.price)}</span>` : ""}
+      </div>`).join("")}
+    </div>`;
+  }
+
+  return `<section id="carte" class="menu-section">
+  <div class="container">
+    <div class="section-kicker">Restauration</div>
+    <h2>Notre carte ${badge}</h2>
+    ${!hasRealPrices ? `<p style="font-size:13px;color:#888;margin-bottom:24px;font-style:italic">Tarifs à titre indicatif — contactez-nous pour les prix actuels</p>` : ""}
+    <div class="menu-grid">
+      ${sectionsHtml}
+    </div>
+  </div>
+</section>
+<style>
+.menu-section{padding:80px 20px;background:#faf9f7}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;max-width:1100px;margin:0 auto;text-align:left}
+.menu-cat-title{font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${primary};margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid ${primary}20}
+.menu-item{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)}
+.menu-item:last-child{border-bottom:none}
+.menu-item-left{flex:1}
+.menu-item-name{display:block;font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:2px}
+.menu-item-desc{display:block;font-size:13px;color:#888;line-height:1.4}
+.menu-item-price{font-size:15px;font-weight:700;color:${primary};white-space:nowrap;flex-shrink:0}
+@media(max-width:600px){.menu-grid{grid-template-columns:1fr}}
+</style>`;
+}
+
 function renderImprovements(ctx: RenderCtx): string {
   const { audit } = ctx;
   const features = audit.improvementBrief.featuresToAdd?.slice(0, 6) || [];
@@ -724,6 +799,7 @@ export function generateCustomMockupHtml(
   const sectionBuilders: Record<string, () => string> = {
     hero: () => renderHero(ctx),
     about: () => renderAbout(ctx),
+    menu: () => renderMenu(ctx),          // vrais plats + prix scrapés
     services: () => renderServices(ctx),
     improvements: () => renderImprovements(ctx),
     comparison: () => renderComparison(ctx),
@@ -742,11 +818,11 @@ export function generateCustomMockupHtml(
   if (requested.length >= 3) {
     order = requested;
   } else if (audit.verdict.quality === "none") {
-    order = ["hero", "about", "services", "improvements", "reviews", "contact"];
+    order = ["hero", "about", "menu", "services", "improvements", "reviews", "contact"];
   } else if (audit.verdict.quality === "poor") {
-    order = ["hero", "about", "services", "improvements", "comparison", "reviews", "contact"];
+    order = ["hero", "about", "menu", "services", "improvements", "comparison", "reviews", "contact"];
   } else {
-    order = ["hero", "about", "services", "improvements", "comparison", "gallery", "reviews", "contact"];
+    order = ["hero", "about", "menu", "services", "improvements", "comparison", "gallery", "reviews", "contact"];
   }
 
   // Toujours hero et contact en garantie
