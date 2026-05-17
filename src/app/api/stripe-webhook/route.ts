@@ -168,6 +168,101 @@ async function sendAdminEmail({
 }
 
 /* ══════════════════════════════════════════
+   Brevo : email de relance J+25 (upsell Sérénité)
+   Planifié via scheduledAt → Brevo envoie automatiquement
+   5 jours avant la fin du mois offert.
+   ══════════════════════════════════════════ */
+
+async function scheduleUpsellEmail({
+  buyerEmail,
+  buyerFirstName,
+  prospectName,
+  prospectSlug,
+  domain,
+}: {
+  buyerEmail: string;
+  buyerFirstName: string;
+  prospectName: string;
+  prospectSlug: string;
+  domain: string;
+}) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey || !buyerEmail) return;
+
+  // J+25 : 5 jours avant la fin du mois offert
+  const sendAt = new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString();
+  const mockupUrl = `https://webconceptor.fr/prospects/${encodeURIComponent(prospectSlug)}`;
+  const hasDomain = domain && domain !== "(aucun)";
+
+  const htmlContent = `
+<div style="font-family:Inter,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:0;color:#0a0a0a;background:#ffffff">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#0d1b5e,#1a2d7a);padding:32px 32px 28px;border-radius:12px 12px 0 0">
+    <p style="margin:0 0 16px;display:inline-block;background:rgba(255,255,255,.12);color:#FFD700;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:100px">WebConceptor</p>
+    <h1 style="margin:0;font-size:24px;font-weight:800;color:#fff;line-height:1.3">Votre mois Sérénité offert<br>se termine dans <span style="color:#FFD700">5 jours</span> ☀️</h1>
+  </div>
+
+  <!-- Body -->
+  <div style="border:1px solid #e8e4db;border-top:none;border-radius:0 0 12px 12px;padding:28px 32px;background:#fff">
+
+    <p style="font-size:15px;line-height:1.7;color:#333;margin:0 0 20px">Bonjour ${buyerFirstName},</p>
+
+    <p style="font-size:15px;line-height:1.7;color:#333;margin:0 0 20px">
+      Depuis un mois, votre site <strong>${prospectName}</strong>${hasDomain ? ` sur <strong>${domain}</strong>` : ""} est hébergé, mis à jour et surveillé dans le cadre de votre mois Sérénité offert.
+      <strong>Dans 5 jours, ce service s'arrête</strong> — sauf si vous choisissez de continuer.
+    </p>
+
+    <!-- Ce que vous perdez -->
+    <div style="background:#fff8f0;border:1.5px solid #f0c070;border-radius:10px;padding:18px 22px;margin:0 0 22px">
+      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#8a5a00;text-transform:uppercase;letter-spacing:.08em">Ce qui s'arrête dans 5 jours :</p>
+      <ul style="margin:0;padding:0 0 0 18px;font-size:14px;color:#555;line-height:2">
+        <li>❌ Hébergement sécurisé de votre site</li>
+        <li>❌ Mises à jour illimitées sur simple email</li>
+        <li>❌ Sauvegardes quotidiennes automatiques</li>
+        <li>❌ Support prioritaire sous 24h</li>
+        ${hasDomain ? "<li>❌ Renouvellement automatique de votre domaine</li>" : ""}
+      </ul>
+    </div>
+
+    <!-- Offre Sérénité -->
+    <div style="background:#f0f7ff;border:1.5px solid #b8d4f0;border-radius:10px;padding:18px 22px;margin:0 0 24px">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#0d1b5e;text-transform:uppercase;letter-spacing:.1em">✅ Continuez avec Sérénité</p>
+      <p style="margin:0 0 4px;font-size:26px;font-weight:800;color:#0d1b5e"><strong>50 €</strong><span style="font-size:14px;font-weight:500;color:#555">/mois</span></p>
+      <p style="margin:0;font-size:13px;color:#555">Ou <strong>480 €/an</strong> — économisez 120 €. Sans engagement, résiliable à tout moment.</p>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin:0 0 24px">
+      <a href="${mockupUrl}" style="display:inline-block;background:#0d1b5e;color:#fff;font-size:15px;font-weight:700;padding:15px 36px;border-radius:100px;text-decoration:none;letter-spacing:.02em">Continuer avec Sérénité →</a>
+      <p style="margin:12px 0 0;font-size:12px;color:#aaa">ou répondez à cet email pour qu'on s'en occupe ensemble</p>
+    </div>
+
+    <p style="font-size:13px;color:#888;border-top:1px solid #f0f0f0;padding-top:20px;margin:0;line-height:1.6">
+      Une question ? Répondez directement à cet email.<br>
+      <a href="mailto:contact@webconceptor.fr" style="color:#0d1b5e;text-decoration:none">contact@webconceptor.fr</a> — L'équipe WebConceptor
+    </p>
+  </div>
+</div>`;
+
+  try {
+    await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
+        to: [{ email: buyerEmail, name: buyerFirstName }],
+        subject: `Votre mois Sérénité offert se termine dans 5 jours — ${prospectName}`,
+        htmlContent,
+        scheduledAt: sendAt,
+      }),
+    });
+  } catch {
+    // silent — non bloquant
+  }
+}
+
+/* ══════════════════════════════════════════
    Brevo email notification to client
    ══════════════════════════════════════════ */
 
@@ -344,6 +439,19 @@ export async function POST(req: NextRequest) {
         ville: metadata.buyer_ville,
       });
 
+      // ─── Email de relance J+25 pour formule Simple ─────────────────────
+      // Planifié via Brevo scheduledAt : envoyé 5 jours avant la fin du mois offert
+      if (!hasSerenite && buyerEmail) {
+        const buyerFirstName = metadata.buyer_prenom || buyerName.split(" ")[0] || "vous";
+        await scheduleUpsellEmail({
+          buyerEmail,
+          buyerFirstName,
+          prospectName: prospect.name,
+          prospectSlug: metadata.prospect_slug || "",
+          domain,
+        });
+      }
+
       // ═══════════════════════════════════════════════════════
       // ABONNEMENT SÉRÉNITÉ 50€/mois
       // Depuis la migration vers mode:"subscription", Stripe crée l'abonnement
@@ -396,7 +504,7 @@ export async function POST(req: NextRequest) {
       // Achat TOUJOURS tenté — le temps est critique pour ne pas se faire
       // piquer le domaine. Retry 3× automatique en cas d'erreur temporaire.
       // ═══════════════════════════════════════════════════════
-      if (hasSerenite && domain && domain !== "(aucun)") {
+      if (domain && domain !== "(aucun)") {
         // Priorité 1 : prénom/nom séparés depuis le Stripe metadata (nouveau format)
         // Priorité 2 : split du nom complet (prospects anciens avec nom combiné)
         let firstName = metadata.buyer_prenom || "";
