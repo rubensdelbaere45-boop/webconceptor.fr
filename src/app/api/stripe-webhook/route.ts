@@ -42,6 +42,34 @@ async function notifyTelegram(message: string) {
 }
 
 /* ══════════════════════════════════════════
+   SMS notification via Brevo (backup Telegram)
+   Recipient : +33635592471 (Rubens)
+   ══════════════════════════════════════════ */
+
+async function notifySMS(message: string) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return;
+
+  // Truncate to 306 chars (2 SMS credits max)
+  const content = message.slice(0, 306);
+
+  try {
+    await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
+      method: "POST",
+      headers: { "api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: "WebConceptor",
+        recipient: "+33635592471",
+        content,
+        type: "transactional",
+      }),
+    });
+  } catch {
+    // silent
+  }
+}
+
+/* ══════════════════════════════════════════
    Brevo email notification to admin (Rubens)
    ══════════════════════════════════════════ */
 
@@ -420,6 +448,15 @@ export async function POST(req: NextRequest) {
         }).catch(() => { /* silent */ });
       }
 
+      // SMS de secours (Brevo) — toujours envoyé même si Telegram tombe
+      await notifySMS(
+        `VENTE WebConceptor!\n` +
+        `${prospect.name}\n` +
+        `Client: ${buyerName} - ${buyerTel}\n` +
+        `Plan: ${hasSerenite ? "Serenite" : "Simple"} - ${amountPaid}EUR` +
+        (domain && domain !== "(aucun)" ? `\nDomaine: ${domain}` : "")
+      );
+
       // Email de confirmation au client (Brevo)
       if (buyerEmail) {
         await sendConfirmationEmail(buyerEmail, buyerName, `Commande ${prospect.name}`, domain);
@@ -552,6 +589,13 @@ export async function POST(req: NextRequest) {
               // disable_notification: false → notif SONORE (succès OU échec = événement critique)
             }),
           }).catch(() => { /* silent */ });
+
+          // SMS de secours domaine (Brevo)
+          await notifySMS(
+            result.success
+              ? `DOMAINE ACHETE: ${domain}\nClient: ${firstName} ${lastName} - ${buyerTel}`
+              : `URGENT! Domaine ${domain} ECHEC achat automatique!\nAchete manuellement sur IONOS maintenant!\nClient: ${firstName} ${lastName} - ${buyerTel}`
+          );
         }
       }
 
