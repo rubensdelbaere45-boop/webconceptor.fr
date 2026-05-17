@@ -23,11 +23,24 @@ import { rateLimit, getClientIp } from "@/lib/security";
    }
    ══════════════════════════════════════════ */
 
-const RESTAURANT_TYPES = new Set([
+// Métiers qui ont besoin d'une démo de réservation/prise de RDV
+// Tout le reste (plombier, électricien, garage...) n'a pas ce besoin
+const BOOKING_ELIGIBLE_TYPES = new Set([
+  // Restauration
   "restaurant", "brasserie", "bistrot", "gastronomique", "pizzeria",
   "creperie", "food_truck", "bar", "cafe", "glacier", "boulangerie",
   "patisserie", "traiteur", "sushi", "kebab", "burger",
+  // Beauté / Bien-être
+  "coiffeur", "institut", "esthetique", "spa", "barbier",
+  // Santé / Sport
+  "osteo", "kine", "salle_sport", "yoga",
+  // Autres avec RDV
+  "fleuriste", "photographe", "epicerie",
 ]);
+
+// SMS : max 2 par slug pour ne pas vider les crédits Brevo
+const SMS_MAX_PER_SLUG = 2;
+const smsCountCache = new Map<string, number>();
 
 function getSupabaseAdmin() {
   return createClient(
@@ -95,18 +108,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Maquette introuvable" }, { status: 404 });
   }
 
+  // Métier non éligible à la démo réservation → retour silencieux
+  const businessTypeCheck = prospect.business_type || "restaurant";
+  if (!BOOKING_ELIGIBLE_TYPES.has(businessTypeCheck)) {
+    return NextResponse.json({ success: true, sms_sent: false, message: "Demande enregistrée" });
+  }
+
   const businessType = prospect.business_type || "restaurant";
-  const isFood = RESTAURANT_TYPES.has(businessType);
+  const isEligible = BOOKING_ELIGIBLE_TYPES.has(businessType);
 
   // ─── SMS au patron du commerce ──────────────────────────────────────────
+  // Limité à SMS_MAX_PER_SLUG SMS par maquette pour préserver les crédits Brevo
   let smsSent = false;
   const prospectPhone = prospect.phone;
+  const currentCount = smsCountCache.get(slug) || 0;
+  const canSendSms = isEligible && currentCount < SMS_MAX_PER_SLUG;
 
-  if (prospectPhone) {
+  if (prospectPhone && canSendSms) {
+    smsCountCache.set(slug, currentCount + 1);
     const formattedPhone = formatFrenchPhone(prospectPhone);
-    const smsText = isFood
-      ? buildSmsText(guestName, guests, date, time, prospect.name)
-      : `📋 Nouvelle demande de ${guestName} (${guests} pers.) le ${formatDate(date)} à ${time}.\n\nVia votre site web — WebConceptor`;
+    const smsText = buildSmsText(guestName, guests, date, time, prospect.name);
 
     const brevoKey = process.env.BREVO_API_KEY;
     if (brevoKey) {
