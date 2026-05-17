@@ -4,7 +4,8 @@ import Stripe from "stripe";
 import { rateLimit, getClientIp } from "@/lib/security";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-  apiVersion: "2026-03-25.dahlia",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  apiVersion: "2023-10-16" as any, // 2026-03-25.dahlia a supprimé subscription_data.add_invoice_items
 });
 
 function getSupabaseAdmin() {
