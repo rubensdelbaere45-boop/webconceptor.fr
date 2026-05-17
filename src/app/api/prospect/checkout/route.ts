@@ -238,7 +238,8 @@ export async function POST(req: NextRequest) {
          SIMPLE → mode: "payment" one-shot 320 €
          Klarna + PayPal acceptés.
       ══════════════════════════════════════════════════════════════════════ */
-      const simpleLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const simpleLineItems: any[] = [
         {
           price_data: {
             currency: "eur",
