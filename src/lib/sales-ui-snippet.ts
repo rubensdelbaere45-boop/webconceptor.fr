@@ -263,6 +263,23 @@ body{padding-top:50px !important}
     if (ov) { ov.classList.remove('open'); document.body.style.overflow = ''; }
   };
 
+  /* Reset _domainVerified si l'utilisateur modifie le domaine après vérif */
+  (function() {
+    var domInp = document.getElementById('wcsx-domain');
+    var tldSel = document.getElementById('wcsx-tld');
+    function resetDomain() {
+      if (_domainVerified) {
+        _domainVerified = null;
+        var st = document.getElementById('wcsx-domain-status');
+        if (st) { st.className = ''; st.textContent = ''; }
+        var ps = document.getElementById('wcsx-price-summary');
+        if (ps) ps.style.display = 'none';
+      }
+    }
+    if (domInp) domInp.addEventListener('input', resetDomain);
+    if (tldSel) tldSel.addEventListener('change', resetDomain);
+  })();
+
   /* ─── Plan selection ─────────────────────────────────────── */
   window.wcSxSelectPlan = function(p) {
     document.querySelectorAll('.wc-sx-plan').forEach(function(el){
@@ -395,6 +412,17 @@ body{padding-top:50px !important}
     if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {
       err.textContent = 'Adresse email invalide.';
       err.classList.add('show'); return;
+    }
+
+    /* Bloquer si l'utilisateur a saisi un domaine sans cliquer Vérifier */
+    var domainInput = document.getElementById('wcsx-domain');
+    var domainVal = domainInput ? domainInput.value.trim() : '';
+    if (domainVal && !_domainVerified) {
+      err.textContent = 'Veuillez cliquer sur "Vérifier" pour confirmer la disponibilité du domaine avant de payer.';
+      err.classList.add('show');
+      var statusEl = document.getElementById('wcsx-domain-status');
+      if (statusEl) { statusEl.className = 'ko'; statusEl.textContent = '⚠ Vérifiez la disponibilité du domaine d\\'abord.'; }
+      return;
     }
 
     submit.disabled = true;
