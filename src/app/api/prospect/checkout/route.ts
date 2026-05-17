@@ -92,15 +92,12 @@ export async function POST(req: NextRequest) {
     buyer.nom = parts.slice(1).join(" ").slice(0, 60);
   }
 
-  // Adresse, CP, ville requis UNIQUEMENT pour Sérénité (enregistrement domaine IONOS).
-  // Pour la formule Simple, on se contente de prénom + nom + email + téléphone
-  // → moins de friction au checkout = +conversion.
-  const needsFullAddress = plan === "serenite";
+  // Adresse requise pour les deux plans (enregistrement domaine IONOS)
   if (!buyer.prenom || !buyer.nom || !buyer.email || !buyer.telephone) {
     return NextResponse.json({ error: "Prénom, nom, email et téléphone requis" }, { status: 400 });
   }
-  if (needsFullAddress && (!buyer.adresse || !buyer.ville || !buyer.cp)) {
-    return NextResponse.json({ error: "Adresse complète requise pour la formule Sérénité (enregistrement du domaine)" }, { status: 400 });
+  if (!buyer.adresse || !buyer.ville || !buyer.cp) {
+    return NextResponse.json({ error: "Adresse complète requise pour l'enregistrement du nom de domaine" }, { status: 400 });
   }
   if (!EMAIL_RE.test(buyer.email)) {
     return NextResponse.json({ error: "Email invalide" }, { status: 400 });
@@ -108,14 +105,14 @@ export async function POST(req: NextRequest) {
   if (buyer.telephone.length < 6) {
     return NextResponse.json({ error: "Téléphone invalide" }, { status: 400 });
   }
-  if (needsFullAddress && !/^\d{4,6}$/.test(buyer.cp)) {
+  if (!/^\d{4,6}$/.test(buyer.cp)) {
     return NextResponse.json({ error: "Code postal invalide" }, { status: 400 });
   }
 
-  // Validate domain if provided
+  // Validate domain if provided (both plans)
   let domainFull = "";
   let domainPriceCents = 0;
-  if (plan === "serenite" && rawDomain) {
+  if (rawDomain) {
     const domainName = str(rawDomain.name, 63).toLowerCase();
     const domainTld = str(rawDomain.tld, 10).toLowerCase();
     const priceNum = typeof rawDomain.priceCents === "number" ? rawDomain.priceCents : NaN;
@@ -241,20 +238,36 @@ export async function POST(req: NextRequest) {
          SIMPLE → mode: "payment" one-shot 320 €
          Klarna + PayPal acceptés.
       ══════════════════════════════════════════════════════════════════════ */
-      session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card", "klarna", "paypal"],
-        line_items: [{
+      const simpleLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+        {
           price_data: {
             currency: "eur",
             product_data: {
               name: `Site web WebConceptor — ${prospect.name}`,
-              description: "Création sur-mesure, livraison 5 jours ouvrables + 2 mois Sérénité offerts",
+              description: "Création sur-mesure, livraison 5 jours ouvrables + 1 mois Sérénité offert",
             },
             unit_amount: 32000, // 320 €
           },
           quantity: 1,
-        }],
+        },
+      ];
+      if (domainFull && domainPriceCents > 0) {
+        simpleLineItems.push({
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Domaine ${domainFull}`,
+              description: "Enregistrement pour 1 an",
+            },
+            unit_amount: domainPriceCents,
+          },
+          quantity: 1,
+        });
+      }
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card", "klarna", "paypal"],
+        line_items: simpleLineItems,
         customer_email: buyer.email,
         customer_creation: "always",
         success_url: successUrl,
