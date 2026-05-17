@@ -220,16 +220,16 @@ export async function POST(req: NextRequest) {
         mode: "subscription",
         payment_method_types: ["card"],
         line_items: [{ price: serenitePriceId, quantity: 1 }],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         subscription_data: {
           trial_period_days: 30, // 1 mois offert — sans engagement
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          add_invoice_items: addInvoiceItems as any,
+          add_invoice_items: addInvoiceItems,
           metadata: {
             source: "self_serve_mockup",
             prospect_id: prospect.id,
             prospect_slug: prospect.slug,
           },
-        },
+        } as any,
         customer_email: buyer.email,
         success_url: successUrl,
         cancel_url:  cancelUrl,
