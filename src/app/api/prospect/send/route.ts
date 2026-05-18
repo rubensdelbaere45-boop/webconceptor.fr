@@ -566,10 +566,24 @@ function escape(s: string): string {
    Brevo email + Telegram
    ══════════════════════════════════════════ */
 
-async function sendEmail(to: string, toName: string, subject: string, htmlBody: string): Promise<boolean> {
+async function sendEmail(
+  to: string,
+  toName: string,
+  subject: string,
+  htmlBody: string,
+  prospectId?: string,   // pour le header List-Unsubscribe (RFC 2369 + RFC 8058)
+): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
   try {
+    // List-Unsubscribe : obligatoire Gmail/Yahoo bulk sender policy depuis fev 2024.
+    // Sans ce header, Gmail affiche "Spam" au lieu de "Se désabonner" → plaintes → blocages.
+    // Le one-click POST (RFC 8058) est géré par /api/unsubscribe.
+    const baseUrl = "https://webconceptor.fr";
+    const unsubUrl = prospectId
+      ? `${baseUrl}/api/unsubscribe?id=${encodeURIComponent(prospectId)}&email=${encodeURIComponent(to)}`
+      : `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(to)}`;
+
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
@@ -578,6 +592,12 @@ async function sendEmail(to: string, toName: string, subject: string, htmlBody: 
         to: [{ email: to, name: toName || to }],
         subject,
         htmlContent: htmlBody,
+        headers: {
+          // RFC 2369 : lien cliquable dans les clients email
+          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@webconceptor.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
+          // RFC 8058 : one-click POST (Gmail affiche le bouton "Se désabonner" directement)
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
     });
     return res.ok;
@@ -974,7 +994,7 @@ async function handleSend(req: NextRequest) {
 
         // Envoi en parallèle aux 1 ou 2 destinataires
         const sendResults = await Promise.all(
-          targetEmails.map((addr) => sendEmail(addr, p.name, emailSubject, emailBody))
+          targetEmails.map((addr) => sendEmail(addr, p.name, emailSubject, emailBody, p.id))
         );
         const successCount = sendResults.filter(Boolean).length;
 

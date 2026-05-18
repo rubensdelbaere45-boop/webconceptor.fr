@@ -69,10 +69,14 @@ function buildReminderEmail(prospectName: string, mockupUrl: string): { subject:
   return { subject, html };
 }
 
-async function sendBrevoEmail(to: string, name: string, subject: string, html: string): Promise<boolean> {
+async function sendBrevoEmail(to: string, name: string, subject: string, html: string, prospectId?: string): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
   try {
+    const baseUrl = "https://webconceptor.fr";
+    const unsubUrl = prospectId
+      ? `${baseUrl}/api/unsubscribe?id=${encodeURIComponent(prospectId)}&email=${encodeURIComponent(to)}`
+      : `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(to)}`;
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -85,6 +89,10 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
         to: [{ email: to, name }],
         subject,
         htmlContent: html,
+        headers: {
+          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@webconceptor.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
       signal: AbortSignal.timeout(10000),
     });
@@ -160,7 +168,7 @@ async function handler(req: NextRequest) {
       }
     }
 
-    const sendResults = await Promise.all(targets.map((addr) => sendBrevoEmail(addr, p.name, subject, html)));
+    const sendResults = await Promise.all(targets.map((addr) => sendBrevoEmail(addr, p.name, subject, html, p.id)));
     const anySuccess = sendResults.some(Boolean);
 
     // Marque comme relancé même si échec (évite retry infini)
