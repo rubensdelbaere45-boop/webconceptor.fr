@@ -826,7 +826,7 @@ async function handleSend(req: NextRequest) {
   const prospect_id = typeof raw.prospect_id === "string" && /^[0-9a-f-]{10,64}$/i.test(raw.prospect_id)
     ? raw.prospect_id
     : null;
-  const batch_size = Math.max(1, Math.min(50, Number.isFinite(Number(raw.batch_size)) ? Number(raw.batch_size) : 5));
+  const batch_size = Math.max(1, Math.min(150, Number.isFinite(Number(raw.batch_size)) ? Number(raw.batch_size) : 5));
   const dry_run = Boolean(raw.dry_run);
 
   // COUVRE-FEU : pas d'envoi d'email entre 19h et 9h (heure Paris)
@@ -887,18 +887,18 @@ async function handleSend(req: NextRequest) {
   const origin = "https://webconceptor.fr";
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
 
-  // Hard deadline — Render free tier coupe à ~100 s. On s'arrête à 80 s pour
-  // garantir une réponse 200 propre plutôt qu'un 502 qui tuerait le workflow n8n.
-  // On traite autant de prospects que possible dans ce budget, les autres
-  // resteront 'found' en DB et seront pris au prochain run.
-  const SEND_DEADLINE_MS = 50_000; // 50 s (Vercel free coupe à 60 s)
+  // Hard deadline — Vercel Pro autorise 300 s pour la route send (vercel.json).
+  // On s'arrête à 240 s pour garder 60 s de marge (réponse JSON + Supabase final).
+  // ~4 s/prospect → ~60 prospects max dans le budget. Les autres restent "found"
+  // et seront traités au prochain run (4 runs/jour × 60 = 240-300 emails/jour).
+  const SEND_DEADLINE_MS = 240_000; // 240 s (Vercel Pro = 300 s max)
   const sendStartedAt = Date.now();
   const sendTimeLeft = () => SEND_DEADLINE_MS - (Date.now() - sendStartedAt);
   let timedOut = 0;
 
   for (const p of prospects) {
-    // Si on n'a plus assez de temps pour un cycle complet (Claude 10-25s + envoi Brevo + notif) → on arrête
-    if (sendTimeLeft() < 12_000) {
+    // Garde : 20 s minimum pour finir proprement (Claude + Brevo + Supabase)
+    if (sendTimeLeft() < 20_000) {
       timedOut++;
       results.push({ id: p.id, name: p.name, status: "deferred_timeout" });
       continue;
