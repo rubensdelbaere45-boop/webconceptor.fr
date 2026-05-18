@@ -3,7 +3,33 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/prospect/cron/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/prospect/find/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/prospect/send/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/monitor/n8n/route.ts": {
+      "maxDuration": 60
     }
   },
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "crons": [
+    {
+      "path": "/api/prospect/cron",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/prospect/cron",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/monitor/n8n",
+      "schedule": "*/15 7-17 * * 1-5"
+    }
+  ]
 }

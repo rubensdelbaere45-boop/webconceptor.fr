@@ -114,7 +114,7 @@ const DEFAULT_QUERIES = [
 
 // Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date
 // pour ne jamais envoyer les mêmes deux jours de suite.
-const QUERIES_PER_RUN = 3;
+const QUERIES_PER_RUN = 2; // 2 × 50s find + send + reminders ≈ 200s < 300s Vercel Pro limit
 
 // Déduit le business_type à envoyer à /find depuis le texte de la query.
 // Sans ça, /find défaut sur "epicerie" → filtre 250km Aubenton appliqué partout.
