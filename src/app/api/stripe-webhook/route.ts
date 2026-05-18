@@ -603,7 +603,265 @@ export async function POST(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // FLOW 2 : Code PIN (existant, via /code)
+    // FLOW 2 : Chatbot IA (79€/mois)
+    // source === "chatbot_subscription"
+    // ═══════════════════════════════════════════════════════
+    if (source === "chatbot_subscription") {
+      const businessName = metadata.business_name || "";
+      const ownerEmail   = metadata.owner_email   || "";
+      const ownerName    = metadata.owner_name    || "";
+      const phone        = metadata.phone         || "";
+      const businessType = metadata.business_type || "general";
+      const city         = metadata.city          || "";
+      const customerId   = typeof session.customer === "string" ? session.customer : null;
+      const subId        = typeof session.subscription === "string" ? session.subscription : null;
+
+      if (!ownerEmail || !businessName) {
+        console.error("[webhook] chatbot_subscription : metadata incomplet");
+        return NextResponse.json({ received: true });
+      }
+
+      // Idempotence : vérifier si déjà traité
+      const { data: existing } = await supabase
+        .from("chatbot_subscriptions")
+        .select("id")
+        .eq("stripe_subscription_id", subId || "")
+        .single();
+
+      if (!existing) {
+        // Créer l'abonnement chatbot
+        const token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        await supabase.from("chatbot_subscriptions").insert({
+          token,
+          stripe_customer_id:     customerId,
+          stripe_subscription_id: subId,
+          business_name:  businessName,
+          business_type:  businessType,
+          owner_email:    ownerEmail,
+          owner_name:     ownerName,
+          phone,
+          city,
+          status: "active",
+        });
+
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+        const chatUrl   = `${baseUrl}/chat/${token}`;
+        const widgetUrl = `${baseUrl}/api/chatbot/widget?token=${token}`;
+        const scriptTag = `<script src="${widgetUrl}" defer></script>`;
+
+        // Email de livraison automatique
+        const brevoKey = process.env.BREVO_API_KEY;
+        if (brevoKey && ownerEmail) {
+          const firstName = ownerName.split(" ")[0] || "vous";
+          await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: { "api-key": brevoKey, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+              to: [{ email: ownerEmail, name: ownerName }],
+              subject: `🤖 Votre Chatbot IA est prêt — ${businessName}`,
+              htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
+<h1 style="font-size:22px;margin-bottom:8px">Votre chatbot est prêt ✅</h1>
+<p style="color:#525252;font-size:15px;margin-bottom:24px">Bonjour ${firstName}, votre assistant IA pour <strong>${businessName}</strong> est actif et répond déjà aux questions de vos clients.</p>
+
+<div style="background:#f0f9ff;border-left:3px solid #0066ff;padding:20px;border-radius:8px;margin-bottom:24px">
+  <p style="font-weight:700;margin-bottom:12px">📎 Votre page de chat standalone</p>
+  <p style="font-size:14px;color:#525252;margin-bottom:12px">Partagez ce lien sur WhatsApp, vos réseaux sociaux ou votre fiche Google :</p>
+  <a href="${chatUrl}" style="display:block;background:#0066ff;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;text-align:center">${chatUrl}</a>
+</div>
+
+<div style="background:#f8f9fa;border-left:3px solid #6366f1;padding:20px;border-radius:8px;margin-bottom:24px">
+  <p style="font-weight:700;margin-bottom:8px">🖥️ Intégration sur votre site existant</p>
+  <p style="font-size:13px;color:#525252;margin-bottom:12px">Collez ce code avant la balise &lt;/body&gt; de votre site :</p>
+  <code style="display:block;background:#1e1e2e;color:#a6e3a1;padding:16px;border-radius:8px;font-size:12px;word-break:break-all">${scriptTag}</code>
+</div>
+
+<div style="background:#fafafa;border:1px solid #e5e5e5;padding:20px;border-radius:8px;margin-bottom:24px">
+  <p style="font-weight:700;margin-bottom:12px">⚙️ Personnaliser votre chatbot</p>
+  <p style="font-size:14px;color:#525252;margin-bottom:12px">Répondez à cet email pour personnaliser :</p>
+  <ul style="font-size:14px;color:#525252;padding-left:20px">
+    <li>Horaires d'ouverture</li>
+    <li>Questions fréquentes et réponses</li>
+    <li>Lien de réservation / prise de RDV</li>
+    <li>Couleur de l'interface</li>
+  </ul>
+</div>
+
+<p style="font-size:14px;color:#525252">Des questions ? Répondez directement à cet email ou appelez le 06 35 59 24 71.</p>
+<div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
+  <strong>Tom Bauer</strong> — WebConceptor<br>contact@webconceptor.fr · webconceptor.fr
+</div>
+</div>`,
+            }),
+          }).catch(() => {});
+        }
+
+        // Notif Telegram
+        await notifyTelegram(`🤖 <b>Nouveau Chatbot IA vendu</b>\n\n<b>Client :</b> ${escapeTelegram(ownerName)}\n<b>Email :</b> ${escapeTelegram(ownerEmail)}\n<b>Entreprise :</b> ${escapeTelegram(businessName)}\n<b>Token :</b> <code>${token}</code>\n<b>Chat URL :</b> ${chatUrl}`);
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FLOW 3 : Agent Avis Google (149€/mois)
+    // source === "gmb_subscription"
+    // ═══════════════════════════════════════════════════════
+    if (source === "gmb_subscription") {
+      const businessName  = metadata.business_name  || "";
+      const ownerEmail    = metadata.owner_email     || "";
+      const ownerName     = metadata.owner_name      || "";
+      const phone         = metadata.phone           || "";
+      const businessType  = metadata.business_type   || "general";
+      const city          = metadata.city            || "";
+      const responseTone  = metadata.response_tone   || "professionnel";
+      const customerId    = typeof session.customer === "string" ? session.customer : null;
+      const subId         = typeof session.subscription === "string" ? session.subscription : null;
+
+      if (!ownerEmail || !businessName) {
+        return NextResponse.json({ received: true });
+      }
+
+      const { data: existingGmb } = await supabase
+        .from("gmb_subscriptions")
+        .select("id, auth_token")
+        .eq("stripe_subscription_id", subId || "")
+        .single();
+
+      let authToken = existingGmb?.auth_token;
+
+      if (!existingGmb) {
+        const newAuthToken = Array.from(crypto.getRandomValues(new Uint8Array(20)))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        authToken = newAuthToken;
+
+        await supabase.from("gmb_subscriptions").insert({
+          auth_token:             newAuthToken,
+          stripe_customer_id:     customerId,
+          stripe_subscription_id: subId,
+          business_name:  businessName,
+          business_type:  businessType,
+          owner_email:    ownerEmail,
+          owner_name:     ownerName,
+          phone,
+          city,
+          response_tone:  responseTone,
+          status:         "pending_auth",
+        });
+      }
+
+      // Email avec lien de connexion Google
+      const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+      const authUrl   = `${baseUrl}/api/gmb/auth?token=${authToken}`;
+      const brevoKey  = process.env.BREVO_API_KEY;
+
+      if (brevoKey && ownerEmail && !existingGmb) {
+        const firstName = ownerName.split(" ")[0] || "vous";
+        await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: { "api-key": brevoKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+            to: [{ email: ownerEmail, name: ownerName }],
+            subject: `🌟 Activez votre Agent Avis Google — ${businessName}`,
+            htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
+<h1 style="font-size:22px;margin-bottom:8px">Plus qu'une étape !</h1>
+<p style="color:#525252;font-size:15px;margin-bottom:24px">Bonjour ${firstName}, votre abonnement Agent Avis Google pour <strong>${businessName}</strong> est confirmé. Il ne reste qu'une chose à faire : connecter votre compte Google My Business.</p>
+
+<div style="text-align:center;margin:32px 0">
+  <a href="${authUrl}" style="display:inline-block;background:#4285F4;color:#fff;padding:16px 32px;border-radius:100px;text-decoration:none;font-weight:700;font-size:15px">
+    🔗 Connecter mon Google My Business
+  </a>
+  <p style="font-size:12px;color:#9ca3af;margin-top:12px">Cliquez une seule fois · Prend moins de 2 minutes</p>
+</div>
+
+<div style="background:#fafafa;border:1px solid #e5e5e5;padding:20px;border-radius:8px;margin-bottom:24px">
+  <p style="font-size:14px;font-weight:700;margin-bottom:8px">Une fois connecté, votre agent :</p>
+  <ul style="font-size:14px;color:#525252;padding-left:20px">
+    <li>Répondra à tous vos avis Google sous 1 heure</li>
+    <li>Adaptera son ton selon le type d'avis</li>
+    <li>Vous enverra un rapport mensuel</li>
+  </ul>
+</div>
+
+<p style="font-size:14px;color:#525252">Ce lien est personnel et valide 30 jours. Des questions ? Répondez à cet email.</p>
+<div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
+  <strong>Tom Bauer</strong> — WebConceptor<br>contact@webconceptor.fr
+</div>
+</div>`,
+          }),
+        }).catch(() => {});
+      }
+
+      await notifyTelegram(`🌟 <b>Nouvel abonnement Agent Avis Google</b>\n\n<b>Client :</b> ${escapeTelegram(ownerName)}\n<b>Email :</b> ${escapeTelegram(ownerEmail)}\n<b>Entreprise :</b> ${escapeTelegram(businessName)}\n⏳ En attente de connexion Google`);
+
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FLOW 4 : Audit IA (49€ one-shot)
+    // source === "audit_ia"
+    // ═══════════════════════════════════════════════════════
+    if (source === "audit_ia") {
+      const businessName = metadata.business_name || "";
+      const ownerEmail   = metadata.owner_email   || "";
+      const ownerName    = metadata.owner_name    || "";
+      const businessAddr = metadata.business_addr || "";
+      const websiteUrl   = metadata.website_url   || "";
+      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
+
+      if (!ownerEmail || !businessName) {
+        return NextResponse.json({ received: true });
+      }
+
+      // Idempotence
+      const { data: existingOrder } = await supabase
+        .from("audit_orders")
+        .select("id, status")
+        .eq("stripe_session_id", session.id)
+        .single();
+
+      if (!existingOrder) {
+        const { data: newOrder } = await supabase
+          .from("audit_orders")
+          .insert({
+            stripe_session_id:    session.id,
+            stripe_payment_intent: paymentIntent,
+            owner_email:   ownerEmail,
+            owner_name:    ownerName,
+            business_name: businessName,
+            business_address: businessAddr,
+            website_url:   websiteUrl,
+            status:        "pending",
+          })
+          .select("id")
+          .single();
+
+        if (newOrder) {
+          // Déclencher la génération en arrière-plan
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+          fetch(`${baseUrl}/api/audit-ia`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-key": process.env.ADMIN_SECRET_KEY || "",
+            },
+            body: JSON.stringify({ mode: "generate", order_id: newOrder.id }),
+          }).catch(() => {});
+
+          await notifyTelegram(`📊 <b>Nouvel Audit IA vendu</b>\n\n<b>Client :</b> ${escapeTelegram(ownerName)}\n<b>Email :</b> ${escapeTelegram(ownerEmail)}\n<b>Entreprise :</b> ${escapeTelegram(businessName)}\n<b>Site :</b> ${escapeTelegram(websiteUrl || "—")}`);
+        }
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FLOW 5 : Code PIN (existant, via /code)
     // metadata.code présent
     // ═══════════════════════════════════════════════════════
     if (!code) {
