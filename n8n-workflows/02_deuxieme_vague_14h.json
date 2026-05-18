@@ -1,0 +1,111 @@
+{
+  "name": "02 — 2ème vague emails 14h",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * 1-5"
+            }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "name": "Schedule — 14h Paris (lun-ven)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/prospect/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-admin-key",
+              "value": "={{ $env.ADMIN_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={ \"batch_size\": 10, \"dry_run\": false }",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "name": "POST /api/prospect/send (batch 10)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📧 2ème vague 14h\n\nEmails envoyés : {{ $json.results ? $json.results.filter(r => r.status === 'sent').length : 0 }}/{{ $json.processed || 0 }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "disable_notification": true
+        }
+      },
+      "id": "b8c9d0e1-f2a3-4567-bcde-678901234567",
+      "name": "Telegram résultat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [680, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram WebConceptor"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule — 14h Paris (lun-ven)": {
+      "main": [
+        [
+          {
+            "node": "POST /api/prospect/send (batch 10)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /api/prospect/send (batch 10)": {
+      "main": [
+        [
+          {
+            "node": "Telegram résultat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveManualExecutions": true,
+    "executionTimeout": 330
+  },
+  "tags": ["webconceptor", "envoi"]
+}

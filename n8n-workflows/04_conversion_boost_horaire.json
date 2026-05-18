@@ -1,0 +1,115 @@
+{
+  "name": "04 — Conversion Boost (SMS hot leads + cart abandon) — toutes les heures",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7-17 * * 1-6"
+            }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "f2a3b4c5-d6e7-8901-fabc-012345678901",
+      "name": "Schedule — toutes les heures 9h-19h (lun-sam)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/prospect/hot-lead-sms",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-cron-secret",
+              "value": "e0edc796fff2ffd69e2f576f0e91d208ca9fee7df025c302e5db7b6270c1ab86"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a3b4c5d6-e7f8-9012-abcd-123456789012",
+      "name": "POST /api/prospect/hot-lead-sms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/prospect/cart-abandon",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-cron-secret",
+              "value": "e0edc796fff2ffd69e2f576f0e91d208ca9fee7df025c302e5db7b6270c1ab86"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "b4c5d6e7-f8a9-0123-bcde-234567890123",
+      "name": "POST /api/prospect/cart-abandon",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 420]
+    }
+  ],
+  "connections": {
+    "Schedule — toutes les heures 9h-19h (lun-sam)": {
+      "main": [
+        [
+          {
+            "node": "POST /api/prospect/hot-lead-sms",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "POST /api/prospect/cart-abandon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveManualExecutions": true,
+    "executionTimeout": 90
+  },
+  "tags": ["webconceptor", "conversion"]
+}
