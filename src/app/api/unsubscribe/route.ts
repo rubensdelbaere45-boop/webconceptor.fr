@@ -63,6 +63,7 @@ async function processUnsubscribe(id: string | null, email: string | null): Prom
         .from("prospects")
         .update({
           unsubscribed_at: now,
+          status: "unsubscribed",
           notes: "Désabonné via one-click le " + now,
         })
         .eq("id", id);
@@ -74,6 +75,7 @@ async function processUnsubscribe(id: string | null, email: string | null): Prom
         .from("prospects")
         .update({
           unsubscribed_at: now,
+          status: "unsubscribed",
           notes: "Désabonné via one-click (par email) le " + now,
         })
         .eq("email", email.toLowerCase());

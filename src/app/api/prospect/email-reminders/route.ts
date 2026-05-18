@@ -26,7 +26,7 @@ function escape(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function buildReminderEmail(prospectName: string, mockupUrl: string): { subject: string; html: string } {
+function buildReminderEmail(prospectName: string, mockupUrl: string, prospectId?: string): { subject: string; html: string } {
   const firstName = prospectName.split(/[\s,]/)[0].slice(0, 40);
   const subject = `${firstName}, votre maquette vous attend toujours`;
   const html = `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a;line-height:1.6">
@@ -64,7 +64,7 @@ function buildReminderEmail(prospectName: string, mockupUrl: string): { subject:
     <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
     <p><a href="https://webconceptor.fr" style="color:#0066ff;text-decoration:none">webconceptor.fr</a></p>
   </div>
-  <p style="font-size:11px;color:#a3a3a3;margin-top:24px;border-top:1px solid #f5f5f5;padding-top:16px">Vous recevez cet email dans le cadre d'un premier contact commercial. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
+  <p style="font-size:11px;color:#a3a3a3;margin-top:24px;border-top:1px solid #f5f5f5;padding-top:16px">Vous recevez cet email dans le cadre d'un premier contact commercial. Pour ne plus être contacté, <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospectId || '')}" style="color:#a3a3a3">cliquez ici pour vous désabonner</a>.</p>
 </div>`;
   return { subject, html };
 }
@@ -156,7 +156,7 @@ async function handler(req: NextRequest) {
 
   for (const p of prospects) {
     const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
-    const { subject, html } = buildReminderEmail(p.name, mockupUrl);
+    const { subject, html } = buildReminderEmail(p.name, mockupUrl, p.id);
 
     // Envoi au mail principal + additional_emails (max 2 destinataires)
     const targets: string[] = [p.email];

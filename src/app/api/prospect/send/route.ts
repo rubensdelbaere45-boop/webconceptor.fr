@@ -794,7 +794,7 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
     <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
   </div>
 
-  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:14px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, répondez simplement avec le mot STOP.</p>
+  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:14px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b5a894">cliquez ici pour vous désabonner</a>.</p>
 </div>`;
   void firstName; // utilisé implicitement via greeting
 }
@@ -857,6 +857,7 @@ async function handleSend(req: NextRequest) {
       .select("*")
       .eq("status", "found")
       .not("email", "is", null)
+      .is("unsubscribed_at", null)   // Jamais envoyer à quelqu'un qui s'est désabonné
       .order("created_at", { ascending: true })
       .limit(batch_size * 10);
     if (data) {
