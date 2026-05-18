@@ -8,10 +8,16 @@ import { safeCompare } from "@/lib/security";
    Utilisable depuis n8n (HTTP Request) ou Render Cron Job.
    ══════════════════════════════════════════ */
 
+// Rotation de queries diversifiées — couvre tous les secteurs cibles.
+// Chaque appel au cron sans ?query= utilise la query du jour (rotation par jour de la semaine).
 const DEFAULT_QUERIES = [
-  "Proxi épicerie France",
-  "Proxi Super France",
-  "Proxi proximité France",
+  "restaurant Marseille",        // lundi
+  "coiffeur Toulouse",           // mardi
+  "boulangerie Nantes",          // mercredi
+  "restaurant Bordeaux",         // jeudi
+  "pizzeria Lyon",               // vendredi
+  "coiffeur Nice",               // samedi
+  "brasserie Strasbourg",        // dimanche
 ];
 
 export async function GET(req: NextRequest) {

@@ -894,12 +894,9 @@ async function handleSend(req: NextRequest) {
       continue;
     }
 
-    // Skip les sites déjà bons (score >= 70) — inutile de pitcher quelqu'un
-    // qui a déjà un super site. On cible uniquement : no-site, poor, average.
-    if (p.site_quality === "good") {
-      results.push({ id: p.id, name: p.name, status: "skipped_good_site" });
-      continue;
-    }
+    // Note : on NE skip PAS les sites "good" — le tri par priorité gère l'ordre
+    // (no-site > poor > average > good). Le pitch reste valide même pour un site
+    // moderne : réservation sans commission, 3× sans frais, design premium.
 
     try {
       const mockupUrl = `${origin}/prospects/${p.slug}`;
