@@ -13,7 +13,7 @@ import { runDeepAudit, type DeepAudit } from "@/lib/deep-audit";
 // Aubenton coordinates (02500)
 const AUBENTON_LAT = 49.836;
 const AUBENTON_LNG = 4.205;
-const EXCLUSION_RADIUS_KM = 350; // 4h drive
+const EXCLUSION_RADIUS_KM = 250; // ~3h drive (rayon d'exclusion Proxi autour d'Aubenton)
 
 function getSupabaseAdmin() {
   return createClient(
@@ -739,7 +739,7 @@ export async function POST(req: NextRequest) {
   const businessType: string = typeof rawBody.business_type === "string"
     && ALLOWED_TYPES.includes(rawBody.business_type)
     ? rawBody.business_type
-    : "epicerie";
+    : "restaurant"; // défaut = restaurant (pas de filtre distance Aubenton)
 
   // Minimum Google rating filter (restaurants with rating ≥ this value = quality signal)
   const minRating: number = typeof rawBody.min_rating === "number"

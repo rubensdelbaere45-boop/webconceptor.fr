@@ -9,16 +9,133 @@ import { safeCompare } from "@/lib/security";
    ══════════════════════════════════════════ */
 
 // Rotation de queries diversifiées — couvre tous les secteurs cibles.
-// Chaque appel au cron sans ?query= utilise la query du jour (rotation par jour de la semaine).
+// Grande liste : on sélectionne N queries par jour de la semaine (rotation).
+// Objectif : trouver des commerces locaux avec un site nul ou inexistant.
 const DEFAULT_QUERIES = [
-  "restaurant Marseille",        // lundi
-  "coiffeur Toulouse",           // mardi
-  "boulangerie Nantes",          // mercredi
-  "restaurant Bordeaux",         // jeudi
-  "pizzeria Lyon",               // vendredi
-  "coiffeur Nice",               // samedi
-  "brasserie Strasbourg",        // dimanche
+  // ── Restaurants ──
+  "restaurant Marseille",
+  "restaurant Bordeaux",
+  "restaurant Rennes",
+  "restaurant Montpellier",
+  "restaurant Reims",
+  "restaurant Le Havre",
+  "restaurant Saint-Étienne",
+  "brasserie Strasbourg",
+  "brasserie Nantes",
+  "brasserie Grenoble",
+  "pizzeria Lyon",
+  "pizzeria Toulon",
+  "pizzeria Aix-en-Provence",
+  "bistrot Paris",
+  "bistrot Lille",
+  "crêperie Rennes",
+  "crêperie Brest",
+  "sushi restaurant Toulouse",
+  "restaurant gastronomique Dijon",
+  "restaurant libanais Montpellier",
+  // ── Coiffeurs ──
+  "coiffeur Toulouse",
+  "coiffeur Nantes",
+  "coiffeur Grenoble",
+  "coiffeur Rouen",
+  "salon de coiffure Bordeaux",
+  "salon de coiffure Montpellier",
+  "salon de coiffure Angers",
+  "coiffeur afro Marseille",
+  "barbier Lyon",
+  "barbier Strasbourg",
+  // ── Boulangeries / Pâtisseries ──
+  "boulangerie artisanale Paris",
+  "boulangerie artisanale Toulouse",
+  "boulangerie Bordeaux",
+  "boulangerie Montpellier",
+  "boulangerie Reims",
+  "pâtisserie Lyon",
+  "pâtisserie Nantes",
+  "pâtisserie Nice",
+  "chocolatier Strasbourg",
+  "glacier Marseille",
+  // ── Artisans / Services ──
+  "plombier chauffagiste Bordeaux",
+  "plombier Lyon",
+  "plombier Marseille",
+  "électricien Nantes",
+  "électricien Montpellier",
+  "peintre en bâtiment Toulouse",
+  "menuisier artisan Rennes",
+  "maçon Grenoble",
+  "couvreur charpentier Lille",
+  "serrurier Paris",
+  // ── Beauté / Bien-être ──
+  "institut de beauté Toulouse",
+  "institut de beauté Bordeaux",
+  "spa bien-être Lyon",
+  "spa massage Marseille",
+  "manucure onglerie Nantes",
+  "tatoueur piercing Montpellier",
+  "tatoueur piercing Strasbourg",
+  "centre esthétique Nice",
+  // ── Santé / Para-médical ──
+  "ostéopathe Bordeaux",
+  "ostéopathe Rennes",
+  "kinésithérapeute Nantes",
+  "dentiste Montpellier",
+  "dentiste Toulouse",
+  "médecin généraliste Grenoble",
+  "cabinet médical Lyon",
+  // ── Fleuristes / Cadeaux ──
+  "fleuriste Marseille",
+  "fleuriste Bordeaux",
+  "fleuriste Rennes",
+  "fleuriste Nantes",
+  // ── Garages / Auto ──
+  "garage auto Toulouse",
+  "garage mécanique Bordeaux",
+  "carrossier peinture Lyon",
+  "contrôle technique Nantes",
+  // ── Auto-écoles ──
+  "auto-école Marseille",
+  "auto-école Toulouse",
+  "auto-école Bordeaux",
+  "auto-école Rennes",
+  // ── Cafés / Bars ──
+  "café bar Bordeaux",
+  "café salon de thé Lyon",
+  "bar restaurant Toulouse",
+  "cave à vins Montpellier",
+  // ── Divers ──
+  "traiteur Marseille",
+  "traiteur Lyon",
+  "cave à bière artisanale Strasbourg",
+  "pressing teinturier Toulouse",
+  "photographe portrait Bordeaux",
+  "agence immobilière artisan Nice",
 ];
+
+// Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date
+// pour ne jamais envoyer les mêmes deux jours de suite.
+const QUERIES_PER_RUN = 3;
+
+// Déduit le business_type à envoyer à /find depuis le texte de la query.
+// Sans ça, /find défaut sur "epicerie" → filtre 250km Aubenton appliqué partout.
+function inferBusinessType(query: string): string {
+  const q = query.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (/restaurant|brasserie|pizzeria|bistrot|traiteur|sushi|creperie|gastronomique|libanais/.test(q)) return "restaurant";
+  if (/coiffeur|salon de coiffure|barbier/.test(q)) return "coiffeur";
+  if (/boulangerie|patisserie|viennoiserie|chocolatier/.test(q)) return "boulangerie";
+  if (/glacier|glace/.test(q)) return "glacier";
+  if (/cafe|bar |salon de the|cave a vins|cave a biere/.test(q)) return "cafe";
+  if (/plombier|chauffagiste/.test(q)) return "plombier";
+  if (/electricien/.test(q)) return "electricien";
+  if (/garage|mecanique|carrossier|controle technique/.test(q)) return "garage";
+  if (/fleuriste/.test(q)) return "fleuriste";
+  if (/auto.ecole/.test(q)) return "auto_ecole";
+  if (/osteopathe|kinesitherapeute/.test(q)) return "osteo";
+  if (/dentiste|cabinet medical|medecin/.test(q)) return "dentiste";
+  if (/institut de beaute|spa|massage|manucure|onglerie|tatoueur/.test(q)) return "institut";
+  if (/proxi|epicerie|superette/.test(q)) return "epicerie";
+  return "restaurant"; // défaut sûr : pas de filtre distance
+}
 
 export async function GET(req: NextRequest) {
   return runCron(req);
@@ -49,10 +166,17 @@ async function runCron(req: NextRequest) {
     ? Math.min(20, Math.max(1, Math.floor(batchParam)))
     : 5;
 
-  // Rotate through default queries if nothing specified
-  const queries = query ? [query] : [
-    DEFAULT_QUERIES[new Date().getDay() % DEFAULT_QUERIES.length],
-  ];
+  // Rotation sur la grande liste : QUERIES_PER_RUN queries différentes par run
+  // On utilise le numéro de jour depuis epoch pour avancer dans la liste chaque jour.
+  const queries: string[] = query ? [query] : (() => {
+    const dayIndex = Math.floor(Date.now() / 86_400_000); // # jours depuis epoch
+    const offset = (dayIndex * QUERIES_PER_RUN) % DEFAULT_QUERIES.length;
+    const selected: string[] = [];
+    for (let i = 0; i < QUERIES_PER_RUN; i++) {
+      selected.push(DEFAULT_QUERIES[(offset + i) % DEFAULT_QUERIES.length]);
+    }
+    return selected;
+  })();
 
   const origin = "https://webconceptor.fr";
   const adminKey = process.env.ADMIN_SECRET_KEY || "";
@@ -63,12 +187,13 @@ async function runCron(req: NextRequest) {
   try {
     // ─── Étape 1 : chercher de nouveaux prospects ───
     for (const q of queries) {
-      log.push(`[find] Recherche "${q}"`);
+      const btype = inferBusinessType(q);
+      log.push(`[find] Recherche "${q}" (type=${btype})`);
       try {
         const r = await fetch(`${origin}/api/prospect/find`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-          body: JSON.stringify({ query: q }),
+          body: JSON.stringify({ query: q, business_type: btype }),
           signal: AbortSignal.timeout(120000),
         });
         const data = await r.json().catch(() => ({}));
