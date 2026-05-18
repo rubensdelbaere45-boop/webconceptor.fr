@@ -1183,10 +1183,10 @@ body{padding-bottom:110px}
     <span class="logo-sub">${esc(content.cuisineType || labels.topStrip)}</span>
   </div>
   <ul class="nav-links">
-    <li><a href="#about">L'adresse</a></li>
-    <li><a href="#menu">La carte</a></li>
-    <li><a href="#gallery">Ambiance</a></li>
-    <li><a href="#info">Nous trouver</a></li>
+    <li><a href="#about">${esc(labels.navItems[0] || "L'adresse")}</a></li>
+    <li><a href="#menu">${esc(labels.navItems[1] || "La carte")}</a></li>
+    <li><a href="#gallery">${esc(labels.navItems[2] || "Ambiance")}</a></li>
+    <li><a href="#info">${esc(labels.navItems[3] || "Nous trouver")}</a></li>
   </ul>
   <button class="nav-cta" onclick="bkOpen()">${esc(labels.ctaVerb)}</button>
 </nav>

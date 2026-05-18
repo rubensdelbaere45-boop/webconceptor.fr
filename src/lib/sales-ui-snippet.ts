@@ -349,22 +349,25 @@ body{padding-top:50px !important}
     statusEl.textContent = 'Vérification en cours…';
     wcSxUpdatePriceSummary();
 
-    fetch('/api/domain-check?domain=' + encodeURIComponent(name + tld))
+    fetch('/api/domain-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullDomain: name + tld })
+      })
       .then(function(r){ return r.json(); })
       .then(function(data) {
         btn.disabled = false;
         if (data.available) {
-          // Marge 15% silencieuse
-          var rawCents = data.price_cents || 0;
-          var finalCents = Math.round(rawCents * 1.15);
-          var finalEuros = (finalCents / 100).toFixed(2).replace('.',',');
-          _domainVerified = { name: name, tld: tld, price_cents: finalCents };
+          // L'API retourne déjà le prix avec marge (× 1.15 côté serveur)
+          var priceCents = data.priceCents || 0;
+          var priceEuros = (priceCents / 100).toFixed(2).replace('.',',');
+          _domainVerified = { name: name, tld: tld, price_cents: priceCents };
           statusEl.className = 'ok';
-          statusEl.textContent = name + tld + ' est disponible — ' + finalEuros + ' €/an';
+          statusEl.textContent = name + tld + ' est disponible — ' + priceEuros + ' €/an';
         } else {
           _domainVerified = null;
           statusEl.className = 'ko';
-          statusEl.textContent = (data.message || (name + tld + ' n\'est pas disponible.'));
+          statusEl.textContent = (data.error || (name + tld + ' n\'est pas disponible.'));
         }
         wcSxUpdatePriceSummary();
       })
@@ -411,6 +414,10 @@ body{padding-top:50px !important}
     }
     if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {
       err.textContent = 'Adresse email invalide.';
+      err.classList.add('show'); return;
+    }
+    if (tel.replace(/[^0-9]/g, '').length < 9) {
+      err.textContent = 'Numéro de téléphone invalide (minimum 9 chiffres).';
       err.classList.add('show'); return;
     }
 

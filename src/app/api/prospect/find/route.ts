@@ -784,10 +784,19 @@ export async function POST(req: NextRequest) {
   // sur le digital. Laisser passer le scrape et laisser site_quality filtrer.
   // ═══════════════════════════════════════════════════════════════
   const FRANCHISE_BLACKLIST = [
-    // Sport / fitness (mega, 0 autonomie locale)
-    "basic-fit", "basic fit", "basicfit", "fitness park", "on air fitness",
-    "l'orange bleue", "keepcool", "keep cool", "magic form", "club med gym",
-    "gymlib", "neoness", "cmg sports", "planet fitness",
+    // Sport / fitness (mega, 0 autonomie locale — décision digitale = centrale)
+    "basic-fit", "basic fit", "basicfit",
+    "fitness park", "fitnesspark",
+    "on air fitness",
+    "l'orange bleue", "l orange bleue",
+    "keepcool", "keep cool",
+    "magic form",
+    "club med gym", "club med",
+    "gymlib", "neoness", "neofitness", "cmg sports", "planet fitness",
+    "o2 coaching", "o2 switch", "o2 bien etre",
+    "gofit", "go fit", "fitness first", "curves",
+    "ucpa", "vita liberte", "vita liberté",
+    "altéora", "alteora",
     // Fast-food chaînes internationales
     "mcdonald", "mcdo", "burger king", "kfc", "quick", "subway", "starbucks",
     "five guys", "pizza hut", "domino", "pret a manger", "pret manger",

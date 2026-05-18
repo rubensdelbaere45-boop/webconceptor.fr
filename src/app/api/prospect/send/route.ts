@@ -508,6 +508,51 @@ JSON valide uniquement, aucun commentaire.`;
    Brevo email helpers
    ══════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════
+   Grandes franchises nationales — le gérant local ne décide pas du site.
+   Double-sécurité : find/route filtre à l'entrée, ici on bloque à l'envoi
+   pour les prospects déjà en DB avant l'ajout de la blacklist.
+   ══════════════════════════════════════════ */
+const BIG_FRANCHISE_KEYWORDS = [
+  // Fitness / sport — jamais d'autonomie locale sur le digital
+  "basic-fit", "basic fit", "basicfit",
+  "fitness park", "fitnesspark",
+  "on air fitness",
+  "l'orange bleue", "l orange bleue",
+  "keepcool", "keep cool",
+  "magic form",
+  "club med gym", "club med",
+  "neoness", "neofitness", "cmg sports", "planet fitness",
+  "o2 coaching", "o2 switch", "o2 bien etre",
+  "gofit", "go fit", "fitness first", "curves",
+  "ucpa", "vita liberte", "vita liberté",
+  // Fast food
+  "mcdonald", "mcdo", "burger king", "kfc", "quick", "subway", "starbucks",
+  "five guys", "pizza hut", "domino",
+  // Grandes surfaces
+  "franprix", "monoprix", "lidl", "aldi", "leader price",
+  "carrefour express", "carrefour city", "carrefour market",
+  // Coiffure chaînes nationales
+  "jean louis david", "saint algue", "franck provost", "camille albane",
+  "dessange", "coiff et co", "coiff and co", "tchip",
+  // Beauté chaînes
+  "yves rocher", "marionnaud", "sephora", "nocibe", "body minute",
+  // Auto-centres
+  "speedy", "midas", "feu vert", "norauto", "roady", "euromaster", "carglass",
+];
+
+function isBigFranchise(name: string): boolean {
+  const normalized = ` ${(name || "").toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim()} `;
+  return BIG_FRANCHISE_KEYWORDS.some((kw) => {
+    const normKw = kw.toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
+    return normalized.includes(` ${normKw} `);
+  });
+}
+
 function escape(s: string): string {
   return (s || "")
     .replace(/&/g, "&amp;")
@@ -840,6 +885,12 @@ async function handleSend(req: NextRequest) {
 
     if (!p.email) {
       results.push({ id: p.id, name: p.name, status: "no_email" });
+      continue;
+    }
+
+    // Skip grandes franchises nationales — décision digitale = centrale, pas locale.
+    if (isBigFranchise(p.name)) {
+      results.push({ id: p.id, name: p.name, status: "skipped_franchise" });
       continue;
     }
 
