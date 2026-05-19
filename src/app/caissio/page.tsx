@@ -4,29 +4,60 @@ import {
   ArrowRight, Check, Zap, Package, FileSpreadsheet, BarChart3,
   Users, ShieldCheck, ScanBarcode, Printer, DoorOpen, Scale,
   Bluetooth, Star, Leaf, Trash2, Plus, Minus, Receipt,
-  Download, Monitor, Cpu, Wifi, ChevronDown, Play,
-  Shield, Sparkles, Percent, CreditCard,
-  Banknote, Mail, Phone, Search, ScanLine, LayoutDashboard,
-  Boxes, FileBarChart2, Plug,
+  Download, Monitor, ChevronDown, Play,
+  Percent, CreditCard, Banknote, Mail, Phone,
+  Search, ScanLine, LayoutDashboard, Boxes, FileBarChart2, Plug,
+  Cpu, Wifi, Shield,
 } from "lucide-react";
 
 /* ─── DATA ─────────────────────────────────────────── */
 
-const FEATURES = [
-  { i: Zap, t: "Encaissement éclair", d: "Scan, panier, paiement, ticket en 3 gestes. Même à l'heure de pointe." },
-  { i: Package, t: "Catalogue intelligent", d: "Prix d'achat, vente, marge auto, TVA, stock minimum alerté." },
-  { i: FileSpreadsheet, t: "Import Excel/CSV", d: "Glissez votre catalogue. Caissio détecte les colonnes, importe en masse." },
-  { i: BarChart3, t: "Dashboard temps réel", d: "CA, marge, panier moyen, top ventes — tout instantanément." },
-  { i: Users, t: "Fidélité client", d: "Base clients intégrée avec points automatiques à chaque achat." },
-  { i: ShieldCheck, t: "PIN + lock auto", d: "Verrouillage 6 chiffres après inactivité. Vos données, protégées." },
-];
-
-const HARDWARE = [
-  { icon: ScanBarcode, label: "Scanner USB", note: "WebHID" },
-  { icon: Printer, label: "Imprimante ticket", note: "WebUSB" },
-  { icon: DoorOpen, label: "Tiroir caisse", note: "ESC/POS" },
-  { icon: Scale, label: "Balance", note: "WebSerial" },
-  { icon: Bluetooth, label: "Scanner Bluetooth", note: "WebBluetooth" },
+const FEATURE_SECTIONS = [
+  {
+    tag: "Encaissement",
+    icon: Zap,
+    title: "Encaissez en 3 gestes.\nMême au rush.",
+    desc: "Scannez, ajustez le panier, encaissez. Caissio est pensé pour être rapide même quand la queue s'allonge.",
+    bullets: ["Scan code-barre instantané", "Paiement espèces, CB ou mixte", "Ticket PDF, email ou SMS", "Rendu monnaie automatique"],
+    img: "/screen-pos.jpg",
+    imgLeft: false,
+  },
+  {
+    tag: "Dashboard",
+    icon: BarChart3,
+    title: "Tout votre commerce,\nd'un coup d'œil.",
+    desc: "CA du jour, marges, top produits, alertes stock — tout s'affiche en temps réel sans aucune saisie manuelle.",
+    bullets: ["CA / marge / panier moyen", "Top 10 produits du jour", "Alertes stock automatiques", "Graphiques hebdo et mensuel"],
+    img: "/screen-dashboard.jpg",
+    imgLeft: true,
+  },
+  {
+    tag: "Catalogue",
+    icon: Package,
+    title: "800 produits importés\nen 2 minutes.",
+    desc: "Glissez votre fichier Excel ou CSV. Caissio détecte les colonnes, crée les catégories et valide les prix automatiquement.",
+    bullets: ["Import Excel / CSV en glisser-déposer", "Prévisualisation avant validation", "Catégories créées automatiquement", "Prix d'achat, vente, marge et TVA"],
+    img: "/screen-products.jpg",
+    imgLeft: false,
+  },
+  {
+    tag: "Import",
+    icon: FileSpreadsheet,
+    title: "Votre catalogue existant,\ndirectement dans Caissio.",
+    desc: "Pas besoin de tout ressaisir. Importez depuis votre fournisseur ou votre ancien logiciel en quelques secondes.",
+    bullets: ["Détection automatique des colonnes", "Gestion des doublons", "Support multi-format", "Annulation possible avant validation"],
+    img: "/screen-import.jpg",
+    imgLeft: true,
+  },
+  {
+    tag: "Périphériques",
+    icon: ScanBarcode,
+    title: "Tous vos appareils,\ndétectés automatiquement.",
+    desc: "Branchez votre scanner, imprimante ou tiroir-caisse. Cliquez sur « Audit complet ». Caissio s'occupe du reste — aucun pilote à installer.",
+    bullets: ["Scanner USB / Bluetooth", "Imprimante ticket (ESC/POS)", "Tiroir-caisse", "Balance connectée"],
+    img: "/screen-devices.jpg",
+    imgLeft: false,
+  },
 ];
 
 const PLANS = [
@@ -101,14 +132,6 @@ const STATS = [
   { value: "0", label: "driver à installer" },
 ];
 
-const SCREENS = [
-  { src: "/screen-pos.jpg", label: "Caisse", desc: "Interface POS épurée — scan, panier, encaissement en 3 gestes." },
-  { src: "/screen-dashboard.jpg", label: "Dashboard", desc: "CA, marges, top produits et alertes stock en temps réel." },
-  { src: "/screen-products.jpg", label: "Produits", desc: "Catalogue complet avec prix, TVA, stock et codes-barres." },
-  { src: "/screen-import.jpg", label: "Import", desc: "Importez votre Excel ou CSV en quelques clics." },
-  { src: "/screen-devices.jpg", label: "Périphériques", desc: "Audit complet — scanner, imprimante, tiroir, balance détectés auto." },
-];
-
 /* ─── DEMO POS ──────────────────────────────────────── */
 
 const CATS = [
@@ -148,8 +171,6 @@ function CaissioMarkSVG({ size = 32, color = "#4F46E5" }: { size?: number; color
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Caissio">
       <rect x="2" y="2" width="44" height="44" rx="11" fill={color} />
       <rect x="14" y="6" width="14" height="6" rx="1.5" fill="white" opacity="0.95" />
-      <rect x="16" y="8" width="6" height="1.2" rx="0.6" fill={color} opacity="0.4" />
-      <rect x="16" y="9.8" width="9" height="1.2" rx="0.6" fill={color} opacity="0.4" />
       <rect x="10" y="16" width="28" height="22" rx="3.5" fill="white" />
       <rect x="14" y="20" width="20" height="6" rx="1.5" fill={color} opacity="0.15" />
       <rect x="14" y="28" width="5" height="3" rx="1" fill={color} opacity="0.5" />
@@ -192,7 +213,6 @@ function DemoPOS() {
 
   return (
     <div style={{ borderRadius: 24, border: "1px solid #e2e8f0", background: "#f8fafc", overflow: "hidden", boxShadow: "0 24px 64px rgba(79,70,229,.12)", position: "relative" }}>
-      {/* Browser chrome */}
       <div style={{ height: 36, background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", padding: "0 14px", gap: 6 }}>
         <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fca5a5" }} />
         <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fcd34d" }} />
@@ -201,7 +221,6 @@ function DemoPOS() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 300px", minHeight: 520 }}>
-        {/* Sidebar */}
         <div style={{ background: "#fff", borderRight: "1px solid #e2e8f0", padding: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px 14px" }}>
             <CaissioMarkSVG size={22} color="#4F46E5" />
@@ -218,7 +237,6 @@ function DemoPOS() {
           })}
         </div>
 
-        {/* Main */}
         <div style={{ background: "#f8fafc", display: "flex", flexDirection: "column" }}>
           <div style={{ height: 48, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: 8, padding: "0 12px", flexShrink: 0 }}>
             <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
@@ -256,7 +274,6 @@ function DemoPOS() {
           </div>
         </div>
 
-        {/* Cart */}
         <aside style={{ background: "#fff", borderLeft: "1px solid #e2e8f0", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "0 16px", height: 48, borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>Ticket en cours</span>
@@ -305,7 +322,6 @@ function DemoPOS() {
         </aside>
       </div>
 
-      {/* Payment overlay */}
       {stage === "pay" && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.5)", backdropFilter: "blur(8px)", borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24, width: "100%", maxWidth: 380, boxShadow: "0 24px 64px rgba(0,0,0,.2)" }}>
@@ -330,7 +346,6 @@ function DemoPOS() {
         </div>
       )}
 
-      {/* Ticket overlay */}
       {stage === "ticket" && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.5)", backdropFilter: "blur(8px)", borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24, width: "100%", maxWidth: 380, textAlign: "center", boxShadow: "0 24px 64px rgba(0,0,0,.2)" }}>
@@ -379,7 +394,6 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function CaissioPage() {
   const [scrolled, setScrolled] = useState(false);
-  const [activeScreen, setActiveScreen] = useState(0);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
@@ -391,25 +405,23 @@ export default function CaissioPage() {
     <div style={{ background: "#fff", color: "#0f172a", minHeight: "100vh", overflowX: "hidden", fontFamily: "'IBM Plex Sans',sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
-        @keyframes float-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         .cai-nav-link { color:#475569; font-size:14px; font-weight:500; text-decoration:none; transition:color .2s; }
         .cai-nav-link:hover { color:#4f46e5; }
         .cai-card { background:#fff; border:1px solid #e2e8f0; border-radius:20px; transition:border-color .25s,box-shadow .25s; }
         .cai-card:hover { border-color:#a5b4fc; box-shadow:0 8px 32px rgba(79,70,229,.1); }
-        .cai-btn-indigo { background:#4f46e5; box-shadow:0 4px 16px rgba(79,70,229,.3); transition:all .25s; text-decoration:none; color:#fff; border:none; cursor:pointer; }
+        .cai-btn-indigo { background:#4f46e5; box-shadow:0 4px 16px rgba(79,70,229,.3); transition:all .25s; text-decoration:none; color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; }
         .cai-btn-indigo:hover { background:#4338ca; box-shadow:0 8px 28px rgba(79,70,229,.45); transform:translateY(-1px); }
-        .cai-btn-outline { background:#fff; border:2px solid #e2e8f0; transition:all .25s; text-decoration:none; color:#475569; cursor:pointer; }
+        .cai-btn-outline { background:#fff; border:2px solid #e2e8f0; transition:all .25s; text-decoration:none; color:#475569; cursor:pointer; display:inline-flex; align-items:center; }
         .cai-btn-outline:hover { border-color:#4f46e5; color:#4f46e5; transform:translateY(-1px); }
-        .cai-btn-sky { background:#0ea5e9; box-shadow:0 4px 16px rgba(14,165,233,.3); transition:all .25s; text-decoration:none; color:#fff; border:none; cursor:pointer; }
-        .cai-btn-sky:hover { background:#0284c7; box-shadow:0 8px 28px rgba(14,165,233,.45); transform:translateY(-1px); }
+        .cai-btn-sky { background:#0ea5e9; box-shadow:0 4px 16px rgba(14,165,233,.3); transition:all .25s; text-decoration:none; color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; }
+        .cai-btn-sky:hover { background:#0284c7; transform:translateY(-1px); }
         .cai-hero-dots { background-image:radial-gradient(#e2e8f0 1px,transparent 1px); background-size:28px 28px; }
-        .cai-screen-tab { transition:all .2s; cursor:pointer; border:1px solid #e2e8f0; }
-        .cai-screen-tab.active { background:#4f46e5!important; border-color:#4f46e5!important; color:#fff!important; }
-        .cai-screen-tab:not(.active):hover { border-color:#a5b4fc; color:#4f46e5; }
+        .screen-shadow { border-radius:16px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 24px 64px rgba(79,70,229,.12); }
+        .screen-chrome { height:32px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; padding:0 12px; gap:6px; }
       `}</style>
 
       {/* ── NAV ── */}
-      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, transition: "all .3s", background: scrolled ? "rgba(255,255,255,.92)" : "#fff", backdropFilter: scrolled ? "blur(20px)" : "none", borderBottom: "1px solid #e2e8f0", boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,.06)" : "none" }}>
+      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, transition: "all .3s", background: scrolled ? "rgba(255,255,255,.95)" : "#fff", backdropFilter: scrolled ? "blur(20px)" : "none", borderBottom: "1px solid #e2e8f0", boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,.06)" : "none" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <CaissioMarkSVG size={30} color="#4F46E5" />
@@ -421,8 +433,8 @@ export default function CaissioPage() {
             ))}
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <a href="#" style={{ fontSize: 14, color: "#475569", textDecoration: "none", fontWeight: 500 }}>Connexion</a>
-            <a href="#" className="cai-btn-indigo" style={{ height: 38, padding: "0 20px", borderRadius: 12, fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <a href="/signup" style={{ fontSize: 14, color: "#475569", textDecoration: "none", fontWeight: 500 }}>Connexion</a>
+            <a href="/signup" className="cai-btn-indigo" style={{ height: 38, padding: "0 20px", borderRadius: 12, fontSize: 14, fontWeight: 700, gap: 6 }}>
               Essai 7 jours gratuit
             </a>
           </div>
@@ -431,37 +443,30 @@ export default function CaissioPage() {
 
       {/* ── HERO ── */}
       <section className="cai-hero-dots" style={{ position: "relative", paddingTop: 120, paddingBottom: 96, overflow: "hidden", background: "#fafafe" }}>
-        {/* Radial glow */}
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 700, height: 400, background: "radial-gradient(ellipse at 50% 0%,rgba(79,70,229,.12),transparent 70%)", pointerEvents: "none" }} />
-
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-            {/* Badge */}
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0 16px", height: 36, borderRadius: 999, background: "#ede9fe", border: "1px solid #c4b5fd", fontSize: 12, fontWeight: 700, color: "#4f46e5", marginBottom: 32 }}>
               <Monitor style={{ width: 14, height: 14 }} />
               Disponible sur Windows 10 &amp; 11
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
             </div>
-
             <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(48px,8vw,88px)", fontWeight: 900, lineHeight: 0.9, letterSpacing: "-0.04em", color: "#0f172a", marginBottom: 32 }}>
               La caisse qui fait<br />
               <span style={{ color: "#4f46e5" }}>tout le travail.</span>
             </h1>
-
             <p style={{ fontSize: "clamp(17px,2vw,21px)", color: "#64748b", maxWidth: 680, margin: "0 auto 48px", lineHeight: 1.6 }}>
               Encaissez plus vite, gérez votre stock en temps réel, fidélisez vos clients.{" "}
               <strong style={{ color: "#0f172a" }}>Sans installation, sans formation, sans prise de tête.</strong>
             </p>
-
             <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", marginBottom: 40 }}>
-              <a href="#" className="cai-btn-indigo" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, display: "inline-flex", alignItems: "center", gap: 12 }}>
+              <a href="/signup" className="cai-btn-indigo" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, gap: 12 }}>
                 Commencer gratuitement <ArrowRight style={{ width: 20, height: 20 }} />
               </a>
-              <a href="#windows" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, display: "inline-flex", alignItems: "center", gap: 12 }}>
+              <a href="#windows" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, gap: 12 }}>
                 <Download style={{ width: 20, height: 20 }} /> Télécharger pour Windows
               </a>
             </div>
-
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px 32px", fontSize: 13, color: "#94a3b8" }}>
               {["7 jours gratuits, sans carte","Configuration en 2 minutes","Résiliation sans engagement"].map((t) => (
                 <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -500,34 +505,55 @@ export default function CaissioPage() {
         </div>
       </section>
 
-      {/* ── PRODUCT SCREENS ── */}
-      <section style={{ padding: "96px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.2em", color: "#4f46e5", fontWeight: 700, marginBottom: 16 }}>Le produit</div>
-            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(32px,4vw,48px)", fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a" }}>
-              Tous vos modules,{" "}
-              <span style={{ color: "#4f46e5" }}>une seule app.</span>
-            </h2>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
-            {SCREENS.map((s, i) => (
-              <button key={i} onClick={() => setActiveScreen(i)} className={`cai-screen-tab${activeScreen === i ? " active" : ""}`} style={{ height: 36, padding: "0 20px", borderRadius: 999, fontSize: 13, fontWeight: 600, background: activeScreen === i ? "#4f46e5" : "#fff", color: activeScreen === i ? "#fff" : "#475569" }}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <div style={{ borderRadius: 20, overflow: "hidden", border: "1px solid #e2e8f0", boxShadow: "0 24px 64px rgba(79,70,229,.1)" }}>
-            <div style={{ background: "#f1f5f9", height: 32, display: "flex", alignItems: "center", padding: "0 12px", gap: 6 }}>
-              <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fca5a5" }} />
-              <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fcd34d" }} />
-              <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#86efac" }} />
-              <div style={{ marginLeft: 12, fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>caissio.app · /{SCREENS[activeScreen].label.toLowerCase()}</div>
+      {/* ── FEATURES avec screenshots ── */}
+      <section id="features" style={{ background: "#fff" }}>
+        {FEATURE_SECTIONS.map((f, idx) => {
+          const Icon = f.icon;
+          const isEven = idx % 2 === 0;
+          const textBlock = (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon style={{ width: 18, height: 18, color: "#4f46e5" }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: "#4f46e5" }}>{f.tag}</span>
+              </div>
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(28px,3.5vw,44px)", fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a", marginBottom: 20, whiteSpace: "pre-line" }}>{f.title}</h2>
+              <p style={{ fontSize: 17, color: "#64748b", lineHeight: 1.7, marginBottom: 28, maxWidth: 480 }}>{f.desc}</p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 36px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {f.bullets.map((b) => (
+                  <li key={b} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, color: "#0f172a", fontWeight: 500 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Check style={{ width: 12, height: 12, color: "#059669" }} />
+                    </div>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <a href="/signup" className="cai-btn-indigo" style={{ height: 52, padding: "0 28px", borderRadius: 16, fontWeight: 700, fontSize: 15, gap: 8, alignSelf: "flex-start" }}>
+                Essayer gratuitement <ArrowRight style={{ width: 16, height: 16 }} />
+              </a>
             </div>
-            <img src={SCREENS[activeScreen].src} alt={SCREENS[activeScreen].label} style={{ width: "100%", display: "block", maxHeight: 520, objectFit: "cover", objectPosition: "top" }} />
-          </div>
-          <p style={{ textAlign: "center", marginTop: 16, color: "#64748b", fontSize: 15 }}>{SCREENS[activeScreen].desc}</p>
-        </div>
+          );
+          const imgBlock = (
+            <div className="screen-shadow">
+              <div className="screen-chrome">
+                <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fca5a5" }} />
+                <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fcd34d" }} />
+                <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#86efac" }} />
+                <div style={{ marginLeft: 10, fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>caissio.app</div>
+              </div>
+              <img src={f.img} alt={f.tag} style={{ width: "100%", display: "block", objectFit: "cover", objectPosition: "top" }} />
+            </div>
+          );
+          return (
+            <div key={f.tag} style={{ padding: "96px 0", borderTop: idx === 0 ? "1px solid #e2e8f0" : "1px solid #f1f5f9", background: isEven ? "#fff" : "#fafafe" }}>
+              <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+                {f.imgLeft ? <>{imgBlock}{textBlock}</> : <>{textBlock}{imgBlock}</>}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       {/* ── WINDOWS DOWNLOAD ── */}
@@ -548,21 +574,21 @@ export default function CaissioPage() {
                   <span style={{ color: "#4f46e5" }}>en local sur votre PC.</span>
                 </h2>
                 <p style={{ fontSize: 18, color: "#475569", marginBottom: 32, maxWidth: 520, lineHeight: 1.6 }}>
-                  Téléchargez l'application de bureau pour Windows. Fonctionne même sans connexion internet. Vos données restent sur votre machine.
+                  Fonctionne même sans connexion internet. Vos données restent sur votre machine.
                 </p>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 40 }}>
-                  <a href="#" className="cai-btn-sky" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 900, fontSize: 17, display: "inline-flex", alignItems: "center", gap: 12 }}>
+                  <a href="/signup" className="cai-btn-sky" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 900, fontSize: 17, gap: 12 }}>
                     <Download style={{ width: 18, height: 18 }} /> Télécharger (.exe)
                   </a>
-                  <a href="#" className="cai-btn-outline" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 700, fontSize: 17, display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <a href="/signup" className="cai-btn-outline" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 700, fontSize: 17, gap: 8 }}>
                     Ou version web →
                   </a>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, maxWidth: 320 }}>
-                  {[{ i: Shield, t: "Données locales", c: "#10b981" },{ i: Wifi, t: "Hors-ligne", c: "#4f46e5" },{ i: Cpu, t: "Ultra-léger", c: "#0ea5e9" }].map(({ i: Icon, t, c }) => (
+                  {[{ i: Shield, t: "Données locales", c: "#10b981" },{ i: Wifi, t: "Hors-ligne", c: "#4f46e5" },{ i: Cpu, t: "Ultra-léger", c: "#0ea5e9" }].map(({ i: Ico, t, c }) => (
                     <div key={t} style={{ textAlign: "center" }}>
-                      <div style={{ width: 40, height: 40, margin: "0 auto 8px", borderRadius: 12, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}>
-                        <Icon style={{ width: 16, height: 16, color: c }} />
+                      <div style={{ width: 40, height: 40, margin: "0 auto 8px", borderRadius: 12, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Ico style={{ width: 16, height: 16, color: c }} />
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>{t}</div>
                     </div>
@@ -575,7 +601,7 @@ export default function CaissioPage() {
                     <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fca5a5" }} />
                     <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fcd34d" }} />
                     <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#86efac" }} />
-                    <div style={{ margin: "0 auto", fontSize: 10, color: "#94a3b8", fontFamily: "monospace" }}>Caissio — Épicerie du Marché</div>
+                    <div style={{ margin: "0 auto", fontSize: 10, color: "#94a3b8", fontFamily: "monospace" }}>Caissio</div>
                   </div>
                   <div style={{ padding: 16 }}>
                     {[["Tomate 500g","1.20 €"],["Eau Evian 1.5L","0.95 €"],["Pain complet","2.80 €"]].map(([name, price]) => (
@@ -596,63 +622,6 @@ export default function CaissioPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: "96px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ maxWidth: 640, marginBottom: 64 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.2em", color: "#4f46e5", fontWeight: 700, marginBottom: 16 }}>
-              <Sparkles style={{ width: 14, height: 14 }} /> Fonctionnalités
-            </div>
-            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(32px,4vw,56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a" }}>
-              Tout ce qu'il faut.<br />
-              <span style={{ color: "#4f46e5" }}>Rien de trop.</span>
-            </h2>
-            <p style={{ marginTop: 20, color: "#64748b", fontSize: 19 }}>Un logiciel pensé pour les commerçants, pas pour les ingénieurs.</p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
-            {FEATURES.map((f) => {
-              const Icon = f.i;
-              return (
-                <div key={f.t} className="cai-card" style={{ padding: 28 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                    <Icon style={{ width: 20, height: 20, color: "#4f46e5" }} />
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>{f.t}</div>
-                  <div style={{ color: "#64748b", lineHeight: 1.6, fontSize: 14 }}>{f.d}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HARDWARE ── */}
-      <section style={{ padding: "80px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 56px" }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.2em", color: "#4f46e5", fontWeight: 700, marginBottom: 16 }}>Matériel compatible</div>
-            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(32px,4vw,48px)", fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a" }}>
-              Plug &amp; Play. <span style={{ color: "#4f46e5" }}>Zéro pilote.</span>
-            </h2>
-            <p style={{ marginTop: 16, color: "#64748b", fontSize: 17 }}>Branchez. Cliquez sur <strong style={{ color: "#0f172a" }}>Audit complet</strong>. Tout est trouvé.</p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16, maxWidth: 900, margin: "0 auto" }}>
-            {HARDWARE.map((h) => {
-              const Icon = h.icon;
-              return (
-                <div key={h.label} className="cai-card" style={{ padding: 24, textAlign: "center" }}>
-                  <div style={{ width: 48, height: 48, margin: "0 auto 14px", borderRadius: 14, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon style={{ width: 20, height: 20, color: "#4f46e5" }} />
-                  </div>
-                  <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 13 }}>{h.label}</div>
-                  <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "#94a3b8", marginTop: 4, fontWeight: 500 }}>{h.note}</div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
@@ -705,66 +674,50 @@ export default function CaissioPage() {
                 boxShadow: plan.highlight ? "0 20px 60px rgba(79,70,229,.35)" : "0 4px 20px rgba(0,0,0,.06)",
                 transform: plan.highlight ? "scale(1.03)" : "none",
               }}>
-                {/* Populaire badge */}
                 {plan.badge && (
-                  <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: "#fbbf24", color: "#78350f", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", padding: "4px 16px", borderRadius: 999, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(251,191,36,.4)" }}>
+                  <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: "#fbbf24", color: "#78350f", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", padding: "4px 16px", borderRadius: 999, whiteSpace: "nowrap" }}>
                     {plan.badge}
                   </div>
                 )}
-
-                {/* Plan name */}
                 <div style={{ fontSize: 13, fontWeight: 700, color: plan.highlight ? "rgba(255,255,255,.7)" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>{plan.name}</div>
-
-                {/* Price */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 56, fontWeight: 900, color: plan.highlight ? "#fff" : "#0f172a", letterSpacing: "-0.03em" }}>{plan.price}€</span>
                   <span style={{ color: plan.highlight ? "rgba(255,255,255,.6)" : "#94a3b8", fontSize: 16 }}>/mois</span>
                 </div>
                 <p style={{ color: plan.highlight ? "rgba(255,255,255,.55)" : "#94a3b8", fontSize: 13, marginBottom: 28 }}>Puis {plan.price}€/mois. Annulable à tout moment.</p>
-
-                {/* Divider */}
                 <div style={{ height: 1, background: plan.highlight ? "rgba(255,255,255,.15)" : "#f1f5f9", marginBottom: 24 }} />
-
-                {/* Features */}
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
-                  {plan.features.map((f) => (
-                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, color: plan.highlight ? "#e0e7ff" : "#475569", fontSize: 14 }}>
+                  {plan.features.map((feat) => (
+                    <li key={feat} style={{ display: "flex", alignItems: "flex-start", gap: 10, color: plan.highlight ? "#e0e7ff" : "#475569", fontSize: 14 }}>
                       <div style={{ width: 20, height: 20, borderRadius: "50%", background: plan.highlight ? "rgba(255,255,255,.2)" : "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
                         <Check style={{ width: 11, height: 11, color: plan.highlight ? "#fff" : "#059669" }} />
                       </div>
-                      <span>{f}</span>
+                      <span>{feat}</span>
                     </li>
                   ))}
                 </ul>
-
-                {/* API key block (Business only) */}
                 {plan.apiKey && (
                   <div style={{ marginTop: 24, padding: 14, borderRadius: 14, background: "#ede9fe", border: "1px solid #c4b5fd" }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#4f46e5", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>🔑 Clé API REST</div>
-                    <div style={{ fontFamily: "monospace", fontSize: 12, color: "#6d28d9", background: "#fff", borderRadius: 8, padding: "8px 12px", border: "1px solid #ddd6fe", letterSpacing: "0.05em", wordBreak: "break-all" }}>
+                    <div style={{ fontFamily: "monospace", fontSize: 12, color: "#6d28d9", background: "#fff", borderRadius: 8, padding: "8px 12px", border: "1px solid #ddd6fe", wordBreak: "break-all" }}>
                       sk-caissio-xxxx-xxxx-xxxx
                     </div>
                     <div style={{ marginTop: 8, fontSize: 11, color: "#7c3aed" }}>Accès complet à l'API · Webhooks · Intégrations tierces</div>
                   </div>
                 )}
-
-                {/* CTA */}
-                <a href="#" style={{
+                <a href="/signup" style={{
                   marginTop: 28, width: "100%", height: 52, borderRadius: 16,
                   fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   textDecoration: "none",
                   background: plan.highlight ? "#fff" : "#4f46e5",
                   color: plan.highlight ? "#4f46e5" : "#fff",
                   border: "none",
-                  boxShadow: plan.highlight ? "0 4px 16px rgba(255,255,255,.3)" : "0 4px 16px rgba(79,70,229,.3)",
-                  transition: "all .2s",
                 }}>
                   {plan.cta} {plan.highlight && <ArrowRight style={{ width: 16, height: 16 }} />}
                 </a>
               </div>
             ))}
           </div>
-
           <p style={{ textAlign: "center", marginTop: 40, fontSize: 13, color: "#94a3b8" }}>
             Aucune carte requise pour l'essai · Résiliation en 1 clic · TVA non incluse
           </p>
@@ -794,10 +747,10 @@ export default function CaissioPage() {
             Aucune carte bancaire. Aucun risque. 7 jours pour tomber amoureux du logiciel.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
-            <a href="#" style={{ height: 64, padding: "0 48px", borderRadius: 20, fontWeight: 900, fontSize: 20, display: "inline-flex", alignItems: "center", gap: 12, background: "#fff", color: "#4f46e5", textDecoration: "none", boxShadow: "0 8px 32px rgba(0,0,0,.15)", transition: "all .2s" }}>
+            <a href="/signup" style={{ height: 64, padding: "0 48px", borderRadius: 20, fontWeight: 900, fontSize: 20, display: "inline-flex", alignItems: "center", gap: 12, background: "#fff", color: "#4f46e5", textDecoration: "none" }}>
               Commencer gratuitement <ArrowRight style={{ width: 20, height: 20 }} />
             </a>
-            <a href="#windows" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 20, display: "inline-flex", alignItems: "center", gap: 12 }}>
+            <a href="/signup" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 20, gap: 12 }}>
               <Download style={{ width: 20, height: 20 }} /> Télécharger Windows
             </a>
           </div>
@@ -806,7 +759,7 @@ export default function CaissioPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ padding: "40px 0", background: "#0f172a", borderTop: "none" }}>
+      <footer style={{ padding: "40px 0", background: "#0f172a" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <CaissioMarkSVG size={24} color="#4F46E5" />
