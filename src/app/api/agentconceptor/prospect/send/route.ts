@@ -253,36 +253,60 @@ export async function POST(req: NextRequest) {
   // ── Sélection des prospects à cibler ──
   // Priorité : ceux avec un site (site_quality good/average) car ils n'ont pas besoin de WebConceptor
   // et ceux avec des avis Google (bons candidats pour Agent Réputation)
-  // Exclure : déjà reçu un email AGENTConceptor
-  const { data: prospects, error } = await supabase
-    .from("prospects")
-    .select("id, name, email, city, business_type, google_rating, google_reviews_count, site_quality, slug")
-    .not("email", "is", null)
-    .is("agentconceptor_sent_at", null)
-    .in("site_quality", ["good", "average", "poor"]) // préférer ceux avec un site
-    .order("google_reviews_count", { ascending: false }) // plus d'avis = plus actifs
-    .limit(batchSize * 3); // fetch plus pour filtrer
+  // Exclure : déjà reçu un email AGENTConceptor (colonne agentconceptor_sent_at)
+  // Si la migration n'a pas encore été jouée → fallback sur les prospects récents
 
-  if (error || !prospects || prospects.length === 0) {
-    // Fallback : chercher TOUS les prospects sans email AC, même sans site
-    const { data: fallbackProspects } = await supabase
+  let selectedProspects: Array<{
+    id: string; name: string; email: string | null; city: string | null;
+    business_type: string | null; google_rating: number | null;
+    google_reviews_count: number | null; site_quality: string | null; slug: string | null;
+  }> = [];
+  let columnExists = true;
+
+  try {
+    const { data, error } = await supabase
       .from("prospects")
       .select("id, name, email, city, business_type, google_rating, google_reviews_count, site_quality, slug")
       .not("email", "is", null)
       .is("agentconceptor_sent_at", null)
-      .order("created_at", { ascending: false })
-      .limit(batchSize);
+      .in("site_quality", ["good", "average", "poor"])
+      .order("google_reviews_count", { ascending: false })
+      .limit(batchSize * 3);
 
-    if (!fallbackProspects || fallbackProspects.length === 0) {
-      return NextResponse.json({ success: true, sent: 0, processed: 0, message: "Aucun prospect disponible pour AGENTConceptor" });
+    if (error) {
+      // Si la colonne n'existe pas (migration pas encore jouée)
+      if (String(error.message).includes("agentconceptor_sent_at") || String(error.code).includes("42703")) {
+        columnExists = false;
+      } else {
+        throw error;
+      }
+    } else {
+      selectedProspects = data || [];
     }
-    prospects?.push(...(fallbackProspects || []));
+  } catch {
+    columnExists = false;
+  }
+
+  // Fallback si colonne absente ou liste vide → take les plus actifs récemment ajoutés
+  if (!columnExists || selectedProspects.length === 0) {
+    const { data: fallback } = await supabase
+      .from("prospects")
+      .select("id, name, email, city, business_type, google_rating, google_reviews_count, site_quality, slug")
+      .not("email", "is", null)
+      .order("google_reviews_count", { ascending: false })
+      .limit(batchSize * 2);
+
+    if (!fallback || fallback.length === 0) {
+      return NextResponse.json({ success: true, sent: 0, processed: 0, message: "Aucun prospect disponible — lancez d'abord la migration 20260519_agentconceptor_prospect.sql" });
+    }
+    selectedProspects = fallback;
   }
 
   // Déduplique et prend batchSize
-  const uniqueProspects = (prospects || [])
-    .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
-    .slice(0, batchSize);
+  const prospects = selectedProspects
+    .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+
+  const uniqueProspects = prospects.slice(0, batchSize);
 
   let sent = 0;
   let errors = 0;
@@ -291,20 +315,20 @@ export async function POST(req: NextRequest) {
   for (const prospect of uniqueProspects) {
     if (!prospect.email) continue;
 
-    const pitch = getAgentPitch(prospect.business_type);
+    const pitch = getAgentPitch(prospect.business_type ?? undefined);
     const unsubUrl = `${baseUrl}/api/prospect/unsubscribe?email=${encodeURIComponent(prospect.email)}`;
 
     const htmlContent = buildAgentEmail({
       businessName:  prospect.name || "votre établissement",
       businessType:  prospect.business_type || "commerce",
       city:          prospect.city || "",
-      googleRating:  prospect.google_rating,
-      reviewsCount:  prospect.google_reviews_count,
+      googleRating:  prospect.google_rating ?? undefined,
+      reviewsCount:  prospect.google_reviews_count ?? undefined,
       pitch,
       unsubscribeUrl: unsubUrl,
     });
 
-    const subject = getSubjectLine(prospect.business_type, prospect.name);
+    const subject = getSubjectLine(prospect.business_type ?? undefined, prospect.name ?? undefined);
 
     if (dryRun) {
       results.push({ id: prospect.id, name: prospect.name, status: "dry_run" });
@@ -334,11 +358,13 @@ export async function POST(req: NextRequest) {
 
       if (res.ok) {
         sent++;
-        // Marquer comme envoyé
-        await supabase
-          .from("prospects")
-          .update({ agentconceptor_sent_at: new Date().toISOString() })
-          .eq("id", prospect.id);
+        // Marquer comme envoyé (si la colonne existe)
+        if (columnExists) {
+          await supabase
+            .from("prospects")
+            .update({ agentconceptor_sent_at: new Date().toISOString() })
+            .eq("id", prospect.id);
+        }
         results.push({ id: prospect.id, name: prospect.name, status: "sent" });
       } else {
         const errBody = await res.text().catch(() => "");
