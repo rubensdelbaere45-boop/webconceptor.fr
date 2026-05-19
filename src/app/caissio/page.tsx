@@ -35,16 +35,15 @@ const PLANS = [
     price: 15,
     badge: null,
     highlight: false,
-    cta: "Démarrer gratuitement",
+    cta: "Démarrer",
     features: [
       "1 utilisateur",
-      "300 articles maximum",
-      "Encaissement & ticket PDF",
+      "500 produits",
+      "Ticket PDF",
       "Dashboard de base",
-      "Matériel reconnu auto",
       "Support email",
     ],
-    missing: ["Import Excel/CSV","Fidélité client","Rapports avancés","Clé API"],
+    apiKey: false,
   },
   {
     name: "Pro",
@@ -54,15 +53,13 @@ const PLANS = [
     cta: "Choisir Pro",
     features: [
       "5 utilisateurs",
-      "Articles illimités",
-      "Import Excel / CSV en masse",
-      "Fidélité client intégrée",
-      "Dashboard & rapports avancés",
-      "Matériel reconnu auto",
-      "Ticket PDF écologique",
+      "Catalogue illimité",
+      "Import Excel/CSV",
+      "Fidélité clients",
+      "Rapports avancés",
       "Support prioritaire",
     ],
-    missing: ["Clé API"],
+    apiKey: false,
   },
   {
     name: "Business",
@@ -72,16 +69,12 @@ const PLANS = [
     cta: "Contacter",
     features: [
       "Utilisateurs illimités",
-      "Articles illimités",
-      "Import Excel / CSV en masse",
-      "Fidélité client intégrée",
-      "Dashboard & rapports avancés",
-      "Matériel reconnu auto",
-      "Ticket PDF écologique",
-      "Clé API REST incluse",
-      "Support dédié & SLA",
+      "Multi-magasins (bientôt)",
+      "Fournisseurs avancés",
+      "API & matériel",
+      "Manager dédié",
+      "SLA 99,9%",
     ],
-    missing: [],
     apiKey: true,
   },
 ];
@@ -739,14 +732,6 @@ export default function CaissioPage() {
                         <Check style={{ width: 10, height: 10, color: "#34d399" }} />
                       </div>
                       <span>{f}</span>
-                    </li>
-                  ))}
-                  {plan.missing.map((f) => (
-                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, color: "#475569", fontSize: 14 }}>
-                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(71,85,105,.15)", border: "1px solid rgba(71,85,105,.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                        <span style={{ fontSize: 10, color: "#475569", lineHeight: 1 }}>—</span>
-                      </div>
-                      <span style={{ textDecoration: "line-through", opacity: 0.5 }}>{f}</span>
                     </li>
                   ))}
                 </ul>
