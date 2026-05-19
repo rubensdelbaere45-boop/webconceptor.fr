@@ -5,29 +5,46 @@ import { useState, useMemo, useEffect } from "react";
 import {
   ArrowRight, Check, Zap, Package, FileSpreadsheet, BarChart3,
   Users, ShieldCheck, ScanBarcode, Printer, DoorOpen, Scale,
-  Bluetooth, Star, Trash2, Plus, Minus, Receipt,
-  Download, Monitor, Cpu, Wifi, ChevronDown, Play,
-  TrendingUp, Clock, Shield, Sparkles,
+  Bluetooth, Star, Plus, Minus, Receipt,
+  Download, Monitor, Cpu, Wifi, Play,
+  Clock, Shield, Sparkles, ChevronDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+
+/* ─── DESIGN TOKENS ─────────────────────────────────── */
+const C = {
+  bg:       "#000000",
+  surface:  "#0A0A0A",
+  elevated: "#1A1A1A",
+  active:   "#27272A",
+  primary:  "#FF4400",
+  primaryH: "#FF5E22",
+  text:     "#FFFFFF",
+  muted:    "#A1A1AA",
+  border:   "#27272A",
+  success:  "#10B981",
+};
+const F = {
+  head: "'Outfit', sans-serif",
+  body: "'IBM Plex Sans', sans-serif",
+  mono: "'JetBrains Mono', monospace",
+};
 
 /* ─── DATA ─────────────────────────────────────────── */
-
 const FEATURES = [
-  { Icon: Zap,            t: "Encaissement éclair",     d: "Scan, panier, paiement, ticket en 3 gestes. Même à l'heure de pointe." },
-  { Icon: Package,        t: "Catalogue intelligent",   d: "Prix d'achat, vente, marge auto, TVA, stock minimum alerté." },
-  { Icon: FileSpreadsheet,t: "Import Excel/CSV",        d: "Glissez votre catalogue. Caissio détecte les colonnes, importe en masse." },
-  { Icon: BarChart3,      t: "Dashboard temps réel",    d: "CA, marge, panier moyen, top ventes — tout instantanément." },
-  { Icon: Users,          t: "Fidélité client",         d: "Base clients intégrée avec points automatiques à chaque achat." },
-  { Icon: ShieldCheck,    t: "PIN + lock auto",         d: "Verrouillage 6 chiffres après inactivité. Vos données, protégées." },
+  { Icon: Zap,             t: "Encaissement éclair",   d: "Scan, panier, paiement, ticket en 3 gestes. Même à l'heure de pointe." },
+  { Icon: Package,         t: "Catalogue intelligent", d: "Prix d'achat, vente, marge auto, TVA, stock minimum alerté." },
+  { Icon: FileSpreadsheet, t: "Import Excel/CSV",      d: "Glissez votre catalogue. Caissio détecte les colonnes, importe en masse." },
+  { Icon: BarChart3,       t: "Dashboard temps réel",  d: "CA, marge, panier moyen, top ventes — tout instantanément." },
+  { Icon: Users,           t: "Fidélité client",       d: "Base clients intégrée avec points automatiques à chaque achat." },
+  { Icon: ShieldCheck,     t: "PIN + lock auto",       d: "Verrouillage 6 chiffres après inactivité. Vos données, protégées." },
 ];
 
 const HARDWARE = [
-  { Icon: ScanBarcode, label: "Scanner USB",         note: "WebHID" },
-  { Icon: Printer,     label: "Imprimante ticket",   note: "WebUSB" },
-  { Icon: DoorOpen,    label: "Tiroir caisse",       note: "ESC/POS" },
-  { Icon: Scale,       label: "Balance",             note: "WebSerial" },
-  { Icon: Bluetooth,   label: "Scanner Bluetooth",   note: "WebBluetooth" },
+  { Icon: ScanBarcode, label: "Scanner USB",        note: "WebHID" },
+  { Icon: Printer,     label: "Imprimante ticket",  note: "WebUSB" },
+  { Icon: DoorOpen,    label: "Tiroir caisse",      note: "ESC/POS" },
+  { Icon: Scale,       label: "Balance",            note: "WebSerial" },
+  { Icon: Bluetooth,   label: "Scanner Bluetooth",  note: "WebBluetooth" },
 ];
 
 const PLAN_FEATURES = [
@@ -46,77 +63,98 @@ const PLAN_FEATURES = [
 const FAQ = [
   { q: "Combien de temps dure l'essai gratuit ?",        a: "7 jours, sans carte bancaire. Accès à toutes les fonctionnalités dès le premier jour." },
   { q: "Sur quel matériel ça fonctionne ?",              a: "Windows 10 et 11 via l'application de bureau. La version web tourne aussi sur tout navigateur moderne." },
-  { q: "Comment fonctionne la détection du matériel ?",  a: "Un bouton « Audit complet » détecte vos appareils connectés grâce aux API natives. Aucun pilote, aucune installation." },
-  { q: "Puis-je importer mon catalogue existant ?",       a: "Oui. Glissez votre fichier Excel ou CSV, prévisualisez, validez. Les catégories sont créées automatiquement." },
+  { q: "Comment fonctionne la détection du matériel ?",  a: "Un bouton « Audit complet » dans les Périphériques détecte vos appareils connectés grâce aux API natives. Aucun pilote, aucune installation." },
+  { q: "Puis-je importer mon catalogue existant ?",      a: "Oui. Glissez votre fichier Excel ou CSV, prévisualisez, validez. Les catégories sont créées automatiquement." },
   { q: "Mes données sont-elles sécurisées ?",            a: "Authentification JWT, PIN 6 chiffres, verrouillage automatique, isolation complète. Vos données n'appartiennent qu'à vous." },
   { q: "Puis-je résilier à tout moment ?",               a: "Oui. Sans engagement, sans préavis, sans pénalité. Résiliez en un clic depuis votre espace." },
 ];
 
 const TESTIMONIALS = [
-  { q: "On encaisse deux fois plus vite. Les clients adorent.",          a: "Sophie L.",  role: "Épicerie fine, Lyon" },
-  { q: "L'import de mes 800 références s'est fait en 2 minutes.",       a: "Karim B.",   role: "Boulangerie, Marseille" },
-  { q: "Enfin une caisse claire, pas un truc d'usine à gaz.",           a: "Marie D.",   role: "Snack-Tabac, Bordeaux" },
+  { q: "On encaisse deux fois plus vite. Les clients adorent.", a: "Sophie L.", role: "Épicerie fine, Lyon" },
+  { q: "L'import de mes 800 références s'est fait en 2 minutes.", a: "Karim B.", role: "Boulangerie, Marseille" },
+  { q: "Enfin une caisse claire, pas un truc d'usine à gaz.", a: "Marie D.", role: "Snack-Tabac, Bordeaux" },
 ];
 
 const DEMO_PRODUCTS = [
-  { id: "1", name: "Croissant",        price: 1.20, emoji: "🥐" },
-  { id: "2", name: "Pain de campagne", price: 3.50, emoji: "🥖" },
-  { id: "3", name: "Pain au chocolat", price: 1.40, emoji: "🍫" },
-  { id: "4", name: "Café expresso",    price: 2.00, emoji: "☕" },
-  { id: "5", name: "Eau plate 50cl",   price: 1.00, emoji: "💧" },
-  { id: "6", name: "Coca-Cola 33cl",   price: 1.80, emoji: "🥤" },
-  { id: "7", name: "Salade mixte",     price: 4.50, emoji: "🥗" },
-  { id: "8", name: "Sandwich jambon",  price: 3.90, emoji: "🥪" },
+  { id: "1", name: "Croissant",       price: 1.20, emoji: "🥐" },
+  { id: "2", name: "Pain campagne",   price: 3.50, emoji: "🥖" },
+  { id: "3", name: "Pain chocolat",   price: 1.40, emoji: "🍫" },
+  { id: "4", name: "Café expresso",   price: 2.00, emoji: "☕" },
+  { id: "5", name: "Eau plate 50cl",  price: 1.00, emoji: "💧" },
+  { id: "6", name: "Coca-Cola 33cl",  price: 1.80, emoji: "🥤" },
+  { id: "7", name: "Salade mixte",    price: 4.50, emoji: "🥗" },
+  { id: "8", name: "Sandwich jambon", price: 3.90, emoji: "🥪" },
 ];
 
 const STATS = [
-  { value: "3 sec",  label: "par transaction" },
-  { value: "2 min",  label: "pour démarrer" },
-  { value: "800",    label: "produits importés" },
-  { value: "0",      label: "driver à installer" },
+  { value: "3 sec", label: "par transaction" },
+  { value: "2 min", label: "pour démarrer" },
+  { value: "800",   label: "produits importés" },
+  { value: "0",     label: "driver à installer" },
 ];
 
-type CartItem = { id: string; name: string; price: number; emoji: string; qty: number };
+/* ─── LOGO MARK ─────────────────────────────────────── */
+function CaissioMark({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill={C.primary} />
+      <rect x="7" y="10" width="18" height="3" rx="1.5" fill="white" />
+      <rect x="7" y="16" width="12" height="3" rx="1.5" fill="white" />
+      <rect x="7" y="22" width="8"  height="3" rx="1.5" fill="white" />
+    </svg>
+  );
+}
 
-/* ─── FAQ ACCORDION ─────────────────────────────────── */
+/* ─── FAQ ITEM ───────────────────────────────────────── */
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div
-      className="rounded-2xl px-5 overflow-hidden"
-      style={{ background: "rgba(30,41,59,.4)", border: "1px solid rgba(148,163,184,.08)" }}
+      style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 16 }}
+      className="overflow-hidden"
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between text-left text-white py-5 font-semibold text-base gap-4"
+        style={{ width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+        data-testid="faq-trigger"
       >
-        {q}
+        <span style={{ fontFamily: F.body, fontWeight: 600, fontSize: 16, color: C.text }}>{q}</span>
         <ChevronDown
-          className="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-300"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          size={18}
+          style={{ color: C.muted, flexShrink: 0, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <p className="text-slate-400 pb-5 text-sm leading-relaxed">{a}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {open && (
+        <div style={{ padding: "0 24px 20px", fontFamily: F.body, fontSize: 15, color: C.muted, lineHeight: 1.7 }}>
+          {a}
+        </div>
+      )}
     </div>
   );
 }
 
-/* ─── MAIN ───────────────────────────────────────────── */
+/* ─── TOAST (state-based) ────────────────────────────── */
+function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 3000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div style={{
+      position: "fixed", bottom: 32, right: 32, zIndex: 9999,
+      background: C.success, color: "#fff",
+      fontFamily: F.body, fontWeight: 700, fontSize: 15,
+      padding: "14px 24px", borderRadius: 12,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+    }}>
+      ✓ {msg}
+    </div>
+  );
+}
+
+/* ─── PAGE ───────────────────────────────────────────── */
 export default function CaissioPage() {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<{ id: string; name: string; price: number; emoji: string; qty: number }[]>([]);
   const [paid, setPaid] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -144,128 +182,130 @@ export default function CaissioPage() {
   const checkout = () => {
     if (cart.length === 0) return;
     setPaid(true);
-    setToast(`✓ Vente démo encaissée : ${total.toFixed(2)} €`);
-    setTimeout(() => { setCart([]); setPaid(false); setToast(null); }, 2500);
+    setToast(`Vente démo encaissée : ${total.toFixed(2)} €`);
+    setTimeout(() => { setCart([]); setPaid(false); }, 2500);
   };
 
+  const HERO_BG = "https://images.unsplash.com/photo-1770795263316-f302a878ee64?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwxfHxkYXJrJTIwbWluaW1hbGlzdCUyMGJsYWNrJTIwdGV4dHVyZSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzc4NzAzMTA1fDA&ixlib=rb-4.1.0&q=85";
+
   return (
-    <div className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
+    <div style={{ background: C.bg, color: C.text, minHeight: "100vh", overflowX: "hidden", fontFamily: F.body }}>
+
+      {/* ── FONTS ── */}
       <style>{`
-        @keyframes glow-pulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
-        .glow-blob { filter:blur(80px); border-radius:50%; position:absolute; }
-        .glow-blue { background:radial-gradient(circle,#2563eb88,transparent 70%); }
-        .glow-purple { background:radial-gradient(circle,#7c3aed55,transparent 70%); }
-        .glass-dark { background:rgba(15,23,42,.72); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); }
-        .card-dark { background:rgba(30,41,59,.5); border:1px solid rgba(148,163,184,.1); transition:all .25s cubic-bezier(.4,0,.2,1); }
-        .card-dark:hover { border-color:rgba(59,130,246,.4); box-shadow:0 0 0 1px rgba(59,130,246,.15),0 20px 40px rgba(0,0,0,.3); }
-        .btn-primary { background:linear-gradient(135deg,#2563eb,#4f46e5); box-shadow:0 0 30px rgba(37,99,235,.4); transition:all .25s cubic-bezier(.4,0,.2,1); }
-        .btn-primary:hover { box-shadow:0 0 50px rgba(37,99,235,.6); transform:translateY(-1px); }
-        .btn-windows { background:linear-gradient(135deg,#0ea5e9,#2563eb); box-shadow:0 0 30px rgba(14,165,233,.35); transition:all .25s cubic-bezier(.4,0,.2,1); }
-        .btn-windows:hover { box-shadow:0 0 50px rgba(14,165,233,.55); transform:translateY(-1px); }
-        .gradient-text { background:linear-gradient(135deg,#60a5fa,#a78bfa,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .gradient-text-blue { background:linear-gradient(135deg,#60a5fa,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .hero-grid { background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px); background-size:60px 60px; }
-        .windows-badge { background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(37,99,235,.15)); border:1px solid rgba(14,165,233,.25); }
-        .price-glow { box-shadow:0 0 60px rgba(37,99,235,.2),inset 0 1px 0 rgba(255,255,255,.06); }
-        .feature-icon-wrap { background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(79,70,229,.2)); border:1px solid rgba(99,102,241,.2); }
-        .stat-card { background:linear-gradient(135deg,rgba(30,41,59,.8),rgba(15,23,42,.8)); border:1px solid rgba(148,163,184,.08); }
-        .trial-badge { background:linear-gradient(135deg,rgba(52,211,153,.15),rgba(16,185,129,.1)); border:1px solid rgba(52,211,153,.3); color:#34d399; }
-        .neon-border { box-shadow:0 0 0 1px rgba(59,130,246,.3),0 0 30px rgba(59,130,246,.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { display: none; }
+        html { scroll-behavior: smooth; }
+        @keyframes glow-pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
       `}</style>
 
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-semibold text-white"
-            style={{ background: "rgba(16,185,129,.9)", backdropFilter: "blur(12px)" }}
-          >
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
 
       {/* ── NAV ── */}
-      <header className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${scrolled ? "glass-dark border-b border-white/5" : ""}`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/caissio" className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black">C</span>
-            <span className="text-xl font-black text-white tracking-tight">Caissio</span>
+      <header style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+        background: scrolled ? "rgba(0,0,0,0.7)" : "transparent",
+        backdropFilter: scrolled ? "blur(20px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
+        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+        transition: "all 0.3s",
+      }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/caissio" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }} data-testid="landing-logo">
+            <CaissioMark size={30} />
+            <span style={{ fontFamily: F.head, fontWeight: 800, fontSize: 20, color: C.text, letterSpacing: "-0.02em" }}>Caissio</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-slate-400">
-            <a href="#demo"     className="hover:text-white font-medium transition-colors">Essayer</a>
-            <a href="#features" className="hover:text-white font-medium transition-colors">Fonctionnalités</a>
-            <a href="#windows"  className="hover:text-white font-medium transition-colors">Télécharger</a>
-            <a href="#pricing"  className="hover:text-white font-medium transition-colors">Tarifs</a>
-            <a href="#faq"      className="hover:text-white font-medium transition-colors">FAQ</a>
+          <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
+            {[["#demo","Essayer"],["#features","Fonctionnalités"],["#pricing","Tarifs"],["#faq","FAQ"]].map(([h,l]) => (
+              <a key={h} href={h} style={{ fontFamily: F.body, fontSize: 14, fontWeight: 500, color: C.muted, textDecoration: "none", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+                {l}
+              </a>
+            ))}
           </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm text-slate-400 hover:text-white font-medium transition-colors">
-              ← WebConceptor
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Link href="/login" style={{ fontFamily: F.body, fontSize: 14, fontWeight: 500, color: C.muted, textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+              Connexion
             </Link>
-            <a
-              href="#pricing"
-              className="btn-primary px-5 h-9 rounded-xl text-white text-sm font-bold inline-flex items-center gap-1.5"
-            >
+            <Link href="/register" data-testid="nav-register-cta"
+              style={{ fontFamily: F.body, fontWeight: 700, fontSize: 14, color: "#fff", background: C.primary, padding: "8px 20px", borderRadius: 8, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, transition: "background 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+              onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
               Essai 7 jours gratuit
-            </a>
+            </Link>
           </div>
         </div>
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative pt-28 pb-24 hero-grid overflow-hidden">
-        <div className="glow-blob glow-blue w-[600px] h-[500px] top-0 left-1/2 -translate-x-1/2 -translate-y-1/4 opacity-60"
-          style={{ animation: "glow-pulse 4s ease-in-out infinite" }} />
-        <div className="glow-blob glow-purple w-[400px] h-[400px] bottom-0 right-0 opacity-40" />
+      <section style={{
+        position: "relative", paddingTop: 112, paddingBottom: 96,
+        backgroundImage: `url(${HERO_BG})`,
+        backgroundSize: "cover", backgroundPosition: "center",
+        overflow: "hidden",
+      }}>
+        {/* Dark overlay */}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.72)" }} />
+        {/* Vermilion glow */}
+        <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,68,0,0.25), transparent 70%)", filter: "blur(60px)", animation: "glow-pulse 4s ease-in-out infinite" }} />
 
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className="max-w-5xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2.5 px-4 h-9 rounded-full windows-badge text-xs font-semibold text-blue-300 uppercase tracking-widest mb-8">
-              <Monitor className="h-3.5 w-3.5" />
-              Disponible sur Windows 10 &amp; 11
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+            {/* Badge */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", background: "rgba(255,68,0,0.12)", border: `1px solid rgba(255,68,0,0.3)`, borderRadius: 999, marginBottom: 32 }}>
+              <Monitor size={14} style={{ color: C.primary }} />
+              <span style={{ fontFamily: F.body, fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                Disponible sur Windows 10 &amp; 11
+              </span>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.success, display: "inline-block" }} />
             </div>
 
-            <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter mb-8">
+            <h1 style={{ fontFamily: F.head, fontSize: "clamp(52px,8vw,96px)", fontWeight: 900, lineHeight: 0.92, letterSpacing: "-0.03em", color: C.text, marginBottom: 28 }}>
               La caisse qui fait<br />
-              <span className="gradient-text">tout le travail.</span>
+              <span style={{ color: C.primary }}>tout le travail.</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed mb-12">
+            <p style={{ fontFamily: F.body, fontSize: 20, color: C.muted, maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.65 }}>
               Encaissez plus vite, gérez votre stock en temps réel, fidélisez vos clients.{" "}
-              <strong className="text-white">Sans installation, sans formation, sans prise de tête.</strong>
+              <strong style={{ color: C.text }}>Sans installation, sans formation, sans prise de tête.</strong>
             </p>
 
-            <div className="flex flex-wrap gap-4 justify-center mb-10">
-              <a href="#pricing" className="btn-primary h-16 px-10 rounded-2xl text-white font-black text-lg inline-flex items-center gap-3">
-                Commencer gratuitement
-                <ArrowRight className="h-5 w-5" />
-              </a>
-              <a href="#windows" className="btn-windows h-16 px-10 rounded-2xl text-white font-black text-lg inline-flex items-center gap-3">
-                <Download className="h-5 w-5" />
-                Télécharger pour Windows
+            {/* CTAs */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", marginBottom: 32 }}>
+              <Link href="/register" data-testid="hero-cta-trial"
+                style={{ fontFamily: F.head, fontWeight: 800, fontSize: 18, color: "#fff", background: C.primary, height: 64, padding: "0 40px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, transition: "background 0.2s, transform 0.1s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+                onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
+                Commencer gratuitement <ArrowRight size={20} />
+              </Link>
+              <a href="#windows"
+                style={{ fontFamily: F.head, fontWeight: 800, fontSize: 18, color: "#fff", background: C.elevated, border: `1px solid ${C.border}`, height: 64, padding: "0 40px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, transition: "background 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.active)}
+                onMouseLeave={e => (e.currentTarget.style.background = C.elevated)}>
+                <Download size={20} /> Télécharger Windows
               </a>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-slate-500">
-              {["7 jours gratuits, sans carte", "Configuration en 2 minutes", "Résiliation sans engagement"].map((t) => (
-                <span key={t} className="inline-flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-400" />{t}
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px 32px" }}>
+              {["7 jours gratuits, sans carte", "Configuration en 2 minutes", "Résiliation sans engagement"].map(t => (
+                <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: F.body, fontSize: 14, color: C.muted }}>
+                  <Check size={15} style={{ color: C.success }} /> {t}
                 </span>
               ))}
             </div>
           </div>
 
           {/* Stats */}
-          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {STATS.map((s) => (
-              <div key={s.label} className="stat-card rounded-2xl p-5 text-center">
-                <div className="text-4xl font-black gradient-text-blue mb-1">{s.value}</div>
-                <div className="text-xs text-slate-500 uppercase tracking-widest font-medium">{s.label}</div>
+          <div style={{ marginTop: 80, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 800, marginLeft: "auto", marginRight: "auto" }}>
+            {STATS.map(s => (
+              <div key={s.label} style={{ background: "rgba(10,10,10,0.8)", border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(12px)" }}>
+                <div style={{ fontFamily: F.head, fontSize: 36, fontWeight: 900, color: C.primary, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontFamily: F.body, fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: "0.18em", marginTop: 6, fontWeight: 600 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -273,94 +313,98 @@ export default function CaissioPage() {
       </section>
 
       {/* ── INTERACTIVE DEMO ── */}
-      <section id="demo" className="py-24 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">
-              <Play className="h-3 w-3 fill-blue-400" />Essayez en direct
+      <section id="demo" style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 56px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>
+              <Play size={12} style={{ fill: C.primary }} /> Essayez en direct
             </div>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(32px,4vw,52px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text }}>
               Encaissez votre première vente{" "}
-              <span className="gradient-text-blue">maintenant.</span>
+              <span style={{ color: C.primary }}>maintenant.</span>
             </h2>
-            <p className="mt-4 text-slate-400 text-lg">Touchez les produits, ajustez les quantités, validez. Exactement comme dans la vraie caisse.</p>
+            <p style={{ marginTop: 16, fontFamily: F.body, fontSize: 18, color: C.muted }}>
+              Touchez les produits, ajustez les quantités, validez. Exactement comme dans la vraie caisse.
+            </p>
           </div>
 
-          <div
-            className="grid lg:grid-cols-[1fr_380px] gap-4 max-w-6xl mx-auto rounded-3xl border border-white/[0.08] overflow-hidden neon-border"
-            style={{ background: "rgba(15,23,42,.8)" }}
-          >
-            {/* Product grid */}
-            <div className="p-6" style={{ background: "rgba(30,41,59,.3)" }}>
-              <div className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-4">Choisissez un produit</div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {/* POS Demo */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 1, maxWidth: 1100, margin: "0 auto", background: C.border, border: `1px solid ${C.border}`, borderRadius: 20, overflow: "hidden" }}
+            data-testid="demo-grid">
+            {/* Products */}
+            <div style={{ background: C.surface, padding: 24 }}>
+              <div style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.18em", marginBottom: 16 }}>
+                Choisissez un produit
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
                 {DEMO_PRODUCTS.map((p) => (
-                  <button
-                    key={p.id} onClick={() => addToCart(p)}
-                    className="card-dark rounded-2xl p-3 text-left flex flex-col cursor-pointer"
-                  >
-                    <div className="aspect-square rounded-xl flex items-center justify-center text-4xl mb-2"
-                      style={{ background: "rgba(30,41,59,.8)" }}>
+                  <button key={p.id} onClick={() => addToCart(p)} data-testid={`demo-product-${p.id}`}
+                    style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left", transition: "background 0.15s, border-color 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = C.active; e.currentTarget.style.borderColor = C.primary; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = C.elevated; e.currentTarget.style.borderColor = C.border; }}>
+                    <div style={{ aspectRatio: "1", background: C.active, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 8 }}>
                       {p.emoji}
                     </div>
-                    <div className="text-sm font-semibold text-slate-200 truncate">{p.name}</div>
-                    <div className="text-base font-bold text-blue-400">{p.price.toFixed(2)} €</div>
+                    <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                    <div style={{ fontFamily: F.head, fontSize: 15, fontWeight: 700, color: C.primary }}>{p.price.toFixed(2)} €</div>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Cart */}
-            <div className="flex flex-col border-l border-white/5">
-              <div className="px-5 h-14 border-b border-white/5 flex items-center justify-between">
-                <div className="font-bold text-white">Ticket démo</div>
+            <div style={{ background: C.surface, display: "flex", flexDirection: "column" }}>
+              <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", borderBottom: `1px solid ${C.border}` }}>
+                <span style={{ fontFamily: F.head, fontWeight: 700, fontSize: 16, color: C.text }}>Ticket démo</span>
                 {cart.length > 0 && (
-                  <button onClick={() => setCart([])}
-                    className="text-xs text-slate-500 hover:text-red-400 uppercase tracking-widest font-medium transition-colors">
+                  <button onClick={() => setCart([])} style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.15em", background: "none", border: "none", cursor: "pointer", transition: "color 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#EF4444")}
+                    onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
                     Vider
                   </button>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+
+              <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 8 }} data-testid="demo-cart">
                 {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center px-6 py-8 min-h-[200px]">
-                    <Receipt className="h-10 w-10 text-slate-700 mb-3" />
-                    <div className="text-sm text-slate-600">Touchez un produit pour commencer.</div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, textAlign: "center", minHeight: 200, gap: 12 }}>
+                    <Receipt size={36} style={{ color: C.active }} />
+                    <span style={{ fontFamily: F.body, fontSize: 14, color: "#3F3F46" }}>Touchez un produit pour commencer.</span>
                   </div>
-                ) : cart.map((i) => (
-                  <div key={i.id} className="rounded-xl p-3 flex items-center gap-2"
-                    style={{ background: "rgba(30,41,59,.5)", border: "1px solid rgba(148,163,184,.08)" }}>
-                    <div className="text-2xl">{i.emoji}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-200 truncate">{i.name}</div>
-                      <div className="text-xs text-slate-500">{i.price.toFixed(2)} € × {i.qty}</div>
+                ) : cart.map((item) => (
+                  <div key={item.id} style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 24 }}>{item.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                      <div style={{ fontFamily: F.mono, fontSize: 11, color: C.muted }}>{item.price.toFixed(2)} € × {item.qty}</div>
                     </div>
-                    <button onClick={() => removeOne(i.id)}
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-                      <Minus className="h-3 w-3" />
+                    <button onClick={() => removeOne(item.id)} style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${C.border}`, cursor: "pointer", color: C.muted, transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = C.active; e.currentTarget.style.color = C.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; }}>
+                      <Minus size={12} />
                     </button>
-                    <div className="font-mono text-sm w-5 text-center text-slate-300">{i.qty}</div>
-                    <button onClick={() => addToCart(i)}
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-                      <Plus className="h-3 w-3" />
+                    <span style={{ fontFamily: F.mono, fontSize: 13, width: 20, textAlign: "center", color: C.text }}>{item.qty}</span>
+                    <button onClick={() => addToCart(item)} style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${C.border}`, cursor: "pointer", color: C.muted, transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = C.active; e.currentTarget.style.color = C.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; }}>
+                      <Plus size={12} />
                     </button>
                   </div>
                 ))}
               </div>
-              <div className="border-t border-white/5 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-widest text-slate-500 font-medium">Total</span>
-                  <span className="text-3xl font-black text-blue-400">{total.toFixed(2)} €</span>
+
+              <div style={{ borderTop: `1px solid ${C.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.18em" }}>Total</span>
+                  <span style={{ fontFamily: F.head, fontSize: 36, fontWeight: 900, color: C.primary, letterSpacing: "-0.03em" }}>{total.toFixed(2)} €</span>
                 </div>
-                <button
-                  onClick={checkout} disabled={cart.length === 0}
-                  className={`w-full h-14 rounded-xl text-white font-bold text-base inline-flex items-center justify-center gap-2 disabled:opacity-25 transition-all ${paid ? "bg-emerald-600" : "btn-primary"}`}
-                >
-                  {paid ? <><Check className="h-4 w-4" /> Encaissé !</> : "Encaisser la démo"}
+                <button onClick={checkout} disabled={cart.length === 0} data-testid="demo-checkout"
+                  style={{ width: "100%", height: 56, borderRadius: 10, border: "none", cursor: cart.length === 0 ? "not-allowed" : "pointer", fontFamily: F.head, fontWeight: 800, fontSize: 16, color: "#fff", background: paid ? C.success : C.primary, opacity: cart.length === 0 ? 0.3 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.2s" }}>
+                  {paid ? <><Check size={18} /> Encaissé !</> : "Encaisser la démo"}
                 </button>
-                <div className="text-center text-xs text-slate-600">
-                  👉 <a href="#pricing" className="text-blue-400 hover:underline font-medium">Créer mon compte</a> pour aller plus loin
-                </div>
+                <p style={{ fontFamily: F.body, fontSize: 12, color: "#3F3F46", textAlign: "center" }}>
+                  👉 <Link href="/register" style={{ color: C.primary, textDecoration: "none", fontWeight: 600 }}>Créer mon compte</Link> pour aller plus loin
+                </p>
               </div>
             </div>
           </div>
@@ -368,91 +412,75 @@ export default function CaissioPage() {
       </section>
 
       {/* ── WINDOWS DOWNLOAD ── */}
-      <section id="windows" className="py-24 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="rounded-3xl p-12 md:p-16 relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg,rgba(14,165,233,.08),rgba(37,99,235,.12))", border: "1px solid rgba(14,165,233,.2)" }}>
-            <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full opacity-30"
-              style={{ background: "radial-gradient(circle,#0ea5e9,transparent 70%)", filter: "blur(60px)" }} />
-
-            <div className="relative grid lg:grid-cols-[1fr_auto] gap-12 items-center">
-              <div>
-                <div className="inline-flex items-center gap-3 mb-8">
-                  <div className="w-10 h-10 grid grid-cols-2 gap-0.5">
-                    {(["#f25022","#7fba00","#00a4ef","#ffb900"] as const).map((bg, i) => (
-                      <div key={i} className="rounded-[2px]" style={{ background: bg }} />
-                    ))}
-                  </div>
-                  <span className="text-lg font-bold text-white">Windows 10 / 11</span>
-                </div>
-
-                <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
-                  Votre caisse,<br />
-                  <span className="gradient-text">en local sur votre PC.</span>
-                </h2>
-
-                <p className="text-xl text-slate-400 mb-8 max-w-xl leading-relaxed">
-                  Téléchargez l'application de bureau pour Windows. Fonctionne même sans connexion internet.
-                  Vos données restent sur votre machine.
-                </p>
-
-                <div className="flex flex-wrap gap-4 mb-10">
-                  <a href="/download/Caissio-Setup.exe"
-                    className="btn-windows h-16 px-10 rounded-2xl text-white font-black text-lg inline-flex items-center gap-3">
-                    <Download className="h-5 w-5" />Télécharger (.exe)
-                  </a>
-                  <a href="#pricing"
-                    className="h-16 px-10 rounded-2xl font-bold text-lg inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
-                    style={{ border: "1px solid rgba(148,163,184,.15)" }}>
-                    Ou version web →
-                  </a>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 max-w-sm">
-                  {([
-                    { I: Shield, t: "Données locales", c: "text-emerald-400" },
-                    { I: Wifi,   t: "Hors-ligne",      c: "text-blue-400" },
-                    { I: Cpu,    t: "Ultra-léger",     c: "text-violet-400" },
-                  ] as const).map(({ I, t, c }) => (
-                    <div key={t} className="text-center">
-                      <div className="h-10 w-10 mx-auto mb-2 rounded-xl feature-icon-wrap flex items-center justify-center">
-                        <I className={`h-4 w-4 ${c}`} />
-                      </div>
-                      <div className="text-xs font-semibold text-slate-300">{t}</div>
-                    </div>
+      <section id="windows" style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: "64px 64px", display: "grid", gridTemplateColumns: "1fr auto", gap: 64, alignItems: "center", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", right: -80, top: -80, width: 320, height: 320, borderRadius: "50%", background: `radial-gradient(circle, rgba(255,68,0,0.15), transparent 70%)`, filter: "blur(60px)" }} />
+            <div style={{ position: "relative" }}>
+              {/* Windows badge */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+                <div style={{ width: 36, height: 36, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                  {["#f25022","#7fba00","#00a4ef","#ffb900"].map(c => (
+                    <div key={c} style={{ borderRadius: 2, background: c }} />
                   ))}
                 </div>
+                <span style={{ fontFamily: F.body, fontWeight: 700, fontSize: 16, color: C.text }}>Windows 10 / 11</span>
               </div>
 
-              {/* Mini mockup */}
-              <div className="hidden lg:block">
-                <div className="w-72 rounded-2xl overflow-hidden"
-                  style={{ border: "1px solid rgba(148,163,184,.12)", background: "rgba(15,23,42,.9)", boxShadow: "0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(14,165,233,.15)" }}>
-                  <div className="h-8 flex items-center px-3 gap-2"
-                    style={{ background: "rgba(30,41,59,.8)", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
-                    <div className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
-                    <div className="mx-auto text-[10px] text-slate-600 font-mono">Caissio — Épicerie du Marché</div>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {(["Tomate 500g","Eau Evian 1.5L","Pain complet"] as const).map((item, i) => (
-                      <div key={item} className="flex items-center justify-between rounded-lg px-3 py-2"
-                        style={{ background: "rgba(30,41,59,.6)" }}>
-                        <span className="text-xs text-slate-300 font-medium">{item}</span>
-                        <span className="text-xs font-bold text-blue-400">{["1.20 €","0.95 €","2.80 €"][i]}</span>
-                      </div>
-                    ))}
-                    <div className="h-px my-2" style={{ background: "rgba(148,163,184,.1)" }} />
-                    <div className="flex justify-between px-1">
-                      <span className="text-xs text-slate-500">TOTAL</span>
-                      <span className="text-lg font-black text-blue-400">4.95 €</span>
+              <h2 style={{ fontFamily: F.head, fontSize: "clamp(32px,4vw,56px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text, marginBottom: 24 }}>
+                Votre caisse,<br /><span style={{ color: C.primary }}>en local sur votre PC.</span>
+              </h2>
+              <p style={{ fontFamily: F.body, fontSize: 18, color: C.muted, marginBottom: 32, maxWidth: 480, lineHeight: 1.65 }}>
+                Téléchargez l'application de bureau. Fonctionne même sans connexion internet. Vos données restent sur votre machine.
+              </p>
+
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 40 }}>
+                <a href="/download/Caissio-Setup.exe"
+                  style={{ fontFamily: F.head, fontWeight: 800, fontSize: 18, color: "#fff", background: C.primary, height: 64, padding: "0 40px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, transition: "background 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+                  onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
+                  <Download size={20} /> Télécharger (.exe)
+                </a>
+                <Link href="/register"
+                  style={{ fontFamily: F.head, fontWeight: 700, fontSize: 18, color: C.muted, border: `1px solid ${C.border}`, height: 64, padding: "0 32px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, transition: "color 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+                  onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+                  Ou version web →
+                </Link>
+              </div>
+
+              <div style={{ display: "flex", gap: 24 }}>
+                {[{ I: Shield, t: "Données locales" }, { I: Wifi, t: "Hors-ligne" }, { I: Cpu, t: "Ultra-léger" }].map(({ I, t }) => (
+                  <div key={t} style={{ textAlign: "center" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(255,68,0,0.1)", border: `1px solid rgba(255,68,0,0.2)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px" }}>
+                      <I size={18} style={{ color: C.primary }} />
                     </div>
-                    <div className="h-9 rounded-lg flex items-center justify-center text-xs font-bold text-white"
-                      style={{ background: "linear-gradient(135deg,#2563eb,#4f46e5)" }}>
-                      ✓ Encaisser
-                    </div>
+                    <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 600, color: C.muted }}>{t}</div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mini mockup */}
+            <div style={{ width: 260, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden", boxShadow: `0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,68,0,0.15)` }}>
+              <div style={{ height: 32, display: "flex", alignItems: "center", padding: "0 12px", gap: 6, background: C.elevated, borderBottom: `1px solid ${C.border}` }}>
+                {["#EF4444","#F59E0B","#10B981"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.7 }} />)}
+                <span style={{ flex: 1, textAlign: "center", fontFamily: F.mono, fontSize: 10, color: "#3F3F46" }}>Caissio — Épicerie du Marché</span>
+              </div>
+              <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                {[["Tomate 500g","1.20 €"],["Eau Evian 1.5L","0.95 €"],["Pain complet","2.80 €"]].map(([item, price]) => (
+                  <div key={item} style={{ display: "flex", justifyContent: "space-between", background: C.elevated, borderRadius: 8, padding: "8px 12px" }}>
+                    <span style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{item}</span>
+                    <span style={{ fontFamily: F.mono, fontSize: 12, fontWeight: 700, color: C.primary }}>{price}</span>
+                  </div>
+                ))}
+                <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "0 4px" }}>
+                  <span style={{ fontFamily: F.body, fontSize: 11, color: "#3F3F46" }}>TOTAL</span>
+                  <span style={{ fontFamily: F.head, fontSize: 20, fontWeight: 900, color: C.primary }}>4.95 €</span>
+                </div>
+                <div style={{ height: 36, borderRadius: 8, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F.head, fontWeight: 800, fontSize: 13, color: "#fff" }}>
+                  ✓ Encaisser
                 </div>
               </div>
             </div>
@@ -461,26 +489,28 @@ export default function CaissioPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-2xl mb-16">
-            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">
-              <Sparkles className="h-3.5 w-3.5" />Fonctionnalités
+      <section id="features" style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ maxWidth: 600, marginBottom: 64 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>
+              <Sparkles size={13} /> Fonctionnalités
             </div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight">
-              Tout ce qu'il faut.<br />
-              <span className="gradient-text-blue">Rien de trop.</span>
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(32px,4vw,56px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text }}>
+              Tout ce qu'il faut.<br /><span style={{ color: C.primary }}>Rien de trop.</span>
             </h2>
-            <p className="mt-5 text-slate-400 text-xl">Un logiciel pensé pour les commerçants, pas pour les ingénieurs.</p>
+            <p style={{ marginTop: 20, fontFamily: F.body, fontSize: 18, color: C.muted }}>Un logiciel pensé pour les commerçants, pas pour les ingénieurs.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map((f) => (
-              <div key={f.t} className="card-dark rounded-2xl p-6">
-                <div className="feature-icon-wrap h-12 w-12 rounded-xl flex items-center justify-center mb-5">
-                  <f.Icon className="h-5 w-5 text-blue-400" />
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+            {FEATURES.map(({ Icon, t, d }) => (
+              <div key={t} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, transition: "border-color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = C.primary)}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,68,0,0.1)", border: "1px solid rgba(255,68,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Icon size={22} style={{ color: C.primary }} />
                 </div>
-                <div className="text-xl font-bold text-white mb-2">{f.t}</div>
-                <div className="text-slate-400 leading-relaxed text-sm">{f.d}</div>
+                <div style={{ fontFamily: F.head, fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 8 }}>{t}</div>
+                <div style={{ fontFamily: F.body, fontSize: 14, color: C.muted, lineHeight: 1.65 }}>{d}</div>
               </div>
             ))}
           </div>
@@ -488,24 +518,25 @@ export default function CaissioPage() {
       </section>
 
       {/* ── HARDWARE ── */}
-      <section className="py-20 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">Matériel compatible</div>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">
-              Plug &amp; Play.{" "}
-              <span className="gradient-text-blue">Zéro pilote.</span>
+      <section style={{ padding: "80px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ textAlign: "center", maxWidth: 580, margin: "0 auto 56px" }}>
+            <div style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>Matériel compatible</div>
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text }}>
+              Plug &amp; Play.{" "}<span style={{ color: C.primary }}>Zéro pilote.</span>
             </h2>
-            <p className="mt-4 text-slate-400 text-lg">Branchez. Cliquez sur <strong className="text-white">Audit complet</strong>. Tout est trouvé.</p>
+            <p style={{ marginTop: 16, fontFamily: F.body, fontSize: 17, color: C.muted }}>Branchez. Cliquez sur <strong style={{ color: C.text }}>Audit complet</strong>. Tout est trouvé.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 max-w-4xl mx-auto">
-            {HARDWARE.map((h) => (
-              <div key={h.label} className="card-dark rounded-2xl p-5 text-center">
-                <div className="feature-icon-wrap mx-auto h-12 w-12 rounded-xl flex items-center justify-center mb-3">
-                  <h.Icon className="h-5 w-5 text-blue-400" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, maxWidth: 800, margin: "0 auto" }}>
+            {HARDWARE.map(({ Icon, label, note }) => (
+              <div key={label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, textAlign: "center", transition: "border-color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = C.primary)}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,68,0,0.1)", border: "1px solid rgba(255,68,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                  <Icon size={22} style={{ color: C.primary }} />
                 </div>
-                <div className="font-semibold text-slate-200 text-sm">{h.label}</div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-600 mt-1 font-medium">{h.note}</div>
+                <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 600, color: C.muted }}>{label}</div>
+                <div style={{ fontFamily: F.mono, fontSize: 10, color: "#3F3F46", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.12em" }}>{note}</div>
               </div>
             ))}
           </div>
@@ -513,27 +544,24 @@ export default function CaissioPage() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section className="py-24 border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <div className="text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">Avis clients</div>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">
-              Des commerçants qui{" "}
-              <span className="gradient-text">dorment mieux.</span>
+      <section style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>Avis clients</div>
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 900, letterSpacing: "-0.03em", color: C.text }}>
+              Des commerçants qui{" "}<span style={{ color: C.primary }}>dorment mieux.</span>
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
             {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="card-dark rounded-2xl p-6">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                  ))}
+              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28 }}>
+                <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+                  {Array.from({ length: 5 }).map((_, j) => <Star key={j} size={14} style={{ color: "#F59E0B", fill: "#F59E0B" }} />)}
                 </div>
-                <p className="text-slate-200 font-medium leading-relaxed text-base">« {t.q} »</p>
-                <div className="mt-5 pt-5 border-t border-white/5">
-                  <div className="text-sm font-bold text-white">{t.a}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{t.role}</div>
+                <p style={{ fontFamily: F.body, fontSize: 16, fontWeight: 500, color: C.muted, lineHeight: 1.65 }}>« {t.q} »</p>
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
+                  <div style={{ fontFamily: F.body, fontSize: 14, fontWeight: 700, color: C.text }}>{t.a}</div>
+                  <div style={{ fontFamily: F.body, fontSize: 12, color: "#3F3F46", marginTop: 2 }}>{t.role}</div>
                 </div>
               </div>
             ))}
@@ -542,62 +570,70 @@ export default function CaissioPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">Tarif</div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight">
-              Un seul prix.{" "}
-              <span className="gradient-text">Tout inclus.</span>
+      <section id="pricing" style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 64px" }}>
+            <div style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>Tarif</div>
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(32px,4vw,60px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: C.text }}>
+              Un seul prix.{" "}<span style={{ color: C.primary }}>Tout inclus.</span>
             </h2>
-            <p className="mt-5 text-slate-400 text-xl">7 jours d'essai gratuit. Résiliez quand vous voulez.</p>
+            <p style={{ marginTop: 20, fontFamily: F.body, fontSize: 18, color: C.muted }}>7 jours d'essai gratuit. Résiliez quand vous voulez.</p>
           </div>
 
-          <div className="max-w-lg mx-auto">
-            <div className="rounded-3xl p-10 price-glow relative overflow-hidden"
-              style={{ background: "linear-gradient(135deg,rgba(37,99,235,.12),rgba(79,70,229,.08))", border: "1px solid rgba(99,102,241,.3)" }}>
-              <div className="trial-badge inline-flex items-center gap-2 px-4 h-8 rounded-full text-xs font-bold uppercase tracking-widest mb-8">
-                <Clock className="h-3.5 w-3.5" />7 jours gratuits — sans carte
+          <div style={{ maxWidth: 480, margin: "0 auto" }}>
+            <div data-testid="pricing-pro"
+              style={{ background: C.surface, border: `1px solid ${C.primary}`, borderRadius: 24, padding: 40, position: "relative", overflow: "hidden", boxShadow: `0 0 80px rgba(255,68,0,0.12)` }}>
+              <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, rgba(255,68,0,0.15), transparent 70%)`, filter: "blur(40px)" }} />
+
+              {/* Badge */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 999, padding: "5px 14px", marginBottom: 28 }}>
+                <Clock size={13} style={{ color: C.success }} />
+                <span style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.success, textTransform: "uppercase", letterSpacing: "0.15em" }}>7 jours gratuits — sans carte</span>
               </div>
 
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-7xl font-black text-white">19€</span>
-                <span className="text-slate-400 text-xl">/mois</span>
+              {/* Price */}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontFamily: F.head, fontSize: 80, fontWeight: 900, color: C.text, lineHeight: 1, letterSpacing: "-0.04em" }}>19€</span>
+                <span style={{ fontFamily: F.body, fontSize: 20, color: C.muted }}>/mois</span>
               </div>
-              <p className="text-slate-400 mb-10 text-lg">Puis 19€/mois. Annulable à tout moment.</p>
+              <p style={{ fontFamily: F.body, fontSize: 16, color: C.muted, marginBottom: 36 }}>Puis 19€/mois. Annulable à tout moment.</p>
 
-              <ul className="space-y-3 mb-10">
-                {PLAN_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-slate-300">
-                    <div className="h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                      <Check className="h-3 w-3 text-emerald-400" />
+              {/* Features */}
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
+                {PLAN_FEATURES.map(f => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: F.body, fontSize: 15, color: C.muted }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Check size={11} style={{ color: C.success }} />
                     </div>
-                    <span>{f}</span>
+                    {f}
                   </li>
                 ))}
               </ul>
 
-              <a href="mailto:contact@webconceptor.fr?subject=Caissio%20-%20Essai%20gratuit"
-                className="btn-primary w-full h-16 rounded-2xl font-black text-xl text-white inline-flex items-center justify-center gap-3">
-                Démarrer mon essai gratuit
-                <ArrowRight className="h-5 w-5" />
-              </a>
-              <p className="text-center text-sm text-slate-600 mt-4">Aucune carte requise. Aucun engagement.</p>
+              {/* CTA */}
+              <Link href="/register" data-testid="pricing-cta-pro"
+                style={{ fontFamily: F.head, fontWeight: 900, fontSize: 18, color: "#fff", background: C.primary, height: 64, borderRadius: 12, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, transition: "background 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+                onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
+                Démarrer mon essai gratuit <ArrowRight size={20} />
+              </Link>
+              <p style={{ textAlign: "center", fontFamily: F.body, fontSize: 13, color: "#3F3F46", marginTop: 12 }}>Aucune carte requise. Aucun engagement.</p>
             </div>
 
-            <div className="mt-6 rounded-2xl p-5 flex items-center gap-4 windows-badge">
-              <div className="w-8 h-8 grid grid-cols-2 gap-0.5 shrink-0">
-                {(["#f25022","#7fba00","#00a4ef","#ffb900"] as const).map((bg, i) => (
-                  <div key={i} className="rounded-[1px]" style={{ background: bg }} />
-                ))}
+            {/* Windows row */}
+            <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 32, height: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, flexShrink: 0 }}>
+                {["#f25022","#7fba00","#00a4ef","#ffb900"].map(c => <div key={c} style={{ borderRadius: 1, background: c }} />)}
               </div>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-white">Application Windows</div>
-                <div className="text-xs text-slate-400">Fonctionne hors-ligne · Données locales</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: F.body, fontSize: 14, fontWeight: 700, color: C.text }}>Application Windows</div>
+                <div style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>Fonctionne hors-ligne · Données locales</div>
               </div>
               <a href="/download/Caissio-Setup.exe"
-                className="btn-windows px-4 h-9 rounded-xl text-white text-sm font-bold inline-flex items-center gap-2 shrink-0">
-                <Download className="h-3.5 w-3.5" />.exe
+                style={{ fontFamily: F.body, fontWeight: 700, fontSize: 14, color: "#fff", background: C.primary, padding: "8px 16px", borderRadius: 8, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, transition: "background 0.2s", flexShrink: 0 }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+                onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
+                <Download size={14} /> .exe
               </a>
             </div>
           </div>
@@ -605,56 +641,63 @@ export default function CaissioPage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" className="py-24 border-t border-white/5">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <div className="text-xs uppercase tracking-[0.25em] text-blue-400 font-bold mb-4">FAQ</div>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Questions fréquentes</h2>
+      <section id="faq" style={{ padding: "96px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <div style={{ fontFamily: F.body, fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 16 }}>FAQ</div>
+            <h2 style={{ fontFamily: F.head, fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 900, letterSpacing: "-0.03em", color: C.text }}>Questions fréquentes</h2>
           </div>
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {FAQ.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
           </div>
         </div>
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="py-32 border-t border-white/5 relative overflow-hidden">
-        <div className="glow-blob glow-blue w-[800px] h-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30" />
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-5xl md:text-8xl font-black tracking-tighter mb-8">
-            Lancez votre caisse{" "}
-            <span className="gradient-text">en 2 minutes</span>.
+      <section style={{ padding: "120px 0", borderTop: `1px solid ${C.border}`, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 800, height: 400, borderRadius: "50%", background: `radial-gradient(circle, rgba(255,68,0,0.2), transparent 70%)`, filter: "blur(80px)" }} />
+        <div style={{ position: "relative", maxWidth: 860, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
+          <h2 style={{ fontFamily: F.head, fontSize: "clamp(40px,7vw,88px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 0.95, color: C.text, marginBottom: 28 }}>
+            Lancez votre caisse{" "}<span style={{ color: C.primary }}>en 2 minutes</span>.
           </h2>
-          <p className="text-slate-400 text-xl mb-12 max-w-xl mx-auto">
+          <p style={{ fontFamily: F.body, fontSize: 18, color: C.muted, marginBottom: 48, maxWidth: 440, margin: "0 auto 48px" }}>
             Aucune carte bancaire. Aucun risque. 7 jours pour tomber amoureux du logiciel.
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <a href="mailto:contact@webconceptor.fr?subject=Caissio%20-%20Essai%20gratuit"
-              className="btn-primary h-16 px-12 rounded-2xl text-white font-black text-xl inline-flex items-center gap-3">
-              Commencer gratuitement<ArrowRight className="h-5 w-5" />
-            </a>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
+            <Link href="/register" data-testid="footer-cta-trial"
+              style={{ fontFamily: F.head, fontWeight: 900, fontSize: 20, color: "#fff", background: C.primary, height: 64, padding: "0 48px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, transition: "background 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = C.primaryH)}
+              onMouseLeave={e => (e.currentTarget.style.background = C.primary)}>
+              Commencer gratuitement <ArrowRight size={22} />
+            </Link>
             <a href="/download/Caissio-Setup.exe"
-              className="btn-windows h-16 px-10 rounded-2xl text-white font-black text-xl inline-flex items-center gap-3">
-              <Download className="h-5 w-5" />Télécharger Windows
+              style={{ fontFamily: F.head, fontWeight: 900, fontSize: 20, color: C.text, background: C.elevated, border: `1px solid ${C.border}`, height: 64, padding: "0 40px", borderRadius: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 12, transition: "background 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = C.active)}
+              onMouseLeave={e => (e.currentTarget.style.background = C.elevated)}>
+              <Download size={22} /> Télécharger Windows
             </a>
           </div>
-          <p className="mt-6 text-sm text-slate-600">Sans engagement · Résiliation en 1 clic · Support 7j/7</p>
+          <p style={{ marginTop: 20, fontFamily: F.body, fontSize: 13, color: "#3F3F46" }}>Sans engagement · Résiliation en 1 clic · Support 7j/7</p>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="py-10 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black">C</span>
-            <span className="font-bold text-white">Caissio</span>
-            <span className="text-slate-600 text-sm">© 2026</span>
+      <footer style={{ padding: "40px 0", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <CaissioMark size={26} />
+            <span style={{ fontFamily: F.head, fontWeight: 800, fontSize: 16, color: C.text }}>Caissio</span>
+            <span style={{ fontFamily: F.body, fontSize: 13, color: "#3F3F46" }}>© 2026</span>
           </div>
-          <div className="text-xs text-slate-600 uppercase tracking-[0.25em]">La caisse intelligente pour les commerces</div>
-          <div className="flex items-center gap-4 text-xs text-slate-600">
-            <Link href="/cgu"            className="hover:text-slate-300 transition-colors">CGU</Link>
-            <Link href="/confidentialite" className="hover:text-slate-300 transition-colors">Confidentialité</Link>
-            <a href="mailto:contact@webconceptor.fr" className="hover:text-slate-300 transition-colors">Contact</a>
+          <div style={{ fontFamily: F.body, fontSize: 11, color: "#3F3F46", textTransform: "uppercase", letterSpacing: "0.2em" }}>La caisse intelligente pour les commerces</div>
+          <div style={{ display: "flex", gap: 24 }}>
+            {[["#","CGU"],["#","Confidentialité"],["mailto:contact@caissio.fr","Contact"]].map(([h,l]) => (
+              <a key={l} href={h} style={{ fontFamily: F.body, fontSize: 13, color: "#3F3F46", textDecoration: "none", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.muted)}
+                onMouseLeave={e => (e.currentTarget.style.color = "#3F3F46")}>
+                {l}
+              </a>
+            ))}
           </div>
         </div>
       </footer>
