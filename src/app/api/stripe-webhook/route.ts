@@ -861,7 +861,213 @@ export async function POST(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // FLOW 5 : Code PIN (existant, via /code)
+    // FLOW 5 : AGENTConceptor — multi-agents (abonnement)
+    // source === "agentconceptor"
+    // ═══════════════════════════════════════════════════════
+    if (source === "agentconceptor") {
+      const agentsList   = (metadata.agents || "").split(",").filter(Boolean);
+      const isPack       = metadata.pack === "true";
+      const businessName = metadata.business_name || "";
+      const ownerEmail   = metadata.owner_email   || "";
+      const ownerName    = metadata.owner_name    || "";
+      const phone        = metadata.phone         || "";
+      const city         = metadata.city          || "";
+      const businessType = metadata.business_type || "general";
+      const monthlyAmt   = parseInt(metadata.monthly_amount || "0", 10);
+      const customerId   = typeof session.customer === "string" ? session.customer : null;
+      const subId        = typeof session.subscription === "string" ? session.subscription : null;
+
+      if (!ownerEmail || !businessName || agentsList.length === 0) {
+        return NextResponse.json({ received: true });
+      }
+
+      // Idempotence
+      const { data: existingAC } = await supabase
+        .from("agentconceptor_subscriptions")
+        .select("id")
+        .eq("stripe_subscription_id", subId || "")
+        .single();
+
+      if (!existingAC) {
+        const hasAgent = (id: string) => agentsList.includes(id) || isPack;
+
+        // Tokens pour les agents qui en ont besoin
+        const chatbotToken = hasAgent("chatbot")
+          ? Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join("")
+          : null;
+        const devisToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join("");
+        const gmbAuthToken = hasAgent("reputation")
+          ? Array.from(crypto.getRandomValues(new Uint8Array(20))).map((b) => b.toString(16).padStart(2, "0")).join("")
+          : null;
+
+        // Créer l'abonnement principal
+        const { data: newSub } = await supabase.from("agentconceptor_subscriptions").insert({
+          stripe_customer_id:     customerId,
+          stripe_subscription_id: subId,
+          stripe_session_id:      session.id,
+          owner_email:    ownerEmail,
+          owner_name:     ownerName,
+          business_name:  businessName,
+          business_type:  businessType,
+          phone,
+          city,
+          has_chatbot:      hasAgent("chatbot"),
+          has_reputation:   hasAgent("reputation"),
+          has_devis:        hasAgent("devis"),
+          has_contenu:      hasAgent("contenu"),
+          has_fidelisation: hasAgent("fidelisation"),
+          has_pack:         isPack,
+          chatbot_token:    chatbotToken,
+          devis_token:      devisToken,
+          gmb_auth_token:   gmbAuthToken,
+          monthly_amount:   monthlyAmt,
+          status:           "active",
+        }).select("id").single();
+
+        if (!newSub) {
+          console.error("[webhook] AGENTConceptor: insert failed");
+          return NextResponse.json({ received: true });
+        }
+
+        // Créer les sous-tables pour les agents actifs
+        if (hasAgent("chatbot") && chatbotToken) {
+          await supabase.from("chatbot_subscriptions").insert({
+            token: chatbotToken,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subId,
+            business_name: businessName,
+            business_type: businessType,
+            owner_email: ownerEmail,
+            owner_name: ownerName,
+            phone, city,
+            status: "active",
+          });
+        }
+
+        if (hasAgent("reputation") && gmbAuthToken) {
+          await supabase.from("gmb_subscriptions").insert({
+            auth_token: gmbAuthToken,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subId,
+            business_name: businessName,
+            business_type: businessType,
+            owner_email: ownerEmail,
+            owner_name: ownerName,
+            phone, city,
+            status: "pending_auth",
+          });
+        }
+
+        if (hasAgent("contenu")) {
+          await supabase.from("contenu_subscriptions").insert({
+            agentconceptor_sub_id: newSub.id,
+            owner_email: ownerEmail,
+            owner_name: ownerName,
+            business_name: businessName,
+            business_type: businessType,
+            city,
+            status: "active",
+          });
+        }
+
+        // ── Email de livraison complet ──
+        const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+        const firstName = (ownerName || "").split(" ")[0] || "vous";
+        const brevoKey  = process.env.BREVO_API_KEY;
+
+        const agentBlocks: string[] = [];
+
+        if (hasAgent("chatbot") && chatbotToken) {
+          const chatUrl   = `${baseUrl}/chat/${chatbotToken}`;
+          const widgetUrl = `${baseUrl}/api/chatbot/widget?token=${chatbotToken}`;
+          agentBlocks.push(`
+<div style="background:#eff6ff;border-left:3px solid #2563eb;padding:16px 20px;border-radius:8px;margin-bottom:12px">
+  <p style="font-weight:800;font-size:15px;margin-bottom:8px">🤖 Agent Chatbot — Actif ✅</p>
+  <p style="font-size:13px;color:#374151;margin-bottom:8px"><strong>Page standalone (partageable) :</strong><br>
+  <a href="${chatUrl}" style="color:#2563eb;word-break:break-all">${chatUrl}</a></p>
+  <p style="font-size:13px;color:#374151"><strong>Script pour votre site :</strong><br>
+  <code style="background:#1e1e2e;color:#a6e3a1;padding:6px 10px;border-radius:6px;font-size:11px;display:block;margin-top:4px;word-break:break-all">&lt;script src="${widgetUrl}" defer&gt;&lt;/script&gt;</code></p>
+</div>`);
+        }
+
+        if (hasAgent("devis")) {
+          const devisUrl = `${baseUrl}/devis/${devisToken}`;
+          agentBlocks.push(`
+<div style="background:#f5f3ff;border-left:3px solid #7c3aed;padding:16px 20px;border-radius:8px;margin-bottom:12px">
+  <p style="font-weight:800;font-size:15px;margin-bottom:8px">📝 Agent Devis — Actif ✅</p>
+  <p style="font-size:13px;color:#374151;margin-bottom:8px">Partagez ce lien à vos clients pour qu'ils reçoivent un devis automatique :</p>
+  <a href="${devisUrl}" style="display:inline-block;background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">${devisUrl}</a>
+</div>`);
+        }
+
+        if (hasAgent("reputation") && gmbAuthToken) {
+          const gmbAuthUrl = `${baseUrl}/api/gmb/auth?token=${gmbAuthToken}`;
+          agentBlocks.push(`
+<div style="background:#fefce8;border-left:3px solid #ca8a04;padding:16px 20px;border-radius:8px;margin-bottom:12px">
+  <p style="font-weight:800;font-size:15px;margin-bottom:8px">⭐ Agent Réputation — Connexion requise ⚠️</p>
+  <p style="font-size:13px;color:#374151;margin-bottom:10px">Cliquez ci-dessous pour connecter votre Google My Business (2 minutes) :</p>
+  <a href="${gmbAuthUrl}" style="display:inline-block;background:#4285F4;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">🔗 Connecter Google My Business</a>
+</div>`);
+        }
+
+        if (hasAgent("contenu")) {
+          agentBlocks.push(`
+<div style="background:#fdf4ff;border-left:3px solid #ec4899;padding:16px 20px;border-radius:8px;margin-bottom:12px">
+  <p style="font-weight:800;font-size:15px;margin-bottom:8px">📱 Agent Contenu — Actif ✅</p>
+  <p style="font-size:13px;color:#374151">Votre premier email de posts sera envoyé <strong>lundi prochain à 9h</strong>. Vous recevrez chaque semaine 5 posts prêts-à-publier pour Instagram et Facebook.</p>
+</div>`);
+        }
+
+        if (hasAgent("fidelisation")) {
+          agentBlocks.push(`
+<div style="background:#f0fdf4;border-left:3px solid #16a34a;padding:16px 20px;border-radius:8px;margin-bottom:12px">
+  <p style="font-weight:800;font-size:15px;margin-bottom:8px">💌 Agent Fidélisation — Configuration en cours</p>
+  <p style="font-size:13px;color:#374151">Répondez à cet email avec votre liste de clients (fichier CSV ou copie-collez les emails) et nous configurons vos campagnes sous 24h.</p>
+</div>`);
+        }
+
+        if (brevoKey) {
+          await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: { "api-key": brevoKey, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender: { name: "Tom — AGENTConceptor", email: "contact@webconceptor.fr" },
+              to: [{ email: ownerEmail, name: ownerName }],
+              subject: `🤖 Vos agents IA sont prêts — ${businessName}`,
+              htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#0a0a0a">
+<div style="background:linear-gradient(135deg,#7c3aed,#2563eb);border-radius:16px;padding:24px;text-align:center;margin-bottom:24px">
+  <p style="color:rgba(255,255,255,.7);font-size:13px;margin-bottom:4px">AGENTConceptor</p>
+  <h1 style="color:#fff;font-size:22px;font-weight:900;margin:0">Vos agents sont déployés !</h1>
+  <p style="color:rgba(255,255,255,.8);font-size:14px;margin-top:8px">${businessName} — ${isPack ? "Pack Complet" : agentsList.length + " agent" + (agentsList.length > 1 ? "s" : "")}</p>
+</div>
+
+<p style="font-size:15px;margin-bottom:20px">Bonjour ${firstName}, voici tout ce dont vous avez besoin pour activer vos agents :</p>
+
+${agentBlocks.join("\n")}
+
+<div style="background:#f8f9fa;border-radius:12px;padding:16px 20px;margin-top:20px">
+  <p style="font-size:14px;color:#525252;margin-bottom:4px"><strong>Des questions ?</strong></p>
+  <p style="font-size:14px;color:#525252">Répondez directement à cet email ou appelez le <strong>06 35 59 24 71</strong>. Je réponds sous 2h.</p>
+</div>
+
+<div style="border-top:1px solid #e5e5e5;padding-top:20px;margin-top:24px;font-size:13px;color:#737373">
+  <strong style="color:#0a0a0a">Tom Bauer</strong> — AGENTConceptor / WebConceptor<br>
+  contact@webconceptor.fr · webconceptor.fr
+</div>
+</div>`,
+            }),
+          }).catch(() => {});
+        }
+
+        const agentNames = agentsList.map((id: string) => ({ chatbot: "Chatbot", reputation: "Réputation", devis: "Devis", contenu: "Contenu", fidelisation: "Fidélisation" }[id] || id)).join(", ");
+        await notifyTelegram(`🤖 <b>Nouveau client AGENTConceptor !</b>\n\n<b>Client :</b> ${escapeTelegram(ownerName)}\n<b>Email :</b> ${escapeTelegram(ownerEmail)}\n<b>Entreprise :</b> ${escapeTelegram(businessName)}\n<b>Agents :</b> ${isPack ? "Pack Complet" : escapeTelegram(agentNames)}\n<b>MRR :</b> +${(monthlyAmt / 100).toFixed(0)}€/mois`);
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FLOW 6 : Code PIN (existant, via /code)
     // metadata.code présent
     // ═══════════════════════════════════════════════════════
     if (!code) {
