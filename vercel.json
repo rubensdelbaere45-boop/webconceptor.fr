@@ -39,19 +39,11 @@
   "crons": [
     {
       "path": "/api/prospect/cron",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/prospect/cron",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/monitor/n8n",
-      "schedule": "*/15 7-17 * * 1-5"
+      "schedule": "0 8 * * 1-5"
     },
     {
       "path": "/api/gmb/cron",
-      "schedule": "0 7-18 * * 1-6"
+      "schedule": "0 9 * * 1-6"
     },
     {
       "path": "/api/agentconceptor/posts/cron",
@@ -60,10 +52,6 @@
     {
       "path": "/api/agentconceptor/prospect/cron",
       "schedule": "0 8 * * 1-5"
-    },
-    {
-      "path": "/api/agentconceptor/prospect/cron",
-      "schedule": "0 14 * * 1-5"
     }
   ]
 }
