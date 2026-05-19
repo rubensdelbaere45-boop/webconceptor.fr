@@ -29,17 +29,61 @@ const HARDWARE = [
   { icon: Bluetooth, label: "Scanner Bluetooth", note: "WebBluetooth" },
 ];
 
-const PLAN_FEATURES = [
-  "Utilisateurs illimités",
-  "Catalogue de produits illimité",
-  "Import Excel / CSV en masse",
-  "Dashboard & rapports avancés",
-  "Fidélité client intégrée",
-  "Matériel reconnu automatiquement",
-  "Ticket PDF écologique",
-  "Support prioritaire par email",
-  "Mises à jour incluses à vie",
-  "Aucun frais caché",
+const PLANS = [
+  {
+    name: "Starter",
+    price: 15,
+    badge: null,
+    highlight: false,
+    cta: "Démarrer gratuitement",
+    features: [
+      "1 utilisateur",
+      "300 articles maximum",
+      "Encaissement & ticket PDF",
+      "Dashboard de base",
+      "Matériel reconnu auto",
+      "Support email",
+    ],
+    missing: ["Import Excel/CSV","Fidélité client","Rapports avancés","Clé API"],
+  },
+  {
+    name: "Pro",
+    price: 39,
+    badge: "Populaire",
+    highlight: true,
+    cta: "Choisir Pro",
+    features: [
+      "5 utilisateurs",
+      "Articles illimités",
+      "Import Excel / CSV en masse",
+      "Fidélité client intégrée",
+      "Dashboard & rapports avancés",
+      "Matériel reconnu auto",
+      "Ticket PDF écologique",
+      "Support prioritaire",
+    ],
+    missing: ["Clé API"],
+  },
+  {
+    name: "Business",
+    price: 59,
+    badge: null,
+    highlight: false,
+    cta: "Contacter",
+    features: [
+      "Utilisateurs illimités",
+      "Articles illimités",
+      "Import Excel / CSV en masse",
+      "Fidélité client intégrée",
+      "Dashboard & rapports avancés",
+      "Matériel reconnu auto",
+      "Ticket PDF écologique",
+      "Clé API REST incluse",
+      "Support dédié & SLA",
+    ],
+    missing: [],
+    apiKey: true,
+  },
 ];
 
 const FAQ_DATA = [
@@ -648,50 +692,98 @@ export default function CaissioPage() {
       <section id="pricing" style={{ padding: "96px 0", borderTop: "1px solid rgba(255,255,255,.05)" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 64px" }}>
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#60a5fa", fontWeight: 700, marginBottom: 16 }}>Tarif</div>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#60a5fa", fontWeight: 700, marginBottom: 16 }}>Tarifs</div>
             <h2 style={{ fontSize: "clamp(32px,4vw,56px)", fontWeight: 900, letterSpacing: "-0.03em" }}>
-              Un seul prix. <span className="cai-gt">Tout inclus.</span>
+              Choisissez votre plan. <span className="cai-gt">Sans surprise.</span>
             </h2>
-            <p style={{ marginTop: 20, color: "#94a3b8", fontSize: 19 }}>7 jours d'essai gratuit. Résiliez quand vous voulez.</p>
+            <p style={{ marginTop: 20, color: "#94a3b8", fontSize: 19 }}>7 jours d'essai gratuit sur tous les plans. Résiliez quand vous voulez.</p>
           </div>
-          <div style={{ maxWidth: 520, margin: "0 auto" }}>
-            <div style={{ borderRadius: 28, padding: 40, background: "linear-gradient(135deg,rgba(37,99,235,.12),rgba(79,70,229,.08))", border: "1px solid rgba(99,102,241,.3)", boxShadow: "0 0 60px rgba(37,99,235,.2),inset 0 1px 0 rgba(255,255,255,.06)" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0 16px", height: 32, borderRadius: 999, background: "linear-gradient(135deg,rgba(52,211,153,.15),rgba(16,185,129,.1))", border: "1px solid rgba(52,211,153,.3)", color: "#34d399", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 32 }}>
-                <Clock style={{ width: 14, height: 14 }} /> 7 jours gratuits — sans carte
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 72, fontWeight: 900, color: "#fff" }}>19€</span>
-                <span style={{ color: "#94a3b8", fontSize: 20 }}>/mois</span>
-              </div>
-              <p style={{ color: "#94a3b8", marginBottom: 40, fontSize: 17 }}>Puis 19€/mois. Annulable à tout moment.</p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 40px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {PLAN_FEATURES.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 12, color: "#cbd5e1" }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(52,211,153,.2)", border: "1px solid rgba(52,211,153,.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Check style={{ width: 11, height: 11, color: "#34d399" }} />
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, maxWidth: 1100, margin: "0 auto" }}>
+            {PLANS.map((plan) => (
+              <div key={plan.name} style={{
+                borderRadius: 28, padding: 32, position: "relative", display: "flex", flexDirection: "column",
+                background: plan.highlight
+                  ? "linear-gradient(135deg,rgba(37,99,235,.18),rgba(79,70,229,.12))"
+                  : "rgba(30,41,59,.4)",
+                border: plan.highlight
+                  ? "1px solid rgba(99,102,241,.45)"
+                  : "1px solid rgba(148,163,184,.1)",
+                boxShadow: plan.highlight
+                  ? "0 0 60px rgba(37,99,235,.2),inset 0 1px 0 rgba(255,255,255,.06)"
+                  : "none",
+                transform: plan.highlight ? "scale(1.02)" : "none",
+              }}>
+                {/* Populaire badge */}
+                {plan.badge && (
+                  <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#2563eb,#4f46e5)", color: "#fff", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", padding: "4px 16px", borderRadius: 999, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(37,99,235,.5)" }}>
+                    {plan.badge}
+                  </div>
+                )}
+
+                {/* Plan name */}
+                <div style={{ fontSize: 13, fontWeight: 700, color: plan.highlight ? "#60a5fa" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>{plan.name}</div>
+
+                {/* Price */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontSize: 56, fontWeight: 900, color: "#fff", letterSpacing: "-0.03em" }}>{plan.price}€</span>
+                  <span style={{ color: "#64748B", fontSize: 16 }}>/mois</span>
+                </div>
+                <p style={{ color: "#64748B", fontSize: 14, marginBottom: 28 }}>Puis {plan.price}€/mois. Annulable à tout moment.</p>
+
+                {/* Features */}
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {plan.features.map((f) => (
+                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, color: "#cbd5e1", fontSize: 14 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(52,211,153,.2)", border: "1px solid rgba(52,211,153,.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                        <Check style={{ width: 10, height: 10, color: "#34d399" }} />
+                      </div>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                  {plan.missing.map((f) => (
+                    <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, color: "#475569", fontSize: 14 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(71,85,105,.15)", border: "1px solid rgba(71,85,105,.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                        <span style={{ fontSize: 10, color: "#475569", lineHeight: 1 }}>—</span>
+                      </div>
+                      <span style={{ textDecoration: "line-through", opacity: 0.5 }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* API key block (Business only) */}
+                {plan.apiKey && (
+                  <div style={{ marginTop: 24, padding: 14, borderRadius: 14, background: "rgba(79,70,229,.1)", border: "1px solid rgba(99,102,241,.25)" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>🔑 Clé API REST</div>
+                    <div style={{ fontFamily: "monospace", fontSize: 12, color: "#818cf8", background: "rgba(15,23,42,.6)", borderRadius: 8, padding: "8px 12px", letterSpacing: "0.05em", wordBreak: "break-all" }}>
+                      sk-caissio-xxxx-xxxx-xxxx
                     </div>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <a href="#" className="cai-btn-blue" style={{ width: "100%", height: 64, borderRadius: 20, fontWeight: 900, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                Démarrer mon essai gratuit <ArrowRight style={{ width: 20, height: 20 }} />
-              </a>
-              <p style={{ textAlign: "center", fontSize: 13, color: "#475569", marginTop: 16 }}>Aucune carte requise. Aucun engagement.</p>
-            </div>
-            <div style={{ marginTop: 24, borderRadius: 20, padding: 20, display: "flex", alignItems: "center", gap: 16, background: "linear-gradient(135deg,rgba(14,165,233,.15),rgba(37,99,235,.15))", border: "1px solid rgba(14,165,233,.25)" }}>
-              <div style={{ width: 32, height: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, flexShrink: 0 }}>
-                {(["#f25022","#7fba00","#00a4ef","#ffb900"] as const).map((c, i) => <div key={i} style={{ background: c, borderRadius: 1 }} />)}
+                    <div style={{ marginTop: 8, fontSize: 11, color: "#64748B" }}>Accès complet à l'API · Webhooks · Intégrations tierces</div>
+                  </div>
+                )}
+
+                {/* CTA */}
+                <a href="#" style={{
+                  marginTop: 28, width: "100%", height: 52, borderRadius: 16,
+                  fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  textDecoration: "none",
+                  background: plan.highlight
+                    ? "linear-gradient(135deg,#2563eb,#4f46e5)"
+                    : "rgba(30,41,59,.8)",
+                  color: "#fff",
+                  border: plan.highlight ? "none" : "1px solid rgba(148,163,184,.15)",
+                  boxShadow: plan.highlight ? "0 0 30px rgba(37,99,235,.4)" : "none",
+                  transition: "all .2s",
+                }}>
+                  {plan.cta} {plan.highlight && <ArrowRight style={{ width: 16, height: 16 }} />}
+                </a>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Application Windows</div>
-                <div style={{ fontSize: 12, color: "#94a3b8" }}>Fonctionne hors-ligne · Données locales</div>
-              </div>
-              <a href="#" className="cai-btn-win" style={{ height: 36, padding: "0 16px", borderRadius: 12, fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                <Download style={{ width: 14, height: 14 }} /> .exe
-              </a>
-            </div>
+            ))}
           </div>
+
+          <p style={{ textAlign: "center", marginTop: 32, fontSize: 13, color: "#475569" }}>
+            Aucune carte requise pour l'essai · Résiliation en 1 clic · TVA non incluse
+          </p>
         </div>
       </section>
 
