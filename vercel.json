@@ -27,6 +27,12 @@
     },
     "src/app/api/agentconceptor/devis/[token]/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/agentconceptor/prospect/send/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/agentconceptor/prospect/cron/route.ts": {
+      "maxDuration": 120
     }
   },
   "regions": ["cdg1"],
@@ -50,6 +56,14 @@
     {
       "path": "/api/agentconceptor/posts/cron",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/agentconceptor/prospect/cron",
+      "schedule": "0 8 * * 1-5"
+    },
+    {
+      "path": "/api/agentconceptor/prospect/cron",
+      "schedule": "0 14 * * 1-5"
     }
   ]
 }
