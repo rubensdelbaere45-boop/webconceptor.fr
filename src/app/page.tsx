@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 /* ══════════════════════════════════════════
    DATA
@@ -267,6 +268,18 @@ function ProxiLogo() {
    ══════════════════════════════════════════ */
 
 export default function Home() {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user?.email ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <div className="bg-white text-[#0a0a0a] min-h-screen">
 
@@ -288,18 +301,28 @@ export default function Home() {
             <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
             <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors">Tarif</a>
             <a href="#faq" className="hover:text-[#0a0a0a] transition-colors">FAQ</a>
+            <Link href="/agentconceptor" className="hover:text-[#0a0a0a] transition-colors font-semibold text-[#0a0a0a]">
+              AGENTConceptor
+              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-violet-600 text-white text-[9px] font-bold uppercase tracking-wide">IA</span>
+            </Link>
             <Link href="/caissio" className="hover:text-[#0a0a0a] transition-colors font-semibold text-[#0a0a0a]">
               Caissio
-              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-[#0066ff] text-white text-[9px] font-bold uppercase tracking-wide">NEW</span>
+              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wide">NEW</span>
             </Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/code" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
               J&apos;ai un code
             </Link>
-            <Link href="/auth/login" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
-              Mon espace
-            </Link>
+            {userEmail ? (
+              <Link href="/dashboard" className="text-[13px] text-[#0066ff] font-medium hover:text-[#0052cc] transition-colors hidden sm:block">
+                Mon espace →
+              </Link>
+            ) : (
+              <Link href="/auth/login" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors hidden sm:block">
+                Mon espace
+              </Link>
+            )}
             <Link href="/demande" className="px-4 py-1.5 bg-[#0066ff] text-white text-[13px] font-medium rounded-full hover:bg-[#0052cc] transition-colors">
               Créer mon site
             </Link>
