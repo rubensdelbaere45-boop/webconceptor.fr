@@ -2,6 +2,10 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, ShoppingBag, Receipt, AlertTriangle, DollarSign } from "lucide-react";
 import { getDashboardStats } from "@/lib/caissio-store";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
+  CartesianGrid, Tooltip, BarChart, Bar,
+} from "recharts";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" }); }
 
@@ -22,6 +26,11 @@ function KpiCard({ label, value, hint, icon: Icon, green = false }: { label: str
   );
 }
 
+const tooltipStyle = {
+  contentStyle: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 8px 24px rgba(15,23,42,.08)", fontFamily: "'IBM Plex Sans',sans-serif", fontSize: 12 },
+  labelStyle: { color: "#64748b" },
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
 
@@ -29,6 +38,8 @@ export default function DashboardPage() {
 
   if (!stats) return <div style={{ padding: 40, color: "#94a3b8", fontSize: 14 }}>Chargement…</div>;
   const k = stats.kpis;
+
+  const hourlyData = stats.hourly.filter((_, i) => i >= 7 && i <= 22);
 
   return (
     <div style={{ padding: "32px 24px", maxWidth: 1400, fontFamily: "'IBM Plex Sans',sans-serif" }}>
@@ -52,40 +63,54 @@ export default function DashboardPage() {
 
       {/* Charts row */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 20 }}>
-        {/* 7 days chart — simple bar visualization */}
+
+        {/* Area chart 7 days */}
         <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: "#94a3b8", marginBottom: 4 }}>7 derniers jours</div>
           <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>Évolution du CA</div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 140 }}>
-            {stats.last7.map((d) => {
-              const max = Math.max(...stats.last7.map((x) => x.revenue), 1);
-              const h = Math.round((d.revenue / max) * 120);
-              return (
-                <div key={d.date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ fontSize: 10, color: "#94a3b8", fontFamily: "monospace" }}>{d.revenue > 0 ? fmt(d.revenue).replace(" €", "") : ""}</div>
-                  <div style={{ width: "100%", height: Math.max(h, 4), borderRadius: "4px 4px 0 0", background: d.date === new Date().toISOString().slice(0, 10) ? "#4f46e5" : "#ede9fe", transition: "height .3s" }} />
-                  <div style={{ fontSize: 10, color: "#94a3b8" }}>{d.date.slice(5)}</div>
-                </div>
-              );
-            })}
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.last7} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradCA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="date" stroke="#94a3b8" tickFormatter={(d: string) => d.slice(5)} fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}€`} width={48} />
+                <Tooltip
+                  {...tooltipStyle}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(v: any) => [fmt(Number(v ?? 0)), "CA"]}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  labelFormatter={(l: any) => new Date(String(l ?? "")).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={2.5} fill="url(#gradCA)" dot={false} activeDot={{ r: 5, fill: "#4f46e5" }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Hourly today */}
+        {/* Bar chart hourly */}
         <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: "#94a3b8", marginBottom: 4 }}>Aujourd&apos;hui</div>
           <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>Ventes horaires</div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 120 }}>
-            {stats.hourly.filter((_, i) => i >= 7 && i <= 22).map((h) => {
-              const max = Math.max(...stats.hourly.map((x) => x.revenue), 1);
-              const ht = Math.round((h.revenue / max) * 100);
-              return (
-                <div key={h.hour} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <div style={{ width: "100%", height: Math.max(ht, 3), borderRadius: "3px 3px 0 0", background: "#10b981", opacity: h.revenue > 0 ? 1 : 0.15 }} />
-                  <div style={{ fontSize: 9, color: "#94a3b8", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>{h.hour}</div>
-                </div>
-              );
-            })}
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={hourlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="hour" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}€`} width={40} />
+                <Tooltip
+                  {...tooltipStyle}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(v: any) => [fmt(Number(v ?? 0)), "CA"]}
+                />
+                <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
