@@ -125,11 +125,14 @@ export function login(email: string, password: string): CaissioUser {
     };
     setSession(demo);
     if (getProducts().length === 0) seedDemoProducts();
+    else migrateMissingCategories();
     return demo;
   }
   const user = getUsers().find((u) => u.email === email && u.password === password);
   if (!user) throw new Error("Email ou mot de passe incorrect.");
   setSession(user);
+  if (getProducts().length === 0) seedDemoProducts();
+  else migrateMissingCategories();
   return user;
 }
 
@@ -323,6 +326,53 @@ export function getDashboardStats() {
     lowStock,
     outOfStock,
   };
+}
+
+/* ── MIGRATIONS ── */
+
+/** Adds products for categories introduced after the initial seed (Fruits, Légumes, Fromage, Charcuterie). */
+export function migrateMissingCategories() {
+  const existing = getProducts();
+  const cats = new Set(existing.map((p) => p.category));
+
+  const missing: Omit<Product, "id">[] = [];
+
+  if (!cats.has("Fruits")) missing.push(
+    { name: "Pommes Golden 1kg", price: 2.50, price_buy: 1.00, category: "Fruits", barcode: "3700000000011", stock: 40, stock_min: 10, tva: 5.5, active: true },
+    { name: "Bananes 1kg", price: 1.90, price_buy: 0.70, category: "Fruits", barcode: "3700000000012", stock: 30, stock_min: 8, tva: 5.5, active: true },
+    { name: "Fraises 250g", price: 3.50, price_buy: 1.40, category: "Fruits", barcode: "3700000000016", stock: 12, stock_min: 4, tva: 5.5, active: true },
+    { name: "Oranges filet 1kg", price: 2.20, price_buy: 0.90, category: "Fruits", barcode: "3700000000025", stock: 28, stock_min: 8, tva: 5.5, active: true },
+    { name: "Poires Williams 1kg", price: 2.80, price_buy: 1.10, category: "Fruits", barcode: "3700000000026", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Kiwis ×4", price: 1.80, price_buy: 0.70, category: "Fruits", barcode: "3700000000027", stock: 22, stock_min: 6, tva: 5.5, active: true },
+    { name: "Raisins 500g", price: 3.20, price_buy: 1.30, category: "Fruits", barcode: "3700000000028", stock: 15, stock_min: 5, tva: 5.5, active: true },
+  );
+
+  if (!cats.has("Légumes")) missing.push(
+    { name: "Salade verte", price: 1.20, price_buy: 0.40, category: "Légumes", barcode: "3700000000013", stock: 15, stock_min: 5, tva: 5.5, active: true },
+    { name: "Carottes 1kg", price: 1.30, price_buy: 0.45, category: "Légumes", barcode: "3700000000014", stock: 25, stock_min: 8, tva: 5.5, active: true },
+    { name: "Courgettes 500g", price: 1.60, price_buy: 0.60, category: "Légumes", barcode: "3700000000015", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Tomates cerise 250g", price: 2.40, price_buy: 0.95, category: "Légumes", barcode: "3700000000029", stock: 18, stock_min: 6, tva: 5.5, active: true },
+    { name: "Poireaux 500g", price: 1.50, price_buy: 0.55, category: "Légumes", barcode: "3700000000030", stock: 14, stock_min: 5, tva: 5.5, active: true },
+    { name: "Champignons 250g", price: 2.10, price_buy: 0.85, category: "Légumes", barcode: "3700000000031", stock: 16, stock_min: 5, tva: 5.5, active: true },
+    { name: "Poivrons ×3", price: 1.90, price_buy: 0.75, category: "Légumes", barcode: "3700000000032", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Haricots verts 500g", price: 2.30, price_buy: 0.90, category: "Légumes", barcode: "3700000000033", stock: 12, stock_min: 4, tva: 5.5, active: true },
+  );
+
+  if (!cats.has("Fromage")) missing.push(
+    { name: "Camembert 250g", price: 3.20, price_buy: 1.40, category: "Fromage", barcode: "3700000000017", stock: 18, stock_min: 6, tva: 5.5, active: true },
+    { name: "Comté AOP 150g", price: 4.80, price_buy: 2.20, category: "Fromage", barcode: "3700000000018", stock: 14, stock_min: 4, tva: 5.5, active: true },
+    { name: "Chèvre frais", price: 2.80, price_buy: 1.10, category: "Fromage", barcode: "3700000000019", stock: 10, stock_min: 4, tva: 5.5, active: true },
+    { name: "Brie de Meaux", price: 3.90, price_buy: 1.80, category: "Fromage", barcode: "3700000000020", stock: 8, stock_min: 3, tva: 5.5, active: true },
+  );
+
+  if (!cats.has("Charcuterie")) missing.push(
+    { name: "Jambon blanc 4 tr.", price: 3.50, price_buy: 1.60, category: "Charcuterie", barcode: "3700000000021", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Saucisson sec 200g", price: 4.20, price_buy: 2.00, category: "Charcuterie", barcode: "3700000000022", stock: 16, stock_min: 5, tva: 5.5, active: true },
+    { name: "Lardons fumés 200g", price: 2.50, price_buy: 1.10, category: "Charcuterie", barcode: "3700000000023", stock: 22, stock_min: 8, tva: 5.5, active: true },
+    { name: "Rosette tranchée", price: 3.80, price_buy: 1.70, category: "Charcuterie", barcode: "3700000000024", stock: 12, stock_min: 4, tva: 5.5, active: true },
+  );
+
+  if (missing.length > 0) missing.forEach((p) => saveProduct(p));
 }
 
 /* ── SEED DATA ── */

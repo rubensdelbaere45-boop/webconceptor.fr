@@ -7,7 +7,7 @@ import {
   ChevronLeft, BookOpen,
 } from "lucide-react";
 import {
-  getProducts, getCustomers, recordSale, getStoreSettings,
+  getProducts, getCustomers, recordSale, getStoreSettings, migrateMissingCategories,
   type Product, type Customer,
 } from "@/lib/caissio-store";
 
@@ -178,6 +178,7 @@ export default function POSPage() {
   const [scanBuffer, setScanBuffer] = useState("");
 
   useEffect(() => {
+    migrateMissingCategories(); // ensure Fruits/Légumes/Fromage/Charcuterie exist
     const prods = getProducts();
     setProducts(prods);
     setCustomers(getCustomers());
