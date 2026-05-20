@@ -54,12 +54,36 @@ export type Customer = {
   created_at: string;
 };
 
+export type Supplier = {
+  id: string;
+  name: string;
+  contact_name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  created_at: string;
+};
+
+export type StoreSettings = {
+  name: string;
+  siret?: string;
+  vat_number?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+  ticket_footer?: string;
+};
+
 const KEY = {
   users: "caissio_users",
   session: "caissio_session",
   products: "caissio_products",
   sales: "caissio_sales",
   customers: "caissio_customers",
+  suppliers: "caissio_suppliers",
+  settings: "caissio_settings",
 };
 
 function get<T>(key: string): T[] {
@@ -158,6 +182,25 @@ export function recordSale(sale: Omit<Sale, "id" | "created_at">): Sale {
   return s;
 }
 
+/* ── PIN ── */
+
+export function validatePin(pin: string): boolean {
+  const user = getSession();
+  if (!user) return false;
+  return user.pin === pin;
+}
+
+export function setUserPin(pin: string): void {
+  const user = getSession();
+  if (!user) return;
+  const updated = { ...user, pin };
+  setSession(updated);
+  if (user.id !== "demo") {
+    const users = getUsers();
+    set(KEY.users, users.map((u) => u.id === user.id ? { ...u, pin } : u));
+  }
+}
+
 /* ── CUSTOMERS ── */
 
 export function getCustomers(): Customer[] { return get<Customer>(KEY.customers); }
@@ -166,6 +209,41 @@ export function saveCustomer(c: Omit<Customer, "id" | "points" | "created_at">):
   const cust: Customer = { ...c, id: uid(), points: 0, created_at: new Date().toISOString() };
   set(KEY.customers, [...getCustomers(), cust]);
   return cust;
+}
+
+/* ── SUPPLIERS ── */
+
+export function getSuppliers(): Supplier[] { return get<Supplier>(KEY.suppliers); }
+
+export function saveSupplier(s: Omit<Supplier, "id" | "created_at">): Supplier {
+  const sup: Supplier = { ...s, id: uid(), created_at: new Date().toISOString() };
+  set(KEY.suppliers, [...getSuppliers(), sup]);
+  return sup;
+}
+
+export function updateSupplier(id: string, data: Partial<Supplier>): void {
+  set(KEY.suppliers, getSuppliers().map((s) => s.id === id ? { ...s, ...data } : s));
+}
+
+export function deleteSupplier(id: string): void {
+  set(KEY.suppliers, getSuppliers().filter((s) => s.id !== id));
+}
+
+/* ── STORE SETTINGS ── */
+
+export function getStoreSettings(): StoreSettings {
+  if (typeof window === "undefined") return { name: "Mon Commerce" };
+  try {
+    const raw = localStorage.getItem(KEY.settings);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  const user = getSession();
+  return { name: user?.store_name || "Mon Commerce" };
+}
+
+export function saveStoreSettings(s: StoreSettings): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(KEY.settings, JSON.stringify(s));
 }
 
 /* ── DASHBOARD STATS ── */

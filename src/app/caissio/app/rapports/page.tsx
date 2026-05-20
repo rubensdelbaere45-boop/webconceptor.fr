@@ -54,7 +54,7 @@ export default function RapportsPage() {
         s.id.slice(-8).toUpperCase(),
         s.items.map((i) => `${productMap[i.product_id] || "?"} x${i.qty}`).join(", "),
         s.total.toFixed(2).replace(".", ","),
-        s.payment_method,
+        s.payment,
       ].join(";"));
     });
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -164,8 +164,8 @@ export default function RapportsPage() {
                     {s.items.map((item) => `${productMap[item.product_id] || "?"} ×${item.qty}`).join(", ")}
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: s.payment_method === "card" ? "#ede9fe" : "#f0fdf4", color: s.payment_method === "card" ? "#4f46e5" : "#16a34a", border: `1px solid ${s.payment_method === "card" ? "#c4b5fd" : "#bbf7d0"}` }}>
-                      {s.payment_method === "card" ? "CB" : "Espèces"}
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: s.payment === "card" ? "#ede9fe" : "#f0fdf4", color: s.payment === "card" ? "#4f46e5" : "#16a34a", border: `1px solid ${s.payment === "card" ? "#c4b5fd" : "#bbf7d0"}` }}>
+                      {s.payment === "card" ? "CB" : "Espèces"}
                     </span>
                   </div>
                   <div style={{ textAlign: "right", fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: "#0f172a", fontSize: 15 }}>{fmt(s.total)}</div>

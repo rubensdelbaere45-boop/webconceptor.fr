@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getSession, logout, type CaissioUser } from "@/lib/caissio-store";
+import { getSession, logout, validatePin, type CaissioUser } from "@/lib/caissio-store";
 import {
   ScanBarcode, LayoutDashboard, Package, Boxes, Users,
   Plug, FileBarChart2, Settings, LogOut, Menu, X,
+  Truck, Lock, Delete,
 } from "lucide-react";
 
 const NAV = [
@@ -13,8 +14,10 @@ const NAV = [
   { href: "/caissio/app/produits", icon: Package, label: "Produits" },
   { href: "/caissio/app/stock", icon: Boxes, label: "Stock" },
   { href: "/caissio/app/clients", icon: Users, label: "Clients" },
+  { href: "/caissio/app/fournisseurs", icon: Truck, label: "Fournisseurs" },
   { href: "/caissio/app/peripheriques", icon: Plug, label: "Périphériques" },
   { href: "/caissio/app/rapports", icon: FileBarChart2, label: "Rapports" },
+  { href: "/caissio/app/parametres", icon: Settings, label: "Paramètres" },
 ];
 
 function CaissioMark({ size = 28 }: { size?: number }) {
@@ -34,11 +37,16 @@ function CaissioMark({ size = 28 }: { size?: number }) {
   );
 }
 
+const LOCK_TIMEOUT = 10 * 60 * 1000; // 10 min
+
 export default function CaissioAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<CaissioUser | null>(null);
   const [open, setOpen] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinErr, setPinErr] = useState("");
 
   useEffect(() => {
     const s = getSession();
@@ -46,9 +54,86 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
     setUser(s);
   }, [router]);
 
+  // auto-lock on inactivity
+  useEffect(() => {
+    if (!user) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const reset = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setLocked(true), LOCK_TIMEOUT);
+    };
+    const events = ["mousemove", "keydown", "pointerdown", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, reset));
+    };
+  }, [user]);
+
+  const handleUnlock = useCallback((code: string) => {
+    const u = getSession();
+    if (!u?.pin || validatePin(code)) {
+      setLocked(false);
+      setPinInput("");
+      setPinErr("");
+    } else {
+      setPinErr("PIN incorrect");
+      setPinInput("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pinInput.length === 6) handleUnlock(pinInput);
+  }, [pinInput, handleUnlock]);
+
+  const pressPin = (d: string) => setPinInput((p) => p.length < 6 ? p + d : p);
+  const backPin = () => { setPinInput((p) => p.slice(0, -1)); setPinErr(""); };
+
   const handleLogout = () => { logout(); router.replace("/caissio/login"); };
 
   if (!user) return null;
+
+  // Lock screen overlay
+  if (locked) return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "linear-gradient(135deg,#ede9fe 0%,#e0e7ff 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "'IBM Plex Sans',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&display=swap');`}</style>
+      <div style={{ width: "100%", maxWidth: 340, textAlign: "center" }}>
+        <CaissioMark size={52} />
+        <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 22, fontWeight: 800, color: "#0f172a", marginTop: 16 }}>Bonjour, {user.name.split(" ")[0]}</div>
+        <div style={{ fontSize: 13, color: "#64748b", marginTop: 4, marginBottom: 28 }}>Entrez votre PIN pour reprendre</div>
+
+        {/* PIN dots */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 20 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{ width: 14, height: 14, borderRadius: "50%", background: i < pinInput.length ? "#4f46e5" : "#c4b5fd", transition: "background .15s, transform .15s", transform: i < pinInput.length ? "scale(1.15)" : "scale(1)" }} />
+          ))}
+        </div>
+        {pinErr && <div style={{ fontSize: 13, color: "#dc2626", fontWeight: 600, marginBottom: 12 }}>{pinErr}</div>}
+        {!user.pin && <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>Aucun PIN configuré — appuyez sur n&apos;importe quelle touche pour continuer.</div>}
+
+        {/* Numpad */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+          {["1","2","3","4","5","6","7","8","9"].map((d) => (
+            <button key={d} onClick={() => pressPin(d)} style={{ height: 68, borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", fontSize: 26, fontWeight: 300, color: "#0f172a", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}>
+              {d}
+            </button>
+          ))}
+          <button onClick={handleLogout} style={{ height: 68, borderRadius: 16, border: "none", background: "transparent", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#94a3b8", cursor: "pointer" }}>Sortir</button>
+          <button onClick={() => pressPin("0")} style={{ height: 68, borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", fontSize: 26, fontWeight: 300, color: "#0f172a", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}>0</button>
+          <button onClick={backPin} style={{ height: 68, borderRadius: 16, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,.06)" }}>
+            <Delete style={{ width: 20, height: 20, color: "#64748b" }} />
+          </button>
+        </div>
+        {!user.pin && (
+          <button onClick={() => handleUnlock("")} style={{ marginTop: 16, fontSize: 13, color: "#4f46e5", fontWeight: 600, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+            Déverrouiller sans PIN
+          </button>
+        )}
+        <div style={{ marginTop: 16, fontSize: 11, color: "#94a3b8" }}>Astuce démo : <span style={{ fontFamily: "monospace", color: "#64748b" }}>123456</span></div>
+      </div>
+    </div>
+  );
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div style={{
@@ -100,6 +185,12 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
             <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em" }}>{user.plan}</div>
           </div>
         </div>
+        <button onClick={() => { setLocked(true); setPinInput(""); setPinErr(""); }} style={{
+          display: "flex", alignItems: "center", gap: 8, padding: "0 10px", height: 36, width: "100%", borderRadius: 10,
+          border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "#94a3b8", fontWeight: 500,
+        }}>
+          <Lock style={{ width: 14, height: 14 }} /> Verrouiller
+        </button>
         <button onClick={handleLogout} style={{
           display: "flex", alignItems: "center", gap: 8, padding: "0 10px", height: 36, width: "100%", borderRadius: 10,
           border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "#94a3b8", fontWeight: 500,

@@ -1,7 +1,28 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Plus, Search, Pencil, Trash2, Check, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Search, Pencil, Trash2, Check, X, Upload, AlertCircle } from "lucide-react";
 import { getProducts, saveProduct, updateProduct, deleteProduct, type Product } from "@/lib/caissio-store";
+
+type CsvRow = { name: string; price: number; price_buy: number; category: string; barcode: string; stock: number; stock_min: number; tva: number; error?: string };
+
+function parseCSV(text: string): CsvRow[] {
+  const lines = text.trim().split(/\r?\n/);
+  const sep = lines[0]?.includes(";") ? ";" : ",";
+  const headers = lines[0]?.split(sep).map((h) => h.trim().toLowerCase().replace(/[^a-z_]/g, ""));
+  return lines.slice(1).map((line) => {
+    const cols = line.split(sep).map((c) => c.trim().replace(/^"|"$/g, ""));
+    const get = (keys: string[]) => cols[keys.map((k) => headers.indexOf(k)).find((i) => i >= 0) ?? -1] || "";
+    const price = parseFloat(get(["price","prix","prix_vente"]).replace(",", ".")) || 0;
+    const price_buy = parseFloat(get(["price_buy","prix_achat","achat"]).replace(",", ".")) || 0;
+    const stock = parseInt(get(["stock","quantite","qty"])) || 0;
+    const stock_min = parseInt(get(["stock_min","min","alerte"])) || 5;
+    const tva = parseFloat(get(["tva","vat","taxe"]).replace(",", ".")) || 20;
+    const name = get(["name","nom","produit","libelle"]);
+    const row: CsvRow = { name, price, price_buy, category: get(["category","categorie","rayon"]) || "Divers", barcode: get(["barcode","code_barre","ean","code"]), stock, stock_min, tva };
+    if (!name) row.error = "Nom manquant";
+    return row;
+  }).filter((r) => r.name || r.error);
+}
 
 type Form = Omit<Product, "id" | "active">;
 const empty: Form = { name: "", price: 0, price_buy: 0, category: "", barcode: "", stock: 0, stock_min: 5, tva: 20, image_url: "" };
@@ -12,6 +33,9 @@ export default function ProduitsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Form>(empty);
+  const [csvRows, setCsvRows] = useState<CsvRow[] | null>(null);
+  const [csvDrag, setCsvDrag] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const reload = () => setProducts(getProducts());
   useEffect(() => { reload(); }, []);
@@ -39,6 +63,20 @@ export default function ProduitsPage() {
 
   const margin = (p: Product) => p.price_buy ? ((p.price - p.price_buy) / p.price * 100).toFixed(0) + "%" : "—";
 
+  const handleFile = (file: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { const text = e.target?.result as string; setCsvRows(parseCSV(text)); };
+    reader.readAsText(file, "utf-8");
+  };
+
+  const commitCSV = () => {
+    if (!csvRows) return;
+    csvRows.filter((r) => !r.error).forEach((r) => saveProduct({ ...r, active: true }));
+    reload();
+    setCsvRows(null);
+  };
+
   return (
     <div style={{ padding: "28px 24px", fontFamily: "'IBM Plex Sans',sans-serif", maxWidth: 1200 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&display=swap');`}</style>
@@ -48,9 +86,15 @@ export default function ProduitsPage() {
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "#94a3b8", marginBottom: 4 }}>Catalogue</div>
           <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 32, fontWeight: 900, color: "#0f172a" }}>Produits</h1>
         </div>
-        <button onClick={openCreate} style={{ height: 42, padding: "0 18px", borderRadius: 12, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-          <Plus style={{ width: 16, height: 16 }} /> Nouveau produit
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input ref={fileRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <button onClick={() => fileRef.current?.click()} style={{ height: 42, padding: "0 16px", borderRadius: 12, background: "#fff", border: "1px solid #e2e8f0", color: "#4f46e5", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+            <Upload style={{ width: 15, height: 15 }} /> Importer CSV
+          </button>
+          <button onClick={openCreate} style={{ height: 42, padding: "0 18px", borderRadius: 12, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+            <Plus style={{ width: 16, height: 16 }} /> Nouveau produit
+          </button>
+        </div>
       </div>
 
       {/* Modal */}
@@ -79,6 +123,60 @@ export default function ProduitsPage() {
               <button onClick={() => { setCreating(false); setEditing(null); }} style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14, color: "#64748b" }}>Annuler</button>
               <button onClick={save} style={{ flex: 2, height: 44, borderRadius: 12, border: "none", background: "#4f46e5", cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#fff" }}>
                 <Check style={{ width: 16, height: 16, display: "inline", marginRight: 6 }} />{editing ? "Enregistrer" : "Créer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV drag zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setCsvDrag(true); }}
+        onDragLeave={() => setCsvDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setCsvDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+        onClick={() => fileRef.current?.click()}
+        style={{ display: csvDrag ? "flex" : "flex", position: "fixed", inset: 0, zIndex: 40, background: "rgba(79,70,229,.12)", backdropFilter: "blur(4px)", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: csvDrag ? 1 : 0, pointerEvents: csvDrag ? "auto" : "none", transition: "opacity .2s" }}
+      >
+        <div style={{ background: "#fff", border: "2px dashed #4f46e5", borderRadius: 20, padding: "40px 60px", textAlign: "center", fontSize: 16, fontWeight: 700, color: "#4f46e5" }}>
+          Déposez votre fichier CSV ici
+        </div>
+      </div>
+
+      {/* CSV preview modal */}
+      {csvRows && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.5)", backdropFilter: "blur(6px)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 24, padding: 28, width: "100%", maxWidth: 700, boxShadow: "0 32px 80px rgba(0,0,0,.2)", maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Aperçu import CSV — {csvRows.length} ligne(s)</h2>
+              <button onClick={() => setCsvRows(null)} style={{ background: "none", border: "none", cursor: "pointer" }}><X style={{ width: 20, height: 20, color: "#94a3b8" }} /></button>
+            </div>
+            <div style={{ flex: 1, overflow: "auto", border: "1px solid #e2e8f0", borderRadius: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px 80px 80px", padding: "8px 14px", background: "#f8fafc", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#94a3b8", position: "sticky", top: 0 }}>
+                <span>Produit</span><span style={{ textAlign: "right" }}>Prix</span><span style={{ textAlign: "right" }}>Achat</span><span style={{ textAlign: "right" }}>Stock</span><span style={{ textAlign: "right" }}>TVA</span>
+              </div>
+              {csvRows.map((r, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px 80px 80px", padding: "10px 14px", borderTop: "1px solid #f1f5f9", background: r.error ? "#fef2f2" : "#fff", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: r.error ? "#dc2626" : "#0f172a" }}>{r.name || "—"}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{r.category}{r.error ? ` · ⚠ ${r.error}` : ""}</div>
+                  </div>
+                  <div style={{ textAlign: "right", fontSize: 13, color: "#4f46e5", fontWeight: 700 }}>{r.price.toFixed(2)} €</div>
+                  <div style={{ textAlign: "right", fontSize: 13, color: "#64748b" }}>{r.price_buy ? r.price_buy.toFixed(2) + " €" : "—"}</div>
+                  <div style={{ textAlign: "right", fontSize: 13, color: "#0f172a" }}>{r.stock}</div>
+                  <div style={{ textAlign: "right", fontSize: 13, color: "#64748b" }}>{r.tva}%</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
+              {csvRows.some((r) => r.error) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#d97706", flex: 1 }}>
+                  <AlertCircle style={{ width: 14, height: 14 }} />
+                  {csvRows.filter((r) => r.error).length} ligne(s) avec erreurs seront ignorées
+                </div>
+              )}
+              <button onClick={() => setCsvRows(null)} style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#64748b" }}>Annuler</button>
+              <button onClick={commitCSV} disabled={csvRows.filter((r) => !r.error).length === 0} style={{ flex: 2, height: 44, borderRadius: 12, border: "none", background: "#4f46e5", cursor: "pointer", fontWeight: 700, color: "#fff", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <Check style={{ width: 16, height: 16 }} /> Importer {csvRows.filter((r) => !r.error).length} produit(s)
               </button>
             </div>
           </div>
