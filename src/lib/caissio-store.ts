@@ -38,7 +38,7 @@ export type Sale = {
   subtotal: number;
   discount: number;
   total: number;
-  payment: "cash" | "card" | "mixed";
+  payment: "cash" | "card" | "mixed" | "account";
   cash_given?: number;
   change?: number;
   customer_id?: string;
@@ -51,6 +51,7 @@ export type Customer = {
   email?: string;
   phone?: string;
   points: number;
+  balance: number; // outstanding tab (amount owed)
   created_at: string;
 };
 
@@ -179,6 +180,13 @@ export function recordSale(sale: Omit<Sale, "id" | "created_at">): Sale {
     const p = products.find((x) => x.id === item.product_id);
     if (p) updateProduct(p.id, { stock: Math.max(0, p.stock - item.qty) });
   });
+  // customer: add points (1 per €) + handle account payment
+  if (s.customer_id) {
+    addCustomerPoints(s.customer_id, Math.floor(s.total));
+    if (s.payment === "account") {
+      addCustomerBalance(s.customer_id, s.total);
+    }
+  }
   return s;
 }
 
@@ -205,10 +213,22 @@ export function setUserPin(pin: string): void {
 
 export function getCustomers(): Customer[] { return get<Customer>(KEY.customers); }
 
-export function saveCustomer(c: Omit<Customer, "id" | "points" | "created_at">): Customer {
-  const cust: Customer = { ...c, id: uid(), points: 0, created_at: new Date().toISOString() };
+export function saveCustomer(c: Omit<Customer, "id" | "points" | "balance" | "created_at">): Customer {
+  const cust: Customer = { ...c, id: uid(), points: 0, balance: 0, created_at: new Date().toISOString() };
   set(KEY.customers, [...getCustomers(), cust]);
   return cust;
+}
+
+export function addCustomerBalance(customerId: string, amount: number): void {
+  set(KEY.customers, getCustomers().map((c) =>
+    c.id === customerId ? { ...c, balance: (c.balance ?? 0) + amount } : c
+  ));
+}
+
+export function addCustomerPoints(customerId: string, points: number): void {
+  set(KEY.customers, getCustomers().map((c) =>
+    c.id === customerId ? { ...c, points: c.points + points } : c
+  ));
 }
 
 /* ── SUPPLIERS ── */
