@@ -339,6 +339,23 @@ function seedDemoProducts() {
     { name: "Sandwich jambon", price: 3.90, price_buy: 1.30, category: "Snacks", barcode: "3700000000008", stock: 0, stock_min: 6, tva: 10, active: true },
     { name: "Pâtes Barilla 500g", price: 1.85, price_buy: 0.80, category: "Épicerie", barcode: "3700000000009", stock: 24, stock_min: 10, tva: 5.5, active: true },
     { name: "Tomates grappe 500g", price: 2.20, price_buy: 0.90, category: "Épicerie", barcode: "3700000000010", stock: 18, stock_min: 8, tva: 5.5, active: true },
+    // Fruits & Légumes
+    { name: "Pommes Golden 1kg", price: 2.50, price_buy: 1.00, category: "Fruits & Légumes", barcode: "3700000000011", stock: 40, stock_min: 10, tva: 5.5, active: true },
+    { name: "Bananes 1kg", price: 1.90, price_buy: 0.70, category: "Fruits & Légumes", barcode: "3700000000012", stock: 30, stock_min: 8, tva: 5.5, active: true },
+    { name: "Salade verte", price: 1.20, price_buy: 0.40, category: "Fruits & Légumes", barcode: "3700000000013", stock: 15, stock_min: 5, tva: 5.5, active: true },
+    { name: "Carottes 1kg", price: 1.30, price_buy: 0.45, category: "Fruits & Légumes", barcode: "3700000000014", stock: 25, stock_min: 8, tva: 5.5, active: true },
+    { name: "Courgettes 500g", price: 1.60, price_buy: 0.60, category: "Fruits & Légumes", barcode: "3700000000015", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Fraises 250g", price: 3.50, price_buy: 1.40, category: "Fruits & Légumes", barcode: "3700000000016", stock: 12, stock_min: 4, tva: 5.5, active: true },
+    // Fromage
+    { name: "Camembert 250g", price: 3.20, price_buy: 1.40, category: "Fromage", barcode: "3700000000017", stock: 18, stock_min: 6, tva: 5.5, active: true },
+    { name: "Comté AOP 150g", price: 4.80, price_buy: 2.20, category: "Fromage", barcode: "3700000000018", stock: 14, stock_min: 4, tva: 5.5, active: true },
+    { name: "Chèvre frais", price: 2.80, price_buy: 1.10, category: "Fromage", barcode: "3700000000019", stock: 10, stock_min: 4, tva: 5.5, active: true },
+    { name: "Brie de Meaux", price: 3.90, price_buy: 1.80, category: "Fromage", barcode: "3700000000020", stock: 8, stock_min: 3, tva: 5.5, active: true },
+    // Charcuterie
+    { name: "Jambon blanc 4 tr.", price: 3.50, price_buy: 1.60, category: "Charcuterie", barcode: "3700000000021", stock: 20, stock_min: 6, tva: 5.5, active: true },
+    { name: "Saucisson sec 200g", price: 4.20, price_buy: 2.00, category: "Charcuterie", barcode: "3700000000022", stock: 16, stock_min: 5, tva: 5.5, active: true },
+    { name: "Lardons fumés 200g", price: 2.50, price_buy: 1.10, category: "Charcuterie", barcode: "3700000000023", stock: 22, stock_min: 8, tva: 5.5, active: true },
+    { name: "Rosette tranchée", price: 3.80, price_buy: 1.70, category: "Charcuterie", barcode: "3700000000024", stock: 12, stock_min: 4, tva: 5.5, active: true },
   ];
   demo.forEach((p) => saveProduct(p));
 
