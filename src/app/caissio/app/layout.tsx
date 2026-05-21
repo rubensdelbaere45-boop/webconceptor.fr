@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getSession, logout, validatePin, type CaissioUser } from "@/lib/caissio-store";
+import { getSession, logout, validatePin, hasAccess, type CaissioUser } from "@/lib/caissio-store";
 import {
   ScanBarcode, LayoutDashboard, Package, Boxes, Users,
   Plug, FileBarChart2, Settings, LogOut, Menu, X,
@@ -53,7 +53,11 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
     const s = getSession();
     if (!s) { router.replace("/caissio/login"); return; }
     setUser(s);
-  }, [router]);
+    // Redirige vers abonnement si l'accès est révoqué (trial expiré ou subscription annulée)
+    if (!hasAccess(s) && pathname !== "/caissio/app/abonnement") {
+      router.replace("/caissio/app/abonnement");
+    }
+  }, [router, pathname]);
 
   // auto-lock on inactivity
   useEffect(() => {
@@ -131,7 +135,7 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
             Déverrouiller sans PIN
           </button>
         )}
-        <div style={{ marginTop: 16, fontSize: 11, color: "#94a3b8" }}>Astuce démo : <span style={{ fontFamily: "monospace", color: "#64748b" }}>123456</span></div>
+        <div style={{ marginTop: 16, fontSize: 11, color: "#94a3b8" }}>Si vous n&apos;avez pas de PIN, appuyez sur Déverrouiller sans PIN.</div>
       </div>
     </div>
   );
