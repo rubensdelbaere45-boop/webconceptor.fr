@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+caissio-desktop/node_modules
+caissio-desktop/dist
 /.pnp
 .pnp.*
 .yarn/*
