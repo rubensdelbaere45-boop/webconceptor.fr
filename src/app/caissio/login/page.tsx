@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2, Share, Plus } from "lucide-react";
 import { login, getSession, loginWithGoogle, registerWithGoogle } from "@/lib/caissio-store";
@@ -21,7 +21,7 @@ function CaissioMark({ size = 36 }: { size?: number }) {
   );
 }
 
-export default function CaissioLogin() {
+function CaissioLogin() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -248,5 +248,13 @@ export default function CaissioLogin() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CaissioLoginPage() {
+  return (
+    <Suspense>
+      <CaissioLogin />
+    </Suspense>
   );
 }
