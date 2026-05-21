@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getSession, logout, validatePin, hasAccess, type CaissioUser } from "@/lib/caissio-store";
+import { getSession, logout, validatePin, hasAccess, updateSubscription, type CaissioUser } from "@/lib/caissio-store";
 import {
   ScanBarcode, LayoutDashboard, Package, Boxes, Users,
   Plug, FileBarChart2, Settings, LogOut, Menu, X,
@@ -56,6 +56,27 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
     // Redirige vers abonnement si l'accès est révoqué (trial expiré ou subscription annulée)
     if (!hasAccess(s) && pathname !== "/caissio/app/abonnement") {
       router.replace("/caissio/app/abonnement");
+      return;
+    }
+    // Vérification Stripe une fois par 24h (fire & forget — ne bloque pas l'UI)
+    if (s.stripe_customer_id) {
+      const lastVerified = s.subscription_verified_at
+        ? new Date(s.subscription_verified_at).getTime()
+        : 0;
+      const dayMs = 24 * 60 * 60 * 1000;
+      if (Date.now() - lastVerified > dayMs) {
+        fetch(`/api/caissio/subscription?customer_id=${s.stripe_customer_id}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data: { subscription_status?: CaissioUser["subscription_status"]; subscription_plan?: CaissioUser["subscription_plan"]; verified_at?: string } | null) => {
+            if (!data) return;
+            updateSubscription({
+              subscription_status: data.subscription_status,
+              subscription_plan: data.subscription_plan,
+              subscription_verified_at: data.verified_at,
+            });
+          })
+          .catch(() => { /* silencieux — accès réseau non disponible */ });
+      }
     }
   }, [router, pathname]);
 
