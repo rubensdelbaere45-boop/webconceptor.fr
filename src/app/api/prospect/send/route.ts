@@ -852,10 +852,11 @@ async function handleSend(req: NextRequest) {
     // no-site disponibles en DB, même s'ils sont anciens. Puis on trie côté JS
     // par priorité absolue au no-site (le meilleur public : ils n'ont même pas
     // de site donc PAS l'excuse 'j'ai déjà un site' quand on les appelle).
+    // On accepte "found" (nouveaux) ET "ready" (préparés mais pas encore envoyés)
     const { data } = await supabase
       .from("prospects")
       .select("*")
-      .eq("status", "found")
+      .in("status", ["found", "ready"])
       .not("email", "is", null)
       .is("unsubscribed_at", null)   // Jamais envoyer à quelqu'un qui s'est désabonné
       .order("created_at", { ascending: true })
@@ -896,12 +897,44 @@ async function handleSend(req: NextRequest) {
   const sendTimeLeft = () => SEND_DEADLINE_MS - (Date.now() - sendStartedAt);
   let timedOut = 0;
 
+  // Anti-spam : domaine cooldown — on track les domaines email déjà envoyés ce batch
+  // pour éviter d'envoyer 5× au même @orange.fr dans la même vague.
+  const domainsSentThisBatch = new Map<string, number>(); // domain → count
+  const MAX_PER_DOMAIN_PER_BATCH = 2; // max 2 emails vers le même @domain.fr par run
+
+  // Vérifier aussi les envois du jour dans la DB pour le cooldown global
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { data: todaySent } = await supabase
+    .from("prospects")
+    .select("email")
+    .eq("status", "sent")
+    .gte("sent_at", todayStart.toISOString())
+    .not("email", "is", null);
+  const domainsSentToday = new Map<string, number>();
+  for (const row of (todaySent || [])) {
+    const domain = (row.email as string).split("@")[1]?.toLowerCase() || "";
+    if (domain) domainsSentToday.set(domain, (domainsSentToday.get(domain) || 0) + 1);
+  }
+  const MAX_PER_DOMAIN_PER_DAY = 5; // max 5 emails vers le même @domain.fr par jour
+
   for (const p of prospects) {
     // Garde : 20 s minimum pour finir proprement (Claude + Brevo + Supabase)
     if (sendTimeLeft() < 20_000) {
       timedOut++;
       results.push({ id: p.id, name: p.name, status: "deferred_timeout" });
       continue;
+    }
+
+    // Anti-spam : cooldown par domaine email
+    const emailDomain = (p.email || "").split("@")[1]?.toLowerCase() || "";
+    if (emailDomain && !dry_run) {
+      const batchCount = domainsSentThisBatch.get(emailDomain) || 0;
+      const dayCount = domainsSentToday.get(emailDomain) || 0;
+      if (batchCount >= MAX_PER_DOMAIN_PER_BATCH || dayCount >= MAX_PER_DOMAIN_PER_DAY) {
+        results.push({ id: p.id, name: p.name, status: "skipped_domain_cooldown" });
+        continue;
+      }
     }
 
     if (!p.email) {
@@ -1085,6 +1118,16 @@ async function handleSend(req: NextRequest) {
       }
 
       results.push({ id: p.id, name: p.name, status: dry_run ? "ready" : "sent" });
+
+      // Anti-spam : délai 3s entre emails + tracking domaine
+      if (!dry_run && emailDomain) {
+        domainsSentThisBatch.set(emailDomain, (domainsSentThisBatch.get(emailDomain) || 0) + 1);
+        domainsSentToday.set(emailDomain, (domainsSentToday.get(emailDomain) || 0) + 1);
+        // Délai anti-spam : 3 secondes entre chaque email pour ne pas déclencher les filtres
+        if (sendTimeLeft() > 25_000) {
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "unknown";
       await supabase.from("prospects").update({ status: "error", error: msg }).eq("id", p.id);

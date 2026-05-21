@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   // Counts by status — léger, pas de mockup_html
   const { data, error } = await supabase
     .from("prospects")
-    .select("status, email_sent_at, email_opened_at, created_at")
+    .select("status, sent_at, opened_at, created_at")
     .order("created_at", { ascending: false })
     .limit(2000);
 
@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
     byStatus[r.status] = (byStatus[r.status] || 0) + 1;
   }
 
-  const sent      = rows.filter(r => r.email_sent_at).length;
-  const opened    = rows.filter(r => r.email_opened_at).length;
+  const sent      = rows.filter(r => r.sent_at || r.status === "sent" || r.status === "opened").length;
+  const opened    = rows.filter(r => r.opened_at || r.status === "opened").length;
   const converted = byStatus["converted"] || 0;
   const ready     = byStatus["mockup_ready"] || byStatus["found"] || 0;
 

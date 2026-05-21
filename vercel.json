@@ -37,21 +37,14 @@
   },
   "regions": ["cdg1"],
   "crons": [
-    {
-      "path": "/api/prospect/cron",
-      "schedule": "0 8 * * 1-5"
-    },
-    {
-      "path": "/api/gmb/cron",
-      "schedule": "0 9 * * 1-6"
-    },
-    {
-      "path": "/api/agentconceptor/posts/cron",
-      "schedule": "0 7 * * 1"
-    },
-    {
-      "path": "/api/agentconceptor/prospect/cron",
-      "schedule": "0 8 * * 1-5"
-    }
+    { "path": "/api/prospect/cron", "schedule": "0 7 * * 1-6" },
+    { "path": "/api/prospect/cron", "schedule": "0 9 * * 1-6" },
+    { "path": "/api/prospect/cron", "schedule": "0 11 * * 1-6" },
+    { "path": "/api/prospect/cron", "schedule": "0 13 * * 1-6" },
+    { "path": "/api/prospect/cron", "schedule": "0 15 * * 1-6" },
+    { "path": "/api/prospect/cron", "schedule": "0 17 * * 1-6" },
+    { "path": "/api/gmb/cron", "schedule": "0 9 * * 1-6" },
+    { "path": "/api/agentconceptor/posts/cron", "schedule": "0 7 * * 1" },
+    { "path": "/api/agentconceptor/prospect/cron", "schedule": "0 8 * * 1-5" }
   ]
 }

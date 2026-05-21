@@ -112,9 +112,9 @@ const DEFAULT_QUERIES = [
   "agence immobilière artisan Nice",
 ];
 
-// Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date
-// pour ne jamais envoyer les mêmes deux jours de suite.
-const QUERIES_PER_RUN = 4; // 4 queries/run → ~4× plus de prospects trouvés par jour
+// Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date+heure
+// pour ne jamais envoyer les mêmes deux runs de suite.
+const QUERIES_PER_RUN = 6; // 6 queries/run × 6 runs/jour = 36 queries/jour → ~200-400 nouveaux prospects/jour
 
 // Déduit le business_type à envoyer à /find depuis le texte de la query.
 // Sans ça, /find défaut sur "epicerie" → filtre 250km Aubenton appliqué partout.
@@ -164,13 +164,14 @@ async function runCron(req: NextRequest) {
   const batchParam = Number(req.nextUrl.searchParams.get("batch"));
   const batch_size = Number.isFinite(batchParam) && batchParam > 0
     ? Math.min(50, Math.max(1, Math.floor(batchParam)))
-    : 25; // 25 emails par run × 3 runs/jour = 75 emails/jour (bien dans les 20 000/mois)
+    : 60; // 60 emails par run × 6 runs/jour = 360 emails/jour → 20 000 en 27 jours ✅
 
   // Rotation sur la grande liste : QUERIES_PER_RUN queries différentes par run
   // On utilise le numéro de jour depuis epoch pour avancer dans la liste chaque jour.
   const queries: string[] = query ? [query] : (() => {
-    const dayIndex = Math.floor(Date.now() / 86_400_000); // # jours depuis epoch
-    const offset = (dayIndex * QUERIES_PER_RUN) % DEFAULT_QUERIES.length;
+    // Rotation par run (heure + jour) pour varier les requêtes à chaque exécution
+    const runIndex = Math.floor(Date.now() / 7_200_000); // change toutes les 2h
+    const offset = (runIndex * QUERIES_PER_RUN) % DEFAULT_QUERIES.length;
     const selected: string[] = [];
     for (let i = 0; i < QUERIES_PER_RUN; i++) {
       selected.push(DEFAULT_QUERIES[(offset + i) % DEFAULT_QUERIES.length]);
