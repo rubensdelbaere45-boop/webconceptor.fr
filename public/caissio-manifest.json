@@ -1,0 +1,63 @@
+{
+  "name": "Caissio — Logiciel de caisse",
+  "short_name": "Caissio",
+  "description": "Logiciel de caisse moderne pour commerçants indépendants. Données locales, hors-ligne, protection PIN.",
+  "start_url": "/caissio/login",
+  "scope": "/caissio/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "categories": ["business", "productivity"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/caissio-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/caissio-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/caissio-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screen-pos.jpg",
+      "type": "image/jpeg",
+      "sizes": "1280x800",
+      "form_factor": "wide",
+      "label": "Module caisse"
+    },
+    {
+      "src": "/screen-dashboard.jpg",
+      "type": "image/jpeg",
+      "sizes": "1280x800",
+      "form_factor": "wide",
+      "label": "Tableau de bord"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ouvrir la caisse",
+      "short_name": "Caisse",
+      "url": "/caissio/app/pos",
+      "icons": [{ "src": "/caissio-icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/caissio/app/dashboard",
+      "icons": [{ "src": "/caissio-icon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -577,11 +577,11 @@ export default function CaissioPage() {
                   Fonctionne même sans connexion internet. Vos données restent sur votre machine.
                 </p>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 40 }}>
-                  <a href="/signup" className="cai-btn-sky" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 900, fontSize: 17, gap: 12 }}>
-                    <Download style={{ width: 18, height: 18 }} /> Télécharger (.exe)
+                  <a href="/caissio/telecharger" className="cai-btn-sky" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 900, fontSize: 17, gap: 12 }}>
+                    <Download style={{ width: 18, height: 18 }} /> Télécharger pour Windows
                   </a>
-                  <a href="/signup" className="cai-btn-outline" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 700, fontSize: 17, gap: 8 }}>
-                    Ou version web →
+                  <a href="/caissio/telecharger#mac" className="cai-btn-outline" style={{ height: 60, padding: "0 36px", borderRadius: 18, fontWeight: 700, fontSize: 17, gap: 8 }}>
+                    🍎 Télécharger pour Mac →
                   </a>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, maxWidth: 320 }}>
@@ -750,8 +750,8 @@ export default function CaissioPage() {
             <a href="/signup" style={{ height: 64, padding: "0 48px", borderRadius: 20, fontWeight: 900, fontSize: 20, display: "inline-flex", alignItems: "center", gap: 12, background: "#fff", color: "#4f46e5", textDecoration: "none" }}>
               Commencer gratuitement <ArrowRight style={{ width: 20, height: 20 }} />
             </a>
-            <a href="/signup" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 20, gap: 12 }}>
-              <Download style={{ width: 20, height: 20 }} /> Télécharger Windows
+            <a href="/caissio/telecharger" className="cai-btn-sky" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 20, gap: 12 }}>
+              <Download style={{ width: 20, height: 20 }} /> Télécharger (Windows &amp; Mac)
             </a>
           </div>
           <p style={{ marginTop: 24, fontSize: 13, color: "rgba(255,255,255,.5)" }}>Sans engagement · Résiliation en 1 clic · Support 7j/7</p>
