@@ -198,7 +198,51 @@ export default function TelechargerPage() {
 
           {/* ══ MAC ══ */}
           {tab === "mac" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+              {/* ── CTA principal : télécharger le .dmg ── */}
+              <div style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)", borderRadius: 24, padding: "32px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,.5)", marginBottom: 8 }}>APPLICATION MACOS NATIVE</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Caissio pour Mac</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,.7)", lineHeight: 1.6 }}>
+                    Image disque (.dmg) — macOS 12 Monterey ou supérieur · Apple Silicon &amp; Intel<br />
+                    Glissez dans Applications · Icône dans le Dock · Données locales sur votre Mac
+                  </div>
+                </div>
+                <a
+                  href="/api/caissio/download/mac"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    height: 56, padding: "0 28px", borderRadius: 16,
+                    background: "#fff", color: "#0f172a",
+                    fontWeight: 800, fontSize: 16,
+                    textDecoration: "none", whiteSpace: "nowrap",
+                    boxShadow: "0 8px 24px rgba(0,0,0,.35)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Download style={{ width: 20, height: 20 }} />
+                  Télécharger le .dmg
+                </a>
+              </div>
+
+              {/* ── Étapes .dmg ── */}
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>
+                  Comment installer Caissio sur Mac
+                </div>
+                <Step n={1} title="Téléchargez le fichier" desc='Cliquez sur "Télécharger le .dmg" ci-dessus. Le fichier Caissio.dmg se télécharge dans votre dossier Téléchargements.' img="⬇️" />
+                <Step n={2} title="Ouvrez le .dmg" desc="Double-cliquez sur Caissio.dmg. Une fenêtre s'ouvre avec l'icône Caissio et votre dossier Applications." img="💿" />
+                <Step n={3} title="Glissez dans Applications" desc='Faites glisser l&apos;icône Caissio dans le dossier Applications. Si macOS affiche "impossible de vérifier", allez dans Réglages → Confidentialité → Ouvrir quand même.' img="📁" />
+                <Step n={4} title="Connectez-vous" desc="Lancez Caissio depuis le Launchpad ou le Dock. Connectez-vous avec votre compte Caissio ou créez-en un." img="🔑" />
+                <div style={{ marginTop: 16, padding: "12px 16px", background: "#ede9fe", borderRadius: 12, fontSize: 13, color: "#4f46e5", fontWeight: 600 }}>
+                  🎉 Caissio est dans votre Launchpad et votre Dock. Vos données sont sauvegardées sur votre Mac.
+                </div>
+              </div>
+
+              {/* ── Chrome + Safari en alternatif ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               {/* Chrome */}
               <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
@@ -236,8 +280,10 @@ export default function TelechargerPage() {
                 </div>
               </div>
 
+              </div>{/* end 2-col grid Chrome/Safari */}
+
               {/* Profiles section */}
-              <div style={{ gridColumn: "1/-1", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>
                   🧑‍💼 Profils utilisateurs Mac
                 </div>
@@ -263,7 +309,37 @@ export default function TelechargerPage() {
 
           {/* ══ IPAD / IPHONE ══ */}
           {tab === "ipad" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+              {/* ── CTA principal : installer directement ── */}
+              <div style={{ background: "linear-gradient(135deg,#4f46e5 0%,#0ea5e9 100%)", borderRadius: 24, padding: "32px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,.7)", marginBottom: 8 }}>APPLICATION iPad · iPhone</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Caissio sur iPad</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,.8)", lineHeight: 1.6 }}>
+                    Ouvrez Caissio dans Safari, puis ajoutez-le à votre écran d&apos;accueil.<br />
+                    Plein écran · Fonctionne hors-ligne · Parfait en caisse
+                  </div>
+                </div>
+                <a
+                  href="/api/caissio/download/ipad"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    height: 56, padding: "0 28px", borderRadius: 16,
+                    background: "#fff", color: "#4f46e5",
+                    fontWeight: 800, fontSize: 16,
+                    textDecoration: "none", whiteSpace: "nowrap",
+                    boxShadow: "0 8px 24px rgba(0,0,0,.2)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>📲</span>
+                  Installer sur iPad
+                </a>
+              </div>
+
+              {/* ── guides iPad + iPhone en 2 colonnes ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📱</div>
@@ -299,7 +375,10 @@ export default function TelechargerPage() {
                 </div>
               </div>
 
-              <div style={{ gridColumn: "1/-1", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 16, padding: "16px 20px", display: "flex", gap: 14 }}>
+              </div>{/* end 2-col grid iPad/iPhone */}
+
+              {/* Note scanner */}
+              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 16, padding: "16px 20px", display: "flex", gap: 14 }}>
                 <span style={{ fontSize: 22 }}>⚠️</span>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#dc2626", marginBottom: 4 }}>Important — Scanner de code-barres</div>

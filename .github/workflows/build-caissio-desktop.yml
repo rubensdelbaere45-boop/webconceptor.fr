@@ -108,3 +108,118 @@ jobs:
           files: caissio-desktop/dist/Caissio-Setup.exe
           make_latest: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mac:
+    name: Build Mac .dmg
+    runs-on: macos-latest
+
+    defaults:
+      run:
+        working-directory: caissio-desktop
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: caissio-desktop/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate .icns icon
+        run: |
+          # Génère un iconset macOS depuis un PNG carré
+          mkdir -p resources/icon.iconset
+          # Crée un PNG 1024x1024 de couleur indigo via Python
+          python3 - <<'EOF'
+          import struct, zlib, base64
+
+          def png_chunk(name, data):
+              c = zlib.crc32(name + data) & 0xffffffff
+              return struct.pack('>I', len(data)) + name + data + struct.pack('>I', c)
+
+          w = h = 1024
+          raw = b''
+          for y in range(h):
+              raw += b'\x00'
+              for x in range(w):
+                  # Coin arrondi ~11/48 ratio → 236px
+                  r = min(x, w-1-x, y, h-1-y)
+                  if r < 236 and (min(x,w-1-x) < 236 and min(y,h-1-y) < 236):
+                      dist = ((x - (236 if x < 512 else w-236))**2 + (y - (236 if y < 512 else h-236))**2)**0.5
+                      if x < 236 and y < 236 and dist > 236:
+                          raw += b'\xff\xff\xff\x00'
+                          continue
+                      if x >= w-236 and y < 236 and dist > 236:
+                          raw += b'\xff\xff\xff\x00'
+                          continue
+                      if x < 236 and y >= h-236 and dist > 236:
+                          raw += b'\xff\xff\xff\x00'
+                          continue
+                      if x >= w-236 and y >= h-236 and dist > 236:
+                          raw += b'\xff\xff\xff\x00'
+                          continue
+                  raw += b'\x4f\x46\xe5\xff'  # #4F46E5 indigo
+
+          import zlib
+          compressed = zlib.compress(raw)
+          chunks  = b'\x89PNG\r\n\x1a\n'
+          chunks += png_chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0))
+          chunks += png_chunk(b'IDAT', compressed)
+          chunks += png_chunk(b'IEND', b'')
+          with open('resources/icon.iconset/icon_1024x1024.png', 'wb') as f:
+              f.write(chunks)
+          print('PNG 1024x1024 generated')
+          EOF
+
+          # Copie aux différentes résolutions requises par macOS
+          for SIZE in 16 32 64 128 256 512; do
+            sips -z $SIZE $SIZE resources/icon.iconset/icon_1024x1024.png \
+              --out "resources/icon.iconset/icon_${SIZE}x${SIZE}.png" 2>/dev/null || true
+            DOUBLE=$((SIZE*2))
+            sips -z $DOUBLE $DOUBLE resources/icon.iconset/icon_1024x1024.png \
+              --out "resources/icon.iconset/icon_${SIZE}x${SIZE}@2x.png" 2>/dev/null || true
+          done
+
+          # Convertit en .icns
+          iconutil -c icns resources/icon.iconset -o resources/icon.icns
+          echo "✓ icon.icns généré"
+
+      - name: Build macOS .dmg
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pas de signature de code (CSC_LINK vide = build non signé)
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Get version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Upload .dmg to GitHub Release (tag stable = caissio-latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: caissio-latest
+          name: "Caissio v${{ steps.version.outputs.version }}"
+          body: |
+            ## Caissio v${{ steps.version.outputs.version }}
+
+            ### Windows
+            Téléchargez `Caissio-Setup.exe` et lancez l'installateur.
+
+            ### macOS
+            Téléchargez `Caissio.dmg`, ouvrez-le et glissez Caissio dans Applications.
+            > Si macOS bloque l'ouverture : Réglages → Confidentialité et sécurité → Ouvrir quand même.
+
+            ### Configuration requise
+            - Windows 10 / 11 (64-bit) ou macOS 12 Monterey+
+            - Connexion Internet pour la connexion initiale
+            - Données de vente sauvegardées localement sur votre machine
+          files: caissio-desktop/dist/Caissio.dmg
+          make_latest: true
+          token: ${{ secrets.GITHUB_TOKEN }}

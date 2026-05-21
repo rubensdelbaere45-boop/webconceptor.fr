@@ -49,7 +49,7 @@
       "target": "dmg",
       "icon": "resources/icon.icns",
       "category": "public.app-category.business",
-      "artifactName": "Caissio-${version}.dmg"
+      "artifactName": "Caissio.dmg"
     },
     "dmg": {
       "title": "Caissio"

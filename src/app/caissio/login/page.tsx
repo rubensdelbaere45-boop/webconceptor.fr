@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, Loader2, Share, Plus } from "lucide-react";
 import { login, getSession } from "@/lib/caissio-store";
 
 function CaissioMark({ size = 36 }: { size?: number }) {
@@ -23,15 +23,24 @@ function CaissioMark({ size = 36 }: { size?: number }) {
 
 export default function CaissioLogin() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
     if (getSession()) router.replace("/caissio/app/pos");
   }, [router]);
+
+  // Bannière d'installation PWA sur iPad/iPhone quand ?install=1
+  useEffect(() => {
+    if (searchParams.get("install") === "1") {
+      setShowInstallBanner(true);
+    }
+  }, [searchParams]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +78,34 @@ export default function CaissioLogin() {
           .cai-login-grid { grid-template-columns: 1fr !important; }
           .cai-login-left { display: none !important; }
         }
+        @keyframes slideDown { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
+
+      {/* ── Bannière installation iPad/iPhone ── */}
+      {showInstallBanner && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
+          background: "linear-gradient(135deg,#4f46e5,#7c3aed)",
+          padding: "14px 20px", animation: "slideDown .3s ease",
+          display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+        }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 15, color: "#fff", marginBottom: 2 }}>
+              Installer Caissio sur votre iPad
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", lineHeight: 1.5 }}>
+              Dans Safari : appuyez sur <Share style={{ width: 12, height: 12, display: "inline", verticalAlign: "middle" }} /> Partager
+              → <Plus style={{ width: 12, height: 12, display: "inline", verticalAlign: "middle" }} /> Sur l&apos;écran d&apos;accueil
+            </div>
+          </div>
+          <button
+            onClick={() => setShowInstallBanner(false)}
+            style={{ background: "rgba(255,255,255,.2)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 14px", fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}
+          >
+            OK
+          </button>
+        </div>
+      )}
 
       {/* Left panel */}
       <div className="cai-login-left" style={{ background: "linear-gradient(135deg,#ede9fe 0%,#dbeafe 100%)", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "48px", borderRight: "1px solid #e2e8f0", position: "relative", overflow: "hidden" }}>
