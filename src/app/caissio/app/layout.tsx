@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getSession, logout, validatePin, hasAccess, updateSubscription, type CaissioUser } from "@/lib/caissio-store";
+import { getSession, logout, validatePin, hasAccess, updateSubscription, switchToLive, type CaissioUser } from "@/lib/caissio-store";
 import {
   ScanBarcode, LayoutDashboard, Package, Boxes, Users,
   Plug, FileBarChart2, Settings, LogOut, Menu, X,
@@ -262,9 +262,32 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
       )}
 
       {/* Main content */}
-      <div style={{ flex: 1, overflow: "auto", paddingTop: 0 }} className="cai-main">
+      <div style={{ flex: 1, overflow: "auto", paddingTop: 0, display: "flex", flexDirection: "column" }} className="cai-main">
         <style>{`@media (max-width: 768px) { .cai-main { padding-top: 56px !important; } }`}</style>
-        {children}
+
+        {/* ── Banner MODE TEST ── */}
+        {user.mode === "test" && (
+          <div style={{ flexShrink: 0, background: "linear-gradient(90deg,#f59e0b,#d97706)", color: "#fff", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontSize: 13, fontWeight: 700, zIndex: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ background: "rgba(0,0,0,.2)", borderRadius: 6, padding: "2px 8px", fontSize: 11, letterSpacing: "0.1em" }}>MODE TEST</span>
+              <span style={{ fontWeight: 500, fontSize: 12 }}>Vos ventes ne comptent pas dans vos rapports réels.</span>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm("Passer en mode Live ? Vos prochaines ventes seront réelles et comptabilisées.")) {
+                  switchToLive();
+                  window.location.reload();
+                }
+              }}
+              style={{ height: 28, padding: "0 12px", borderRadius: 8, background: "rgba(255,255,255,.25)", border: "1px solid rgba(255,255,255,.4)", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              ⚡ Passer en Live
+            </button>
+          </div>
+        )}
+
+        <div style={{ flex: 1, overflow: "auto" }}>
+          {children}
+        </div>
       </div>
     </div>
   );

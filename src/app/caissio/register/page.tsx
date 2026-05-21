@@ -53,7 +53,7 @@ export default function CaissioRegister() {
     setLoading(true);
     try {
       register(form);
-      router.push("/caissio/app/dashboard");
+      router.push("/caissio/onboarding");
     } catch (ex: unknown) {
       setAttempts((a) => a + 1);
       setErr(ex instanceof Error ? ex.message : "Erreur lors de la création");

@@ -4,10 +4,11 @@ import {
   Search, Trash2, Plus, Minus, Percent, CreditCard, Banknote,
   Receipt, DoorOpen, X, Check, Leaf, Mail, Phone, Printer,
   PauseCircle, RotateCcw, Users, Delete, UserCheck,
-  ChevronLeft, BookOpen,
+  ChevronLeft, BookOpen, PlusCircle, Edit2,
 } from "lucide-react";
 import {
   getProducts, getCustomers, recordSale, getStoreSettings,
+  saveProduct, updateProduct, deleteProduct,
   migrateMissingCategories, migrateV2,
   type Product, type Customer,
 } from "@/lib/caissio-store";
@@ -159,6 +160,119 @@ function ArticleModal({ products, onAdd, onClose }: { products: Product[]; onAdd
   );
 }
 
+/* ── Context-menu types ──────────────────────────── */
+type CtxMenu = { type: "cat"; catName: string; x: number; y: number }
+             | { type: "prod"; product: Product; x: number; y: number }
+             | null;
+
+/* ── Quick-add product modal ─────────────────────── */
+function ProductFormModal({
+  initialCat,
+  initialProduct,
+  onSave,
+  onClose,
+}: {
+  initialCat?: string;
+  initialProduct?: Product;
+  onSave: () => void;
+  onClose: () => void;
+}) {
+  const cats = ["Boulangerie","Boissons","Snacks","Épicerie","Fruits","Légumes","Fromage","Charcuterie","Autre"];
+  const [form, setForm] = useState({
+    name: initialProduct?.name ?? "",
+    price: initialProduct?.price?.toString() ?? "",
+    category: initialProduct?.category ?? initialCat ?? "Autre",
+    barcode: initialProduct?.barcode ?? "",
+    stock: initialProduct?.stock?.toString() ?? "0",
+    tva: initialProduct?.tva?.toString() ?? "20",
+  });
+  const [err, setErr] = useState("");
+
+  const handleSave = () => {
+    if (!form.name.trim()) { setErr("Nom requis"); return; }
+    const price = parseFloat(form.price);
+    if (isNaN(price) || price < 0) { setErr("Prix invalide"); return; }
+    const data = {
+      name: form.name.trim(),
+      price,
+      category: form.category,
+      barcode: form.barcode.trim() || undefined,
+      stock: parseInt(form.stock) || 0,
+      stock_min: 5,
+      tva: parseFloat(form.tva) || 20,
+      active: true,
+    };
+    if (initialProduct) {
+      updateProduct(initialProduct.id, data);
+    } else {
+      saveProduct(data);
+    }
+    onSave();
+    onClose();
+  };
+
+  const field = (label: string, key: keyof typeof form, opts?: { type?: string; placeholder?: string }) => (
+    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b" }}>{label}</span>
+      <input
+        type={opts?.type ?? "text"}
+        value={form[key]}
+        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+        placeholder={opts?.placeholder}
+        style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}
+      />
+    </label>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 420, boxShadow: "0 32px 80px rgba(0,0,0,.25)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
+            {initialProduct ? "Modifier l'article" : "Nouvel article"}
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X style={{ width: 14, height: 14, color: "#64748b" }} />
+          </button>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+          {field("Nom de l'article", "name", { placeholder: "ex: Café expresso" })}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {field("Prix (€)", "price", { type: "number", placeholder: "2.50" })}
+            {field("Stock", "stock", { type: "number", placeholder: "0" })}
+          </div>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b" }}>Catégorie</span>
+            <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}>
+              {cats.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {field("Code-barres", "barcode", { placeholder: "EAN13..." })}
+            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b" }}>TVA (%)</span>
+              <select value={form.tva} onChange={(e) => setForm((f) => ({ ...f, tva: e.target.value }))}
+                style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}>
+                <option value="5.5">5,5 %</option>
+                <option value="10">10 %</option>
+                <option value="20">20 %</option>
+              </select>
+            </label>
+          </div>
+          {err && <div style={{ fontSize: 13, color: "#dc2626", fontWeight: 600 }}>{err}</div>}
+        </div>
+        <div style={{ padding: "12px 20px", borderTop: "1px solid #f1f5f9", display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#f8fafc", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#64748b" }}>Annuler</button>
+          <button onClick={handleSave} style={{ flex: 2, height: 44, borderRadius: 12, border: "none", background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+            {initialProduct ? "Enregistrer" : "Créer l'article"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main POS ────────────────────────────────────── */
 export default function POSPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -177,6 +291,21 @@ export default function POSPage() {
   const [cashInput, setCashInput] = useState("");
   const [completedSale, setCompletedSale] = useState<{ ticketNum: string; total: number; change: number } | null>(null);
   const [scanBuffer, setScanBuffer] = useState("");
+  const [ctxMenu, setCtxMenu] = useState<CtxMenu>(null);
+  const [productForm, setProductForm] = useState<{ open: boolean; cat?: string; product?: Product }>({ open: false });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "cat" | "prod"; catName?: string; product?: Product } | null>(null);
+  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* Long-press helpers */
+  const startLongPress = (e: React.MouseEvent | React.TouchEvent, menu: NonNullable<CtxMenu>) => {
+    lpTimer.current = setTimeout(() => {
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      setCtxMenu({ ...menu, x: rect.left + rect.width / 2, y: rect.top });
+    }, 500);
+  };
+  const cancelLongPress = () => { if (lpTimer.current) clearTimeout(lpTimer.current); };
+
+  const reloadProducts = () => setProducts(getProducts());
 
   useEffect(() => {
     migrateMissingCategories();
@@ -307,11 +436,16 @@ export default function POSPage() {
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: activeCat?.color }}>{selectedCat}</div>
                 <div style={{ fontSize: 12, color: "#94a3b8", marginLeft: 4 }}>{catProducts.length} article{catProducts.length > 1 ? "s" : ""}</div>
               </div>
-              <div style={{ position: "relative", width: 220 }}>
+              <div style={{ position: "relative", width: 200 }}>
                 <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: "#94a3b8" }} />
                 <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Filtrer ${selectedCat.toLowerCase()}…`}
                   style={{ width: "100%", height: 38, paddingLeft: 32, paddingRight: 10, border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 13, outline: "none", background: "#f8fafc" }} />
               </div>
+              <button onClick={() => setProductForm({ open: true, cat: selectedCat })}
+                title="Ajouter un article dans cette catégorie"
+                style={{ height: 38, width: 38, borderRadius: 10, background: "#ede9fe", color: "#4f46e5", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <PlusCircle style={{ width: 18, height: 18 }} />
+              </button>
             </>
           ) : (
             /* Default header */
@@ -321,13 +455,17 @@ export default function POSPage() {
                 style={{ height: 40, padding: "0 14px", borderRadius: 10, background: "#0f172a", color: "#fff", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                 <BookOpen style={{ width: 14, height: 14 }} /> Rechercher un article
               </button>
+              <button onClick={() => setProductForm({ open: true })}
+                style={{ height: 40, width: 40, borderRadius: 10, background: "#ede9fe", color: "#4f46e5", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <PlusCircle style={{ width: 18, height: 18 }} />
+              </button>
             </>
           )}
         </div>
 
         {/* ── CATEGORY GRID ── */}
         {!selectedCat && (
-          <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: 16, position: "relative" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
               {categories.map((catName) => {
                 const cat = getCatDef(catName);
@@ -335,6 +473,12 @@ export default function POSPage() {
                 return (
                   <button key={catName} className="cat-card"
                     onClick={() => setSelectedCat(catName)}
+                    onMouseDown={(e) => startLongPress(e, { type: "cat", catName, x: 0, y: 0 })}
+                    onMouseUp={cancelLongPress}
+                    onMouseLeave={cancelLongPress}
+                    onTouchStart={(e) => startLongPress(e, { type: "cat", catName, x: 0, y: 0 })}
+                    onTouchEnd={cancelLongPress}
+                    onTouchMove={cancelLongPress}
                     style={{
                       background: cat.light,
                       border: `2px solid ${cat.color}30`,
@@ -346,35 +490,45 @@ export default function POSPage() {
                       display: "flex",
                       flexDirection: "column",
                       minHeight: 150,
+                      position: "relative",
                     }}
                   >
                     {/* Color bar */}
                     <div style={{ height: 6, background: cat.color }} />
-
                     <div style={{ flex: 1, padding: "16px 18px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "left" }}>
-                      {/* Emoji */}
                       <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 10 }}>{cat.emoji}</div>
-
                       <div>
-                        {/* Name */}
-                        <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 900, color: "#0f172a", marginBottom: 4, letterSpacing: "-0.02em" }}>
-                          {cat.name}
-                        </div>
-                        {/* Count */}
-                        <div style={{ fontSize: 12, fontWeight: 700, color: cat.color }}>
-                          {count} article{count > 1 ? "s" : ""}
-                        </div>
+                        <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 900, color: "#0f172a", marginBottom: 4, letterSpacing: "-0.02em" }}>{cat.name}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: cat.color }}>{count} article{count > 1 ? "s" : ""}</div>
                       </div>
+                    </div>
+                    {/* Hint long-press */}
+                    <div style={{ position: "absolute", top: 10, right: 10, width: 22, height: 22, borderRadius: "50%", background: `${cat.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 10, color: cat.color }}>⋯</span>
                     </div>
                   </button>
                 );
               })}
+
+              {/* ── Carte "+" pour ajouter un article ── */}
+              <button className="cat-card"
+                onClick={() => setProductForm({ open: true })}
+                style={{ background: "#f8fafc", border: "2px dashed #e2e8f0", borderRadius: 20, padding: 0, cursor: "pointer", overflow: "hidden", transition: "all .15s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 150, gap: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <PlusCircle style={{ width: 24, height: 24, color: "#4f46e5" }} />
+                </div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: "#4f46e5" }}>Nouvel article</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>Ou restez appuyé sur une case</div>
+              </button>
             </div>
 
             {categories.length === 0 && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, paddingTop: 60, color: "#94a3b8" }}>
                 <Receipt style={{ width: 40, height: 40, opacity: 0.3 }} />
                 <div style={{ fontSize: 14 }}>Aucun produit dans le catalogue</div>
+                <button onClick={() => setProductForm({ open: true })} style={{ height: 40, padding: "0 20px", borderRadius: 10, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Plus style={{ width: 14, height: 14 }} /> Ajouter un article
+                </button>
               </div>
             )}
           </div>
@@ -396,7 +550,13 @@ export default function POSPage() {
                   return (
                     <button key={p.id} className="prod-card"
                       onClick={() => !outOfStock && addToCart(p)}
-                      disabled={outOfStock}
+                      onMouseDown={(e) => startLongPress(e, { type: "prod", product: p, x: 0, y: 0 })}
+                      onMouseUp={cancelLongPress}
+                      onMouseLeave={cancelLongPress}
+                      onTouchStart={(e) => startLongPress(e, { type: "prod", product: p, x: 0, y: 0 })}
+                      onTouchEnd={cancelLongPress}
+                      onTouchMove={cancelLongPress}
+                      disabled={false}
                       style={{
                         background: "#fff",
                         border: `2px solid ${outOfStock ? "#e2e8f0" : activeCat.color + "30"}`,
@@ -578,6 +738,119 @@ export default function POSPage() {
 
       {/* Article modal */}
       {showArticle && <ArticleModal products={products} onAdd={addToCart} onClose={() => setShowArticle(false)} />}
+
+      {/* ── Context menu (long-press) ── */}
+      {ctxMenu && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 250 }} onClick={() => setCtxMenu(null)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: Math.min(ctxMenu.y, window.innerHeight - 200),
+              left: Math.min(ctxMenu.x - 80, window.innerWidth - 200),
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 16px 48px rgba(0,0,0,.2)",
+              border: "1px solid #e2e8f0",
+              overflow: "hidden",
+              minWidth: 180,
+              zIndex: 251,
+            }}
+          >
+            {ctxMenu.type === "cat" && (
+              <>
+                <div style={{ padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8" }}>Catégorie</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ctxMenu.catName}</div>
+                </div>
+                <button onClick={() => { setCtxMenu(null); setProductForm({ open: true, cat: ctxMenu.catName }); }}
+                  style={{ width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "#0f172a" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <PlusCircle style={{ width: 15, height: 15, color: "#4f46e5" }} /> Ajouter un article
+                </button>
+                <button onClick={() => { setCtxMenu(null); setDeleteConfirm({ type: "cat", catName: ctxMenu.catName }); }}
+                  style={{ width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "#dc2626" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <Trash2 style={{ width: 15, height: 15 }} /> Supprimer la catégorie
+                </button>
+              </>
+            )}
+            {ctxMenu.type === "prod" && (
+              <>
+                <div style={{ padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8" }}>Article</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ctxMenu.product.name}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{ctxMenu.product.price.toFixed(2)} €</div>
+                </div>
+                <button onClick={() => { setCtxMenu(null); setProductForm({ open: true, product: ctxMenu.product }); }}
+                  style={{ width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "#0f172a" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <Edit2 style={{ width: 15, height: 15, color: "#4f46e5" }} /> Modifier l&apos;article
+                </button>
+                <button onClick={() => { addToCart(ctxMenu.product); setCtxMenu(null); }}
+                  style={{ width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "#059669" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0fdf4")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <Plus style={{ width: 15, height: 15 }} /> Ajouter au ticket
+                </button>
+                <button onClick={() => { setCtxMenu(null); setDeleteConfirm({ type: "prod", product: ctxMenu.product }); }}
+                  style={{ width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "#dc2626" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <Trash2 style={{ width: 15, height: 15 }} /> Supprimer l&apos;article
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Confirmation suppression ── */}
+      {deleteConfirm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 260, background: "rgba(15,23,42,.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 20, maxWidth: 380, width: "100%", padding: 24, boxShadow: "0 24px 64px rgba(0,0,0,.2)" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+              <Trash2 style={{ width: 22, height: 22, color: "#dc2626" }} />
+            </div>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+              {deleteConfirm.type === "cat" ? "Supprimer la catégorie ?" : "Supprimer l'article ?"}
+            </div>
+            <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>
+              {deleteConfirm.type === "cat"
+                ? `Tous les articles de la catégorie "${deleteConfirm.catName}" seront supprimés définitivement.`
+                : `"${deleteConfirm.product?.name}" sera supprimé du catalogue.`}
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#f8fafc", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#64748b" }}>Annuler</button>
+              <button onClick={() => {
+                if (deleteConfirm.type === "cat" && deleteConfirm.catName) {
+                  products.filter((p) => p.category === deleteConfirm.catName).forEach((p) => deleteProduct(p.id));
+                } else if (deleteConfirm.type === "prod" && deleteConfirm.product) {
+                  deleteProduct(deleteConfirm.product.id);
+                }
+                reloadProducts();
+                setDeleteConfirm(null);
+                if (deleteConfirm.type === "cat") setSelectedCat(null);
+              }} style={{ flex: 1, height: 44, borderRadius: 12, border: "none", background: "#dc2626", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Formulaire article ── */}
+      {productForm.open && (
+        <ProductFormModal
+          initialCat={productForm.cat}
+          initialProduct={productForm.product}
+          onSave={reloadProducts}
+          onClose={() => setProductForm({ open: false })}
+        />
+      )}
 
       {/* Payment modal */}
       {stage === "pay" && (
