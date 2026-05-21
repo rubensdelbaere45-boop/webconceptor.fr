@@ -127,9 +127,7 @@ export default function TelechargerPage() {
                   </div>
                 </div>
                 <a
-                  href="https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/download/caissio-latest/Caissio-Setup.exe"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/api/caissio/download"
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
                     height: 56, padding: "0 28px", borderRadius: 16,
