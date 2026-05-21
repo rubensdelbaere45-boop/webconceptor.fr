@@ -6,9 +6,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const PRICE_MAP: Record<string, string | undefined> = {
-  starter: process.env.CAISSIO_STRIPE_PRICE_STARTER,
-  pro: process.env.CAISSIO_STRIPE_PRICE_PRO,
-  business: process.env.CAISSIO_STRIPE_PRICE_BUSINESS,
+  starter: process.env.STRIPE_CAISSIO_STARTER_PRICE_ID,
+  pro: process.env.STRIPE_CAISSIO_PRO_PRICE_ID,
+  business: process.env.STRIPE_CAISSIO_BUSINESS_PRICE_ID,
 };
 
 export async function POST(req: NextRequest) {
@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
     }
 
     const priceId = PRICE_MAP[plan];
-    if (!priceId || priceId.startsWith("price_REMPLACER")) {
+    if (!priceId || priceId.startsWith("price_REMPLACER") || priceId === "") {
       return NextResponse.json(
-        { error: "Prix non configuré. Ajoutez CAISSIO_STRIPE_PRICE_* dans .env.local" },
+        { error: "Prix non configuré. Ajoutez STRIPE_CAISSIO_*_PRICE_ID dans Render" },
         { status: 503 }
       );
     }

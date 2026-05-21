@@ -89,8 +89,8 @@ function mapStatus(s: string): "trialing" | "active" | "past_due" | "cancelled" 
 
 function detectPlan(priceId: string | undefined): "starter" | "pro" | "business" {
   if (!priceId) return "starter";
-  if (priceId === process.env.CAISSIO_STRIPE_PRICE_STARTER) return "starter";
-  if (priceId === process.env.CAISSIO_STRIPE_PRICE_PRO) return "pro";
-  if (priceId === process.env.CAISSIO_STRIPE_PRICE_BUSINESS) return "business";
+  if (priceId === process.env.STRIPE_CAISSIO_STARTER_PRICE_ID) return "starter";
+  if (priceId === process.env.STRIPE_CAISSIO_PRO_PRICE_ID) return "pro";
+  if (priceId === process.env.STRIPE_CAISSIO_BUSINESS_PRICE_ID) return "business";
   return "starter";
 }

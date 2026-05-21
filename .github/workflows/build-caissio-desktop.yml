@@ -1,0 +1,110 @@
+name: Build Caissio Desktop
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "caissio-desktop/**"
+  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+
+permissions:
+  contents: write  # Nécessaire pour créer des releases
+
+jobs:
+  build-windows:
+    name: Build Windows .exe
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: caissio-desktop
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: caissio-desktop/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate icon from SVG
+        shell: pwsh
+        run: |
+          # Crée un fichier PNG 256x256 de l'icône Caissio (fallback si icon.ico absent)
+          $svgContent = @'
+          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 48 48">
+            <rect x="0" y="0" width="48" height="48" rx="11" fill="#4F46E5"/>
+            <rect x="14" y="6" width="14" height="6" rx="1.5" fill="white" opacity="0.95"/>
+            <rect x="10" y="16" width="28" height="22" rx="3.5" fill="white"/>
+            <rect x="14" y="20" width="20" height="6" rx="1.5" fill="#4F46E5" opacity="0.15"/>
+            <rect x="14" y="28" width="5" height="3" rx="1" fill="#4F46E5" opacity="0.5"/>
+            <rect x="21.5" y="28" width="5" height="3" rx="1" fill="#4F46E5" opacity="0.5"/>
+            <rect x="29" y="28" width="5" height="3" rx="1" fill="#4F46E5" opacity="0.5"/>
+            <rect x="14" y="33" width="5" height="3" rx="1" fill="#4F46E5" opacity="0.5"/>
+            <rect x="21.5" y="33" width="5" height="3" rx="1" fill="#4F46E5" opacity="0.5"/>
+            <rect x="29" y="33" width="5" height="3" rx="1" fill="#10B981"/>
+          </svg>
+          '@
+          $svgContent | Out-File -FilePath "resources/icon.svg" -Encoding UTF8
+
+      - name: Install ImageMagick for icon generation
+        shell: pwsh
+        run: |
+          choco install imagemagick --no-progress -y 2>$null
+          # Convertit SVG → ICO (multi-résolution : 16, 32, 48, 64, 128, 256)
+          $magick = "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
+          if (Test-Path $magick) {
+            & $magick convert -background none "resources/icon.svg" `
+              -define icon:auto-resize=256,128,64,48,32,16 `
+              "resources/icon.ico"
+            Write-Host "✓ icon.ico généré"
+          } else {
+            Write-Host "ImageMagick non trouvé, copie un ICO placeholder..."
+            # Crée un ICO minimal (1x1 blanc) si ImageMagick échoue
+            [System.IO.File]::WriteAllBytes("resources/icon.ico", [System.Convert]::FromBase64String(
+              "AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            ))
+          }
+
+      - name: Build Windows installer
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Upload .exe to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: caissio-v${{ steps.version.outputs.version }}
+          name: "Caissio v${{ steps.version.outputs.version }}"
+          body: |
+            ## Caissio v${{ steps.version.outputs.version }} — Application Windows
+
+            ### Installation
+            1. Téléchargez `Caissio-Setup-${{ steps.version.outputs.version }}.exe`
+            2. Exécutez le fichier et suivez les instructions
+            3. Lancez Caissio depuis votre bureau ou menu Démarrer
+            4. Connectez-vous avec votre compte Caissio
+
+            ### Configuration requise
+            - Windows 10 / 11 (64-bit)
+            - Connexion Internet (pour la connexion et les paiements Stripe)
+            - Vos données sont sauvegardées localement sur votre PC
+          files: caissio-desktop/dist/*.exe
+          make_latest: true
+          token: ${{ secrets.GITHUB_TOKEN }}

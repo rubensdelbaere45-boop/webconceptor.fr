@@ -114,51 +114,84 @@ export default function TelechargerPage() {
 
           {/* ══ WINDOWS ══ */}
           {tab === "windows" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
-              {/* Left: Chrome */}
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🌐</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Via Google Chrome</div>
-                    <div style={{ fontSize: 12, color: "#94a3b8" }}>Recommandé</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+              {/* ── CTA principal : télécharger le .exe ── */}
+              <div style={{ background: "linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)", borderRadius: 24, padding: "32px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,.7)", marginBottom: 8 }}>APPLICATION WINDOWS NATIVE</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Caissio pour Windows</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,.8)", lineHeight: 1.6 }}>
+                    Installateur Windows (.exe) — Windows 10 / 11 · 64-bit<br />
+                    Vos données sauvegardées localement · Icône dans le menu Démarrer
                   </div>
-                  <div style={{ marginLeft: "auto", background: "#10b981", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>⭐ Recommandé</div>
                 </div>
-                <Step n={1} title="Ouvrir Chrome" desc="Lancez Google Chrome (téléchargeable sur chrome.google.com si besoin)." img="🌐" />
-                <Step n={2} title="Aller sur le site" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio" img="🔗" />
-                <Step n={3} title='Cliquer sur "Installer"' desc='Vous verrez une icône ⊕ dans la barre d&apos;adresse (à droite). Cliquez dessus puis sur "Installer Caissio".' img="⊕" />
-                <Step n={4} title="Confirmer l'installation" desc='Une fenêtre s&apos;ouvre. Cliquez sur "Installer". C&apos;est tout !' img="✅" />
+                <a
+                  href="https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/latest/download/Caissio-Setup-1.0.0.exe"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    height: 56, padding: "0 28px", borderRadius: 16,
+                    background: "#fff", color: "#4f46e5",
+                    fontWeight: 800, fontSize: 16,
+                    textDecoration: "none", whiteSpace: "nowrap",
+                    boxShadow: "0 8px 24px rgba(0,0,0,.2)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Download style={{ width: 20, height: 20 }} />
+                  Télécharger le .exe
+                </a>
+              </div>
+
+              {/* ── Étapes d'installation ── */}
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>
+                  Comment installer Caissio sur Windows
+                </div>
+                <Step n={1} title="Téléchargez le fichier" desc='Cliquez sur "Télécharger le .exe" ci-dessus. Le fichier Caissio-Setup-1.0.0.exe se télécharge.' img="⬇️" />
+                <Step n={2} title="Lancez l'installateur" desc='Double-cliquez sur le fichier téléchargé. Si Windows affiche un avertissement SmartScreen, cliquez "Informations complémentaires" → "Exécuter quand même".' img="🖱️" />
+                <Step n={3} title="Choisissez le dossier" desc="L'installateur vous demande où installer Caissio. Laissez le dossier par défaut et cliquez Suivant." img="📁" />
+                <Step n={4} title="Connectez-vous" desc="Caissio s'ouvre automatiquement. Connectez-vous avec votre compte Caissio ou créez-en un." img="🔑" />
                 <div style={{ marginTop: 16, padding: "12px 16px", background: "#ede9fe", borderRadius: 12, fontSize: 13, color: "#4f46e5", fontWeight: 600 }}>
-                  🎉 Caissio apparaît dans votre menu Démarrer et sur votre Bureau !
+                  🎉 Caissio est dans votre menu Démarrer et sur votre Bureau. Vos données sont sauvegardées sur votre PC.
                 </div>
               </div>
 
-              {/* Right: Edge */}
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 28 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🔵</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Via Microsoft Edge</div>
-                    <div style={{ fontSize: 12, color: "#94a3b8" }}>Déjà installé sur Windows</div>
+              {/* ── Méthode alternative : PWA ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🌐</div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>Alternative : Chrome PWA</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>Sans téléchargement</div>
+                    </div>
                   </div>
+                  <Step n={1} title="Ouvrir Chrome" desc="Allez sur webconceptor.fr/caissio dans Chrome." img="🌐" />
+                  <Step n={2} title='Cliquer ⊕' desc='Icône ⊕ dans la barre d&apos;adresse → "Installer Caissio".' img="⊕" />
                 </div>
-                <Step n={1} title="Ouvrir Edge" desc="Edge est déjà présent sur votre PC Windows 10/11. Cherchez-le dans le menu Démarrer." img="🔵" />
-                <Step n={2} title="Aller sur le site" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio" img="🔗" />
-                <Step n={3} title="Menu Apps" desc='Cliquez sur le menu ··· (en haut à droite), puis "Applications" → "Installer ce site comme application".' img="⋯" />
-                <Step n={4} title="Choisir le nom et valider" desc='Laissez le nom "Caissio" et cliquez sur "Installer". L&apos;app s&apos;ouvre immédiatement.' img="✅" />
-                <div style={{ marginTop: 16, padding: "12px 16px", background: "#dbeafe", borderRadius: 12, fontSize: 13, color: "#1d4ed8", fontWeight: 600 }}>
-                  💡 Conseil : épinglez Caissio à la barre des tâches pour un accès encore plus rapide.
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🔵</div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>Alternative : Edge PWA</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>Déjà sur Windows</div>
+                    </div>
+                  </div>
+                  <Step n={1} title="Ouvrir Edge" desc="Allez sur webconceptor.fr/caissio dans Edge." img="🔵" />
+                  <Step n={2} title="Menu ···" desc='Cliquez ··· → Applications → "Installer ce site comme app".' img="⋯" />
                 </div>
               </div>
 
               {/* Full-width note */}
-              <div style={{ gridColumn: "1/-1", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 16, padding: "16px 20px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 16, padding: "16px 20px", display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 22 }}>🔒</span>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#c2410c", marginBottom: 4 }}>Protection anti-utilisation frauduleuse</div>
                   <div style={{ fontSize: 13, color: "#7c3aed", lineHeight: 1.6 }}>
-                    Caissio vérifie votre compte à chaque ouverture. Sans abonnement actif, l&apos;accès est bloqué. Vos données locales sont chiffrées et ne peuvent pas être copiées vers un autre compte. Il n&apos;existe aucun &quot;crack&quot; fonctionnel : l&apos;application contacte nos serveurs pour valider la licence à chaque session.
+                    Caissio vérifie votre compte à chaque ouverture. Sans abonnement actif, l&apos;accès est bloqué. Vos données locales ne peuvent pas être copiées vers un autre compte. Il n&apos;existe aucun &quot;crack&quot; fonctionnel : l&apos;application contacte nos serveurs pour valider la licence à chaque session.
                   </div>
                 </div>
               </div>

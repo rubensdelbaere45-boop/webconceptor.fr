@@ -1,0 +1,29 @@
+CONTRAT DE LICENCE UTILISATEUR FINAL — CAISSIO
+
+Copyright © 2026 Caissio / Web Conceptor. Tous droits réservés.
+
+IMPORTANT : Lisez attentivement ce contrat avant d'installer ou d'utiliser Caissio.
+
+1. LICENCE D'UTILISATION
+   Ce logiciel est concédé sous licence, non vendu. Vous êtes autorisé à installer et utiliser
+   Caissio sur un seul appareil, sous réserve d'avoir un abonnement actif.
+
+2. RESTRICTIONS
+   Vous ne pouvez pas : copier, modifier, distribuer, vendre, décompiler, désassembler ou
+   tenter de contourner les mécanismes de protection du logiciel.
+
+3. ABONNEMENT
+   L'accès à Caissio nécessite un abonnement payant après la période d'essai de 7 jours.
+   Tout usage du logiciel sans abonnement valide est interdit.
+
+4. DONNÉES
+   Les données de votre commerce sont stockées localement sur votre appareil.
+   Web Conceptor n'a pas accès à vos données de vente ou clients.
+
+5. LIMITATION DE RESPONSABILITÉ
+   Caissio est fourni "tel quel". Web Conceptor ne saurait être tenu responsable de pertes
+   de données ou de préjudices liés à l'utilisation du logiciel.
+
+En installant Caissio, vous acceptez les termes de ce contrat.
+
+Contact : contact@webconceptor.fr
