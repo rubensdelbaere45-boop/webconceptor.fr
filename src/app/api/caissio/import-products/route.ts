@@ -14,10 +14,10 @@ import { NextResponse } from "next/server";
  *  - max_tokens : 800 (suffisant pour ~40 articles)
  */
 export async function POST(req: Request) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.CAISSIO_AI_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "OPENROUTER_API_KEY non configuré dans les variables Vercel." },
+      { error: "CAISSIO_AI_KEY non configuré dans les variables Vercel." },
       { status: 503 }
     );
   }
