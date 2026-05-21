@@ -87,24 +87,24 @@ jobs:
           $version = (Get-Content package.json | ConvertFrom-Json).version
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
-      - name: Upload .exe to GitHub Release
+      - name: Upload .exe to GitHub Release (tag stable = caissio-latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: caissio-v${{ steps.version.outputs.version }}
-          name: "Caissio v${{ steps.version.outputs.version }}"
+          tag_name: caissio-latest
+          name: "Caissio v${{ steps.version.outputs.version }} — Application Windows"
           body: |
             ## Caissio v${{ steps.version.outputs.version }} — Application Windows
 
             ### Installation
-            1. Téléchargez `Caissio-Setup-${{ steps.version.outputs.version }}.exe`
-            2. Exécutez le fichier et suivez les instructions
-            3. Lancez Caissio depuis votre bureau ou menu Démarrer
+            1. Téléchargez `Caissio-Setup.exe` ci-dessous
+            2. Exécutez le fichier et suivez les instructions d'installation
+            3. Lancez Caissio depuis votre bureau ou le menu Démarrer
             4. Connectez-vous avec votre compte Caissio
 
             ### Configuration requise
             - Windows 10 / 11 (64-bit)
-            - Connexion Internet (pour la connexion et les paiements Stripe)
-            - Vos données sont sauvegardées localement sur votre PC
-          files: caissio-desktop/dist/*.exe
+            - Connexion Internet pour la connexion et les paiements
+            - Vos données de vente sont sauvegardées localement sur votre PC
+          files: caissio-desktop/dist/Caissio-Setup.exe
           make_latest: true
           token: ${{ secrets.GITHUB_TOKEN }}

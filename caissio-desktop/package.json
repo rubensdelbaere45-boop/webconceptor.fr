@@ -30,7 +30,7 @@
         }
       ],
       "icon": "resources/icon.ico",
-      "artifactName": "Caissio-Setup-${version}.exe"
+      "artifactName": "Caissio-Setup.exe"
     },
     "nsis": {
       "oneClick": false,
