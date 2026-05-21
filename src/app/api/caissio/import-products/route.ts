@@ -55,7 +55,7 @@ ${truncated}
         "X-Title": "Caissio Import",
       },
       body: JSON.stringify({
-        model: "google/gemini-flash-1.5-8b",
+        model: "google/gemini-2.5-flash-lite",
         max_tokens: 800,
         temperature: 0,
         messages: [{ role: "user", content: prompt }],
