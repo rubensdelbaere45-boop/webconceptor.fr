@@ -7,7 +7,8 @@ import {
   ChevronLeft, BookOpen,
 } from "lucide-react";
 import {
-  getProducts, getCustomers, recordSale, getStoreSettings, migrateMissingCategories,
+  getProducts, getCustomers, recordSale, getStoreSettings,
+  migrateMissingCategories, migrateV2,
   type Product, type Customer,
 } from "@/lib/caissio-store";
 
@@ -178,7 +179,8 @@ export default function POSPage() {
   const [scanBuffer, setScanBuffer] = useState("");
 
   useEffect(() => {
-    migrateMissingCategories(); // ensure Fruits/Légumes/Fromage/Charcuterie exist
+    migrateMissingCategories();
+    migrateV2(); // add photos + new products
     const prods = getProducts();
     setProducts(prods);
     setCustomers(getCustomers());
@@ -387,53 +389,68 @@ export default function POSPage() {
                 <div style={{ fontSize: 14 }}>Aucun article trouvé</div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
                 {catProducts.map((p) => {
                   const outOfStock = p.stock === 0;
+                  const lowStock = !outOfStock && p.stock <= (p.stock_min ?? 5);
                   return (
                     <button key={p.id} className="prod-card"
                       onClick={() => !outOfStock && addToCart(p)}
                       disabled={outOfStock}
                       style={{
-                        background: outOfStock ? "#f8fafc" : "#fff",
-                        border: `2px solid ${outOfStock ? "#e2e8f0" : activeCat.color + "40"}`,
-                        borderRadius: 16,
+                        background: "#fff",
+                        border: `2px solid ${outOfStock ? "#e2e8f0" : activeCat.color + "30"}`,
+                        borderRadius: 18,
                         padding: 0,
                         cursor: outOfStock ? "not-allowed" : "pointer",
                         overflow: "hidden",
                         transition: "all .12s",
-                        opacity: outOfStock ? 0.55 : 1,
+                        opacity: outOfStock ? 0.6 : 1,
                         display: "flex",
                         flexDirection: "column",
                         textAlign: "left",
                       }}
                     >
-                      {/* Color accent */}
-                      <div style={{ height: 5, background: outOfStock ? "#e2e8f0" : activeCat.color }} />
+                      {/* ── Photo zone ── */}
+                      <div style={{ position: "relative", height: 120, overflow: "hidden", background: activeCat.light, flexShrink: 0 }}>
 
-                      <div style={{ padding: "14px 14px 14px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 120 }}>
-                        {/* Big emoji letter */}
-                        <div style={{ fontSize: 36, lineHeight: 1, marginBottom: 8, opacity: 0.25, color: activeCat.color, fontFamily: "'Outfit',sans-serif", fontWeight: 900 }}>
-                          {p.name[0]?.toUpperCase()}
+                        {/* Color bar top */}
+                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: outOfStock ? "#e2e8f0" : activeCat.color, zIndex: 3 }} />
+
+                        {/* Emoji fallback (always rendered behind image) */}
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>
+                          {activeCat.emoji}
                         </div>
 
-                        <div>
-                          {/* Product name */}
-                          <div style={{ fontSize: 13, fontWeight: 700, color: outOfStock ? "#94a3b8" : "#0f172a", lineHeight: 1.3, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                            {p.name}
-                          </div>
+                        {/* Photo on top — hides emoji when loaded */}
+                        {p.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: outOfStock ? 0.5 : 1 }}
+                          />
+                        )}
 
-                          {/* Price + stock */}
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                            <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 16, fontWeight: 900, color: outOfStock ? "#94a3b8" : activeCat.color }}>
-                              {fmt(p.price)}
-                            </div>
-                            {outOfStock ? (
-                              <span style={{ fontSize: 9, fontWeight: 800, color: "#ef4444", background: "#fee2e2", padding: "2px 5px", borderRadius: 4 }}>Rupture</span>
-                            ) : (
-                              <span style={{ fontSize: 10, color: "#94a3b8" }}>{p.stock} st.</span>
-                            )}
-                          </div>
+                        {/* Gradient bottom for readability */}
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 36, background: `linear-gradient(transparent, ${activeCat.light}cc)`, zIndex: 2 }} />
+
+                        {/* Rupture / Stock faible badge */}
+                        {outOfStock && (
+                          <div style={{ position: "absolute", top: 10, right: 8, background: "#ef4444", color: "#fff", fontSize: 9, fontWeight: 800, padding: "3px 7px", borderRadius: 6, zIndex: 4, letterSpacing: "0.05em" }}>RUPTURE</div>
+                        )}
+                        {lowStock && (
+                          <div style={{ position: "absolute", top: 10, right: 8, background: "#f59e0b", color: "#fff", fontSize: 9, fontWeight: 800, padding: "3px 7px", borderRadius: 6, zIndex: 4 }}>⚠ {p.stock}</div>
+                        )}
+                      </div>
+
+                      {/* ── Info zone ── */}
+                      <div style={{ padding: "10px 12px 13px", display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: outOfStock ? "#94a3b8" : "#0f172a", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {p.name}
+                        </div>
+                        <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 900, color: outOfStock ? "#94a3b8" : activeCat.color, letterSpacing: "-0.02em" }}>
+                          {fmt(p.price)}
                         </div>
                       </div>
                     </button>
