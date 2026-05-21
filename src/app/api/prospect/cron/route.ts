@@ -114,7 +114,7 @@ const DEFAULT_QUERIES = [
 
 // Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date
 // pour ne jamais envoyer les mêmes deux jours de suite.
-const QUERIES_PER_RUN = 2; // 2 × 50s find + send + reminders ≈ 200s < 300s Vercel Pro limit
+const QUERIES_PER_RUN = 4; // 4 queries/run → ~4× plus de prospects trouvés par jour
 
 // Déduit le business_type à envoyer à /find depuis le texte de la query.
 // Sans ça, /find défaut sur "epicerie" → filtre 250km Aubenton appliqué partout.
@@ -163,8 +163,8 @@ async function runCron(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("query")?.trim().slice(0, 200) || "";
   const batchParam = Number(req.nextUrl.searchParams.get("batch"));
   const batch_size = Number.isFinite(batchParam) && batchParam > 0
-    ? Math.min(20, Math.max(1, Math.floor(batchParam)))
-    : 5;
+    ? Math.min(50, Math.max(1, Math.floor(batchParam)))
+    : 25; // 25 emails par run × 3 runs/jour = 75 emails/jour (bien dans les 20 000/mois)
 
   // Rotation sur la grande liste : QUERIES_PER_RUN queries différentes par run
   // On utilise le numéro de jour depuis epoch pour avancer dans la liste chaque jour.
