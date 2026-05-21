@@ -9,6 +9,12 @@ export type CaissioUser = {
   pin?: string;
   plan: "starter" | "pro" | "business";
   created_at: string;
+  // Stripe / subscription
+  trial_ends_at: string;             // ISO — 7 days after creation
+  stripe_customer_id?: string;
+  subscription_status?: "trialing" | "active" | "past_due" | "cancelled";
+  subscription_plan?: "starter" | "pro" | "business";
+  subscription_verified_at?: string; // last Stripe verification (ISO)
 };
 
 export type Product = {
@@ -105,34 +111,48 @@ function uid(): string {
 
 export function getUsers(): CaissioUser[] { return get<CaissioUser>(KEY.users); }
 
-export function register(data: Omit<CaissioUser, "id" | "plan" | "created_at">): CaissioUser {
+export function register(data: Omit<CaissioUser, "id" | "plan" | "created_at" | "trial_ends_at">): CaissioUser {
   const users = getUsers();
-  if (users.find((u) => u.email === data.email)) throw new Error("Email déjà utilisé.");
-  const user: CaissioUser = { ...data, id: uid(), plan: "pro", created_at: new Date().toISOString() };
+  // Validate email format
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) throw new Error("Adresse email invalide.");
+  if (data.password.length < 6) throw new Error("Le mot de passe doit faire au moins 6 caractères.");
+  if (data.name.trim().length < 2) throw new Error("Nom invalide.");
+  if (data.store_name.trim().length < 2) throw new Error("Nom du commerce invalide.");
+  const email = data.email.trim().toLowerCase();
+  if (users.find((u) => u.email === email)) throw new Error("Email déjà utilisé.");
+
+  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const user: CaissioUser = {
+    ...data,
+    email,
+    id: uid(),
+    plan: "pro",
+    created_at: new Date().toISOString(),
+    trial_ends_at: trialEndsAt,
+    subscription_status: "trialing",
+  };
   set(KEY.users, [...users, user]);
   setSession(user);
-  // seed demo products on first register
   if (getProducts().length === 0) seedDemoProducts();
   return user;
 }
 
 export function login(email: string, password: string): CaissioUser {
-  // allow demo account always
-  if (email === "admin@caissio.fr" && password === "admin123") {
-    const demo: CaissioUser = {
-      id: "demo", name: "Admin Demo", store_name: "Épicerie Demo",
-      email, password, pin: "123456", plan: "pro", created_at: "2026-01-01T00:00:00Z",
-    };
-    setSession(demo);
-    if (getProducts().length === 0) seedDemoProducts();
-    else migrateMissingCategories();
-    return demo;
-  }
-  const user = getUsers().find((u) => u.email === email && u.password === password);
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = getUsers().find((u) => u.email === normalizedEmail && u.password === password);
   if (!user) throw new Error("Email ou mot de passe incorrect.");
+  // Backfill trial_ends_at for old accounts
+  if (!user.trial_ends_at) {
+    const patched = { ...user, trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), subscription_status: "trialing" as const };
+    set(KEY.users, getUsers().map((u) => u.id === user.id ? patched : u));
+    setSession(patched);
+    if (getProducts().length === 0) seedDemoProducts();
+    else { migrateMissingCategories(); migrateV2(); }
+    return patched;
+  }
   setSession(user);
   if (getProducts().length === 0) seedDemoProducts();
-  else migrateMissingCategories();
+  else { migrateMissingCategories(); migrateV2(); }
   return user;
 }
 
@@ -149,6 +169,45 @@ export function getSession(): CaissioUser | null {
 function setSession(user: CaissioUser): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(KEY.session, JSON.stringify(user));
+}
+
+/* ── SUBSCRIPTION HELPERS ── */
+
+/** True if the user is within their 7-day trial window */
+export function isTrialing(user: CaissioUser | null): boolean {
+  if (!user) return false;
+  if (!user.trial_ends_at) return false;
+  return new Date(user.trial_ends_at) > new Date();
+}
+
+/** Days remaining in trial (0 if expired or not trialing) */
+export function trialDaysLeft(user: CaissioUser | null): number {
+  if (!user?.trial_ends_at) return 0;
+  const ms = new Date(user.trial_ends_at).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86400000));
+}
+
+/** True if user can access the app (trial active OR subscription active) */
+export function hasAccess(user: CaissioUser | null): boolean {
+  if (!user) return false;
+  if (isTrialing(user)) return true;
+  return user.subscription_status === "active";
+}
+
+/** Update subscription info in session + user list */
+export function updateSubscription(data: {
+  stripe_customer_id?: string;
+  subscription_status?: CaissioUser["subscription_status"];
+  subscription_plan?: CaissioUser["subscription_plan"];
+  subscription_verified_at?: string;
+}): void {
+  const user = getSession();
+  if (!user) return;
+  const updated: CaissioUser = { ...user, ...data };
+  setSession(updated);
+  if (user.id !== "demo") {
+    set(KEY.users, getUsers().map((u) => u.id === user.id ? { ...u, ...data } : u));
+  }
 }
 
 /* ── PRODUCTS ── */

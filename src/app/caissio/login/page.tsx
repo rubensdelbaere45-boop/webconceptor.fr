@@ -23,10 +23,11 @@ function CaissioMark({ size = 36 }: { size?: number }) {
 
 export default function CaissioLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@caissio.fr");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     if (getSession()) router.replace("/caissio/app/pos");
@@ -35,11 +36,24 @@ export default function CaissioLogin() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
+
+    // Basic rate-limiting (client-side)
+    if (attempts >= 5) {
+      setErr("Trop de tentatives. Veuillez patienter quelques instants.");
+      return;
+    }
+
+    if (!email.trim() || !password) {
+      setErr("Veuillez remplir tous les champs.");
+      return;
+    }
+
     setLoading(true);
     try {
-      login(email, password);
+      login(email.trim(), password);
       router.push("/caissio/app/pos");
     } catch (ex: unknown) {
+      setAttempts((a) => a + 1);
       setErr(ex instanceof Error ? ex.message : "Erreur de connexion");
       setLoading(false);
     }
@@ -47,17 +61,25 @@ export default function CaissioLogin() {
 
   return (
     <div style={{ minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", fontFamily: "'IBM Plex Sans',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        input:focus { border-color: #4f46e5 !important; box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+        @media (max-width: 768px) {
+          .cai-login-grid { grid-template-columns: 1fr !important; }
+          .cai-login-left { display: none !important; }
+        }
+      `}</style>
 
       {/* Left panel */}
-      <div style={{ background: "linear-gradient(135deg,#ede9fe 0%,#dbeafe 100%)", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "48px", borderRight: "1px solid #e2e8f0", position: "relative", overflow: "hidden" }}>
+      <div className="cai-login-left" style={{ background: "linear-gradient(135deg,#ede9fe 0%,#dbeafe 100%)", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "48px", borderRight: "1px solid #e2e8f0", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -80, right: -80, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,#a5b4fc,transparent 70%)", filter: "blur(40px)", opacity: 0.6 }} />
         <a href="/caissio" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", position: "relative" }}>
           <CaissioMark size={36} />
           <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Caissio</span>
         </a>
         <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.25em", color: "#4f46e5", marginBottom: 16 }}>Caisse SaaS premium</div>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.25em", color: "#4f46e5", marginBottom: 16 }}>Logiciel de caisse SaaS</div>
           <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 52, fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.04em", color: "#0f172a", marginBottom: 20 }}>
             Plus rapide.<br />Plus simple.<br /><span style={{ color: "#4f46e5" }}>Plus intelligent.</span>
           </h2>
@@ -69,40 +91,70 @@ export default function CaissioLogin() {
       </div>
 
       {/* Right panel */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "48px", background: "#fff" }}>
+      <div className="cai-login-grid" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "48px", background: "#fff" }}>
         <div style={{ width: "100%", maxWidth: 360 }}>
           <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 30, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Bon retour parmi nous</h1>
           <p style={{ fontSize: 14, color: "#64748b", marginBottom: 32 }}>
             Pas encore de compte ?{" "}
-            <a href="/caissio/register" style={{ color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>Créer un compte</a>
+            <a href="/caissio/register" style={{ color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>Créer un compte gratuit</a>
           </p>
 
-          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }} noValidate>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#64748b" }}>Email</span>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@commerce.fr"
-                style={{ height: 48, padding: "0 16px", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 14, color: "#0f172a", outline: "none", background: "#fff" }} />
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="vous@commerce.fr"
+                maxLength={254}
+                style={{ height: 48, padding: "0 16px", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 14, color: "#0f172a", outline: "none", background: "#fff", transition: "border-color .15s, box-shadow .15s" }}
+              />
             </label>
+
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#64748b" }}>Mot de passe</span>
+                <a href="/caissio/reset-password" style={{ fontSize: 12, color: "#4f46e5", textDecoration: "none" }}>Mot de passe oublié ?</a>
               </div>
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                style={{ height: 48, padding: "0 16px", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 14, color: "#0f172a", outline: "none", background: "#fff" }} />
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                maxLength={128}
+                style={{ height: 48, padding: "0 16px", border: "1px solid #e2e8f0", borderRadius: 12, fontSize: 14, color: "#0f172a", outline: "none", background: "#fff", transition: "border-color .15s, box-shadow .15s" }}
+              />
             </label>
-            {err && <div style={{ fontSize: 13, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px" }}>{err}</div>}
-            <button type="submit" disabled={loading} style={{ height: 50, borderRadius: 14, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 16, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, marginTop: 4 }}>
-              {loading ? <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} /> : <>Se connecter <ArrowRight style={{ width: 18, height: 18 }} /></>}
+
+            {err && (
+              <div role="alert" style={{ fontSize: 13, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px" }}>
+                {err}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ height: 50, borderRadius: 14, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 16, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, marginTop: 4 }}
+            >
+              {loading
+                ? <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} />
+                : <>Se connecter <ArrowRight style={{ width: 18, height: 18 }} /></>
+              }
             </button>
           </form>
 
-          <div style={{ marginTop: 24, padding: 16, borderRadius: 14, background: "#ede9fe", border: "1px solid #c4b5fd" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "#4f46e5", marginBottom: 6 }}>Compte démo</div>
-            <div style={{ fontSize: 13, color: "#475569", fontFamily: "monospace" }}>admin@caissio.fr · admin123 · PIN 123456</div>
-          </div>
+          <p style={{ marginTop: 28, fontSize: 12, color: "#94a3b8", textAlign: "center", lineHeight: 1.6 }}>
+            En vous connectant, vous acceptez nos{" "}
+            <a href="/caissio/cgu" style={{ color: "#64748b", textDecoration: "underline" }}>CGU</a>{" "}et notre{" "}
+            <a href="/caissio/confidentialite" style={{ color: "#64748b", textDecoration: "underline" }}>politique de confidentialité</a>.
+          </p>
         </div>
       </div>
-      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
     </div>
   );
 }
