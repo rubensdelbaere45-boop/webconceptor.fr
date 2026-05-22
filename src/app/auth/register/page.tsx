@@ -26,10 +26,9 @@ export default function RegisterPage() {
   };
 
   const handleGoogle = async () => {
-    const redirect = getRedirectAfterAuth();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}${redirect}` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   };
 
