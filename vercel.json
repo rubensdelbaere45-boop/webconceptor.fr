@@ -40,7 +40,6 @@
     { "path": "/api/gmb/cron", "schedule": "0 9 * * 1-6" },
     { "path": "/api/agentconceptor/posts/cron", "schedule": "0 7 * * 1" },
     { "path": "/api/agentconceptor/prospect/cron", "schedule": "0 8 * * 1-5" },
-    { "path": "/api/monitor/n8n", "schedule": "15 * * * *" },
-    { "path": "/api/monitor/n8n", "schedule": "45 * * * *" }
+    { "path": "/api/monitor/n8n", "schedule": "0 8 * * *" }
   ]
 }
