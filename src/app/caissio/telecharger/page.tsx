@@ -1,10 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Monitor, Smartphone, Shield, Wifi, HardDrive,
   CheckCircle2, ChevronRight, Download, Lock,
   RefreshCw, Star, ArrowRight, ExternalLink,
 } from "lucide-react";
+
+/* Logo Apple officiel SVG */
+function AppleLogo({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 814 1000" fill="currentColor" aria-hidden="true">
+      <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.4-148.2-82.5c-43.1-45.1-109.3-172.8-109.3-333.5 0-60.9 11.1-162.7 60.3-228.1C164.9 168.8 270.2 124.6 374 124.6c64.9 0 125.6 39 165.9 39 38.6 0 102.2-39.8 176.8-39.8 26.3 0 124.8 3.2 189.2 97.1zm-234.1-112.4c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/>
+    </svg>
+  );
+}
 
 /* ── helpers ─────────────────────────────────────────────── */
 function Step({ n, title, desc, img }: { n: number; title: string; desc: string; img: React.ReactNode }) {
@@ -31,9 +41,14 @@ function FeaturePill({ icon: Icon, label, color }: { icon: React.ElementType; la
 
 type Tab = "windows" | "mac" | "ipad";
 
-/* ── Page ────────────────────────────────────────────────── */
-export default function TelechargerPage() {
-  const [tab, setTab] = useState<Tab>("windows");
+/* ── Inner page (uses useSearchParams) ───────────────────── */
+function TelechargerInner() {
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams.get("tab");
+    if (t === "mac" || t === "ipad") return t;
+    return "windows";
+  });
 
   return (
     <div style={{ fontFamily: "'IBM Plex Sans',sans-serif", background: "#fff", minHeight: "100vh" }}>
@@ -95,11 +110,11 @@ export default function TelechargerPage() {
 
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 8, marginBottom: 40, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 16, padding: 6 }}>
-            {([
-              { id: "windows" as Tab, icon: "🪟", label: "Windows 10 / 11" },
-              { id: "mac" as Tab, icon: "🍎", label: "Mac / macOS" },
-              { id: "ipad" as Tab, icon: "📱", label: "iPad / iPhone" },
-            ] as const).map((t) => (
+            {(([
+              { id: "windows" as Tab, icon: "🪟" as React.ReactNode, label: "Windows 10 / 11" },
+              { id: "mac" as Tab, icon: <AppleLogo size={20} /> as React.ReactNode, label: "Mac / macOS" },
+              { id: "ipad" as Tab, icon: "📱" as React.ReactNode, label: "iPad / iPhone" },
+            ])).map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 style={{ flex: 1, height: 48, borderRadius: 12, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all .15s",
                   background: tab === t.id ? "#fff" : "transparent",
@@ -459,5 +474,14 @@ export default function TelechargerPage() {
         <div style={{ fontSize: 11, color: "#cbd5e1" }}>© 2026 WebConceptor. Tous droits réservés.</div>
       </footer>
     </div>
+  );
+}
+
+/* ── Export avec Suspense (useSearchParams) ───────────────── */
+export default function TelechargerPage() {
+  return (
+    <Suspense>
+      <TelechargerInner />
+    </Suspense>
   );
 }

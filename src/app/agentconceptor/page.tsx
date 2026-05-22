@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 /* ─── Design tokens ─────────────────────────────────────── */
@@ -161,7 +162,7 @@ function HireModal({ agent, onClose, onProceed }: { agent: Agent | null; onClose
 function SignInModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
   const handleGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/agentconceptor` } });
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/agentconceptor/dashboard` } });
   };
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(11,11,13,0.45)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -210,6 +211,7 @@ function FAQItem({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: bo
 
 /* ─── Main page ─────────────────────────────────────────── */
 export default function AgentConceptorPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [hiring, setHiring] = useState<Agent | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
@@ -218,10 +220,18 @@ export default function AgentConceptorPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) setUser({ email: data.session.user.email!, name: data.session.user.user_metadata?.full_name, picture: data.session.user.user_metadata?.avatar_url });
+      if (data.session?.user) {
+        // Utilisateur déjà connecté → dashboard
+        router.replace("/agentconceptor/dashboard");
+        return;
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ? { email: session.user.email!, name: session.user.user_metadata?.full_name, picture: session.user.user_metadata?.avatar_url } : null);
+      if (session?.user) {
+        router.replace("/agentconceptor/dashboard");
+        return;
+      }
+      setUser(null);
     });
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);

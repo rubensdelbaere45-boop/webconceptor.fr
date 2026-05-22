@@ -110,6 +110,39 @@ const DEFAULT_QUERIES = [
   "pressing teinturier Toulouse",
   "photographe portrait Bordeaux",
   "agence immobilière artisan Nice",
+  // ── Épiceries / Commerce de proximité (cible Caissio) ──
+  "épicerie de proximité Paris",
+  "épicerie de proximité Lyon",
+  "épicerie de proximité Marseille",
+  "épicerie de proximité Bordeaux",
+  "supérette alimentation Toulouse",
+  "supérette alimentation Nantes",
+  "épicerie fine traiteur Montpellier",
+  "épicerie asiatique Paris",
+  "épicerie africaine Lyon",
+  "alimentation générale Strasbourg",
+  "commerce de proximité Rennes",
+  "épicerie de nuit Paris",
+  "tabac presse épicerie Bordeaux",
+  "boucherie charcuterie Marseille",
+  "boucherie artisanale Lyon",
+  "boucherie halal Paris",
+  "poissonnerie marché Nantes",
+  "fromagerie épicerie fine Paris",
+  "primeur fruits légumes Toulouse",
+  "primeur fruits légumes Bordeaux",
+  "supérette épicerie Grenoble",
+  // ── PME / Entreprises (cible AgentConceptor) ──
+  "cabinet comptable PME Paris",
+  "agence immobilière Lyon",
+  "agence immobilière Bordeaux",
+  "agence de communication Toulouse",
+  "agence web Nantes",
+  "bureau d'études ingénierie Marseille",
+  "cabinet de recrutement Paris",
+  "grossiste importateur Lyon",
+  "entreprise BTP Bordeaux",
+  "société de nettoyage professionnel Paris",
 ];
 
 // Sélectionne QUERIES_PER_RUN queries depuis la liste, en rotation par date+heure
@@ -133,7 +166,8 @@ function inferBusinessType(query: string): string {
   if (/osteopathe|kinesitherapeute/.test(q)) return "osteo";
   if (/dentiste|cabinet medical|medecin/.test(q)) return "dentiste";
   if (/institut de beaute|spa|massage|manucure|onglerie|tatoueur/.test(q)) return "institut";
-  if (/proxi|epicerie|superette/.test(q)) return "epicerie";
+  if (/proxi|epicerie|superette|alimentation|boucherie|poissonnerie|primeur|fromager|tabac|presse/.test(q)) return "epicerie";
+  if (/cabinet comptable|agence immobiliere|agence web|agence de communication|cabinet de recrutement|bureau d.etudes|grossiste|nettoyage professionnel|societe de|entreprise btp/.test(q)) return "restaurant"; // pas de filtre distance pour PME
   return "restaurant"; // défaut sûr : pas de filtre distance
 }
 

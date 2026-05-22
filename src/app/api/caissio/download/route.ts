@@ -1,33 +1,13 @@
 import { NextResponse } from "next/server";
 
-const EXE_URL =
-  "https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/download/caissio-latest/Caissio-Setup.exe";
-
 /**
- * GET /api/caissio/download
- * Proxy direct — le fichier est servi depuis webconceptor.fr,
- * GitHub n'est jamais visible pour l'utilisateur.
+ * GET /api/caissio/download (Windows)
+ * Redirige vers la page de téléchargement avec le bon onglet.
+ * Chrome / Edge proposent l'installation PWA depuis la barre d'adresse.
  */
 export async function GET() {
-  try {
-    const upstream = await fetch(EXE_URL, { redirect: "follow" });
-    if (!upstream.ok || !upstream.body) {
-      return new NextResponse(
-        "Le fichier d'installation n'est pas encore disponible. Réessayez dans quelques minutes.",
-        { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
-      );
-    }
-    const headers = new Headers({
-      "Content-Type": "application/octet-stream",
-      "Content-Disposition": 'attachment; filename="Caissio-Setup.exe"',
-      "Cache-Control": "no-store",
-    });
-    const len = upstream.headers.get("content-length");
-    if (len) headers.set("Content-Length", len);
-    return new NextResponse(upstream.body as BodyInit, { status: 200, headers });
-  } catch {
-    return new NextResponse("Erreur lors de la récupération du fichier.", {
-      status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
-  }
+  return NextResponse.redirect(
+    "https://www.webconceptor.fr/caissio/telecharger?tab=windows",
+    { status: 302 }
+  );
 }
