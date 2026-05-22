@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 56" width="340" height="56" role="img" aria-label="AgentConceptor">
+  <g>
+    <rect x="0" y="4" width="48" height="48" rx="6" fill="#F5F1E8"></rect>
+    <path d="M14 42 L24 14 H30 L40 42 H34 L32 36 H22 L20 42 Z M23.5 31 H30.5 L27 21 Z" fill="#0B0B0D"></path>
+    <circle cx="40" cy="44" r="3.2" fill="#C8FF3D"></circle>
+  </g>
+  <text x="60" y="37" font-family="Instrument Serif, Cormorant Garamond, Georgia, serif" font-size="30" fill="#F5F1E8" letter-spacing="-0.5">AgentConceptor</text>
+</svg>

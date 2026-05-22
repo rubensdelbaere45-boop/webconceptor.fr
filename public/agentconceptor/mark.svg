@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="AgentConceptor mark">
+  <rect x="0" y="0" width="64" height="64" rx="8" fill="#0B0B0D"></rect>
+  <path d="M18 50 L29 14 H35 L46 50 H39 L36.5 42 H27.5 L25 50 Z M29 36 H35 L32 24 Z" fill="#F5F1E8"></path>
+  <circle cx="50" cy="52" r="4" fill="#C8FF3D"></circle>
+</svg>
