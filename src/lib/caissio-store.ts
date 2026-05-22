@@ -90,6 +90,55 @@ export type StoreSettings = {
   ticket_footer?: string;
 };
 
+export type InvoiceLine = {
+  description: string;
+  qty: number;
+  unit_price_ht: number;
+  tva_rate: number;
+  total_ht: number;
+  tva_amount: number;
+  total_ttc: number;
+};
+
+export type TvaBreakdown = {
+  rate: number;
+  base_ht: number;
+  tva_amount: number;
+};
+
+export type Invoice = {
+  id: string;
+  number: string; // FAC-2026-0001
+  date: string;
+  due_date?: string;
+  sale_id?: string;
+  // Vendeur
+  seller_name: string;
+  seller_address?: string;
+  seller_siret?: string;
+  seller_vat_number?: string;
+  seller_email?: string;
+  seller_phone?: string;
+  // Client
+  customer_id?: string;
+  customer_name: string;
+  customer_address?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  // Lignes
+  lines: InvoiceLine[];
+  // Totaux
+  total_ht: number;
+  total_tva: number;
+  total_ttc: number;
+  tva_breakdown: TvaBreakdown[];
+  // Paiement
+  payment_method?: string;
+  notes?: string;
+  status: "draft" | "sent" | "paid";
+  created_at: string;
+};
+
 const KEY = {
   users:      "caissio_users",
   session:    "caissio_session",
@@ -99,6 +148,7 @@ const KEY = {
   customers:  "caissio_customers",
   suppliers:  "caissio_suppliers",
   settings:   "caissio_settings",
+  invoices:   "caissio_invoices",
 };
 
 function get<T>(key: string): T[] {
@@ -450,6 +500,36 @@ export function getStoreSettings(): StoreSettings {
 export function saveStoreSettings(s: StoreSettings): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(KEY.settings, JSON.stringify(s));
+}
+
+/* ── INVOICES ── */
+
+export function getInvoices(): Invoice[] { return get<Invoice>(KEY.invoices); }
+
+export function getNextInvoiceNumber(): string {
+  const invoices = getInvoices();
+  const year = new Date().getFullYear();
+  const prefix = `FAC-${year}-`;
+  const maxNum = invoices
+    .filter((inv) => inv.number.startsWith(prefix))
+    .map((inv) => parseInt(inv.number.slice(prefix.length), 10))
+    .filter((n) => !isNaN(n))
+    .reduce((max, n) => Math.max(max, n), 0);
+  return `${prefix}${String(maxNum + 1).padStart(4, "0")}`;
+}
+
+export function saveInvoice(inv: Omit<Invoice, "id" | "created_at">): Invoice {
+  const invoice: Invoice = { ...inv, id: uid(), created_at: new Date().toISOString() };
+  set(KEY.invoices, [...getInvoices(), invoice]);
+  return invoice;
+}
+
+export function updateInvoice(id: string, data: Partial<Invoice>): void {
+  set(KEY.invoices, getInvoices().map((inv) => inv.id === id ? { ...inv, ...data } : inv));
+}
+
+export function deleteInvoice(id: string): void {
+  set(KEY.invoices, getInvoices().filter((inv) => inv.id !== id));
 }
 
 /* ── DASHBOARD STATS ── */

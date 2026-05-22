@@ -5,7 +5,7 @@ import { getSession, logout, validatePin, hasAccess, updateSubscription, switchT
 import {
   ScanBarcode, LayoutDashboard, Package, Boxes, Users,
   Plug, FileBarChart2, Settings, LogOut, Menu, X,
-  Truck, Lock, Delete, CreditCard,
+  Truck, Lock, Delete, CreditCard, FileText,
 } from "lucide-react";
 
 const NAV = [
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/caissio/app/fournisseurs", icon: Truck, label: "Fournisseurs" },
   { href: "/caissio/app/peripheriques", icon: Plug, label: "Périphériques" },
   { href: "/caissio/app/rapports", icon: FileBarChart2, label: "Rapports" },
+  { href: "/caissio/app/factures", icon: FileText, label: "Factures" },
   { href: "/caissio/app/abonnement", icon: CreditCard, label: "Abonnement" },
   { href: "/caissio/app/parametres", icon: Settings, label: "Paramètres" },
 ];
