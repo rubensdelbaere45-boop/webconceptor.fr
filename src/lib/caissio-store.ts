@@ -194,7 +194,17 @@ export function loginWithGoogle(google_sub: string, email: string): CaissioUser 
   const users = getUsers();
   const user = users.find((u) => u.google_sub === google_sub || u.email === email.toLowerCase());
   if (!user) return null;
-  const patched = { ...user, google_sub };
+
+  // Backfill champs manquants (même logique que login() pour les anciens comptes)
+  const patched: CaissioUser = {
+    ...user,
+    google_sub,
+    trial_ends_at: user.trial_ends_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_status: user.subscription_status || "trialing",
+    mode: user.mode || "live",
+    onboarding_done: user.onboarding_done ?? true,
+  };
+
   set(KEY.users, users.map((u) => u.id === user.id ? patched : u));
   setSession(patched);
   migrateMissingCategories();
@@ -296,7 +306,11 @@ export function trialDaysLeft(user: CaissioUser | null): number {
 
 export function hasAccess(user: CaissioUser | null): boolean {
   if (!user) return false;
+  // Accès pendant l'essai gratuit (trial_ends_at dans le futur)
   if (isTrialing(user)) return true;
+  // Accès si le statut est "trialing" même sans trial_ends_at (ancien compte / compte Google patché)
+  if (user.subscription_status === "trialing") return true;
+  // Accès si abonnement payant actif
   return user.subscription_status === "active";
 }
 
