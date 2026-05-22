@@ -308,8 +308,10 @@ export function hasAccess(user: CaissioUser | null): boolean {
   if (!user) return false;
   // Accès pendant l'essai gratuit (trial_ends_at dans le futur)
   if (isTrialing(user)) return true;
-  // Accès si le statut est "trialing" même sans trial_ends_at (ancien compte / compte Google patché)
+  // Accès si le statut est "trialing" (explicite)
   if (user.subscription_status === "trialing") return true;
+  // Accès si subscription_status absent → ancien compte localStorage sans champ = essai implicite
+  if (!user.subscription_status) return true;
   // Accès si abonnement payant actif
   return user.subscription_status === "active";
 }

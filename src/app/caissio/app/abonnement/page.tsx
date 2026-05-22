@@ -140,12 +140,7 @@ export default function AbonnementPage() {
       const data = await res.json() as { url?: string; error?: string };
 
       if (!res.ok || data.error) {
-        // Stripe pas encore configuré → message clair
-        if (data.error?.includes("configuré")) {
-          showToast("info", "Stripe n'est pas encore configuré. Ajoutez vos clés dans .env.local");
-        } else {
-          showToast("error", data.error || "Erreur lors de la création du paiement");
-        }
+        showToast("error", data.error || "Erreur lors de la création du paiement");
         return;
       }
 

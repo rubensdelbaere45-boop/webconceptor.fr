@@ -50,8 +50,31 @@ export default function CaissioAppLayout({ children }: { children: React.ReactNo
   const [pinErr, setPinErr] = useState("");
 
   useEffect(() => {
-    const s = getSession();
+    let s = getSession();
     if (!s) { router.replace("/caissio/login"); return; }
+
+    // Patch silencieux : backfill les champs manquants pour les vieux comptes
+    // (comptes créés avant l'ajout de trial_ends_at / subscription_status)
+    if (!s.trial_ends_at || !s.subscription_status || !s.mode) {
+      const { updateSubscription: _u, ...rest } = { updateSubscription: null, ...s };
+      void rest; // évite lint "unused"
+      const patched = {
+        ...s,
+        trial_ends_at: s.trial_ends_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        subscription_status: s.subscription_status || ("trialing" as const),
+        mode: s.mode || ("live" as const),
+        onboarding_done: s.onboarding_done ?? true,
+      };
+      localStorage.setItem("caissio_session", JSON.stringify(patched));
+      // Met aussi à jour le tableau users
+      try {
+        const users = JSON.parse(localStorage.getItem("caissio_users") || "[]") as typeof patched[];
+        const updated = users.map((u) => u.id === patched.id ? patched : u);
+        localStorage.setItem("caissio_users", JSON.stringify(updated));
+      } catch { /* silencieux */ }
+      s = patched;
+    }
+
     setUser(s);
     // Redirige vers abonnement si l'accès est révoqué (trial expiré ou subscription annulée)
     if (!hasAccess(s) && pathname !== "/caissio/app/abonnement") {
