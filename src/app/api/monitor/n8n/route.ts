@@ -13,13 +13,14 @@ import {
    GET|POST /api/monitor/n8n
    Monitoring + auto-healing des workflows n8n.
 
-   Appelé toutes les 15 min par un cron Render.
-   Pour chaque workflow actif, vérifie :
+   Appelé toutes les 30 min par un cron Vercel.
+   Pour chaque workflow surveillé, vérifie :
    - Est-il bien actif ?                → sinon re-active
    - Dernière exécution en erreur ?     → cycle (deactivate/reactivate) + notif
    - Exécution stuck depuis >2h ?       → stop forcé + cycle + notif
-   - Pas d'exécution depuis 25h (pour workflows quotidiens) ? → cycle + notif
+   - Pas d'exécution depuis 50h ?       → cycle + notif (50h couvre les WE)
 
+   BLACKLIST : workflows volontairement désactivés — jamais re-activés.
    Notifie Telegram UNIQUEMENT si une action a été prise (pas de spam).
    ══════════════════════════════════════════ */
 
@@ -33,6 +34,27 @@ interface MonitorReport {
   actionTaken: string | null;
   actionResult: "success" | "failed" | null;
 }
+
+/* ──────────────────────────────────────────────────────────
+   WORKFLOWS À SURVEILLER (doivent rester actifs)
+   Seuls ces IDs sont pris en charge par le monitor.
+   ────────────────────────────────────────────────────────── */
+const WATCHED_WORKFLOW_IDS = new Set([
+  "wSmfcn9acDuKdVqT", // Prospection quotidienne 9h
+  "YxIeBu4yoYxwOLoC", // Relances J+2 (10h30)
+  "wfG4XLRdreNqmao4", // 2ème vague emails (15h)
+  "sIZJEsAXU3lAH8Ep", // Prospection 200 Emails IA Direct
+]);
+
+/* ──────────────────────────────────────────────────────────
+   WORKFLOWS EN QUARANTAINE (désactivés volontairement)
+   Le monitor les ignore ET ne les réactive JAMAIS.
+   Si l'un d'eux se réactive tout seul, on le coupe immédiatement.
+   ────────────────────────────────────────────────────────── */
+const QUARANTINE_WORKFLOW_IDS = new Set([
+  "cFwd9ypaXYTs1MvV", // Conversion Boost — toutes les heures → surchargeait n8n
+  "75QLnvgd6ElPW8a2", // Hot Leads — toutes les heures → même problème
+]);
 
 function parseStartedAt(startedAt: string): number {
   const t = new Date(startedAt).getTime();
@@ -63,8 +85,8 @@ async function handler(req: NextRequest) {
   // Auth : accepte admin-key OU cron-secret
   const adminKey = req.headers.get("x-admin-key") || "";
   const cronSecret = req.headers.get("x-cron-secret") || "";
-  const adminOK = safeCompare(adminKey, process.env.ADMIN_SECRET_KEY);
-  const cronOK = safeCompare(cronSecret, process.env.CRON_SECRET);
+  const adminOK = safeCompare(adminKey, process.env.ADMIN_SECRET_KEY || "");
+  const cronOK = safeCompare(cronSecret, process.env.CRON_SECRET || "");
   if (!adminOK && !cronOK) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
@@ -85,19 +107,25 @@ async function handler(req: NextRequest) {
   }
 
   const reports: MonitorReport[] = [];
+  const quarantineActions: string[] = [];
   const now = Date.now();
   const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-  const TWENTY_FIVE_HOURS_MS = 25 * 60 * 60 * 1000;
+  // 50h au lieu de 25h → couvre les weekends sans faux positifs
+  const FIFTY_HOURS_MS = 50 * 60 * 60 * 1000;
 
-  // On ne surveille QUE les 3 workflows actifs par ID (précis, évite de spammer
-  // les anciens brouillons désactivés qui ont aussi "webconceptor" dans le nom).
-  const ACTIVE_WORKFLOW_IDS = new Set([
-    "wSmfcn9acDuKdVqT", // Prospection quotidienne 9h
-    "YxIeBu4yoYxwOLoC", // Relances J+2 (10h30)
-    "wfG4XLRdreNqmao4", // 2ème vague emails (15h)
-    "cFwd9ypaXYTs1MvV", // Conversion Boost (hot lead SMS + cart abandon, toutes les heures)
-  ]);
-  const ourWorkflows = workflows.filter((w) => ACTIVE_WORKFLOW_IDS.has(w.id));
+  /* ── 0. QUARANTAINE : désactive immédiatement tout workflow en quarantaine qui serait actif ── */
+  for (const wf of workflows) {
+    if (QUARANTINE_WORKFLOW_IDS.has(wf.id) && wf.active) {
+      const { deactivateWorkflow } = await import("@/lib/n8n-client");
+      const res = await deactivateWorkflow(wf.id);
+      const msg = `🛑 Quarantaine : <b>${escapeTelegram(wf.name)}</b> s'était réactivé — désactivé à nouveau.`;
+      quarantineActions.push(msg);
+      console.warn(`[monitor/n8n] quarantine: ${wf.name} (${wf.id}) was active → deactivated. ok=${res.ok}`);
+    }
+  }
+
+  /* ── 1. WATCHED : surveille et répare les workflows importants ── */
+  const ourWorkflows = workflows.filter((w) => WATCHED_WORKFLOW_IDS.has(w.id));
 
   for (const wf of ourWorkflows) {
     const report: MonitorReport = {
@@ -121,15 +149,15 @@ async function handler(req: NextRequest) {
       continue;
     }
 
-    // ─── Check 2 : dernière exécution en erreur / stuck ? ───
+    // ─── Check 2 : dernière exécution ───
     const executions = await listExecutions(wf.id, 5);
     if (executions.length === 0) {
-      report.issueDetected = "aucune exécution trouvée";
+      // Pas encore d'exécution (workflow tout neuf) — pas d'alerte
       reports.push(report);
       continue;
     }
 
-    const latest = executions[0];
+    const latest: N8nExecution = executions[0];
     report.lastExecutionAt = latest.startedAt;
     report.lastExecutionStatus = latest.status || (latest.finished ? "success" : "running");
 
@@ -157,8 +185,8 @@ async function handler(req: NextRequest) {
       continue;
     }
 
-    // ─── Pas d'exécution depuis 25h (workflow quotidien silencieux) ───
-    if (ageMs > TWENTY_FIVE_HOURS_MS) {
+    // ─── Pas d'exécution depuis 50h (workflow quotidien silencieux) ───
+    if (ageMs > FIFTY_HOURS_MS) {
       report.issueDetected = `aucune exécution depuis ${Math.round(ageMs / (60 * 60 * 1000))} h`;
       const cycle = await cycleWorkflow(wf.id);
       report.actionTaken = "cycleWorkflow (réveil)";
@@ -171,21 +199,19 @@ async function handler(req: NextRequest) {
     reports.push(report);
   }
 
-  // ─── Notifie Telegram si au moins 1 action a été prise ───
+  /* ── 2. Notifie Telegram si au moins 1 action a été prise ── */
   const actionsTaken = reports.filter((r) => r.actionTaken);
-  if (actionsTaken.length > 0) {
-    const sound = actionsTaken.some((r) => r.actionResult === "failed");
+  const allActions = [...quarantineActions, ...actionsTaken.map((r) => {
+    const icon = r.actionResult === "success" ? "✅" : "❌";
+    return `${icon} <b>${escapeTelegram(r.name)}</b>\n   Problème : ${escapeTelegram(r.issueDetected || "?")}\n   Action : ${escapeTelegram(r.actionTaken || "?")}\n   Résultat : ${escapeTelegram(r.actionResult || "?")}`;
+  })];
 
-    const lines = actionsTaken.map((r) => {
-      const icon = r.actionResult === "success" ? "✅" : "❌";
-      return `${icon} <b>${escapeTelegram(r.name)}</b>\n   Problème : ${escapeTelegram(r.issueDetected || "?")}\n   Action : ${escapeTelegram(r.actionTaken || "?")}\n   Résultat : ${escapeTelegram(r.actionResult || "?")}`;
-    });
-
+  if (allActions.length > 0) {
+    const sound = actionsTaken.some((r) => r.actionResult === "failed") || quarantineActions.length > 0;
     const msg =
       `${sound ? "🚨" : "🔧"} <b>Auto-healing n8n</b>\n\n` +
-      lines.join("\n\n") +
-      `\n\n<i>Monitoring automatique — ${new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</i>`;
-
+      allActions.join("\n\n") +
+      `\n\n<i>${new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</i>`;
     await notifyTelegram(msg, sound);
   }
 
@@ -193,6 +219,8 @@ async function handler(req: NextRequest) {
     success: true,
     timestamp: new Date().toISOString(),
     workflowsChecked: reports.length,
+    quarantineChecked: workflows.filter((w) => QUARANTINE_WORKFLOW_IDS.has(w.id)).length,
+    quarantineReactivations: quarantineActions.length,
     actionsTaken: actionsTaken.length,
     reports,
   });
