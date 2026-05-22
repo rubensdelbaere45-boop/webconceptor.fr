@@ -208,8 +208,8 @@ const DEFAULT_QUERIES = [
   "kinésithérapeute Orléans", "kinésithérapeute Rouen", "kinésithérapeute Toulon",
 ];
 
-// 3 queries par run × 8 runs/jour = 24 queries/jour
-// Chaque query renvoie ~20 places → ~480 places/jour → ~150 prospects avec email/jour
+// 3 queries par run × 12 runs/jour = 36 queries/jour
+// Chaque query renvoie ~20 places → ~720 places/jour → ~200 prospects avec email/jour
 const QUERIES_PER_RUN = 3;
 
 function inferBusinessType(query: string): string {
@@ -251,14 +251,14 @@ async function runCron(req: NextRequest) {
 
   const query = req.nextUrl.searchParams.get("query")?.trim().slice(0, 200) || "";
   const batchParam = Number(req.nextUrl.searchParams.get("batch"));
-  // 60 emails par run × 8 runs/jour = 480 emails/jour → ~14 400 en 30 jours ✅
+  // 60 emails par run × 12 runs/jour = 720 emails/jour → ~18 720 en 26 jours (quota Brevo 20k) ✅
   const batch_size = Number.isFinite(batchParam) && batchParam > 0
     ? Math.min(80, Math.max(1, Math.floor(batchParam)))
     : 60;
 
-  // Rotation par fenêtre de 3h (8 fois/jour) pour varier les requêtes
+  // Rotation par fenêtre de 2h (12 fois/jour) pour varier les requêtes
   const queries: string[] = query ? [query] : (() => {
-    const runIndex = Math.floor(Date.now() / (3 * 60 * 60 * 1000));
+    const runIndex = Math.floor(Date.now() / (2 * 60 * 60 * 1000));
     const offset = (runIndex * QUERIES_PER_RUN) % DEFAULT_QUERIES.length;
     const selected: string[] = [];
     for (let i = 0; i < QUERIES_PER_RUN; i++) {
