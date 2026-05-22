@@ -14,7 +14,7 @@ const PLANS = [
   {
     id: "starter",
     name: "Starter",
-    price: 19,
+    price: 15,
     features: [
       "1 utilisateur",
       "Catalogue jusqu'à 500 produits",
@@ -43,7 +43,7 @@ const PLANS = [
   {
     id: "business",
     name: "Business",
-    price: 69,
+    price: 59,
     features: [
       "Utilisateurs illimités",
       "Multi-magasins (bientôt)",
