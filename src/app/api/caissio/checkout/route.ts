@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const priceId = PRICE_MAP[plan];
     if (!priceId || priceId.startsWith("price_REMPLACER") || priceId === "") {
       return NextResponse.json(
-        { error: "Prix non configuré. Ajoutez STRIPE_CAISSIO_*_PRICE_ID dans Render" },
+        { error: "Prix non configuré. Ajoutez STRIPE_CAISSIO_*_PRICE_ID dans Vercel" },
         { status: 503 }
       );
     }
