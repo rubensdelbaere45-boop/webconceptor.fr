@@ -256,9 +256,9 @@ async function runCron(req: NextRequest) {
     ? Math.min(80, Math.max(1, Math.floor(batchParam)))
     : 60;
 
-  // Rotation par fenêtre de 2h (12 fois/jour) pour varier les requêtes
+  // Rotation par fenêtre de 1h (crons horaires) pour varier les requêtes à chaque run
   const queries: string[] = query ? [query] : (() => {
-    const runIndex = Math.floor(Date.now() / (2 * 60 * 60 * 1000));
+    const runIndex = Math.floor(Date.now() / (1 * 60 * 60 * 1000));
     const offset = (runIndex * QUERIES_PER_RUN) % DEFAULT_QUERIES.length;
     const selected: string[] = [];
     for (let i = 0; i < QUERIES_PER_RUN; i++) {
@@ -311,7 +311,7 @@ async function runCron(req: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
         body: JSON.stringify({ batch_size, dry_run: false }),
-        signal: AbortSignal.timeout(110_000), // 110s max → total cron ≤ 280s
+        signal: AbortSignal.timeout(130_000), // 130s max → total cron ≤ 300s (3×50s find + 130s send)
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok) {
