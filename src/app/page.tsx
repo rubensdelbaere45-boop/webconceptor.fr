@@ -301,10 +301,7 @@ export default function Home() {
             <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
             <a href="#tarif" className="hover:text-[#0a0a0a] transition-colors">Tarif</a>
             <a href="#faq" className="hover:text-[#0a0a0a] transition-colors">FAQ</a>
-            <Link href="/agentconceptor" className="hover:text-[#0a0a0a] transition-colors font-semibold text-[#0a0a0a]">
-              AGENTConceptor
-              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-violet-600 text-white text-[9px] font-bold uppercase tracking-wide">IA</span>
-            </Link>
+{/* agentCONCEPTOR masqué temporairement */}
             <Link href="/caissio" className="hover:text-[#0a0a0a] transition-colors font-semibold text-[#0a0a0a]">
               Caissio
               <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wide">NEW</span>

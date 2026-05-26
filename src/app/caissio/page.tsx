@@ -305,6 +305,11 @@ function DemoPOS() {
   };
 
   const handleDemoPrint = async () => {
+    if (!printerConn) {
+      // Pas d'imprimante connectée → rien ne sort, comportement identique à "Non merci"
+      reset();
+      return;
+    }
     const ticketData: TicketData = {
       storeName: "Caissio Démo",
       ticketNum: Date.now().toString().slice(-6),
@@ -366,7 +371,7 @@ function DemoPOS() {
             {printerStatus === "connecting" && "Connexion en cours…"}
             {printerStatus === "connected" && (printerConn?.label ?? "Connectée")}
             {printerStatus === "error" && "Connexion échouée — vérifiez l'imprimante"}
-            {printerStatus === "idle" && "Branchez votre imprimante pour imprimer le ticket directement depuis la démo"}
+            {printerStatus === "idle" && "Optionnel : connectez votre imprimante thermique pour que le vrai ticket sorte lors de la démo"}
           </span>
         </div>
         {printerStatus === "idle" && (
@@ -953,7 +958,7 @@ export default function CaissioPage() {
           </div>
           <DemoPOS />
           <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "#94a3b8" }}>
-            Démo 100% fonctionnelle · Stock géré en temps réel · Ticket de caisse complet après paiement
+            Testez par vous-même ! · Démo 100% fonctionnelle · Stock géré en temps réel · Ticket complet après paiement
           </p>
         </div>
       </section>
