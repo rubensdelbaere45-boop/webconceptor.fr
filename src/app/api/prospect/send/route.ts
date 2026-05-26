@@ -901,10 +901,25 @@ async function handleSend(req: NextRequest) {
   const sendTimeLeft = () => SEND_DEADLINE_MS - (Date.now() - sendStartedAt);
   let timedOut = 0;
 
-  // Anti-spam : domaine cooldown — on track les domaines email déjà envoyés ce batch
-  // pour éviter d'envoyer 5× au même @orange.fr dans la même vague.
+  // Anti-spam : domaine cooldown — on track les domaines email déjà envoyés ce batch.
+  // Grands FAI (gmail, orange, etc.) ont des milliers d'abonnés indépendants → limite haute.
+  // Domaines d'entreprise spécifiques → limite basse pour éviter de spammer un même commerce.
+  const BIG_PROVIDERS = new Set([
+    "gmail.com", "googlemail.com",
+    "orange.fr", "wanadoo.fr",
+    "free.fr", "laposte.net",
+    "sfr.fr", "neuf.fr", "numericable.fr", "bbox.fr",
+    "yahoo.fr", "yahoo.com",
+    "hotmail.fr", "hotmail.com", "live.fr", "live.com", "outlook.fr", "outlook.com",
+    "icloud.com", "me.com",
+    "aol.com",
+  ]);
+  const MAX_PER_DOMAIN_PER_BATCH_BIG = 10; // FAI grand public : 10/batch
+  const MAX_PER_DOMAIN_PER_DAY_BIG   = 50; // FAI grand public : 50/jour
+  const MAX_PER_DOMAIN_PER_BATCH_SMB = 2;  // domaine entreprise : 2/batch
+  const MAX_PER_DOMAIN_PER_DAY_SMB   = 5;  // domaine entreprise : 5/jour
+
   const domainsSentThisBatch = new Map<string, number>(); // domain → count
-  const MAX_PER_DOMAIN_PER_BATCH = 2; // max 2 emails vers le même @domain.fr par run
 
   // Vérifier aussi les envois du jour dans la DB pour le cooldown global
   const todayStart = new Date();
@@ -920,7 +935,6 @@ async function handleSend(req: NextRequest) {
     const domain = (row.email as string).split("@")[1]?.toLowerCase() || "";
     if (domain) domainsSentToday.set(domain, (domainsSentToday.get(domain) || 0) + 1);
   }
-  const MAX_PER_DOMAIN_PER_DAY = 5; // max 5 emails vers le même @domain.fr par jour
 
   for (const p of prospects) {
     // Garde : 20 s minimum pour finir proprement (Claude + Brevo + Supabase)
@@ -933,9 +947,12 @@ async function handleSend(req: NextRequest) {
     // Anti-spam : cooldown par domaine email
     const emailDomain = (p.email || "").split("@")[1]?.toLowerCase() || "";
     if (emailDomain && !dry_run) {
+      const isBig = BIG_PROVIDERS.has(emailDomain);
+      const batchLimit = isBig ? MAX_PER_DOMAIN_PER_BATCH_BIG : MAX_PER_DOMAIN_PER_BATCH_SMB;
+      const dayLimit   = isBig ? MAX_PER_DOMAIN_PER_DAY_BIG   : MAX_PER_DOMAIN_PER_DAY_SMB;
       const batchCount = domainsSentThisBatch.get(emailDomain) || 0;
-      const dayCount = domainsSentToday.get(emailDomain) || 0;
-      if (batchCount >= MAX_PER_DOMAIN_PER_BATCH || dayCount >= MAX_PER_DOMAIN_PER_DAY) {
+      const dayCount   = domainsSentToday.get(emailDomain) || 0;
+      if (batchCount >= batchLimit || dayCount >= dayLimit) {
         results.push({ id: p.id, name: p.name, status: "skipped_domain_cooldown" });
         continue;
       }

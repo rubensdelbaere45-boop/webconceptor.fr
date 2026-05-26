@@ -206,6 +206,45 @@ const DEFAULT_QUERIES = [
   "kinésithérapeute Clermont-Ferrand", "kinésithérapeute Le Mans",
   "kinésithérapeute Limoges", "kinésithérapeute Metz", "kinésithérapeute Nancy",
   "kinésithérapeute Orléans", "kinésithérapeute Rouen", "kinésithérapeute Toulon",
+  // ── Menuisiers ──
+  "menuisier Albi", "menuisier Amiens", "menuisier Angers", "menuisier Avignon",
+  "menuisier Bayonne", "menuisier Béziers", "menuisier Brest", "menuisier Caen",
+  "menuisier Clermont-Ferrand", "menuisier Colmar", "menuisier La Rochelle",
+  "menuisier Le Mans", "menuisier Limoges", "menuisier Metz", "menuisier Nancy",
+  "menuisier Orléans", "menuisier Pau", "menuisier Perpignan",
+  "menuisier Rouen", "menuisier Saint-Étienne", "menuisier Toulon",
+  "menuisier Troyes", "menuisier Valence", "menuisier Vannes",
+  // ── Peintres en bâtiment ──
+  "peintre bâtiment Amiens", "peintre bâtiment Angers", "peintre bâtiment Avignon",
+  "peintre bâtiment Brest", "peintre bâtiment Caen", "peintre bâtiment Chambéry",
+  "peintre bâtiment Clermont-Ferrand", "peintre bâtiment La Rochelle",
+  "peintre bâtiment Le Mans", "peintre bâtiment Limoges", "peintre bâtiment Metz",
+  "peintre bâtiment Nancy", "peintre bâtiment Orléans", "peintre bâtiment Rouen",
+  "peintre bâtiment Saint-Étienne", "peintre bâtiment Toulon", "peintre bâtiment Troyes",
+  // ── Pizzerias ──
+  "pizzeria Albi", "pizzeria Amiens", "pizzeria Angers", "pizzeria Avignon",
+  "pizzeria Bayonne", "pizzeria Béziers", "pizzeria Brest", "pizzeria Caen",
+  "pizzeria Chambéry", "pizzeria Chartres", "pizzeria Cherbourg",
+  "pizzeria Clermont-Ferrand", "pizzeria Colmar", "pizzeria Dunkerque",
+  "pizzeria La Rochelle", "pizzeria Le Mans", "pizzeria Lens",
+  "pizzeria Limoges", "pizzeria Lorient", "pizzeria Metz",
+  "pizzeria Mulhouse", "pizzeria Nancy", "pizzeria Niort",
+  "pizzeria Orléans", "pizzeria Pau", "pizzeria Perpignan",
+  "pizzeria Rouen", "pizzeria Saint-Étienne", "pizzeria Toulon",
+  "pizzeria Troyes", "pizzeria Valence", "pizzeria Vannes",
+  // ── Salons de thé ──
+  "salon de thé Amiens", "salon de thé Angers", "salon de thé Avignon",
+  "salon de thé Brest", "salon de thé Caen", "salon de thé Clermont-Ferrand",
+  "salon de thé Dijon", "salon de thé Le Mans", "salon de thé Limoges",
+  "salon de thé Metz", "salon de thé Nancy", "salon de thé Orléans",
+  "salon de thé Rouen", "salon de thé Toulon",
+  // ── Cave à vins ──
+  "cave à vins Angers", "cave à vins Avignon", "cave à vins Bayonne",
+  "cave à vins Béziers", "cave à vins Brest", "cave à vins Caen",
+  "cave à vins Clermont-Ferrand", "cave à vins Colmar", "cave à vins Dijon",
+  "cave à vins La Rochelle", "cave à vins Le Mans", "cave à vins Limoges",
+  "cave à vins Metz", "cave à vins Nancy", "cave à vins Orléans",
+  "cave à vins Pau", "cave à vins Rouen", "cave à vins Toulon",
 ];
 
 // 3 queries par run × 12 runs/jour = 36 queries/jour
@@ -218,8 +257,8 @@ function inferBusinessType(query: string): string {
   if (/coiffeur|salon de coiffure|barbier/.test(q)) return "coiffeur";
   if (/boulangerie|patisserie|viennoiserie|chocolatier/.test(q)) return "boulangerie";
   if (/glacier|glace/.test(q)) return "glacier";
-  if (/cafe|bar |salon de the|cave a vins|cave a biere/.test(q)) return "cafe";
-  if (/plombier|chauffagiste/.test(q)) return "plombier";
+  if (/cafe|bar |salon de the|cave a vins|cave a biere|epicerie fine/.test(q)) return "cafe";
+  if (/plombier|chauffagiste|menuisier|peintre|charpentier|couvreur|macon|carreleur/.test(q)) return "plombier";
   if (/electricien/.test(q)) return "electricien";
   if (/garage|mecanique|carrossier|controle technique/.test(q)) return "garage";
   if (/fleuriste/.test(q)) return "fleuriste";
@@ -251,10 +290,10 @@ async function runCron(req: NextRequest) {
 
   const query = req.nextUrl.searchParams.get("query")?.trim().slice(0, 200) || "";
   const batchParam = Number(req.nextUrl.searchParams.get("batch"));
-  // 60 emails par run × 12 runs/jour = 720 emails/jour → ~18 720 en 26 jours (quota Brevo 20k) ✅
+  // 80 emails par run × 12 runs/jour = 960 emails/jour → ~20k en 21 jours ✅
   const batch_size = Number.isFinite(batchParam) && batchParam > 0
     ? Math.min(80, Math.max(1, Math.floor(batchParam)))
-    : 60;
+    : 80;
 
   // Rotation par fenêtre de 1h (crons horaires) pour varier les requêtes à chaque run
   const queries: string[] = query ? [query] : (() => {

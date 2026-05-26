@@ -10,6 +10,9 @@
     "src/app/api/prospect/find/route.ts": {
       "maxDuration": 60
     },
+    "src/app/api/prospect/find-cron/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/gmb/cron/route.ts": {
       "maxDuration": 120
     },
@@ -40,6 +43,10 @@
     { "path": "/api/prospect/cron", "schedule": "0 16 * * *" },
     { "path": "/api/prospect/cron", "schedule": "0 17 * * *" },
     { "path": "/api/prospect/cron", "schedule": "0 18 * * *" },
+    { "path": "/api/prospect/find-cron", "schedule": "0 19 * * *" },
+    { "path": "/api/prospect/find-cron", "schedule": "0 20 * * *" },
+    { "path": "/api/prospect/find-cron", "schedule": "0 21 * * *" },
+    { "path": "/api/prospect/find-cron", "schedule": "0 22 * * *" },
     { "path": "/api/gmb/cron", "schedule": "0 9 * * 1-6" },
     { "path": "/api/agentconceptor/posts/cron", "schedule": "0 7 * * 1" },
     { "path": "/api/agentconceptor/prospect/cron", "schedule": "0 8 * * 1-5" },
