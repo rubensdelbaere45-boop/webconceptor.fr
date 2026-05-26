@@ -239,7 +239,7 @@ export default async function RestaurantPage({
                 <strong>✨ Aperçu exclusif créé pour vous</strong>
                 <p>Voici votre carte telle que vos clients la verront sur leur téléphone.</p>
               </div>
-              <a href="https://webconceptor.fr/tableflow" className="demo-btn">
+              <a href={`/api/tableflow/checkout?slug=${p.slug}`} className="demo-btn">
                 Activer →
               </a>
             </div>
@@ -327,13 +327,13 @@ export default async function RestaurantPage({
 
             {isDemo ? (
               <div className="cta-box">
-                <p className="cta-tagline">Offre de lancement · places limitées</p>
+                <p className="cta-tagline">Offre de lancement · 14 jours gratuits</p>
                 <p className="cta-price">49 €<span>/mois</span></p>
-                <p className="cta-sub">Sans engagement · 14 jours gratuits</p>
-                <a href="https://webconceptor.fr/tableflow" className="cta-btn">
+                <p className="cta-sub">Sans engagement · Résiliable en 1 clic</p>
+                <a href={`/api/tableflow/checkout?slug=${p.slug}`} className="cta-btn">
                   Activer mon menu digital →
                 </a>
-                <p className="cta-reassure">✓ Votre carte mise à jour en 2 min · ✓ QR code inclus · ✓ Résiliable en 1 clic</p>
+                <p className="cta-reassure">✓ Votre carte mise à jour en 2 min · ✓ QR code inclus · ✓ Paiement sécurisé Stripe</p>
               </div>
             ) : (
               <p className="powered">

@@ -28,6 +28,12 @@
     "src/app/api/tableflow/qrcode/route.ts": {
       "maxDuration": 10
     },
+    "src/app/api/tableflow/checkout/route.ts": {
+      "maxDuration": 10
+    },
+    "src/app/api/tableflow/webhook/route.ts": {
+      "maxDuration": 10
+    },
     "src/app/api/gmb/cron/route.ts": {
       "maxDuration": 120
     },
