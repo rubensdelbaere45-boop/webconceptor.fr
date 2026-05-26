@@ -451,13 +451,12 @@ async function callClaudeAudit(input: ClaudeAuditInput): Promise<DeepAudit | nul
     if (isOpenRouter) {
       // OpenRouter proxy Claude Haiku, pas de prompt caching natif via OpenRouter
       body = {
-        model: "anthropic/claude-haiku-4.5",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         messages: [
           { role: "system", content: AUDIT_SYSTEM_PROMPT },
           { role: "user", content: userBrief + schemaHint },
         ],
         max_tokens: 2000,
-        response_format: { type: "json_object" },
       };
     } else {
       // Anthropic direct — active le prompt caching sur le system prompt

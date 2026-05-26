@@ -243,7 +243,7 @@ Règles STRICTES :
 
     const body = isOpenRouter
       ? {
-          model: "anthropic/claude-haiku-4.5",
+          model: "meta-llama/llama-3.3-70b-instruct:free",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 1200,
         }
