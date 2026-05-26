@@ -335,8 +335,44 @@ function buildLocalAuditTeaser(
   return "notamment sur la vitesse de chargement et l'expérience utilisateur";
 }
 
+async function callLLM(
+  prompt: string,
+  keys: { openrouter?: string; anthropic?: string },
+  maxTokens = 800
+): Promise<string | null> {
+  const orKey = keys.openrouter;
+  const anKey = keys.anthropic;
+
+  // Try OpenRouter first; on 403 (quota exhausted) fall back to direct Anthropic API
+  for (const [k, isOR] of [[orKey, true], [anKey, false]] as [string | undefined, boolean][]) {
+    if (!k) continue;
+    const endpoint = isOR
+      ? "https://openrouter.ai/api/v1/chat/completions"
+      : "https://api.anthropic.com/v1/messages";
+    const body = isOR
+      ? { model: "anthropic/claude-haiku-4.5", messages: [{ role: "user", content: prompt }], max_tokens: maxTokens, response_format: { type: "json_object" } }
+      : { model: "claude-haiku-4-5", max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] };
+    const headers: Record<string, string> = isOR
+      ? { "Content-Type": "application/json", "Authorization": `Bearer ${k}` }
+      : { "Content-Type": "application/json", "x-api-key": k, "anthropic-version": "2023-06-01" };
+    try {
+      const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) });
+      if (!res.ok) {
+        if (res.status === 403 || res.status === 429) continue; // quota/rate-limit → try next key
+        return null;
+      }
+      const data = await res.json();
+      return isOR ? (data.choices?.[0]?.message?.content ?? null) : (data.content?.[0]?.text ?? null);
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<RestaurantContent> {
-  const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
+  const orKey = process.env.OPENROUTER_API_KEY;
+  const anKey = process.env.ANTHROPIC_API_KEY;
   const label = getBusinessLabel(prospect.business_type);
 
   /* ── Valeurs calculées LOCALEMENT (jamais envoyées à Claude) ─────────────
@@ -367,12 +403,7 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
     emailPitch: `J'ai préparé une maquette personnalisée pour votre ${label.name}${prospect.city ? ` à ${prospect.city}` : ""}. Elle reflète votre activité et peut être mise en ligne rapidement.`,
   };
 
-  if (!key) return fallback;
-
-  const isOpenRouter = key.startsWith("sk-or-");
-  const endpoint = isOpenRouter
-    ? "https://openrouter.ai/api/v1/chat/completions"
-    : "https://api.anthropic.com/v1/messages";
+  if (!orKey && !anKey) return fallback;
 
   /* ── Contexte minimal pour Claude ───────────────────────────────────────
      On ne donne que ce dont il a besoin pour personnaliser le TEXTE.
@@ -429,34 +460,7 @@ Réponds avec UNIQUEMENT ce JSON (clés exactes) :
 JSON valide uniquement, aucun commentaire.`;
 
   try {
-    const body = isOpenRouter
-      ? {
-          model: "anthropic/claude-haiku-4.5",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 800,
-          response_format: { type: "json_object" },
-        }
-      : {
-          model: "claude-haiku-4-5",
-          max_tokens: 800,
-          messages: [{ role: "user", content: prompt }],
-        };
-
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: isOpenRouter
-        ? { "Content-Type": "application/json", "Authorization": `Bearer ${key}` }
-        : { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (!res.ok) return fallback;
-
-    const data = await res.json();
-    const raw = isOpenRouter
-      ? data.choices?.[0]?.message?.content
-      : data.content?.[0]?.text;
+    const raw = await callLLM(prompt, { openrouter: orKey, anthropic: anKey });
     if (!raw) return fallback;
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
