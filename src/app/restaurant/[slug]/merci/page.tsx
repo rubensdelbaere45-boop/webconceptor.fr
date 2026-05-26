@@ -199,8 +199,8 @@ export default async function MerciPage({
             }}>
               <p style={{ fontSize: 13, color: "#9CA3AF" }}>
                 Une question ? Répondez à l&apos;email de confirmation ou écrivez à{" "}
-                <a href="mailto:rubens@webconceptor.fr" style={{ color: "#c19a56", fontWeight: 600 }}>
-                  rubens@webconceptor.fr
+                <a href="mailto:contact@webconceptor.fr" style={{ color: "#c19a56", fontWeight: 600 }}>
+                  contact@webconceptor.fr
                 </a>
               </p>
             </div>

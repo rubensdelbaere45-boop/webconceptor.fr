@@ -55,7 +55,7 @@ function Unauthorized({ reason }: { reason: string }) {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Accès refusé</h1>
           <p style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>{reason}</p>
           <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 20 }}>
-            Contactez <a href="mailto:rubens@webconceptor.fr" style={{ color: "#c19a56" }}>rubens@webconceptor.fr</a> si vous avez besoin d&apos;aide.
+            Contactez <a href="mailto:contact@webconceptor.fr" style={{ color: "#c19a56" }}>contact@webconceptor.fr</a> si vous avez besoin d&apos;aide.
           </p>
         </div>
       </body>
