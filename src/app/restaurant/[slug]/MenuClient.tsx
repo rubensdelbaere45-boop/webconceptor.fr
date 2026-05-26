@@ -11,6 +11,7 @@ export interface MenuItem {
   description?: string;
   price?: string | number;
   category?: string;
+  sold_out?: boolean;
 }
 
 interface MenuClientProps {
@@ -19,6 +20,8 @@ interface MenuClientProps {
   photos: string[];
   restaurantName: string;
   isDemo: boolean;
+  phone?: string;          // pour WhatsApp
+  googlePlaceId?: string;  // pour avis Google
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -66,16 +69,28 @@ function getDishBg(item: MenuItem, photos: string[], index: number): { type: "ph
   return { type: "gradient", value: gradients[index % gradients.length] };
 }
 
-/* ─── Génère l'URL Pollinations.ai pour une image IA du plat ────────────── */
+/* ─── Seed déterministe → même plat = même image (cache Pollinations) ───── */
+function dishSeed(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
+  return Math.abs(h) % 9999999;
+}
+
+/* ─── Génère l'URL Pollinations FLUX pour un rendu hyperréaliste ─────────── */
 function buildDishImageUrl(item: MenuItem): string {
-  const parts = [
-    "professional food photography",
+  const prompt = [
+    "hyperrealistic food photography",
     item.name,
-    item.description ? item.description.slice(0, 80) : "",
-    "appetizing, restaurant quality, elegant plating, dark background, cinematic lighting",
-  ].filter(Boolean);
-  const prompt = parts.join(", ");
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&enhance=true`;
+    item.description ? item.description.slice(0, 100) : "",
+    "michelin star plating, professional chef, studio lighting, shallow depth of field, 85mm lens, bokeh background, appetizing, award-winning food photo, 4k uhd",
+  ].filter(Boolean).join(", ");
+
+  const seed = dishSeed(item.name + (item.description || ""));
+
+  return (
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+    `?model=flux&width=1024&height=1024&nologo=true&enhance=true&seed=${seed}`
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -159,7 +174,7 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         gap: 24,
       }}>
-        {/* Spinner pendant chargement */}
+        {/* Spinner pendant chargement FLUX */}
         {!imgLoaded && !camError && (
           <div style={{ textAlign: "center", animation: "fadeUp 0.5s ease" }}>
             <div style={{
@@ -169,11 +184,11 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
               animation: "spin 1s linear infinite",
               margin: "0 auto 16px",
             }} />
-            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, fontWeight: 600 }}>
-              Génération du plat en cours…
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 15, fontWeight: 700 }}>
+              Génération FLUX IA…
             </p>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 4 }}>
-              Powered by IA · Pollinations
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>
+              Rendu hyperréaliste • quelques secondes
             </p>
           </div>
         )}
@@ -303,18 +318,26 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
    DishModal — Slide-up au clic sur un plat
    ══════════════════════════════════════════════════════════════════ */
 function DishModal({
-  item, index, photos, restaurantName, onClose, onAR,
+  item, index, photos, restaurantName, phone, onClose, onAR,
 }: {
   item: MenuItem;
   index: number;
   photos: string[];
   restaurantName: string;
+  phone?: string;
   onClose: () => void;
   onAR: () => void;
 }) {
   const bg    = getDishBg(item, photos, index);
   const price = fmtPrice(item.price);
   const cfg   = getCat(item.category);
+
+  /* WhatsApp — numéro nettoyé */
+  const waPhone = phone ? phone.replace(/\D/g, "").replace(/^0/, "33") : "";
+  const waMsg   = encodeURIComponent(
+    `Bonjour, je voudrais commander : ${item.name}${price ? ` (${price})` : ""} 🍽`
+  );
+  const waUrl   = waPhone ? `https://wa.me/${waPhone}?text=${waMsg}` : "";
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -364,27 +387,42 @@ function DishModal({
             color: "#fff", fontSize: 18, fontWeight: 700,
             display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
           }}>✕</button>
-          <div style={{
-            position: "absolute", bottom: 16, left: 16,
-            display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.25)",
-            padding: "5px 12px", borderRadius: 20,
-            color: "#fff", fontSize: 12, fontWeight: 600,
-            textTransform: "uppercase", letterSpacing: "0.05em",
-          }}>
-            {cfg.emoji} {item.category || "Carte"}
-          </div>
+          {/* Badge catégorie ou Épuisé */}
+          {item.sold_out ? (
+            <div style={{
+              position: "absolute", bottom: 16, left: 16,
+              background: "rgba(220,38,38,0.85)", backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              padding: "5px 12px", borderRadius: 20,
+              color: "#fff", fontSize: 12, fontWeight: 700,
+              textTransform: "uppercase", letterSpacing: "0.05em",
+            }}>
+              🚫 Épuisé
+            </div>
+          ) : (
+            <div style={{
+              position: "absolute", bottom: 16, left: 16,
+              display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              padding: "5px 12px", borderRadius: 20,
+              color: "#fff", fontSize: 12, fontWeight: 600,
+              textTransform: "uppercase", letterSpacing: "0.05em",
+            }}>
+              {cfg.emoji} {item.category || "Carte"}
+            </div>
+          )}
         </div>
 
         {/* Contenu */}
         <div style={{ padding: "24px 24px 40px" }}>
           <h2 style={{
             fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: 28, fontWeight: 700, color: "#111827",
+            fontSize: 28, fontWeight: 700, color: item.sold_out ? "#9CA3AF" : "#111827",
             lineHeight: 1.2, marginBottom: 12,
           }}>
             {item.name}
+            {item.sold_out && <span style={{ fontSize: 16, color: "#EF4444", marginLeft: 10 }}>Épuisé</span>}
           </h2>
 
           {item.description && (
@@ -418,25 +456,47 @@ function DishModal({
             </div>
           </div>
 
-          {/* ✨ Bouton AR */}
-          <button
-            onClick={onAR}
-            style={{
-              width: "100%",
-              background: "linear-gradient(135deg, #1a1310 0%, #2d1f0e 100%)",
-              color: "#c19a56",
-              padding: "16px 24px", borderRadius: 14,
-              fontWeight: 700, fontSize: 15,
-              border: "1px solid rgba(193,154,86,0.3)",
-              cursor: "pointer", fontFamily: "inherit",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              marginBottom: 12,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            }}
-          >
-            <span style={{ fontSize: 20 }}>📷</span>
-            Voir ce plat en réalité augmentée
-          </button>
+          {/* ✨ Bouton AR — désactivé si épuisé */}
+          {!item.sold_out && (
+            <button
+              onClick={onAR}
+              style={{
+                width: "100%",
+                background: "linear-gradient(135deg, #1a1310 0%, #2d1f0e 100%)",
+                color: "#c19a56",
+                padding: "16px 24px", borderRadius: 14,
+                fontWeight: 700, fontSize: 15,
+                border: "1px solid rgba(193,154,86,0.3)",
+                cursor: "pointer", fontFamily: "inherit",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                marginBottom: 12,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              }}
+            >
+              <span style={{ fontSize: 20 }}>📷</span>
+              Voir en réalité augmentée (IA)
+            </button>
+          )}
+
+          {/* 💬 Commander via WhatsApp */}
+          {waUrl && !item.sold_out && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                width: "100%",
+                background: "#25D366", color: "#fff",
+                padding: "15px 24px", borderRadius: 14,
+                fontWeight: 700, fontSize: 15, textDecoration: "none",
+                marginBottom: 12,
+              }}
+            >
+              <span style={{ fontSize: 20 }}>💬</span>
+              Commander via WhatsApp
+            </a>
+          )}
 
           {/* Retour */}
           <button
@@ -459,21 +519,26 @@ function DishModal({
 /* ══════════════════════════════════════════════════════════════════
    MenuClient — composant principal
    ══════════════════════════════════════════════════════════════════ */
-export default function MenuClient({ groups, photos, restaurantName, isDemo }: MenuClientProps) {
+export default function MenuClient({ groups, photos, restaurantName, isDemo, phone, googlePlaceId }: MenuClientProps) {
   const [selectedItem, setSelectedItem] = useState<{ item: MenuItem; index: number } | null>(null);
   const [arItem, setArItem]             = useState<MenuItem | null>(null);
   const cats = Object.keys(groups);
 
   let globalIndex = 0;
 
-  const close    = useCallback(() => setSelectedItem(null), []);
-  const closeAR  = useCallback(() => setArItem(null), []);
+  const close   = useCallback(() => setSelectedItem(null), []);
+  const closeAR = useCallback(() => setArItem(null), []);
 
   function openAR() {
     if (!selectedItem) return;
-    setSelectedItem(null);  // ferme le modal
+    setSelectedItem(null);
     setArItem(selectedItem.item);
   }
+
+  /* Lien Google Reviews */
+  const googleReviewUrl = googlePlaceId
+    ? `https://search.google.com/local/writereview?placeid=${googlePlaceId}`
+    : null;
 
   return (
     <>
@@ -520,24 +585,37 @@ export default function MenuClient({ groups, photos, restaurantName, isDemo }: M
                       key={idx}
                       onClick={() => setSelectedItem({ item, index: idx })}
                       style={{
-                        background: "#fff", borderRadius: 14,
-                        border: "1px solid #F0EDE8", padding: "14px 16px",
+                        background: item.sold_out ? "#F9FAFB" : "#fff",
+                        borderRadius: 14,
+                        border: item.sold_out ? "1px solid #E5E7EB" : "1px solid #F0EDE8",
+                        padding: "14px 16px",
                         display: "flex", gap: 12, alignItems: "flex-start",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                         cursor: "pointer", textAlign: "left",
                         width: "100%", fontFamily: "inherit",
                         transition: "transform 0.15s, box-shadow 0.15s",
+                        opacity: item.sold_out ? 0.65 : 1,
                       }}
-                      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
+                      onMouseDown={(e) => { if (!item.sold_out) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
                       onMouseUp={(e)   => { (e.currentTarget as HTMLButtonElement).style.transform = ""; }}
                     >
                       <div style={{
                         width: 8, height: 8, borderRadius: "50%", marginTop: 5, flexShrink: 0,
-                        background: `linear-gradient(135deg,${cfg.g1},${cfg.g2})`,
+                        background: item.sold_out ? "#D1D5DB" : `linear-gradient(135deg,${cfg.g1},${cfg.g2})`,
                       }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14.5, color: "#111827", lineHeight: 1.35 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14.5, color: item.sold_out ? "#9CA3AF" : "#111827", lineHeight: 1.35 }}>
                           {item.name}
+                          {item.sold_out && (
+                            <span style={{
+                              marginLeft: 8, fontSize: 10, fontWeight: 700,
+                              background: "#FEE2E2", color: "#DC2626",
+                              padding: "2px 7px", borderRadius: 10,
+                              verticalAlign: "middle",
+                            }}>
+                              ÉPUISÉ
+                            </span>
+                          )}
                         </div>
                         {item.description && (
                           <div style={{
@@ -550,12 +628,12 @@ export default function MenuClient({ groups, photos, restaurantName, isDemo }: M
                         )}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0, gap: 6 }}>
-                        {price && <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{price}</div>}
+                        {price && <div style={{ fontWeight: 700, fontSize: 15, color: item.sold_out ? "#9CA3AF" : "#111827" }}>{price}</div>}
                         <div style={{
                           width: 24, height: 24, borderRadius: 8,
-                          background: `linear-gradient(135deg,${cfg.g1},${cfg.g2})`,
+                          background: item.sold_out ? "#F3F4F6" : `linear-gradient(135deg,${cfg.g1},${cfg.g2})`,
                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
-                        }}>👁</div>
+                        }}>{item.sold_out ? "🚫" : "👁"}</div>
                       </div>
                     </button>
                   );
@@ -566,6 +644,35 @@ export default function MenuClient({ groups, photos, restaurantName, isDemo }: M
         })}
       </div>
 
+      {/* ── CTA Google Reviews (si is_live et place_id connu) ────────── */}
+      {!isDemo && googleReviewUrl && (
+        <div style={{ margin: "24px 16px 8px" }}>
+          <a
+            href={googleReviewUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              background: "#fff",
+              border: "1.5px solid #FDE68A",
+              borderRadius: 16, padding: "16px 20px",
+              textDecoration: "none",
+              boxShadow: "0 2px 12px rgba(245,158,11,0.1)",
+            }}
+          >
+            <span style={{ fontSize: 24 }}>⭐</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
+                Vous avez apprécié votre repas ?
+              </div>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                Laissez un avis Google — 30 secondes →
+              </div>
+            </div>
+          </a>
+        </div>
+      )}
+
       {/* ── Modal plat ────────────────────────────────────────────────── */}
       {selectedItem && !arItem && (
         <DishModal
@@ -573,6 +680,7 @@ export default function MenuClient({ groups, photos, restaurantName, isDemo }: M
           index={selectedItem.index}
           photos={photos}
           restaurantName={restaurantName}
+          phone={phone}
           onClose={close}
           onAR={openAR}
         />
@@ -582,9 +690,6 @@ export default function MenuClient({ groups, photos, restaurantName, isDemo }: M
       {arItem && (
         <ARView item={arItem} onClose={closeAR} />
       )}
-
-      {/* Supprimer l'avertissement unused */}
-      {isDemo && <></>}
     </>
   );
 }

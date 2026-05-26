@@ -12,6 +12,7 @@ export interface MenuItem {
   description?: string;
   price?: string | number;
   category?: string;
+  sold_out?: boolean;
 }
 
 interface Restaurant {
@@ -24,6 +25,7 @@ interface Restaurant {
   is_live?: boolean;
   photos?: string[];
   admin_token: string;
+  scan_count?: number;
 }
 
 interface AdminClientProps {
@@ -366,18 +368,18 @@ export default function AdminClient({ restaurant, initialItems }: AdminClientPro
         </div>
 
         {/* Stats bar */}
-        <div style={{ display: "flex", gap: 16, marginBottom: 0 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 0 }}>
           {[
             { label: "Plats", value: items.length },
-            { label: "Catégories", value: Object.keys(groups).length },
-            { label: "Statut", value: restaurant.is_live ? "🟢 En ligne" : "🟡 Démo" },
+            { label: "Scans QR", value: restaurant.scan_count ?? 0 },
+            { label: "Statut", value: restaurant.is_live ? "🟢 Live" : "🟡 Démo" },
           ].map(({ label, value }) => (
             <div key={label} style={{
               flex: 1, background: "rgba(255,255,255,0.08)", borderRadius: "12px 12px 0 0",
-              padding: "10px 14px",
+              padding: "10px 12px",
             }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginTop: 2 }}>{value}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginTop: 2 }}>{value}</div>
             </div>
           ))}
         </div>
@@ -472,7 +474,14 @@ export default function AdminClient({ restaurant, initialItems }: AdminClientPro
 
                         {/* Content */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: "#111827" }}>{item.name}</div>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: item.sold_out ? "#9CA3AF" : "#111827", display: "flex", alignItems: "center", gap: 6 }}>
+                            {item.name}
+                            {item.sold_out && (
+                              <span style={{ fontSize: 10, fontWeight: 700, background: "#FEE2E2", color: "#DC2626", padding: "2px 6px", borderRadius: 8 }}>
+                                ÉPUISÉ
+                              </span>
+                            )}
+                          </div>
                           {item.description && (
                             <div style={{
                               fontSize: 12, color: "#9CA3AF", marginTop: 2,
@@ -490,8 +499,26 @@ export default function AdminClient({ restaurant, initialItems }: AdminClientPro
                           </div>
                         )}
 
-                        {/* Edit / Delete */}
-                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        {/* Épuisé toggle + Edit + Delete */}
+                        <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                          {/* Toggle épuisé */}
+                          <button
+                            onClick={() => {
+                              const newItems = items.map((it, i) =>
+                                i === index ? { ...it, sold_out: !it.sold_out } : it
+                              );
+                              setItems(newItems);
+                              save(newItems);
+                            }}
+                            title={item.sold_out ? "Remettre en vente" : "Marquer épuisé"}
+                            style={{
+                              width: 32, height: 32, borderRadius: 8,
+                              border: item.sold_out ? "1px solid #FCA5A5" : "1px solid #E5E7EB",
+                              background: item.sold_out ? "#FEF2F2" : "#F9FAFB",
+                              cursor: "pointer", fontSize: 14,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                          >{item.sold_out ? "✅" : "🚫"}</button>
                           <button
                             onClick={() => setEditItem({ item, index })}
                             style={editBtnStyle}

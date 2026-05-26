@@ -18,6 +18,7 @@ interface MenuItem {
   description?: string;
   price?: string | number;
   category?: string;
+  sold_out?: boolean;
 }
 
 interface Restaurant {
@@ -31,6 +32,7 @@ interface Restaurant {
   photos?: string[];
   menu_items?: MenuItem[];
   admin_token: string;
+  scan_count?: number;
 }
 
 /* ─── Auth error page ───────────────────────────────────────────────────── */

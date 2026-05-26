@@ -25,6 +25,8 @@ interface Prospect {
   menu_items?: MenuItem[] | null;
   editorial?: string | null;
   is_live?: boolean;
+  place_id?: string;
+  scan_count?: number;
 }
 
 function getSupabase() {
@@ -74,10 +76,14 @@ export default async function RestaurantPage({
   const p = await getProspect(slug);
   if (!p) notFound();
 
-  const isDemo  = !p.is_live;
-  const items   = p.menu_items || [];
-  const groups  = groupItems(items);
-  const cover   = p.photos?.[0] || null;
+  /* ── Compteur de scans (fire-and-forget, atomique) ─────────────── */
+  void getSupabase()
+    .rpc("increment_tf_scan", { slug_param: slug });
+
+  const isDemo      = !p.is_live;
+  const items       = p.menu_items || [];
+  const groups      = groupItems(items);
+  const cover       = p.photos?.[0] || null;
   const extraPhotos = (p.photos || []).slice(1, 5);
 
   return (
@@ -304,6 +310,8 @@ export default async function RestaurantPage({
             photos={p.photos || []}
             restaurantName={p.name}
             isDemo={isDemo}
+            phone={p.phone}
+            googlePlaceId={p.place_id}
           />
 
           {/* ── GALERIE PHOTOS ───────────────────────────────────────────── */}
