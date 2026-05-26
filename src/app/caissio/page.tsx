@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { universalPrint, connectSerialPrinter, detectQZ, PrinterConn, TicketData } from "@/lib/caissio-printer";
 import {
   ArrowRight, Check, Zap, Package, FileSpreadsheet, BarChart3,
   Users, ScanBarcode, Printer, DoorOpen,
@@ -222,6 +223,8 @@ function DemoPOS() {
   const [payMethod, setPayMethod] = useState<"cash" | "card">("card");
   const [cashInput, setCashInput] = useState("");
   const [saleTime, setSaleTime] = useState("");
+  const [printerConn, setPrinterConn] = useState<PrinterConn | null>(null);
+  const [printerStatus, setPrinterStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
 
   const allProducts = useMemo(() => [...DEMO_PRODUCTS, ...extraProducts], [extraProducts]);
   const activeCat = DEMO_CATS.find((c) => c.id === selectedCat);
@@ -283,6 +286,45 @@ function DemoPOS() {
     Math.ceil(total / 20) * 20,
   ].filter((v, i, a) => v >= total && a.indexOf(v) === i).slice(0, 4);
 
+  const connectPrinter = async () => {
+    setPrinterStatus("connecting");
+    try {
+      const hasQZ = await detectQZ();
+      if (hasQZ) {
+        setPrinterConn({ method: "qz", label: "QZ Tray — impression silencieuse" });
+        setPrinterStatus("connected");
+        return;
+      }
+      const result = await connectSerialPrinter();
+      setPrinterConn({ method: "serial", label: result.label, port: result.port });
+      setPrinterStatus("connected");
+    } catch {
+      setPrinterStatus("error");
+      setTimeout(() => setPrinterStatus("idle"), 3000);
+    }
+  };
+
+  const handleDemoPrint = async () => {
+    const ticketData: TicketData = {
+      storeName: "Caissio Démo",
+      ticketNum: Date.now().toString().slice(-6),
+      dateStr: `${new Date().toLocaleDateString("fr-FR")} ${saleTime}`,
+      items: cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+      subtotal,
+      discount,
+      total,
+      payMode: payMethod,
+      ...(payMethod === "cash" && cashNum > 0 ? { cashGiven: cashNum } : {}),
+      ...(payMethod === "cash" && change > 0 ? { change } : {}),
+    };
+    try {
+      await universalPrint(ticketData, printerConn);
+    } catch (e) {
+      console.error("[DemoPOS] Print error:", e);
+    }
+    reset();
+  };
+
   const handleAddProduct = () => {
     const price = parseFloat(addForm.price);
     if (!addForm.name.trim() || isNaN(price)) return;
@@ -306,6 +348,42 @@ function DemoPOS() {
         <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#fcd34d" }} />
         <div style={{ height: 10, width: 10, borderRadius: "50%", background: "#86efac" }} />
         <div style={{ margin: "0 auto", fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>caissio.app · /caisse</div>
+      </div>
+
+      {/* ── Printer bar ── */}
+      <div style={{
+        background: printerStatus === "connected" ? "#f0fdf4" : printerStatus === "error" ? "#fef2f2" : "#fffbeb",
+        borderBottom: "1px solid " + (printerStatus === "connected" ? "#bbf7d0" : printerStatus === "error" ? "#fecaca" : "#fde68a"),
+        padding: "7px 16px",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%",
+            background: printerStatus === "connected" ? "#16a34a" : printerStatus === "error" ? "#dc2626" : printerStatus === "connecting" ? "#f59e0b" : "#d97706",
+          }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: printerStatus === "connected" ? "#15803d" : printerStatus === "error" ? "#b91c1c" : "#92400e" }}>
+            {printerStatus === "connecting" && "Connexion en cours…"}
+            {printerStatus === "connected" && (printerConn?.label ?? "Connectée")}
+            {printerStatus === "error" && "Connexion échouée — vérifiez l'imprimante"}
+            {printerStatus === "idle" && "Branchez votre imprimante pour imprimer le ticket directement depuis la démo"}
+          </span>
+        </div>
+        {printerStatus === "idle" && (
+          <button onClick={connectPrinter}
+            style={{ height: 26, padding: "0 12px", borderRadius: 7, background: "#4f46e5", color: "#fff", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+            🖨 Connecter mon imprimante
+          </button>
+        )}
+        {printerStatus === "connecting" && (
+          <span style={{ fontSize: 11, color: "#92400e" }}>…</span>
+        )}
+        {printerStatus === "connected" && (
+          <button onClick={() => { setPrinterConn(null); setPrinterStatus("idle"); }}
+            style={{ height: 26, padding: "0 10px", borderRadius: 7, background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 600, border: "1px solid #bbf7d0", cursor: "pointer" }}>
+            Déconnecter
+          </button>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 300px", minHeight: 560, position: "relative" }}>
@@ -623,11 +701,15 @@ function DemoPOS() {
             <div style={{ padding: "0 20px 16px" }}>
               <div style={{ fontWeight: 700, fontSize: 12, color: "#0f172a", marginBottom: 8 }}>Le client souhaite son ticket ?</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 8 }}>
-                {([["Imprimer", Printer], ["Email", Mail], ["SMS", Phone]] as const).map(([label, Icon]) => (
-                  <button key={label} onClick={reset} style={{ height: 36, borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer" }}>
-                    <Icon style={{ width: 11, height: 11 }} /> {label}
-                  </button>
-                ))}
+                <button onClick={handleDemoPrint} style={{ height: 36, borderRadius: 10, background: printerConn ? "#ede9fe" : "#f8fafc", border: printerConn ? "1px solid #c4b5fd" : "1px solid #e2e8f0", color: printerConn ? "#4f46e5" : "#0f172a", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer" }}>
+                  <Printer style={{ width: 11, height: 11 }} /> Imprimer
+                </button>
+                <button onClick={reset} style={{ height: 36, borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer" }}>
+                  <Mail style={{ width: 11, height: 11 }} /> Email
+                </button>
+                <button onClick={reset} style={{ height: 36, borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer" }}>
+                  <Phone style={{ width: 11, height: 11 }} /> SMS
+                </button>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 <button onClick={reset} style={{ height: 36, borderRadius: 10, background: "#d1fae5", border: "none", color: "#065f46", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>

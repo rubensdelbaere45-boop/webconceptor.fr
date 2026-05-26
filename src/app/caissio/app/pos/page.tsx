@@ -4,7 +4,7 @@ import {
   Search, Trash2, Plus, Minus, Percent, CreditCard, Banknote,
   Receipt, DoorOpen, X, Check, Leaf, Mail, Phone, Printer,
   PauseCircle, RotateCcw, Users, Delete, UserCheck,
-  ChevronLeft, BookOpen, PlusCircle, Edit2,
+  ChevronLeft, BookOpen, PlusCircle, Edit2, Loader2,
 } from "lucide-react";
 import {
   getProducts, getCustomers, recordSale, getStoreSettings,
@@ -12,6 +12,7 @@ import {
   migrateMissingCategories, migrateV2,
   type Product, type Customer,
 } from "@/lib/caissio-store";
+import { detectQZ, printViaQZ, type TicketData } from "@/lib/caissio-printer";
 
 /* ── Types ───────────────────────────────────────── */
 type CartItem = { id: string; name: string; price: number; qty: number };
@@ -296,6 +297,11 @@ export default function POSPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "cat" | "prod"; catName?: string; product?: Product } | null>(null);
   const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* Email ticket */
+  const [emailStep, setEmailStep] = useState<null | "input" | "sending" | "done">(null);
+  const [emailVal,  setEmailVal]  = useState("");
+  const [smsToast,  setSmsToast]  = useState(false);
+
   /* Long-press helpers */
   const startLongPress = (e: React.MouseEvent | React.TouchEvent, menu: NonNullable<CtxMenu>) => {
     lpTimer.current = setTimeout(() => {
@@ -408,6 +414,69 @@ export default function POSPage() {
 
   const activeCat = selectedCat ? getCatDef(selectedCat) : null;
 
+  /* ── Impression ──────────────────────────────────── */
+  const handlePrint = async () => {
+    if (!completedSale) return;
+    // ── Tentative QZ Tray : impression silencieuse sur toutes imprimantes thermiques ──
+    try {
+      const hasQZ = await detectQZ();
+      if (hasQZ) {
+        const ticketData: TicketData = {
+          storeName:    settings.name,
+          storeAddress: settings.address || undefined,
+          ticketNum:    completedSale.ticketNum,
+          dateStr:      new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+          items:        cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+          subtotal, discount, total, payMode,
+          ...(payMode === "cash" && cashNum > 0 ? { cashGiven: cashNum } : {}),
+          ...(completedSale.change > 0 ? { change: completedSale.change } : {}),
+        };
+        await printViaQZ(ticketData);
+        setTimeout(clearAll, 500);
+        return;
+      }
+    } catch { /* QZ non disponible, on continue vers le fallback navigateur */ }
+    // ── Fallback : dialogue navigateur avec le ticket HTML déjà rendu ──
+    setTimeout(() => {
+      window.print();
+      setTimeout(clearAll, 1000);
+    }, 100);
+  };
+
+  /* ── Envoi email ticket ───────────────────────────── */
+  const sendByEmail = async () => {
+    if (!emailVal.trim() || !completedSale) return;
+    setEmailStep("sending");
+    try {
+      await fetch("/api/caissio/send-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toEmail:      emailVal.trim(),
+          storeName:    settings.name,
+          storeAddress: settings.address || undefined,
+          siret:        settings.siret   || undefined,
+          ticketNum:    completedSale.ticketNum,
+          items:        cart.map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+          subtotal, discount, total, payMode,
+          cashGiven:    payMode === "cash" ? cashNum : undefined,
+          change:       completedSale.change > 0 ? completedSale.change : undefined,
+          customerName: selectedCustomer?.name,
+        }),
+      });
+      setEmailStep("done");
+      setTimeout(() => { setEmailStep(null); setEmailVal(""); clearAll(); }, 1800);
+    } catch {
+      setEmailStep("input");
+    }
+  };
+
+  /* ── Toast SMS ────────────────────────────────────── */
+  const handleSms = () => {
+    setSmsToast(true);
+    setTimeout(() => setSmsToast(false), 2500);
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: "'IBM Plex Sans',sans-serif" }}>
       <style>{`
@@ -417,6 +486,25 @@ export default function POSPage() {
         .cat-card:active { transform: scale(0.97); }
         .prod-card:hover:not(:disabled) { transform: scale(0.97); filter: brightness(0.95); }
         .prod-card:active:not(:disabled) { transform: scale(0.93); }
+        @media print {
+          @page {
+            size: 80mm auto;
+            margin: 2mm;
+          }
+          body * { visibility: hidden !important; }
+          #ticket-print, #ticket-print * { visibility: visible !important; }
+          #ticket-print {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 76mm !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 2mm !important;
+            background: #fff !important;
+          }
+        }
       `}</style>
 
       {/* ══════════ LEFT: Categories / Products ══════════ */}
@@ -842,6 +930,56 @@ export default function POSPage() {
         </div>
       )}
 
+      {/* ── Modal email ticket ── */}
+      {emailStep && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 380, padding: 28, boxShadow: "0 32px 80px rgba(0,0,0,.25)" }}>
+            {emailStep === "done" ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <Check style={{ width: 28, height: 28, color: "#059669" }} />
+                </div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Ticket envoyé !</div>
+                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>{emailVal}</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Envoyer par email</div>
+                <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 20 }}>Entrez l&apos;adresse email du client</div>
+                <input
+                  type="email"
+                  value={emailVal}
+                  onChange={(e) => setEmailVal(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendByEmail()}
+                  placeholder="client@example.com"
+                  autoFocus
+                  style={{ width: "100%", height: 48, padding: "0 14px", border: "2px solid #4f46e5", borderRadius: 12, fontSize: 15, outline: "none", marginBottom: 14, boxSizing: "border-box" }}
+                />
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => { setEmailStep(null); setEmailVal(""); }}
+                    style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#f8fafc", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#64748b" }}>
+                    Annuler
+                  </button>
+                  <button onClick={sendByEmail} disabled={emailStep === "sending" || !emailVal.trim()}
+                    style={{ flex: 2, height: 44, borderRadius: 12, border: "none", background: emailVal.trim() ? "#4f46e5" : "#e0e7ff", color: emailVal.trim() ? "#fff" : "#a5b4fc", fontWeight: 700, fontSize: 14, cursor: emailVal.trim() ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {emailStep === "sending"
+                      ? <><Loader2 style={{ width: 16, height: 16 }} /> Envoi...</>
+                      : <><Mail style={{ width: 16, height: 16 }} /> Envoyer</>}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast SMS ── */}
+      {smsToast && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 400, background: "#0f172a", color: "#fff", padding: "12px 20px", borderRadius: 30, fontSize: 13, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
+          📱 SMS disponible dans la prochaine version
+        </div>
+      )}
+
       {/* ── Formulaire article ── */}
       {productForm.open && (
         <ProductFormModal
@@ -949,7 +1087,7 @@ export default function POSPage() {
               </div>
             </div>
             <div style={{ padding: 20, maxHeight: 380, overflowY: "auto", background: "#fafafa", borderBottom: "1px solid #e2e8f0" }}>
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px 20px" }}>
+              <div id="ticket-print" style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px 20px" }}>
                 <ThermalTicket cart={cart} total={total} subtotal={subtotal} discount={discount}
                   payMode={payMode} cashGiven={cashNum} change={completedSale.change}
                   customer={selectedCustomer} ticketNum={completedSale.ticketNum} settings={settings} />
@@ -958,9 +1096,9 @@ export default function POSPage() {
             <div style={{ padding: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Le client souhaite-t-il son ticket ?</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
-                <button onClick={clearAll} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Printer style={{ width: 14, height: 14 }} /> Imprimer</button>
-                <button onClick={clearAll} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Mail style={{ width: 14, height: 14 }} /> Email</button>
-                <button onClick={clearAll} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Phone style={{ width: 14, height: 14 }} /> SMS</button>
+                <button onClick={handlePrint} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Printer style={{ width: 14, height: 14 }} /> Imprimer</button>
+                <button onClick={() => setEmailStep("input")} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Mail style={{ width: 14, height: 14 }} /> Email</button>
+                <button onClick={handleSms} style={{ height: 48, borderRadius: 12, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Phone style={{ width: 14, height: 14 }} /> SMS</button>
                 <button onClick={clearAll} style={{ height: 48, borderRadius: 12, border: "none", background: "#10b981", fontSize: 12, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}><Leaf style={{ width: 14, height: 14 }} /> Non merci</button>
               </div>
             </div>
