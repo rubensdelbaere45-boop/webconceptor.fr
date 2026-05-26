@@ -98,6 +98,22 @@ function buildMenuPreviewHtml(menuItems: Prospect["menu_items"]): string {
     </div>`;
 }
 
+/* ─── Extrait 2-3 plats emblématiques pour la personnalisation ───────────── */
+function getHighlightDishes(menuItems: Prospect["menu_items"]): string[] {
+  if (!menuItems || menuItems.length === 0) return [];
+  // Privilégie les plats (pas les boissons ni desserts simples)
+  const mainDishes = menuItems.filter((i) => {
+    const cat = (i.category || "").toLowerCase();
+    return /plat|viande|poisson|pizza|burger|galette|ramen|sushi|grillad/i.test(cat);
+  });
+  const source = mainDishes.length >= 2 ? mainDishes : menuItems;
+  // Prend les plats avec un nom le plus expressif (> 5 chars)
+  return source
+    .filter((i) => i.name && i.name.length > 5)
+    .slice(0, 3)
+    .map((i) => i.name);
+}
+
 /* ─── Corps de l'email ────────────────────────────────────────────────────── */
 function buildEmailBody(prospect: Prospect, demoUrl: string): string {
   const rating = prospect.google_rating
@@ -105,10 +121,22 @@ function buildEmailBody(prospect: Prospect, demoUrl: string): string {
     : "";
 
   const menuPreview = buildMenuPreviewHtml(prospect.menu_items);
+  const highlights  = getHighlightDishes(prospect.menu_items);
+
+  // Phrase d'accroche personnalisée avec les vrais plats
+  let dishLine = "";
+  if (highlights.length >= 2) {
+    const listed = highlights.slice(0, 2).map((d) => `<strong>${d}</strong>`).join(", ");
+    dishLine = `Votre <span style="color:#c19a56">${listed}</span> — et toute votre carte — sera désormais visible en 3 secondes sur le téléphone de chaque client qui s'assoit à votre table.`;
+  } else if (highlights.length === 1) {
+    dishLine = `Votre <span style="color:#c19a56"><strong>${highlights[0]}</strong></span> — et toute votre carte — sera désormais visible en 3 secondes sur le téléphone de chaque client.`;
+  } else {
+    dishLine = `Toute votre carte sera visible en 3 secondes sur le téléphone de chaque client qui s'assoit à votre table.`;
+  }
 
   const websiteNote = prospect.website
-    ? `J'ai retrouvé votre site (${new URL(prospect.website).hostname}) et extrait vos plats automatiquement.`
-    : `J'ai créé un menu type pour votre établissement — vous pourrez le personnaliser en quelques clics.`;
+    ? `J'ai retrouvé votre site (${new URL(prospect.website).hostname}) et importé vos plats automatiquement.`
+    : `J'ai reconstruit votre carte — vous pourrez la personnaliser en quelques clics depuis votre téléphone.`;
 
   const coverImg = prospect.photos?.[0]
     ? `<img src="${prospect.photos[0]}" alt="${prospect.name}" width="100%" style="width:100%;height:180px;object-fit:cover;border-radius:12px 12px 0 0;display:block" />`
@@ -128,15 +156,16 @@ function buildEmailBody(prospect: Prospect, demoUrl: string): string {
   </div>
 
   <!-- Accroche -->
-  <p style="margin:0 0 8px;font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#1a1310;line-height:1.2">
-    Bonjour,
-  </p>
-  <p style="margin:0 0 20px;font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#1a1310;line-height:1.2">
-    j'ai digitalisé la carte de <span style="color:#c19a56">${prospect.name}</span>.
+  <p style="margin:0 0 20px;font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#1a1310;line-height:1.25">
+    Bonjour,<br/>j'ai créé le menu digital de <span style="color:#c19a56">${prospect.name}</span>.
   </p>
 
-  <p style="margin:0 0 16px;font-size:15px;color:#4a4340;line-height:1.6">
-    ${websiteNote} Vos clients peuvent maintenant scanner un QR code à table et voir votre carte directement sur leur téléphone — avec les photos des plats.
+  <p style="margin:0 0 16px;font-size:15px;color:#4a4340;line-height:1.7">
+    ${dishLine}
+  </p>
+
+  <p style="margin:0 0 16px;font-size:14px;color:#888;line-height:1.6">
+    ${websiteNote} Il leur suffit de scanner le QR code posé sur la table — aucune appli à télécharger.
   </p>
 
   <!-- Preview carte restaurant -->
@@ -213,17 +242,29 @@ function buildEmailBody(prospect: Prospect, demoUrl: string): string {
 </div>`;
 }
 
-/* ─── Sujet email ─────────────────────────────────────────────────────────── */
+/* ─── Sujet email — personnalisé avec les vrais plats ────────────────────── */
 function buildSubject(prospect: Prospect): string {
-  const subjects = [
+  const highlights = getHighlightDishes(prospect.menu_items);
+  const dish = highlights[0]; // Premier plat emblématique
+
+  if (dish) {
+    const subjects = [
+      `${dish} — sur le téléphone de vos clients dès ce soir`,
+      `Votre ${dish} visible en 3 sec depuis n'importe quelle table`,
+      `${prospect.name} · Menu QR créé — votre ${dish} est dedans`,
+      `J'ai mis votre ${dish} sur smartphone (aperçu pour ${prospect.name})`,
+    ];
+    const idx = prospect.slug.charCodeAt(0) % subjects.length;
+    return subjects[idx];
+  }
+
+  // Fallback sans plat connu
+  const fallbacks = [
     `${prospect.name} — votre carte digitalisée avec QR code`,
     `Votre menu digital prêt pour ${prospect.name}`,
-    `J'ai créé le menu digital de ${prospect.name}`,
-    `${prospect.name} : vos plats sur smartphone (aperçu gratuit)`,
+    `${prospect.name} : vos plats sur smartphone en 3 secondes`,
   ];
-  // Rotation basée sur le slug pour cohérence
-  const idx = prospect.slug.charCodeAt(0) % subjects.length;
-  return subjects[idx];
+  return fallbacks[prospect.slug.charCodeAt(0) % fallbacks.length];
 }
 
 /* ─── Envoi Brevo ─────────────────────────────────────────────────────────── */

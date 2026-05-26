@@ -1,13 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 
-/* ══════════════════════════════════════════
-   TableFlow — Page menu QR mobile-first
-   URL : /restaurant/[slug]
-   Visible par : le restaurateur (démo depuis l'email)
-                 les clients du restaurant (QR code à table)
-   ══════════════════════════════════════════ */
-
 interface MenuItem {
   name: string;
   description?: string;
@@ -15,7 +8,7 @@ interface MenuItem {
   category?: string;
 }
 
-interface TableflowProspect {
+interface Prospect {
   id: string;
   slug: string;
   name: string;
@@ -23,14 +16,13 @@ interface TableflowProspect {
   address?: string;
   phone?: string;
   website?: string;
-  email?: string;
   google_rating?: number;
   google_reviews_count?: number;
   photos?: string[];
   hours?: string;
   cuisine_type?: string;
   menu_items?: MenuItem[] | null;
-  status?: string;
+  editorial?: string | null;
   is_live?: boolean;
 }
 
@@ -41,9 +33,8 @@ function getSupabase() {
   );
 }
 
-async function getProspect(slug: string): Promise<TableflowProspect | null> {
-  const sb = getSupabase();
-  const { data } = await sb
+async function getProspect(slug: string): Promise<Prospect | null> {
+  const { data } = await getSupabase()
     .from("tableflow_prospects")
     .select("*")
     .eq("slug", slug)
@@ -51,343 +42,412 @@ async function getProspect(slug: string): Promise<TableflowProspect | null> {
   return data || null;
 }
 
-// Catégories et leurs emojis / couleurs
-const CATEGORY_META: Record<string, { emoji: string; color: string; bg: string }> = {
-  "entrée":       { emoji: "🥗", color: "#2D6A4F", bg: "#D8F3DC" },
-  "entrées":      { emoji: "🥗", color: "#2D6A4F", bg: "#D8F3DC" },
-  "plat":         { emoji: "🍽️", color: "#9B2335", bg: "#FFE5E8" },
-  "plats":        { emoji: "🍽️", color: "#9B2335", bg: "#FFE5E8" },
-  "dessert":      { emoji: "🍮", color: "#7B5E00", bg: "#FFF3CD" },
-  "desserts":     { emoji: "🍮", color: "#7B5E00", bg: "#FFF3CD" },
-  "boisson":      { emoji: "🥤", color: "#1565A0", bg: "#DBEAFE" },
-  "boissons":     { emoji: "🥤", color: "#1565A0", bg: "#DBEAFE" },
-  "vins":         { emoji: "🍷", color: "#6B2737", bg: "#FCE7F3" },
-  "formule":      { emoji: "🎁", color: "#5B21B6", bg: "#EDE9FE" },
-  "formules":     { emoji: "🎁", color: "#5B21B6", bg: "#EDE9FE" },
-  "pizza":        { emoji: "🍕", color: "#C2410C", bg: "#FFEDD5" },
-  "pizzas":       { emoji: "🍕", color: "#C2410C", bg: "#FFEDD5" },
-  "pâtes":        { emoji: "🍝", color: "#B45309", bg: "#FEF3C7" },
-  "galettes":     { emoji: "🫓", color: "#92400E", bg: "#FEF3C7" },
-  "galettes salées": { emoji: "🫓", color: "#92400E", bg: "#FEF3C7" },
-  "crêpes":       { emoji: "🥞", color: "#D97706", bg: "#FEF9C3" },
-  "crêpes sucrées": { emoji: "🥞", color: "#D97706", bg: "#FEF9C3" },
-  "fromages":     { emoji: "🧀", color: "#854D0E", bg: "#FEF9C3" },
-  "viandes":      { emoji: "🥩", color: "#991B1B", bg: "#FEE2E2" },
-  "poissons":     { emoji: "🐟", color: "#075985", bg: "#E0F2FE" },
-  "végétarien":   { emoji: "🥦", color: "#166534", bg: "#DCFCE7" },
-  "végétariens":  { emoji: "🥦", color: "#166534", bg: "#DCFCE7" },
-  "pains":        { emoji: "🥖", color: "#92400E", bg: "#FEF3C7" },
-  "viennoiseries":{ emoji: "🥐", color: "#B45309", bg: "#FEF9C3" },
-  "pâtisseries":  { emoji: "🍰", color: "#BE185D", bg: "#FCE7F3" },
-  "sandwichs":    { emoji: "🥪", color: "#65A30D", bg: "#ECFCCB" },
-  "burgers":      { emoji: "🍔", color: "#C2410C", bg: "#FFEDD5" },
-  "salades":      { emoji: "🥙", color: "#15803D", bg: "#D1FAE5" },
-  "tapas":        { emoji: "🫒", color: "#4D7C0F", bg: "#ECFCCB" },
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+const CATEGORY_CONFIG: Record<string, { emoji: string; gradient: string; text: string }> = {
+  "Entrées":         { emoji: "🥗", gradient: "#D8F3DC,#B7E4C7", text: "#1B4332" },
+  "Plats":           { emoji: "🍽️", gradient: "#FFE8E8,#FECDD3", text: "#881337" },
+  "Desserts":        { emoji: "🍮", gradient: "#FEF9C3,#FEF08A", text: "#713F12" },
+  "Boissons":        { emoji: "🥤", gradient: "#DBEAFE,#BFDBFE", text: "#1E3A8A" },
+  "Vins":            { emoji: "🍷", gradient: "#FCE7F3,#FBCFE8", text: "#831843" },
+  "Pizzas":          { emoji: "🍕", gradient: "#FFEDD5,#FED7AA", text: "#9A3412" },
+  "Burgers":         { emoji: "🍔", gradient: "#ECFCCB,#D9F99D", text: "#365314" },
+  "Formules":        { emoji: "🎁", gradient: "#EDE9FE,#DDD6FE", text: "#4C1D95" },
+  "Mezze":           { emoji: "🫒", gradient: "#ECFDF5,#A7F3D0", text: "#065F46" },
+  "Sushis":          { emoji: "🍣", gradient: "#FFF1F2,#FFE4E6", text: "#881337" },
+  "Ramens":          { emoji: "🍜", gradient: "#FFF7ED,#FED7AA", text: "#7C2D12" },
+  "Galettes salées": { emoji: "🫓", gradient: "#FEF3C7,#FDE68A", text: "#78350F" },
+  "Crêpes sucrées":  { emoji: "🥞", gradient: "#FFFBEB,#FEF9C3", text: "#713F12" },
+  "Tapas":           { emoji: "🫒", gradient: "#ECFDF5,#A7F3D0", text: "#065F46" },
+  "Salades":         { emoji: "🥙", gradient: "#F0FDF4,#BBF7D0", text: "#14532D" },
+  "Accompagnements": { emoji: "🥔", gradient: "#FEF9C3,#FDE68A", text: "#78350F" },
 };
 
-function getCategoryMeta(cat?: string) {
-  if (!cat) return { emoji: "🍴", color: "#374151", bg: "#F3F4F6" };
-  const key = cat.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  const normalizedMap = Object.entries(CATEGORY_META).reduce((acc, [k, v]) => {
-    const nk = k.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    acc[nk] = v;
-    return acc;
-  }, {} as Record<string, typeof CATEGORY_META[string]>);
-  return normalizedMap[key] || { emoji: "🍴", color: "#374151", bg: "#F3F4F6" };
+function getCat(cat?: string) {
+  if (!cat) return { emoji: "🍴", gradient: "#F3F4F6,#E5E7EB", text: "#111827" };
+  return CATEGORY_CONFIG[cat] || { emoji: "🍴", gradient: "#F3F4F6,#E5E7EB", text: "#111827" };
 }
 
-function groupByCategory(items: MenuItem[]): Record<string, MenuItem[]> {
-  const groups: Record<string, MenuItem[]> = {};
-  for (const item of items) {
-    const cat = item.category || "Carte";
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(item);
-  }
-  return groups;
-}
-
-function formatPrice(price?: string | number): string {
-  if (price === undefined || price === null || price === "") return "";
-  const n = typeof price === "string" ? parseFloat(price.replace(",", ".")) : price;
+function fmtPrice(p?: string | number): string {
+  if (!p && p !== 0) return "";
+  const n = typeof p === "string" ? parseFloat(p.replace(",", ".")) : p;
   if (isNaN(n) || n === 0) return "";
-  return `${n.toFixed(2).replace(".", ",")} €`;
+  return n % 1 === 0 ? `${n} €` : `${n.toFixed(2).replace(".", ",")} €`;
 }
 
-function formatRating(rating?: number): string {
-  if (!rating) return "";
-  return rating.toFixed(1).replace(".", ",");
+function groupItems(items: MenuItem[]): Record<string, MenuItem[]> {
+  const g: Record<string, MenuItem[]> = {};
+  for (const item of items) {
+    const c = item.category || "Carte";
+    if (!g[c]) g[c] = [];
+    g[c].push(item);
+  }
+  return g;
 }
 
+/* ─── Composant étoiles ──────────────────────────────────────────────────── */
+function Stars({ rating }: { rating: number }) {
+  const full = Math.round(rating);
+  return (
+    <span style={{ color: "#F59E0B", fontSize: 14, letterSpacing: 1 }}>
+      {"★".repeat(full)}{"☆".repeat(5 - full)}
+    </span>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default async function RestaurantPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const prospect = await getProspect(slug);
-  if (!prospect) notFound();
+  const p = await getProspect(slug);
+  if (!p) notFound();
 
-  const isDemo = !prospect.is_live;
-  const menuItems = prospect.menu_items || [];
-  const groups = groupByCategory(menuItems);
-  const categories = Object.keys(groups);
-  const coverPhoto = prospect.photos?.[0] || null;
-  const secondPhoto = prospect.photos?.[1] || null;
+  const isDemo  = !p.is_live;
+  const items   = p.menu_items || [];
+  const groups  = groupItems(items);
+  const cats    = Object.keys(groups);
+  const cover   = p.photos?.[0] || null;
+  const extraPhotos = (p.photos || []).slice(1, 5);
 
   return (
-    <>
+    <html lang="fr">
       <head>
-        <title>{prospect.name} — Menu digital</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content={`Découvrez la carte de ${prospect.name} à ${prospect.city || ""}`} />
-        <meta name="robots" content="noindex" />
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>{p.name} — Carte</title>
+        <meta name="description" content={`La carte de ${p.name}${p.city ? ` à ${p.city}` : ""} — directement sur votre téléphone`} />
+        <meta name="robots" content="noindex,nofollow" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <style>{`
+          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+          html { -webkit-text-size-adjust: 100%; }
+          body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #FAFAF8;
+            color: #1a1310;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+          }
+          .page { max-width: 480px; margin: 0 auto; }
+          .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+          /* Demo banner */
+          .demo-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1a1310;
+            padding: 12px 20px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          }
+          .demo-bar p { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.4; }
+          .demo-bar strong { color: #fff; display: block; font-size: 13px; }
+          .demo-btn {
+            flex-shrink: 0;
+            background: #c19a56; color: #1a1310;
+            padding: 9px 16px; border-radius: 30px;
+            font-weight: 700; font-size: 12px; text-decoration: none;
+            white-space: nowrap;
+          }
+
+          /* Hero */
+          .hero { position: relative; height: 260px; overflow: hidden; }
+          .hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+          .hero-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1310 0%, #3d2a14 50%, #c19a56 130%);
+          }
+          .hero-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.05) 100%);
+          }
+          .hero-content {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 24px 20px 20px;
+          }
+          .hero-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 20px;
+            margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+          }
+          .hero-name {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 30px; font-weight: 700;
+            color: #fff; line-height: 1.15;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            margin-bottom: 8px;
+          }
+          .hero-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+          .hero-rating { display: flex; align-items: center; gap: 5px; }
+          .hero-rating-num { color: #fff; font-weight: 700; font-size: 14px; }
+          .hero-rating-count { color: rgba(255,255,255,0.65); font-size: 12px; }
+          .hero-sep { color: rgba(255,255,255,0.3); }
+          .hero-city { color: rgba(255,255,255,0.8); font-size: 13px; }
+
+          /* Info strip */
+          .info-strip {
+            background: #fff;
+            border-bottom: 1px solid #F0EDE8;
+            padding: 14px 20px;
+            display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+          }
+          .info-pill {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 13px; color: #4B5563; font-weight: 500;
+          }
+          .info-pill a { color: #c19a56; text-decoration: none; font-weight: 600; }
+          .cuisine-tag {
+            background: #FFF8EE; border: 1px solid #F3E4C2;
+            color: #8B5E1A; font-size: 11px; font-weight: 600;
+            padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+
+          /* Editorial */
+          .editorial {
+            padding: 16px 20px;
+            font-size: 14px; color: #6B7280; line-height: 1.6; font-style: italic;
+            border-bottom: 1px solid #F0EDE8;
+            background: #fff;
+          }
+
+          /* Catégorie header */
+          .cat-header {
+            padding: 24px 20px 10px;
+            display: flex; align-items: center; gap: 12px;
+          }
+          .cat-emoji-wrap {
+            width: 38px; height: 38px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+          }
+          .cat-name {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 20px; font-weight: 700;
+          }
+          .cat-count {
+            margin-left: auto;
+            font-size: 12px; color: #9CA3AF; font-weight: 500;
+          }
+
+          /* Item carte */
+          .items-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+          .item-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #F0EDE8;
+            padding: 14px 16px;
+            display: flex; gap: 12px; align-items: flex-start;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+            transition: box-shadow 0.2s;
+          }
+          .item-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+          .item-body { flex: 1; min-width: 0; }
+          .item-name { font-weight: 600; font-size: 14.5px; color: #111827; line-height: 1.35; }
+          .item-desc { margin-top: 3px; font-size: 12.5px; color: #6B7280; line-height: 1.45; }
+          .item-price {
+            font-weight: 700; font-size: 15px; color: #1a1310;
+            white-space: nowrap; flex-shrink: 0;
+          }
+
+          /* Photos galerie */
+          .gallery { padding: 24px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+          .gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; display: block; }
+
+          /* Footer / CTA */
+          .footer {
+            margin-top: 32px;
+            background: #fff;
+            border-top: 1px solid #F0EDE8;
+            padding: 24px 20px 40px;
+          }
+          .hours-block {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: #6B7280;
+            padding-bottom: 20px; margin-bottom: 20px;
+            border-bottom: 1px solid #F0EDE8;
+          }
+          .cta-box {
+            background: linear-gradient(135deg, #1a1310 0%, #2d1f0e 100%);
+            border-radius: 18px; padding: 24px 20px;
+            text-align: center;
+          }
+          .cta-tagline { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+          .cta-price { font-size: 34px; font-weight: 700; color: #c19a56; margin-bottom: 2px; }
+          .cta-price span { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.5); }
+          .cta-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 18px; }
+          .cta-btn {
+            display: block;
+            background: #c19a56; color: #1a1310;
+            padding: 16px 24px; border-radius: 50px;
+            font-weight: 700; font-size: 15px; text-decoration: none;
+            box-shadow: 0 8px 24px rgba(193,154,86,0.35);
+          }
+          .cta-reassure { margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.35); }
+
+          .powered {
+            text-align: center; margin-top: 20px;
+            font-size: 11px; color: #9CA3AF;
+          }
+          .powered strong { color: #6B7280; }
+        `}</style>
       </head>
 
-      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", background: "#FAFAF8", minHeight: "100vh", maxWidth: 480, margin: "0 auto" }}>
+      <body>
+        <div className="page">
 
-        {/* BANNER DÉMO */}
-        {isDemo && (
-          <div style={{
-            background: "linear-gradient(135deg, #1a1310, #2d1f0e)",
-            color: "#f9f5ef",
-            padding: "14px 20px",
-            textAlign: "center",
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-          }}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>
-              ✨ Aperçu TableFlow — Menu digital de {prospect.name}
-            </p>
-            <a
-              href="https://webconceptor.fr/tableflow"
-              style={{
-                display: "inline-block", marginTop: 8,
-                background: "#c19a56", color: "#1a1310",
-                padding: "7px 18px", borderRadius: 20,
-                fontWeight: 700, fontSize: 12, textDecoration: "none",
-              }}
-            >
-              Activer ce menu — 49 €/mois →
-            </a>
-          </div>
-        )}
-
-        {/* HERO : Photo couverture */}
-        <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
-          {coverPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={coverPhoto}
-              alt={prospect.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <div style={{
-              width: "100%", height: "100%",
-              background: "linear-gradient(135deg, #1a1310 0%, #3d2a14 50%, #c19a56 130%)",
-            }} />
+          {/* ── BANNER DÉMO ─────────────────────────────────────────────── */}
+          {isDemo && (
+            <div className="demo-bar">
+              <div>
+                <strong>✨ Aperçu exclusif créé pour vous</strong>
+                <p>Voici votre carte telle que vos clients la verront sur leur téléphone.</p>
+              </div>
+              <a href="https://webconceptor.fr/tableflow" className="demo-btn">
+                Activer →
+              </a>
+            </div>
           )}
-          {/* Gradient overlay */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)",
-          }} />
-          {/* Nom restaurant */}
-          <div style={{ position: "absolute", bottom: 18, left: 20, right: 20 }}>
-            <h1 style={{
-              margin: 0, color: "#fff",
-              fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em",
-              textShadow: "0 2px 8px rgba(0,0,0,0.5)",
-            }}>
-              {prospect.name}
-            </h1>
-            {prospect.city && (
-              <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.85)", fontSize: 13 }}>
-                📍 {prospect.address || prospect.city}
-              </p>
+
+          {/* ── HERO ────────────────────────────────────────────────────── */}
+          <div className="hero">
+            {cover
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={cover} alt={p.name} className="hero-img" />
+              : <div className="hero-placeholder" />
+            }
+            <div className="hero-overlay" />
+            <div className="hero-content">
+              {p.cuisine_type && (
+                <div className="hero-badge">
+                  🍽 {p.cuisine_type}
+                </div>
+              )}
+              <h1 className="hero-name serif">{p.name}</h1>
+              <div className="hero-meta">
+                {p.google_rating && (
+                  <div className="hero-rating">
+                    <Stars rating={p.google_rating} />
+                    <span className="hero-rating-num">{p.google_rating.toFixed(1).replace(".", ",")}</span>
+                    {p.google_reviews_count && (
+                      <span className="hero-rating-count">({p.google_reviews_count} avis)</span>
+                    )}
+                  </div>
+                )}
+                {p.city && <><span className="hero-sep">·</span><span className="hero-city">📍 {p.city}</span></>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── INFO STRIP ──────────────────────────────────────────────── */}
+          <div className="info-strip">
+            {p.cuisine_type && <span className="cuisine-tag">{p.cuisine_type}</span>}
+            {p.phone && (
+              <div className="info-pill">
+                📞 <a href={`tel:${p.phone}`}>{p.phone}</a>
+              </div>
+            )}
+            {p.address && (
+              <div className="info-pill">
+                🗺 {p.address.split(",").slice(0, 2).join(",")}
+              </div>
             )}
           </div>
-        </div>
 
-        {/* INFOS RAPIDES */}
-        <div style={{
-          background: "#fff",
-          padding: "16px 20px",
-          borderBottom: "1px solid #ECECEC",
-          display: "flex", gap: 16, flexWrap: "wrap",
-          alignItems: "center",
-        }}>
-          {prospect.google_rating && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{ color: "#F59E0B", fontSize: 15 }}>★</span>
-              <span style={{ fontWeight: 700, fontSize: 14 }}>{formatRating(prospect.google_rating)}</span>
-              {prospect.google_reviews_count && (
-                <span style={{ color: "#888", fontSize: 12 }}>({prospect.google_reviews_count} avis)</span>
-              )}
+          {/* ── DESCRIPTION ─────────────────────────────────────────────── */}
+          {p.editorial && (
+            <div className="editorial">
+              &ldquo;{p.editorial}&rdquo;
             </div>
           )}
-          {prospect.cuisine_type && (
-            <span style={{
-              background: "#F3F4F6", color: "#374151",
-              padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 500,
-            }}>
-              {prospect.cuisine_type}
-            </span>
-          )}
-          {prospect.phone && (
-            <a href={`tel:${prospect.phone}`} style={{
-              color: "#c19a56", fontWeight: 600, fontSize: 13, textDecoration: "none",
-            }}>
-              📞 {prospect.phone}
-            </a>
-          )}
-        </div>
 
-        {/* MENU */}
-        <div style={{ padding: "8px 0 40px" }}>
-          {categories.length === 0 ? (
-            <div style={{ padding: 40, textAlign: "center", color: "#888" }}>
-              <p style={{ fontSize: 32 }}>🍽️</p>
-              <p style={{ fontSize: 15 }}>La carte arrive bientôt…</p>
-            </div>
-          ) : (
-            categories.map((cat) => {
-              const meta = getCategoryMeta(cat);
-              const items = groups[cat];
+          {/* ── MENU ────────────────────────────────────────────────────── */}
+          <div style={{ paddingBottom: 8 }}>
+            {cats.length === 0 ? (
+              <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🍴</div>
+                <p style={{ fontSize: 15 }}>La carte arrive bientôt…</p>
+              </div>
+            ) : cats.map((cat) => {
+              const cfg = getCat(cat);
+              const catItems = groups[cat];
+              const [g1, g2] = cfg.gradient.split(",");
               return (
                 <div key={cat}>
-                  {/* Header catégorie */}
-                  <div style={{
-                    padding: "20px 20px 10px",
-                    display: "flex", alignItems: "center", gap: 10,
-                  }}>
-                    <span style={{
-                      fontSize: 20, width: 36, height: 36,
-                      background: meta.bg, borderRadius: 10,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      {meta.emoji}
-                    </span>
-                    <h2 style={{
-                      margin: 0, fontSize: 17, fontWeight: 700,
-                      color: meta.color, letterSpacing: "-0.01em",
-                      textTransform: "capitalize",
-                    }}>
-                      {cat}
-                    </h2>
+                  <div className="cat-header">
+                    <div className="cat-emoji-wrap" style={{ background: `linear-gradient(135deg, ${g1}, ${g2})` }}>
+                      {cfg.emoji}
+                    </div>
+                    <h2 className="cat-name serif" style={{ color: cfg.text }}>{cat}</h2>
+                    <span className="cat-count">{catItems.length} plat{catItems.length > 1 ? "s" : ""}</span>
                   </div>
-
-                  {/* Items */}
-                  <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                    {items.map((item, i) => {
-                      const price = formatPrice(item.price);
+                  <div className="items-list">
+                    {catItems.map((item, i) => {
+                      const price = fmtPrice(item.price);
                       return (
-                        <div key={i} style={{
-                          background: "#fff",
-                          borderRadius: 14,
-                          padding: "14px 16px",
-                          border: "1px solid #F0F0EC",
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                          gap: 12,
-                        }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontWeight: 600, fontSize: 14, color: "#1a1310",
-                              lineHeight: 1.3,
-                            }}>
-                              {item.name}
-                            </div>
+                        <div key={i} className="item-card">
+                          <div className="item-dot" style={{ background: `linear-gradient(135deg, ${g1}, ${g2})` }} />
+                          <div className="item-body">
+                            <div className="item-name">{item.name}</div>
                             {item.description && (
-                              <div style={{
-                                marginTop: 4, fontSize: 12.5, color: "#6B7280",
-                                lineHeight: 1.4,
-                              }}>
-                                {item.description}
-                              </div>
+                              <div className="item-desc">{item.description}</div>
                             )}
                           </div>
-                          {price && (
-                            <div style={{
-                              fontWeight: 700, fontSize: 15, color: "#1a1310",
-                              whiteSpace: "nowrap", flexShrink: 0,
-                            }}>
-                              {price}
-                            </div>
-                          )}
+                          {price && <div className="item-price">{price}</div>}
                         </div>
                       );
                     })}
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
-
-        {/* PHOTOS SECONDAIRES */}
-        {secondPhoto && (
-          <div style={{ padding: "0 16px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {prospect.photos?.slice(1, 5).map((photo, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={photo}
-                alt={`${prospect.name} photo ${i + 2}`}
-                style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12 }}
-              />
-            ))}
+            })}
           </div>
-        )}
 
-        {/* FOOTER */}
-        <div style={{
-          borderTop: "1px solid #ECECEC",
-          padding: "20px 20px 40px",
-          background: "#fff",
-          textAlign: "center",
-        }}>
-          {prospect.hours && (
-            <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6B7280" }}>
-              🕐 {prospect.hours}
-            </p>
+          {/* ── GALERIE PHOTOS ───────────────────────────────────────────── */}
+          {extraPhotos.length >= 2 && (
+            <div className="gallery">
+              {extraPhotos.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={src} alt={`${p.name} ${i + 2}`} />
+              ))}
+            </div>
           )}
 
-          {isDemo ? (
-            <>
-              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#6B7280", lineHeight: 1.5 }}>
-                Ce menu digital a été créé en quelques secondes pour {prospect.name}.<br />
-                Vos clients le retrouvent en scannant un QR code à table.
+          {/* ── FOOTER ──────────────────────────────────────────────────── */}
+          <div className="footer">
+            {p.hours && (
+              <div className="hours-block">
+                <span style={{ fontSize: 18 }}>🕐</span>
+                <span>{p.hours}</span>
+              </div>
+            )}
+
+            {isDemo ? (
+              <div className="cta-box">
+                <p className="cta-tagline">Offre de lancement · places limitées</p>
+                <p className="cta-price">49 €<span>/mois</span></p>
+                <p className="cta-sub">Sans engagement · 14 jours gratuits</p>
+                <a href="https://webconceptor.fr/tableflow" className="cta-btn">
+                  Activer mon menu digital →
+                </a>
+                <p className="cta-reassure">✓ Votre carte mise à jour en 2 min · ✓ QR code inclus · ✓ Résiliable en 1 clic</p>
+              </div>
+            ) : (
+              <p className="powered">
+                Menu propulsé par <strong>TableFlow</strong>
               </p>
-              <a
-                href="https://webconceptor.fr/tableflow"
-                style={{
-                  display: "block",
-                  background: "linear-gradient(135deg, #1a1310, #2d1f0e)",
-                  color: "#f9f5ef",
-                  padding: "16px 24px", borderRadius: 14,
-                  fontWeight: 700, fontSize: 15, textDecoration: "none",
-                  boxShadow: "0 4px 14px rgba(26,19,16,0.25)",
-                }}
-              >
-                Activer mon menu digital — 49 €/mois
-              </a>
-              <p style={{ margin: "12px 0 0", fontSize: 11, color: "#9CA3AF" }}>
-                14 jours gratuits · Sans engagement · Résiliable à tout moment
-              </p>
-            </>
-          ) : (
-            <p style={{ margin: 0, fontSize: 11, color: "#9CA3AF" }}>
-              Menu digital propulsé par <strong>TableFlow</strong>
-            </p>
-          )}
+            )}
+          </div>
+
         </div>
-      </div>
-    </>
+      </body>
+    </html>
   );
 }
 
