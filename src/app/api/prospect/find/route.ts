@@ -110,6 +110,7 @@ async function searchProxiStores(query: string, apiKey: string): Promise<GoogleP
       regionCode: "fr",
       pageSize: 20,
     }),
+    signal: AbortSignal.timeout(12000),
   });
 
   if (!res.ok) {
