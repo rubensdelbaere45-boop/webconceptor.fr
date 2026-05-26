@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 
-/* ══════════════════════════════════════════
-   POST /api/prospect/reset-errors
-   Remet en status='found' les prospects qui ont été marqués 'error' par
-   l'ancienne logique de skip "good site" (avant commit bb3ae3e).
-   Ces prospects ont un email valide et méritent d'être recontactés.
-   ══════════════════════════════════════════ */
-
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
@@ -24,13 +17,12 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabaseAdmin();
 
-  // On reset SEULEMENT les prospects qui ont été skippés par l'ancien code
-  // (error commence par "skipped:"). Pas les vrais échecs Brevo.
+  // Compte d'abord pour le rapport
   const { data: toReset, error: selectErr } = await supabase
     .from("prospects")
-    .select("id, name")
+    .select("id, name, error")
     .eq("status", "error")
-    .like("error", "skipped:%");
+    .not("email", "is", null);
 
   if (selectErr) {
     return NextResponse.json({ error: selectErr.message }, { status: 500 });
@@ -40,11 +32,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, reset: 0, message: "Rien à réinitialiser" });
   }
 
+  // Remet TOUS les prospects en erreur (avec email) en 'found' pour retry
   const { error: updateErr } = await supabase
     .from("prospects")
     .update({ status: "found", error: null })
     .eq("status", "error")
-    .like("error", "skipped:%");
+    .not("email", "is", null);
 
   if (updateErr) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
