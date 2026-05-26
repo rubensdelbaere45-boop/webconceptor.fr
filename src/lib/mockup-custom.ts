@@ -96,7 +96,7 @@ function safePhoto(url: string, prospect: CustomProspect, origin: string): strin
 function resolvePhotos(audit: DeepAudit, prospect: CustomProspect, origin: string, max = 8): string[] {
   const out: string[] = [];
   // 1. Photos scrapées du site actuel (priorité — ce sont LEURS photos)
-  for (const u of audit.contentToKeep.photos || []) {
+  for (const u of (Array.isArray(audit.contentToKeep.photos) ? audit.contentToKeep.photos : [])) {
     if (out.length >= max) break;
     const safe = safePhoto(u, prospect, origin);
     if (safe) out.push(safe);
@@ -346,7 +346,7 @@ function renderAbout(ctx: RenderCtx): string {
 
 function renderServices(ctx: RenderCtx): string {
   const { audit, prospect } = ctx;
-  const headings = audit.contentToKeep.headingsH1H2 || [];
+  const headings = Array.isArray(audit.contentToKeep.headingsH1H2) ? audit.contentToKeep.headingsH1H2 : [];
   // Services = on filtre les headings qui ressemblent à des offres
   const serviceHeadings = headings.filter((h) =>
     h.length < 50 && !/contact|propos|accueil|menu principal/i.test(h)
