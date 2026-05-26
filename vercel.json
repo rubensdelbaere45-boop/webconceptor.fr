@@ -34,6 +34,9 @@
     "src/app/api/tableflow/webhook/route.ts": {
       "maxDuration": 10
     },
+    "src/app/api/caissio/webhook/route.ts": {
+      "maxDuration": 10
+    },
     "src/app/api/gmb/cron/route.ts": {
       "maxDuration": 120
     },
