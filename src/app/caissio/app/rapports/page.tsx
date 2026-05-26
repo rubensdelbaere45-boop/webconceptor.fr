@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FileBarChart2, TrendingUp, ShoppingBag, Receipt, Download } from "lucide-react";
-import { getSales, getProducts, type Sale } from "@/lib/caissio-store";
+import { FileBarChart2, TrendingUp, ShoppingBag, Receipt, Download, Shield, CheckCircle, AlertTriangle, Clock, Archive } from "lucide-react";
+import { getSales, getProducts, getSession, type Sale } from "@/lib/caissio-store";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" }); }
 
@@ -17,10 +17,19 @@ function filterByPeriod(sales: Sale[], period: Period): Sale[] {
   return sales.filter((s) => new Date(s.created_at) >= start);
 }
 
+type ChainStatus = "idle" | "checking" | "ok" | "broken" | "no-data";
+type ClosureStatus = "idle" | "running" | "done" | "error";
+
 export default function RapportsPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [period, setPeriod] = useState<Period>("month");
   const [productMap, setProductMap] = useState<Record<string, string>>({});
+
+  // NF 525
+  const [chainStatus,  setChainStatus]  = useState<ChainStatus>("idle");
+  const [chainMsg,     setChainMsg]     = useState("");
+  const [closureState, setClosureState] = useState<ClosureStatus>("idle");
+  const [closureMsg,   setClosureMsg]   = useState("");
 
   useEffect(() => {
     setSales(getSales().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
@@ -28,6 +37,46 @@ export default function RapportsPage() {
     getProducts().forEach((p) => { pm[p.id] = p.name; });
     setProductMap(pm);
   }, []);
+
+  const verifyChain = async () => {
+    const user = getSession();
+    if (!user?.email) { setChainStatus("no-data"); setChainMsg("Aucun compte connecté."); return; }
+    setChainStatus("checking");
+    try {
+      const res  = await fetch(`/api/caissio/verify-chain?email=${encodeURIComponent(user.email)}`);
+      const data = await res.json();
+      setChainStatus(data.ok ? "ok" : "broken");
+      setChainMsg(data.message || "");
+    } catch {
+      setChainStatus("broken");
+      setChainMsg("Impossible de contacter le serveur.");
+    }
+  };
+
+  const doClosureDaily = async () => {
+    const user = getSession();
+    if (!user?.email) return;
+    setClosureState("running");
+    try {
+      const res  = await fetch("/api/caissio/closure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: user.email, type: "daily" }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setClosureState("done");
+        setClosureMsg(`Z-report enregistré — ${data.total_sales} ticket(s) · ${Number(data.total_amount).toFixed(2)} €`);
+      } else {
+        setClosureState("error");
+        setClosureMsg(data.error || "Erreur clôture");
+      }
+    } catch {
+      setClosureState("error");
+      setClosureMsg("Impossible de contacter le serveur.");
+    }
+    setTimeout(() => { setClosureState("idle"); setClosureMsg(""); }, 5000);
+  };
 
   const filtered = filterByPeriod(sales, period);
   const totalCA = filtered.reduce((s, t) => s + t.total, 0);
@@ -119,6 +168,45 @@ export default function RapportsPage() {
             <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 30, fontWeight: 900, color: "#0f172a", letterSpacing: "-0.03em" }}>{k.value}</div>
           </div>
         ))}
+      </div>
+
+      {/* ── NF 525 — Conformité fiscale ──────────────────────────────── */}
+      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Shield style={{ width: 20, height: 20, color: "#4f46e5" }} />
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 16, fontWeight: 800, color: "#0f172a" }}>Conformité NF 525</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>
+                Ventes enregistrées de manière immuable · Chaîne SHA-256 · Conservation 6 ans
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {/* Vérifier l'intégrité */}
+            <button onClick={verifyChain} disabled={chainStatus === "checking"}
+              style={{ height: 38, padding: "0 14px", borderRadius: 10, background: chainStatus === "ok" ? "#f0fdf4" : chainStatus === "broken" ? "#fef2f2" : "#f8fafc", border: `1px solid ${chainStatus === "ok" ? "#bbf7d0" : chainStatus === "broken" ? "#fecaca" : "#e2e8f0"}`, color: chainStatus === "ok" ? "#15803d" : chainStatus === "broken" ? "#dc2626" : "#4f46e5", fontWeight: 700, fontSize: 12, cursor: chainStatus === "checking" ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              {chainStatus === "checking" ? <><Clock style={{ width: 13, height: 13 }} /> Vérification…</>
+                : chainStatus === "ok" ? <><CheckCircle style={{ width: 13, height: 13 }} /> Intégrité OK</>
+                : chainStatus === "broken" ? <><AlertTriangle style={{ width: 13, height: 13 }} /> Anomalie détectée</>
+                : <><Shield style={{ width: 13, height: 13 }} /> Vérifier la chaîne</>}
+            </button>
+            {/* Clôture journalière */}
+            <button onClick={doClosureDaily} disabled={closureState === "running"}
+              style={{ height: 38, padding: "0 14px", borderRadius: 10, background: closureState === "done" ? "#f0fdf4" : "#0f172a", border: "none", color: closureState === "done" ? "#15803d" : "#fff", fontWeight: 700, fontSize: 12, cursor: closureState === "running" ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              {closureState === "running" ? <><Clock style={{ width: 13, height: 13 }} /> En cours…</>
+                : closureState === "done" ? <><CheckCircle style={{ width: 13, height: 13 }} /> Z-report enregistré</>
+                : <><Archive style={{ width: 13, height: 13 }} /> Clôture journalière (Z)</>}
+            </button>
+          </div>
+        </div>
+        {(chainMsg || closureMsg) && (
+          <div style={{ marginTop: 10, padding: "8px 14px", borderRadius: 10, background: chainStatus === "broken" || closureState === "error" ? "#fef2f2" : "#f0fdf4", fontSize: 12, fontWeight: 600, color: chainStatus === "broken" || closureState === "error" ? "#dc2626" : "#15803d" }}>
+            {chainMsg || closureMsg}
+          </div>
+        )}
       </div>
 
       {/* Two columns: top products + sales list */}

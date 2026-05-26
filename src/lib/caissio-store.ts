@@ -424,6 +424,40 @@ export function recordSale(sale: Omit<Sale, "id" | "created_at" | "mode">): Sale
     addCustomerPoints(s.customer_id, Math.floor(s.total));
     if (s.payment === "account") addCustomerBalance(s.customer_id, s.total);
   }
+
+  // ── NF 525 : double-écriture Supabase (immuable, hash chain SHA-256) ──
+  // Fire-and-forget : ne bloque pas l'UI, localStorage reste la source de vérité locale.
+  if (typeof window !== "undefined" && user?.email) {
+    const settings = getStoreSettings();
+    const body = {
+      user_email:  user.email,
+      store_name:  settings.name || user.store_name,
+      address:     settings.address  || undefined,
+      siret:       settings.siret    || undefined,
+      ticket_num:  s.id.slice(-6).toUpperCase(),
+      sale_date:   s.created_at,
+      subtotal:    s.subtotal,
+      discount:    s.discount,
+      total:       s.total,
+      pay_mode:    s.payment,
+      cash_given:  s.cash_given,
+      change:      s.change,
+      customer_id: s.customer_id,
+      mode:        s.mode,
+      items:       s.items.map((i) => ({
+        name:       i.name,
+        qty:        i.qty,
+        unit_price: i.price,
+        tva_rate:   products.find((p) => p.id === i.product_id)?.tva ?? 20,
+      })),
+    };
+    fetch("/api/caissio/record-sale", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(body),
+    }).catch((e) => console.warn("[caissio/NF525] sync failed (offline?):", e));
+  }
+
   return s;
 }
 

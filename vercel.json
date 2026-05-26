@@ -40,6 +40,15 @@
     "src/app/api/caissio/send-ticket/route.ts": {
       "maxDuration": 10
     },
+    "src/app/api/caissio/record-sale/route.ts": {
+      "maxDuration": 15
+    },
+    "src/app/api/caissio/closure/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/caissio/verify-chain/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/gmb/cron/route.ts": {
       "maxDuration": 120
     },
