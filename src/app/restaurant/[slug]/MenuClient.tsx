@@ -94,19 +94,24 @@ function buildDishImageUrl(item: MenuItem): string {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ARView — Caméra arrière + plat généré par IA qui flotte
+   ARView — Caméra + détection surface par gyroscope
+   Le plat apparaît UNIQUEMENT quand le téléphone pointe vers la table.
+   Utilise DeviceOrientationEvent (100% des smartphones).
    ══════════════════════════════════════════════════════════════════ */
 function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
   const videoRef  = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [camError, setCamError]   = useState<string | null>(null);
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [closing, setClosing]     = useState(false);
+  const [camError, setCamError]         = useState<string | null>(null);
+  const [imgLoaded, setImgLoaded]       = useState(false);
+  const [closing, setClosing]           = useState(false);
+  // null = pas encore de données gyroscope | true = sur table | false = mauvais angle
+  const [onTable, setOnTable]           = useState<boolean | null>(null);
+  const [needsPermission, setNeedsPermission] = useState(false);
 
   const imageUrl = buildDishImageUrl(item);
   const price    = fmtPrice(item.price);
 
-  /* Démarrer la caméra */
+  /* ── Caméra arrière ─────────────────────────────────────────────── */
   useEffect(() => {
     let mounted = true;
     navigator.mediaDevices
@@ -114,28 +119,61 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
       .then((s) => {
         if (!mounted) { s.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = s;
-        if (videoRef.current) {
-          videoRef.current.srcObject = s;
-          videoRef.current.play().catch(() => {});
-        }
+        if (videoRef.current) { videoRef.current.srcObject = s; videoRef.current.play().catch(() => {}); }
       })
-      .catch(() => {
-        if (mounted) setCamError("Autorisez l'accès à la caméra pour voir ce plat en AR");
-      });
-    return () => {
-      mounted = false;
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
+      .catch(() => { if (mounted) setCamError("Autorisez l'accès à la caméra"); });
+    return () => { mounted = false; streamRef.current?.getTracks().forEach((t) => t.stop()); };
   }, []);
 
-  /* Fermer avec animation */
+  /* ── Gyroscope — détection angle de la table ────────────────────── */
+  useEffect(() => {
+    /* beta = inclinaison avant/arrière du téléphone
+       ~90° = téléphone vertical (mode lecture)
+       ~20-70° = incliné vers l'avant/bas → pointe vers une table devant soi
+       ~0-20°  = pointe vers le sol juste en dessous
+       ~70-90° = trop droit, pointe niveau des yeux */
+    const handler = (e: DeviceOrientationEvent) => {
+      const beta = e.beta ?? 90;
+      setOnTable(beta > 22 && beta < 70);
+    };
+
+    // iOS 13+ exige une permission explicite pour DeviceOrientation
+    type DOEWithPerm = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<string> };
+    const DOE = DeviceOrientationEvent as DOEWithPerm;
+
+    if (typeof DOE.requestPermission === "function") {
+      setNeedsPermission(true); // bouton affiché, permission demandée au clic
+    } else {
+      // Android + anciens iOS : écoute directe
+      window.addEventListener("deviceorientation", handler);
+      return () => window.removeEventListener("deviceorientation", handler);
+    }
+  }, []);
+
+  async function askOrientationPermission() {
+    type DOEWithPerm = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<string> };
+    const DOE = DeviceOrientationEvent as DOEWithPerm;
+    if (typeof DOE.requestPermission !== "function") return;
+    try {
+      const perm = await DOE.requestPermission();
+      if (perm === "granted") {
+        setNeedsPermission(false);
+        const handler = (e: DeviceOrientationEvent) => {
+          const beta = e.beta ?? 90;
+          setOnTable(beta > 22 && beta < 70);
+        };
+        window.addEventListener("deviceorientation", handler);
+      }
+    } catch { /* refus silencieux */ }
+  }
+
+  /* ── Fermer ─────────────────────────────────────────────────────── */
   function handleClose() {
     setClosing(true);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     setTimeout(onClose, 300);
   }
 
-  /* Escape */
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
     document.addEventListener("keydown", h);
@@ -144,111 +182,197 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Le plat est visible si : gyro sur table, ou pas encore de données (fallback)
+  const showDish = onTable === true || onTable === null;
+  // Pas de données gyro = affiche comme avant (flottant)
+  const hasGyro  = onTable !== null;
+
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 2000, background: "#000",
       opacity: closing ? 0 : 1, transition: "opacity 0.3s ease",
+      overflow: "hidden",
     }}>
       <style>{`
-        @keyframes popIn  { 0%{transform:scale(0) rotate(-10deg);opacity:0} 70%{transform:scale(1.08) rotate(2deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
-        @keyframes float  { 0%,100%{transform:translateY(0px) scale(1)} 50%{transform:translateY(-18px) scale(1.02)} }
-        @keyframes glow   { 0%,100%{box-shadow:0 0 40px rgba(193,154,86,0.5),0 0 80px rgba(193,154,86,0.2)} 50%{box-shadow:0 0 60px rgba(193,154,86,0.8),0 0 120px rgba(193,154,86,0.4)} }
-        @keyframes spin   { to{transform:rotate(360deg)} }
-        @keyframes shimmer{ 0%{opacity:0.3}50%{opacity:0.7}100%{opacity:0.3} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin      { to { transform: rotate(360deg) } }
+        @keyframes shimmer   { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+        @keyframes popOnTable{ 0%{transform:perspective(600px) rotateX(68deg) scale(0);opacity:0}
+                               70%{transform:perspective(600px) rotateX(68deg) scale(1.07);opacity:1}
+                               100%{transform:perspective(600px) rotateX(68deg) scale(1);opacity:1} }
+        @keyframes breathe   { 0%,100%{transform:perspective(600px) rotateX(68deg) scale(1)}
+                               50%{transform:perspective(600px) rotateX(68deg) scale(1.03)} }
+        @keyframes popFloat  { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.08);opacity:1}
+                               100%{transform:scale(1);opacity:1} }
+        @keyframes float     { 0%,100%{transform:scale(1) translateY(0)} 50%{transform:scale(1.02) translateY(-14px)} }
+        @keyframes glow      { 0%,100%{box-shadow:0 0 40px rgba(193,154,86,0.5),0 0 80px rgba(193,154,86,0.2)}
+                               50%{box-shadow:0 0 60px rgba(193,154,86,0.8),0 0 120px rgba(193,154,86,0.4)} }
+        @keyframes scanPulse { 0%{transform:translateX(-50%) scale(0.95);opacity:0.5}
+                               50%{transform:translateX(-50%) scale(1.05);opacity:1}
+                               100%{transform:translateX(-50%) scale(0.95);opacity:0.5} }
+        @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+        @keyframes shadowPulse { 0%,100%{transform:translateX(-50%) scaleX(1);opacity:0.5}
+                                 50%{transform:translateX(-50%) scaleX(1.08);opacity:0.7} }
       `}</style>
 
       {/* Flux caméra */}
       <video
-        ref={videoRef}
-        autoPlay playsInline muted
+        ref={videoRef} autoPlay playsInline muted
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
 
-      {/* Overlay sombre léger */}
-      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
+      {/* Overlay très léger pour lisibilité */}
+      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)" }} />
 
-      {/* === Plat généré par IA === */}
-      <div style={{
-        position: "absolute", inset: 0,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 24,
-      }}>
-        {/* Spinner pendant chargement FLUX */}
-        {!imgLoaded && !camError && (
-          <div style={{ textAlign: "center", animation: "fadeUp 0.5s ease" }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: "50%",
-              border: "3px solid rgba(193,154,86,0.3)",
-              borderTopColor: "#c19a56",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 16px",
-            }} />
-            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 15, fontWeight: 700 }}>
-              Génération FLUX IA…
+      {/* ════ ÉTAT : chargement FLUX ═════════════════════════════════ */}
+      {!imgLoaded && !camError && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%,-50%)",
+          textAlign: "center", animation: "fadeIn 0.4s ease",
+        }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: "50%",
+            border: "3px solid rgba(193,154,86,0.3)",
+            borderTopColor: "#c19a56",
+            animation: "spin 1s linear infinite",
+            margin: "0 auto 14px",
+          }} />
+          <p style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>Génération FLUX IA…</p>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, marginTop: 4 }}>Rendu hyperréaliste</p>
+        </div>
+      )}
+
+      {/* ════ ÉTAT : pas de caméra ═══════════════════════════════════ */}
+      {camError && imgLoaded === false && (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex",
+          flexDirection: "column", alignItems: "center", justifyContent: "center",
+          padding: "0 40px", textAlign: "center",
+        }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>📷</div>
+          <p style={{ color: "#fff", fontSize: 14, lineHeight: 1.6 }}>{camError}</p>
+        </div>
+      )}
+
+      {/* ════ ÉTAT : permission gyroscope iOS ════════════════════════ */}
+      {needsPermission && imgLoaded && (
+        <div style={{
+          position: "absolute", bottom: 160, left: "50%", transform: "translateX(-50%)",
+          textAlign: "center", animation: "fadeUp 0.5s ease",
+        }}>
+          <button
+            onClick={askOrientationPermission}
+            style={{
+              background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              color: "#fff", padding: "12px 24px", borderRadius: 30,
+              fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            🔭 Activer la détection de table
+          </button>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginTop: 8 }}>
+            Nécessaire pour l&apos;AR sur iPhone
+          </p>
+        </div>
+      )}
+
+      {/* ════ ÉTAT : mauvais angle → guidage ═════════════════════════ */}
+      {hasGyro && !showDish && imgLoaded && (
+        <div style={{
+          position: "absolute", inset: 0,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          animation: "fadeIn 0.3s ease",
+        }}>
+          {/* Ring de scan au bas de l'écran */}
+          <div style={{
+            position: "absolute", bottom: "22%", left: "50%",
+            transform: "translateX(-50%)",
+            width: 200, height: 60,
+            border: "2px solid rgba(193,154,86,0.5)",
+            borderRadius: "50%",
+            animation: "scanPulse 2s ease-in-out infinite",
+          }} />
+          {/* Message */}
+          <div style={{
+            background: "rgba(0,0,0,0.65)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            padding: "16px 24px", borderRadius: 20,
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 8, animation: "arrowBounce 1.2s ease infinite" }}>
+              ↓
+            </div>
+            <p style={{ color: "#fff", fontWeight: 700, fontSize: 15, margin: 0 }}>
+              Pointez vers la table
             </p>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>
-              Rendu hyperréaliste • quelques secondes
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>
+              Inclinez votre téléphone vers le bas
             </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Image du plat — cercle flottant */}
-        {!camError && (
-          // eslint-disable-next-line @next/next/no-img-element
+      {/* ════ PLAT SUR LA TABLE ══════════════════════════════════════ */}
+      {showDish && (
+        <div style={{
+          position: "absolute",
+          bottom: hasGyro ? "18%" : "50%",   // Sur table : en bas | Sans gyro : centré
+          left: "50%",
+          transform: hasGyro ? "translateX(-50%)" : "translate(-50%, 50%)",
+          display: "flex", flexDirection: "column", alignItems: "center",
+        }}>
+          {/* Ombre portée sous le plat */}
+          {hasGyro && (
+            <div style={{
+              position: "absolute",
+              bottom: -20, left: "50%",
+              width: 220, height: 44,
+              background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 70%)",
+              borderRadius: "50%",
+              animation: "shadowPulse 3s ease-in-out infinite",
+            }} />
+          )}
+
+          {/* Image du plat */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={item.name}
             onLoad={() => setImgLoaded(true)}
             style={{
-              width: 260, height: 260, borderRadius: "50%",
+              width: hasGyro ? 280 : 260,
+              height: hasGyro ? 280 : 260,
+              borderRadius: "50%",
               objectFit: "cover",
-              border: "3px solid rgba(193,154,86,0.6)",
+              border: "3px solid rgba(193,154,86,0.7)",
               opacity: imgLoaded ? 1 : 0,
-              animation: imgLoaded ? "popIn 0.6s cubic-bezier(.2,.8,.2,1.2) forwards, float 4s ease-in-out 0.6s infinite, glow 3s ease-in-out 0.6s infinite" : "none",
-              transition: "opacity 0.4s",
+              transition: "opacity 0.5s",
+              // Sur table : perspective pour effet "posé"
+              // Sans gyro : flottant (comme avant)
+              animation: imgLoaded
+                ? hasGyro
+                  ? "popOnTable 0.7s cubic-bezier(.2,.8,.2,1.2) forwards, breathe 4s ease-in-out 0.7s infinite"
+                  : "popFloat 0.6s cubic-bezier(.2,.8,.2,1.2) forwards, float 4s ease-in-out 0.6s infinite, glow 3s ease-in-out 0.6s infinite"
+                : "none",
             }}
           />
-        )}
+        </div>
+      )}
 
-        {/* Erreur caméra → mode image seule */}
-        {camError && (
-          <div style={{ textAlign: "center", padding: "0 40px", animation: "fadeUp 0.5s ease" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📷</div>
-            <p style={{ color: "#fff", fontSize: 15, lineHeight: 1.6 }}>{camError}</p>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 8 }}>
-              Voici quand même la visualisation IA du plat :
-            </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={item.name}
-              onLoad={() => setImgLoaded(true)}
-              style={{
-                width: 220, height: 220, borderRadius: "50%",
-                objectFit: "cover", marginTop: 20,
-                border: "3px solid rgba(193,154,86,0.6)",
-                opacity: imgLoaded ? 1 : 0,
-                animation: imgLoaded ? "popIn 0.6s ease forwards, float 4s ease-in-out 0.6s infinite, glow 3s ease-in-out 0.6s infinite" : "none",
-              }}
-            />
-          </div>
-        )}
-      </div>
+      {/* ════ UI FIXES ═══════════════════════════════════════════════ */}
 
-      {/* Fermer */}
-      <button
-        onClick={handleClose}
-        style={{
-          position: "absolute", top: 20, right: 20,
-          width: 42, height: 42, borderRadius: "50%",
-          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.2)",
-          color: "#fff", fontSize: 18, fontWeight: 700,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer",
-        }}
-      >✕</button>
+      {/* Bouton fermer */}
+      <button onClick={handleClose} style={{
+        position: "absolute", top: 20, right: 20,
+        width: 42, height: 42, borderRadius: "50%",
+        background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)",
+        border: "1px solid rgba(255,255,255,0.2)",
+        color: "#fff", fontSize: 18, fontWeight: 700,
+        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+      }}>✕</button>
 
       {/* Badge AR */}
       <div style={{
@@ -260,53 +384,48 @@ function ARView({ item, onClose }: { item: MenuItem; onClose: () => void }) {
         textTransform: "uppercase", letterSpacing: "0.08em",
         animation: "shimmer 2s ease infinite",
       }}>
-        ✨ Visualisation IA
+        {hasGyro && showDish ? "📍 Sur la table" : "✨ Visualisation IA"}
       </div>
 
-      {/* Info plat — bas de l'écran */}
+      {/* Infos plat en bas */}
       <div style={{
         position: "absolute", bottom: 0, left: 0, right: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)",
-        padding: "80px 24px 48px",
+        background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)",
+        padding: "40px 24px 40px",
         textAlign: "center",
-        animation: "fadeUp 0.5s ease 0.3s both",
+        animation: "fadeUp 0.5s ease 0.2s both",
       }}>
-        <h2 style={{
-          fontFamily: "'Playfair Display', Georgia, serif",
-          fontSize: 30, fontWeight: 700, color: "#fff",
-          lineHeight: 1.2, marginBottom: 8,
-          textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+        {showDish && (
+          <>
+            <h2 style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontSize: 26, fontWeight: 700, color: "#fff",
+              lineHeight: 1.2, marginBottom: 6,
+            }}>
+              {item.name}
+            </h2>
+            {price && (
+              <div style={{
+                display: "inline-block",
+                background: "rgba(193,154,86,0.2)",
+                border: "1px solid rgba(193,154,86,0.5)",
+                backdropFilter: "blur(10px)",
+                padding: "6px 18px", borderRadius: 30,
+                color: "#c19a56", fontWeight: 700, fontSize: 18,
+                marginBottom: 14,
+              }}>
+                {price}
+              </div>
+            )}
+          </>
+        )}
+        <button onClick={handleClose} style={{
+          display: "block", margin: "0 auto",
+          background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.2)",
+          color: "#fff", padding: "11px 28px", borderRadius: 30,
+          fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit",
         }}>
-          {item.name}
-        </h2>
-        {item.description && (
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 1.6, maxWidth: 320, margin: "0 auto 16px" }}>
-            {item.description}
-          </p>
-        )}
-        {price && (
-          <div style={{
-            display: "inline-block",
-            background: "rgba(193,154,86,0.2)",
-            border: "1px solid rgba(193,154,86,0.5)",
-            backdropFilter: "blur(10px)",
-            padding: "8px 20px", borderRadius: 30,
-            color: "#c19a56", fontWeight: 700, fontSize: 20,
-          }}>
-            {price}
-          </div>
-        )}
-        <button
-          onClick={handleClose}
-          style={{
-            display: "block", margin: "20px auto 0",
-            background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            color: "#fff", padding: "12px 28px", borderRadius: 30,
-            fontWeight: 600, fontSize: 14, cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
           ← Retour à la carte
         </button>
       </div>
