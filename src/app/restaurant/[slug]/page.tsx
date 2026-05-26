@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
+import MenuClient from "./MenuClient";
 
 interface MenuItem {
   name: string;
@@ -43,37 +44,6 @@ async function getProspect(slug: string): Promise<Prospect | null> {
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
-const CATEGORY_CONFIG: Record<string, { emoji: string; gradient: string; text: string }> = {
-  "Entrées":         { emoji: "🥗", gradient: "#D8F3DC,#B7E4C7", text: "#1B4332" },
-  "Plats":           { emoji: "🍽️", gradient: "#FFE8E8,#FECDD3", text: "#881337" },
-  "Desserts":        { emoji: "🍮", gradient: "#FEF9C3,#FEF08A", text: "#713F12" },
-  "Boissons":        { emoji: "🥤", gradient: "#DBEAFE,#BFDBFE", text: "#1E3A8A" },
-  "Vins":            { emoji: "🍷", gradient: "#FCE7F3,#FBCFE8", text: "#831843" },
-  "Pizzas":          { emoji: "🍕", gradient: "#FFEDD5,#FED7AA", text: "#9A3412" },
-  "Burgers":         { emoji: "🍔", gradient: "#ECFCCB,#D9F99D", text: "#365314" },
-  "Formules":        { emoji: "🎁", gradient: "#EDE9FE,#DDD6FE", text: "#4C1D95" },
-  "Mezze":           { emoji: "🫒", gradient: "#ECFDF5,#A7F3D0", text: "#065F46" },
-  "Sushis":          { emoji: "🍣", gradient: "#FFF1F2,#FFE4E6", text: "#881337" },
-  "Ramens":          { emoji: "🍜", gradient: "#FFF7ED,#FED7AA", text: "#7C2D12" },
-  "Galettes salées": { emoji: "🫓", gradient: "#FEF3C7,#FDE68A", text: "#78350F" },
-  "Crêpes sucrées":  { emoji: "🥞", gradient: "#FFFBEB,#FEF9C3", text: "#713F12" },
-  "Tapas":           { emoji: "🫒", gradient: "#ECFDF5,#A7F3D0", text: "#065F46" },
-  "Salades":         { emoji: "🥙", gradient: "#F0FDF4,#BBF7D0", text: "#14532D" },
-  "Accompagnements": { emoji: "🥔", gradient: "#FEF9C3,#FDE68A", text: "#78350F" },
-};
-
-function getCat(cat?: string) {
-  if (!cat) return { emoji: "🍴", gradient: "#F3F4F6,#E5E7EB", text: "#111827" };
-  return CATEGORY_CONFIG[cat] || { emoji: "🍴", gradient: "#F3F4F6,#E5E7EB", text: "#111827" };
-}
-
-function fmtPrice(p?: string | number): string {
-  if (!p && p !== 0) return "";
-  const n = typeof p === "string" ? parseFloat(p.replace(",", ".")) : p;
-  if (isNaN(n) || n === 0) return "";
-  return n % 1 === 0 ? `${n} €` : `${n.toFixed(2).replace(".", ",")} €`;
-}
-
 function groupItems(items: MenuItem[]): Record<string, MenuItem[]> {
   const g: Record<string, MenuItem[]> = {};
   for (const item of items) {
@@ -107,7 +77,6 @@ export default async function RestaurantPage({
   const isDemo  = !p.is_live;
   const items   = p.menu_items || [];
   const groups  = groupItems(items);
-  const cats    = Object.keys(groups);
   const cover   = p.photos?.[0] || null;
   const extraPhotos = (p.photos || []).slice(1, 5);
 
@@ -215,45 +184,6 @@ export default async function RestaurantPage({
             font-size: 14px; color: #6B7280; line-height: 1.6; font-style: italic;
             border-bottom: 1px solid #F0EDE8;
             background: #fff;
-          }
-
-          /* Catégorie header */
-          .cat-header {
-            padding: 24px 20px 10px;
-            display: flex; align-items: center; gap: 12px;
-          }
-          .cat-emoji-wrap {
-            width: 38px; height: 38px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; flex-shrink: 0;
-          }
-          .cat-name {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 20px; font-weight: 700;
-          }
-          .cat-count {
-            margin-left: auto;
-            font-size: 12px; color: #9CA3AF; font-weight: 500;
-          }
-
-          /* Item carte */
-          .items-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-          .item-card {
-            background: #fff;
-            border-radius: 14px;
-            border: 1px solid #F0EDE8;
-            padding: 14px 16px;
-            display: flex; gap: 12px; align-items: flex-start;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-            transition: box-shadow 0.2s;
-          }
-          .item-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-          .item-body { flex: 1; min-width: 0; }
-          .item-name { font-weight: 600; font-size: 14.5px; color: #111827; line-height: 1.35; }
-          .item-desc { margin-top: 3px; font-size: 12.5px; color: #6B7280; line-height: 1.45; }
-          .item-price {
-            font-weight: 700; font-size: 15px; color: #1a1310;
-            white-space: nowrap; flex-shrink: 0;
           }
 
           /* Photos galerie */
@@ -367,47 +297,14 @@ export default async function RestaurantPage({
             </div>
           )}
 
-          {/* ── MENU ────────────────────────────────────────────────────── */}
-          <div style={{ paddingBottom: 8 }}>
-            {cats.length === 0 ? (
-              <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF" }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>🍴</div>
-                <p style={{ fontSize: 15 }}>La carte arrive bientôt…</p>
-              </div>
-            ) : cats.map((cat) => {
-              const cfg = getCat(cat);
-              const catItems = groups[cat];
-              const [g1, g2] = cfg.gradient.split(",");
-              return (
-                <div key={cat}>
-                  <div className="cat-header">
-                    <div className="cat-emoji-wrap" style={{ background: `linear-gradient(135deg, ${g1}, ${g2})` }}>
-                      {cfg.emoji}
-                    </div>
-                    <h2 className="cat-name serif" style={{ color: cfg.text }}>{cat}</h2>
-                    <span className="cat-count">{catItems.length} plat{catItems.length > 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="items-list">
-                    {catItems.map((item, i) => {
-                      const price = fmtPrice(item.price);
-                      return (
-                        <div key={i} className="item-card">
-                          <div className="item-dot" style={{ background: `linear-gradient(135deg, ${g1}, ${g2})` }} />
-                          <div className="item-body">
-                            <div className="item-name">{item.name}</div>
-                            {item.description && (
-                              <div className="item-desc">{item.description}</div>
-                            )}
-                          </div>
-                          {price && <div className="item-price">{price}</div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* ── MENU (interactif, modal au clic) ───────────────────────── */}
+          <MenuClient
+            items={items}
+            groups={groups}
+            photos={p.photos || []}
+            restaurantName={p.name}
+            isDemo={isDemo}
+          />
 
           {/* ── GALERIE PHOTOS ───────────────────────────────────────────── */}
           {extraPhotos.length >= 2 && (
