@@ -18,6 +18,52 @@ function getSupabaseAdmin() {
    notif Telegram "HOT LEAD" (1ère ouverture uniquement).
    ══════════════════════════════════════════ */
 
+// Retire un <div id="..."> et tout son contenu (gère les divs imbriquées correctement)
+function stripDivById(html: string, id: string): string {
+  const marker = `id="${id}"`;
+  const markerIdx = html.indexOf(marker);
+  if (markerIdx === -1) return html;
+  const divStart = html.lastIndexOf('<div', markerIdx);
+  if (divStart === -1) return html;
+  let depth = 0;
+  let i = divStart;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      if (/^<div[\s>]/i.test(html.slice(i, i + 5))) {
+        depth++;
+        i += 4;
+      } else if (/^<\/div>/i.test(html.slice(i, i + 6))) {
+        depth--;
+        if (depth === 0) return html.slice(0, divStart) + html.slice(i + 6);
+        i += 6;
+      } else {
+        i++;
+      }
+    } else {
+      i++;
+    }
+  }
+  return html;
+}
+
+// Retire toute ancienne version du snippet (avec ou sans marqueurs WC-SX-START/END).
+// Garantit que la version fraîche est toujours injectée, même si le mockup_html en DB
+// a été sauvegardé avec une ancienne version du snippet déjà embarquée.
+function stripOldSnippet(html: string): string {
+  let clean = html;
+  // Cas 1 : snippet récent avec marqueurs (rapide et précis)
+  clean = clean.replace(/<!--\s*WC-SX-START\s*-->[\s\S]*?<!--\s*WC-SX-END\s*-->/g, '');
+  // Cas 2 : ancien snippet sans marqueurs (contenu DB historique)
+  // Retire le <script> contenant l'IIFE wcSxInit
+  clean = clean.replace(/<script>\s*\(function wcSxInit\b[\s\S]*?<\/script>/g, '');
+  // Retire le <style> du snippet (seul bloc style commençant par ce commentaire)
+  clean = clean.replace(/<style>\s*\/\* ─── CTA bar fixe en haut[\s\S]*?<\/style>/g, '');
+  // Retire la barre CTA fixe et le modal overlay (gestion des divs imbriqués)
+  clean = stripDivById(clean, 'wc-sx-cta');
+  clean = stripDivById(clean, 'wc-sx-overlay');
+  return clean;
+}
+
 // Normalise un numéro français pour le lien tel: (garde seulement digits + préfixe +33)
 function phoneToTelLink(raw: string): string {
   const digits = raw.replace(/[^0-9+]/g, "");
@@ -387,19 +433,16 @@ export async function GET(
 
   // ═══════════════════════════════════════════════════════════════════
   // INJECTION SALES UI UNIVERSELLE
-  // Les maquettes non-restaurant (adaptive) et l'ancien template épicerie
-  // n'ont AUCUN CTA d'achat. Sans ça, le prospect voit une belle maquette
-  // mais n'a aucun moyen de commander. On injecte un CTA bar fixe + modal
-  // d'achat si la maquette n'a pas de `.wc-cta-bar` natif (restaurant) ni
-  // déjà été injectée (`.wc-sx-cta`).
+  // On retire toute ancienne version du snippet déjà embarquée dans le
+  // mockup_html stocké en DB, puis on injecte TOUJOURS la version fraîche.
+  // Cela garantit que les corrections du snippet (IIFE, prix, domaine…)
+  // sont effectives immédiatement sans avoir à regénérer les maquettes.
   //
-  // Le restaurant a son propre CTA riche (réservation, domaine, chat IA)
-  // dans mockup-restaurant.ts → on ne re-injecte pas chez lui.
+  // Le snippet lui-même gère les templates avec `.wc-cta-bar` native
+  // (restaurant) : il cache cette barre et redirige pmOpen → wcSxOpen.
   // ═══════════════════════════════════════════════════════════════════
-  const hasNativeSalesUi = injectedHtml.includes('class="wc-sx-cta"');
-  const withSalesUi = hasNativeSalesUi
-    ? injectedHtml
-    : injectedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site") + "</body>");
+  const cleanedHtml = stripOldSnippet(injectedHtml);
+  const withSalesUi = cleanedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site") + "</body>");
 
   // ═══════════════════════════════════════════════════════════════════
   // BEACON VIEW TRACKING — fire uniquement sur interaction humaine réelle

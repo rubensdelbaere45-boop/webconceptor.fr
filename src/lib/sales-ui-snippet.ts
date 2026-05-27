@@ -25,6 +25,7 @@ export function buildSalesUiSnippet(slug: string, prospectName: string): string 
   const safeSlug = slug.replace(/[^a-z0-9_-]/gi, "").slice(0, 100);
 
   return `
+<!-- WC-SX-START -->
 <style>
 /* ─── CTA bar fixe en haut ─────────────────────────────────── */
 .wc-sx-cta{position:fixed;top:0;left:0;right:0;z-index:9996;background:#0a0a0a;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 16px rgba(0,0,0,0.35);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;font-size:13px}
@@ -528,5 +529,6 @@ body{padding-top:50px !important}
   });
 })();
 </script>
+<!-- WC-SX-END -->
 `;
 }
