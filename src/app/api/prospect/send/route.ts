@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { escapeTelegram, safeCompare, isWithinSendingHours } from "@/lib/security";
+import { scoreProspect, type ProspectTier } from "@/lib/prospect-scoring";
 import {
   generateRestaurantMockupHtml,
   BUSINESS_TYPE_VIBE,
@@ -760,86 +761,56 @@ function getEmailGainBullets(businessType?: string): string[] {
   ];
 }
 
-function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
-  const cityStr = prospect.city ? ` à ${escape(prospect.city)}` : "";
+/* ══════════════════════════════════════════
+   EMAIL COURT — Cold outreach optimisé
+   80-120 mots, adapté au tier HOT/WARM.
+   Le job de l'email = obtenir le clic.
+   Le job de la maquette = convertir.
+   ══════════════════════════════════════════ */
 
-  // ── Angle psychologique basé sur la note Google ──────────────────────────
-  // Note ≥ 4.5 → prestige ("parmi les mieux notés")
-  // Note 4.0–4.4 → valorisation ("vos avis méritent une vitrine à la hauteur")
-  // Note < 4.0 ou absente → pas de mention rating (on n'insiste pas sur un point faible)
-  let ratingHook = "";
-  if (prospect.google_rating && prospect.google_reviews_count && prospect.google_reviews_count >= 5) {
-    if (prospect.google_rating >= 4.5) {
-      ratingHook = `<p style="font-size:14px;color:#4a4340;margin:0 0 18px;line-height:1.65;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0"><strong>${escape(prospect.name)}</strong> affiche <strong>${prospect.google_rating}/5</strong> sur Google avec ${prospect.google_reviews_count} avis — une réputation que peu peuvent se vanter d'avoir${cityStr}. Cette maquette est à la hauteur de ça.</p>`;
-    } else if (prospect.google_rating >= 4.0) {
-      ratingHook = `<p style="font-size:14px;color:#4a4340;margin:0 0 18px;line-height:1.65">Vos ${prospect.google_reviews_count} avis Google (${prospect.google_rating}/5) témoignent de votre qualité. Voici une maquette qui leur donne une vitrine à la hauteur.</p>`;
+function buildShortEmail(
+  prospect: Prospect,
+  content: RestaurantContent,
+  mockupUrl: string,
+  tier: ProspectTier,
+): string {
+  // Ligne de preuve sociale (note Google) — si pertinente
+  let proofLine = "";
+  if (prospect.google_rating && prospect.google_reviews_count && prospect.google_reviews_count >= 10) {
+    if (prospect.google_rating >= 4.3) {
+      proofLine = `<p style="font-size:14px;color:#4a4340;margin:0 0 16px;line-height:1.65;padding:12px 16px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">${prospect.google_rating}/5 sur Google · ${prospect.google_reviews_count} avis — votre réputation mérite une présence en ligne à la hauteur.</p>`;
     }
   }
 
-  // ── Bloc audit discret (site existant vieillissant) ──────────────────────
-  const hasOutdatedSite = prospect.website
-    && (prospect.site_quality === "poor" || prospect.site_quality === "average")
-    && content.auditTeaser && content.auditTeaser.trim().length > 0;
-
-  const auditBlock = hasOutdatedSite
-    ? `<p style="font-size:14px;color:#4a4340;margin:16px 0;line-height:1.6;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">En analysant votre présence en ligne, j'ai noté ${escape(content.auditTeaser || "")}. J'ai appliqué ces améliorations directement dans la maquette.</p>`
+  // Ligne d'urgence pour HOT seulement
+  const urgencyLine = tier === "HOT" && prospect.site_quality === "none"
+    ? `<p style="font-size:14px;color:#4a4340;margin:0 0 16px;line-height:1.65">Vos concurrents ont déjà un site — c'est le bon moment pour prendre de l'avance.</p>`
     : "";
 
-  // ── Feature bullets (ce que contient la maquette) ────────────────────────
-  const featureBullets = getEmailFeatureBullets(prospect.business_type);
-  const featureBulletsHtml = featureBullets
-    .map(b => `<li style="margin-bottom:9px;line-height:1.55;font-size:14px;color:#4a4340">${b}</li>`)
-    .join("");
+  return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1a1310;line-height:1.65;background:#ffffff">
 
-  // ── Gain bullets (ce qu'ils gagnent concrètement) ───────────────────────
-  const gainBullets = getEmailGainBullets(prospect.business_type);
-  const gainBulletsHtml = gainBullets
-    .map(b => `<li style="margin-bottom:9px;line-height:1.55;font-size:14px;color:#4a4340">${b}</li>`)
-    .join("");
+  <p style="font-size:15px;margin:0 0 16px">Bonjour,</p>
 
-  // ── Bloc admin (objection "c'est trop compliqué à gérer") ───────────────
-  const adminBlock = getEmailAdminBlock(prospect.business_type);
+  <p style="font-size:15px;margin:0 0 16px">${escape(content.emailPitch)}</p>
 
-  return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;padding:36px 28px;color:#1a1310;line-height:1.65;background:#ffffff">
+  ${proofLine}
+  ${urgencyLine}
 
-  <p style="font-size:15px;margin:0 0 18px">Bonjour,</p>
-
-  <p style="font-size:15px;margin:0 0 18px">${escape(content.emailPitch)}</p>
-
-  ${ratingHook}
-  ${auditBlock}
-
-  <div style="text-align:center;margin:28px 0">
-    <a href="${mockupUrl}" style="display:inline-block;padding:16px 40px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:15px;letter-spacing:0.05em">Voir votre maquette →</a>
+  <div style="text-align:center;margin:24px 0 20px">
+    <a href="${mockupUrl}" style="display:inline-block;padding:15px 38px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:15px;letter-spacing:0.04em">Voir votre maquette →</a>
   </div>
 
-  <p style="font-size:12px;color:#7a6a5a;margin:0 0 8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">Ce que contient votre maquette</p>
-  <ul style="margin:0 0 24px;padding-left:20px">
-    ${featureBulletsHtml}
-  </ul>
+  <p style="font-size:13px;color:#6b5f54;text-align:center;margin:0 0 28px">Site livré en 5 jours · <strong>320 € TTC</strong> · 3× sans frais</p>
 
-  <p style="font-size:12px;color:#7a6a5a;margin:0 0 8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">Ce que vous y gagnez concrètement</p>
-  <ul style="margin:0 0 24px;padding-left:20px">
-    ${gainBulletsHtml}
-  </ul>
+  <p style="font-size:13px;color:#7a6a5a;margin:0 0 24px;line-height:1.6">Si quelque chose ne vous plaît pas — photo, texte, couleur — répondez à cet email, je le change.</p>
 
-  ${adminBlock}
-
-  <div style="background:#f9f5ef;border:1px solid #e8dfd0;border-radius:4px;padding:18px 20px;margin:24px 0">
-    <p style="font-size:14px;margin:0 0 6px"><strong>320 € TTC</strong> — site livré en 5 jours ouvrés</p>
-    <p style="font-size:13px;color:#6b5f54;margin:0">Ou 3× 110 € sans frais · Option Sérénité : 50 €/mois (mises à jour illimitées)</p>
-  </div>
-
-  <p style="font-size:14px;color:#4a4340;margin:0 0 24px;line-height:1.65">Si quelque chose ne vous convient pas dans la maquette — photo, texte, couleur — répondez simplement à cet email, je m'en occupe.</p>
-
-  <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#6b6b6b">
-    <p style="margin:0 0 3px"><strong style="color:#1a1310">Tom Bauer</strong></p>
-    <p style="margin:0 0 3px">WebConceptor</p>
-    <p style="margin:0 0 3px"><a href="mailto:contact@webconceptor.fr" style="color:#1a3a5c;text-decoration:none">contact@webconceptor.fr</a> &middot; <a href="tel:+33635592471" style="color:#1a3a5c;text-decoration:none">06 35 59 24 71</a></p>
+  <div style="border-top:1px solid #e8dfd0;padding-top:18px;font-size:13px;color:#6b6b6b">
+    <p style="margin:0 0 2px"><strong style="color:#1a1310">Tom Bauer</strong> — WebConceptor</p>
+    <p style="margin:0 0 2px"><a href="mailto:contact@webconceptor.fr" style="color:#1a3a5c;text-decoration:none">contact@webconceptor.fr</a> &middot; <a href="tel:+33635592471" style="color:#1a3a5c;text-decoration:none">06 35 59 24 71</a></p>
     <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
   </div>
 
-  <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:14px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b5a894">cliquez ici pour vous désabonner</a>.</p>
+  <p style="font-size:11px;color:#b5a894;margin-top:22px;border-top:1px solid #f0e9dc;padding-top:12px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b5a894">Se désabonner</a>.</p>
 </div>`;
 }
 
@@ -1019,6 +990,19 @@ async function handleSend(req: NextRequest) {
       continue;
     }
 
+    // ── Scoring prospect — skip COLD (< 40 pts) ──────────────────────────
+    const prospectScore = scoreProspect({
+      google_rating: p.google_rating,
+      google_reviews_count: p.google_reviews_count,
+      site_quality: p.site_quality,
+      business_type: p.business_type,
+    });
+    if (prospectScore.tier === "COLD" && !prospect_id && !prospect_slug) {
+      // COLD + envoi batch → on skip. Si slug/id direct → admin force, on envoie quand même.
+      results.push({ id: p.id, name: p.name, status: "skipped_cold_score" });
+      continue;
+    }
+
     // Note : on NE skip PAS les sites "good" — le tri par priorité gère l'ordre
     // (no-site > poor > average > good). Le pitch reste valide même pour un site
     // moderne : réservation sans commission, 3× sans frais, design premium.
@@ -1065,7 +1049,7 @@ async function handleSend(req: NextRequest) {
         html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
       }
 
-      const emailBody = buildRestaurantEmailBody(p, restoContent, mockupUrl);
+      const emailBody = buildShortEmail(p, restoContent, mockupUrl, prospectScore.tier);
       const emailSubject = restoContent.emailSubject;
 
       // Save mockup + email content to DB
@@ -1134,6 +1118,7 @@ async function handleSend(req: NextRequest) {
         const noSiteBadge = p.site_quality === "none"
           ? `🆕 <b>PAS DE SITE — PRIO MAX POUR APPEL</b>\n\n`
           : "";
+        const scoreBadge = `🎯 Score : <b>${prospectScore.score}/100</b> · ${prospectScore.tier}\n`;
 
         // Libellé + emoji adapté au métier (plus de "Restaurant contacté" sur coiffeurs/plombiers/etc.)
         const metierMap: Record<string, { emoji: string; label: string }> = {
@@ -1166,6 +1151,7 @@ async function handleSend(req: NextRequest) {
             .join("\n");
           await notifyTelegram(
             noSiteBadge +
+            scoreBadge +
             `${metierInfo.emoji} <b>${metierInfo.label}</b>\n\n` +
             `<b>${escapeTelegram(p.name)}</b>\n` +
             `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
@@ -1177,9 +1163,10 @@ async function handleSend(req: NextRequest) {
             `<a href="${escapeTelegram(mockupUrl)}">→ Voir la maquette</a>`
           );
         } else {
-          // Compact épicerie notif
+          // Compact notif
           await notifyTelegram(
             noSiteBadge +
+            scoreBadge +
             `📧 <b>Prospect contacté</b>\n\n` +
             `<b>${escapeTelegram(p.name)}</b>\n` +
             `📍 ${escapeTelegram(p.address || p.city || "?")}\n` +
