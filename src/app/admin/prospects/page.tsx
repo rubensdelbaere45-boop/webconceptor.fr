@@ -416,6 +416,25 @@ export default function AdminProspectsPage() {
     setLoading(false);
   };
 
+  const handleSendPreview = async (p: Prospect) => {
+    const email = prompt(`Envoyer un aperçu de la maquette de "${p.name}" à quelle adresse ?`, "rubensdelbaere@icloud.com");
+    if (!email || !email.includes("@")) return;
+    setLoading(true);
+    addLog(`Envoi aperçu de ${p.name} vers ${email}...`);
+    try {
+      const res = await fetch("/api/prospect/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ prospect_slug: p.slug, preview_email: email }),
+      });
+      const data = await res.json();
+      addLog(res.ok ? `✅ Aperçu envoyé à ${email}` : `❌ ${data.error || "Erreur"}`);
+    } catch (err) {
+      addLog(`❌ ${err instanceof Error ? err.message : "Erreur"}`);
+    }
+    setLoading(false);
+  };
+
   const handleSend = async (prospectId?: string) => {
     setLoading(true);
     addLog(dryRun ? "Test (dry-run) — génération maquettes..." : "Envoi en cours...");
@@ -1290,6 +1309,16 @@ export default function AdminProspectsPage() {
                           title={dryRun ? "Générer la maquette sans envoyer" : "Envoyer l'email au prospect"}
                         >
                           {dryRun ? "Générer" : "Envoyer"}
+                        </button>
+                      )}
+                      {p.slug && p.status !== "found" && (
+                        <button
+                          onClick={() => handleSendPreview(p)}
+                          disabled={loading}
+                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition disabled:opacity-50"
+                          title="Envoyer un aperçu de la maquette à une adresse de test"
+                        >
+                          Aperçu →
                         </button>
                       )}
                       {/* Appeler directement — couleur adaptée au verdict GO/STOP/CHECK */}
