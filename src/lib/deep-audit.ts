@@ -451,7 +451,7 @@ async function callClaudeAudit(input: ClaudeAuditInput): Promise<DeepAudit | nul
     if (isOpenRouter) {
       // OpenRouter proxy Claude Haiku, pas de prompt caching natif via OpenRouter
       body = {
-        model: "deepseek/deepseek-v4-flash:free",
+        model: (process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free"),
         messages: [
           { role: "system", content: AUDIT_SYSTEM_PROMPT },
           { role: "user", content: userBrief + schemaHint },

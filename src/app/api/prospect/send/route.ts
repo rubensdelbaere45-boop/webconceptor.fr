@@ -350,7 +350,7 @@ async function callLLM(
       ? "https://openrouter.ai/api/v1/chat/completions"
       : "https://api.anthropic.com/v1/messages";
     const body = isOR
-      ? { model: "deepseek/deepseek-v4-flash:free", messages: [{ role: "user", content: prompt }], max_tokens: maxTokens }
+      ? { model: (process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free"), messages: [{ role: "user", content: prompt }], max_tokens: maxTokens }
       : { model: "claude-haiku-4-5", max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] };
     const headers: Record<string, string> = isOR
       ? { "Content-Type": "application/json", "Authorization": `Bearer ${k}` }

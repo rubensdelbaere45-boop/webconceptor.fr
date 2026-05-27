@@ -167,7 +167,7 @@ ${cleaned}`;
         "Authorization": `Bearer ${orKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-v4-flash:free",
+        model: (process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free"),
         messages: [{ role: "user", content: prompt }],
         max_tokens: 2000,
         temperature: 0.1,
