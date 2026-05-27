@@ -175,6 +175,29 @@ export default function PeripheriquesPage() {
   const patch     = (id: string, p: Partial<ConnectedDevice>) => setDevices((prev) => prev.map((x) => x.id === id ? { ...x, ...p } : x));
   const remove    = (id: string) => setDevices((prev) => prev.filter((x) => x.id !== id));
 
+  /* ── QZ Tray — téléchargement direct selon l'OS ── */
+  const downloadQZTray = () => {
+    const ua = navigator.userAgent;
+    let url: string;
+    let filename: string;
+    if (ua.includes("Win")) {
+      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.exe";
+      filename = "qz-tray-2.2.4.exe";
+    } else if (ua.includes("Mac")) {
+      // PKG universel (Intel + Apple Silicon)
+      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.pkg";
+      filename = "qz-tray-2.2.4.pkg";
+    } else {
+      // Linux
+      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.deb";
+      filename = "qz-tray-2.2.4.deb";
+    }
+    const a = document.createElement("a");
+    a.href     = url;
+    a.download = filename;
+    a.click();
+  };
+
   /* ── QZ Tray (impression silencieuse, tous navigateurs) ── */
   const connectQZ = async () => {
     setQzStatus("checking");
@@ -481,10 +504,10 @@ export default function PeripheriquesPage() {
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
           {qzStatus === "unavailable" && (
-            <a href="https://qz.io/download/" target="_blank" rel="noopener"
-              style={{ height: 36, padding: "0 14px", borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e", fontSize: 12, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+            <button onClick={downloadQZTray}
+              style={{ height: 36, padding: "0 14px", borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
               <Download style={{ width: 13, height: 13 }} /> Télécharger QZ Tray
-            </a>
+            </button>
           )}
           {qzStatus === "connected" && (
             <>

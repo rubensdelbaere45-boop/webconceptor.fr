@@ -95,7 +95,7 @@ export default function CaissioRegister() {
         <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>Créer un compte</h1>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 24 }}>
-          {["7 jours gratuits", "Sans carte bancaire", "Sans engagement"].map((s) => (
+          {["7 jours offerts (Starter)", "Activez via Stripe", "Résiliez quand vous voulez"].map((s) => (
             <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#475569" }}>
               <Check style={{ width: 13, height: 13, color: "#10b981" }} /> {s}
             </span>

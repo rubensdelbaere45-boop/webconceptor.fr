@@ -175,7 +175,7 @@ function ProductFormModal({
 }: {
   initialCat?: string;
   initialProduct?: Product;
-  onSave: () => void;
+  onSave: (widget: boolean, category: string) => void;
   onClose: () => void;
 }) {
   const cats = ["Boulangerie","Boissons","Snacks","Épicerie","Fruits","Légumes","Fromage","Charcuterie","Autre"];
@@ -187,12 +187,17 @@ function ProductFormModal({
     stock: initialProduct?.stock?.toString() ?? "0",
     tva: initialProduct?.tva?.toString() ?? "20",
   });
+  // widget = accès direct sur l'écran d'accueil ; sous-widget = dans sa catégorie (défaut)
+  const [displayMode, setDisplayMode] = useState<"widget" | "subwidget">(
+    initialProduct?.widget ? "widget" : "subwidget"
+  );
   const [err, setErr] = useState("");
 
   const handleSave = () => {
     if (!form.name.trim()) { setErr("Nom requis"); return; }
     const price = parseFloat(form.price);
     if (isNaN(price) || price < 0) { setErr("Prix invalide"); return; }
+    const isWidget = displayMode === "widget";
     const data = {
       name: form.name.trim(),
       price,
@@ -202,13 +207,14 @@ function ProductFormModal({
       stock_min: 5,
       tva: parseFloat(form.tva) || 20,
       active: true,
+      widget: isWidget,
     };
     if (initialProduct) {
       updateProduct(initialProduct.id, data);
     } else {
       saveProduct(data);
     }
-    onSave();
+    onSave(isWidget, form.category);
     onClose();
   };
 
@@ -261,6 +267,25 @@ function ProductFormModal({
               </select>
             </label>
           </div>
+          {/* Affichage : widget vs sous-widget */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b", marginBottom: 8 }}>Comment afficher cet article ?</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button type="button" onClick={() => setDisplayMode("subwidget")}
+                style={{ padding: "10px 8px", borderRadius: 10, border: `2px solid ${displayMode === "subwidget" ? "#4f46e5" : "#e2e8f0"}`, background: displayMode === "subwidget" ? "#ede9fe" : "#f8fafc", cursor: "pointer", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>📂</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: displayMode === "subwidget" ? "#4f46e5" : "#64748b" }}>Sous-catégorie</div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>Dans &quot;{form.category}&quot;</div>
+              </button>
+              <button type="button" onClick={() => setDisplayMode("widget")}
+                style={{ padding: "10px 8px", borderRadius: 10, border: `2px solid ${displayMode === "widget" ? "#f59e0b" : "#e2e8f0"}`, background: displayMode === "widget" ? "#fffbeb" : "#f8fafc", cursor: "pointer", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>⚡</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: displayMode === "widget" ? "#d97706" : "#64748b" }}>Widget direct</div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>Accès rapide en accueil</div>
+              </button>
+            </div>
+          </div>
+
           {err && <div style={{ fontSize: 13, color: "#dc2626", fontWeight: 600 }}>{err}</div>}
         </div>
         <div style={{ padding: "12px 20px", borderTop: "1px solid #f1f5f9", display: "flex", gap: 10 }}>
@@ -554,6 +579,38 @@ export default function POSPage() {
         {/* ── CATEGORY GRID ── */}
         {!selectedCat && (
           <div style={{ flex: 1, overflowY: "auto", padding: 16, position: "relative" }}>
+
+            {/* ── Widgets directs (accès rapide) ── */}
+            {(() => {
+              const widgets = products.filter((p) => p.active && p.widget);
+              if (widgets.length === 0) return null;
+              return (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#94a3b8", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span>⚡</span> Accès rapide
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                    {widgets.map((p) => {
+                      const cat = getCatDef(p.category);
+                      const outOfStock = p.stock === 0;
+                      return (
+                        <button key={p.id} onClick={() => !outOfStock && addToCart(p)}
+                          disabled={outOfStock}
+                          style={{ height: 52, padding: "0 18px", borderRadius: 14, border: `2px solid ${outOfStock ? "#e2e8f0" : cat.color + "40"}`, background: outOfStock ? "#f8fafc" : cat.light, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 10, opacity: outOfStock ? 0.55 : 1, transition: "all .12s" }}>
+                          <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>{p.name}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: cat.color }}>{p.price.toFixed(2)} €</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ height: 1, background: "#e2e8f0", marginTop: 16 }} />
+                </div>
+              );
+            })()}
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
               {categories.map((catName) => {
                 const cat = getCatDef(catName);
@@ -985,7 +1042,14 @@ export default function POSPage() {
         <ProductFormModal
           initialCat={productForm.cat}
           initialProduct={productForm.product}
-          onSave={reloadProducts}
+          onSave={(isWidget, category) => {
+            reloadProducts();
+            // Si sous-catégorie → auto-naviguer vers la catégorie pour voir l'article immédiatement
+            if (!isWidget) {
+              setSelectedCat(category);
+            }
+            // Si widget → reste sur l'accueil pour le voir directement dans les widgets
+          }}
           onClose={() => setProductForm({ open: false })}
         />
       )}

@@ -35,6 +35,7 @@ export type Product = {
   tva: number;
   image_url?: string;
   active: boolean;
+  widget?: boolean; // true = affiché directement sur l'écran d'accueil caisse (hors catégorie)
 };
 
 export type SaleItem = {

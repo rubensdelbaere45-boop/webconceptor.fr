@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
       cancel_url: `${baseUrl}/caissio/app/abonnement?cancelled=true`,
       subscription_data: {
         metadata: { user_id, plan },
-        trial_period_days: undefined, // trial géré en local
+        // 7 jours offerts sur le premier abonnement Starter uniquement
+        trial_period_days: plan === "starter" ? 7 : undefined,
       },
       allow_promotion_codes: true,
       billing_address_collection: "auto",

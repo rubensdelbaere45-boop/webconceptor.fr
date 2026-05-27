@@ -158,7 +158,7 @@ export default function AbonnementPage() {
 
   const trial = isTrialing(user);
   const daysLeft = trialDaysLeft(user);
-  const activePlan = user.subscription_plan || user.plan || "pro";
+  const activePlan = user.subscription_plan || user.plan || "starter";
   const subStatus = user.subscription_status;
   const isActive = subStatus === "active";
 
@@ -201,13 +201,21 @@ export default function AbonnementPage() {
 
       {/* Trial banner */}
       {trial && (
-        <div style={{ background: daysLeft <= 2 ? "#fef2f2" : "#fffbeb", border: `1px solid ${daysLeft <= 2 ? "#fecaca" : "#fde68a"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-          <Clock style={{ width: 16, height: 16, color: daysLeft <= 2 ? "#dc2626" : "#d97706", flexShrink: 0 }} />
-          <div style={{ fontSize: 13, color: daysLeft <= 2 ? "#991b1b" : "#92400e", fontWeight: 600 }}>
-            {daysLeft > 0
-              ? `Il vous reste ${daysLeft} jour${daysLeft > 1 ? "s" : ""} d'essai gratuit. Choisissez un plan pour continuer après la période d'essai.`
-              : "Votre période d'essai est terminée. Choisissez un plan pour continuer."}
+        <div style={{ background: daysLeft <= 2 ? "#fef2f2" : "#fffbeb", border: `1px solid ${daysLeft <= 2 ? "#fecaca" : "#fde68a"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isActive ? 0 : 8 }}>
+            <Clock style={{ width: 16, height: 16, color: daysLeft <= 2 ? "#dc2626" : "#d97706", flexShrink: 0 }} />
+            <div style={{ fontSize: 13, color: daysLeft <= 2 ? "#991b1b" : "#92400e", fontWeight: 600 }}>
+              {daysLeft > 0
+                ? `Il vous reste ${daysLeft} jour${daysLeft > 1 ? "s" : ""} d'essai gratuit.`
+                : "Votre période d'essai est terminée."}
+            </div>
           </div>
+          {!isActive && (
+            <div style={{ fontSize: 12, color: "#92400e", marginLeft: 26, lineHeight: 1.6 }}>
+              👉 Pour activer les <strong>7 jours offerts sur l&apos;abonnement Starter</strong>, cliquez sur <strong>« Choisir ce plan »</strong> ci-dessous et entrez votre carte sur Stripe.
+              Aucun prélèvement pendant les 7 premiers jours — résiliez avant le 8ème jour pour ne rien payer.
+            </div>
+          )}
         </div>
       )}
 
