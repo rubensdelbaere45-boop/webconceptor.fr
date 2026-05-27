@@ -219,7 +219,7 @@ body{padding-top:50px !important}
 (function wcSxInit() {
   var SLUG = ${JSON.stringify(safeSlug)};
   var LS_KEY = 'wc_buyer_snippet';
-  var _domainVerified = null; // {name, tld, price_cents} ou null
+  var _domainVerified = null; // {name, tld, priceCents} ou null
 
   // Si le template a déjà une CTA bar native, on cache notre barre mais on garde wcSxOpen
   if (document.querySelector('.wc-cta-bar')) {
@@ -368,7 +368,7 @@ body{padding-top:50px !important}
           // L'API retourne déjà le prix avec marge (× 1.15 côté serveur)
           var priceCents = data.priceCents || 0;
           var priceEuros = (priceCents / 100).toFixed(2).replace('.',',');
-          _domainVerified = { name: name, tld: tld, price_cents: priceCents };
+          _domainVerified = { name: name, tld: tld.replace(/^\./, ''), priceCents: priceCents };
           statusEl.className = 'ok';
           statusEl.textContent = name + tld + ' est disponible — ' + priceEuros + ' €/an';
         } else {
@@ -394,8 +394,8 @@ body{padding-top:50px !important}
     var total = 320;
     html += '<div>Création du site : <strong>320,00 €</strong></div>';
     if (_domainVerified) {
-      var domEuros = (_domainVerified.price_cents / 100).toFixed(2).replace('.',',');
-      total = 320 + _domainVerified.price_cents / 100;
+      var domEuros = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
+      total = 320 + _domainVerified.priceCents / 100;
       html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEuros + ' €</strong></div>';
     }
     html += '<div class="ps-total">Total : ' + total.toFixed(2).replace('.',',') + ' €</div>';
@@ -448,7 +448,7 @@ body{padding-top:50px !important}
       buyer: { prenom: prenom, nom: nom, email: email, telephone: tel, adresse: adresse, cp: cp, ville: ville },
     };
     if (_domainVerified) {
-      payload.domain = { name: _domainVerified.name, tld: _domainVerified.tld, price_cents: _domainVerified.price_cents };
+      payload.domain = { name: _domainVerified.name, tld: _domainVerified.tld, priceCents: _domainVerified.priceCents };
     }
 
     fetch('/api/prospect/checkout', {
