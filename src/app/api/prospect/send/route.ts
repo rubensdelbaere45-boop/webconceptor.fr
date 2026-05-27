@@ -761,35 +761,76 @@ function getEmailGainBullets(businessType?: string): string[] {
 }
 
 function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent, mockupUrl: string): string {
-  // Prénom extrait du nom complet si possible (premier mot)
-  const firstName = prospect.name.split(/\s+/)[0];
-  const greeting = `Bonjour,`;
+  const cityStr = prospect.city ? ` à ${escape(prospect.city)}` : "";
 
-  // Bloc audit discret — uniquement si site existant et audit pertinent
+  // ── Angle psychologique basé sur la note Google ──────────────────────────
+  // Note ≥ 4.5 → prestige ("parmi les mieux notés")
+  // Note 4.0–4.4 → valorisation ("vos avis méritent une vitrine à la hauteur")
+  // Note < 4.0 ou absente → pas de mention rating (on n'insiste pas sur un point faible)
+  let ratingHook = "";
+  if (prospect.google_rating && prospect.google_reviews_count && prospect.google_reviews_count >= 5) {
+    if (prospect.google_rating >= 4.5) {
+      ratingHook = `<p style="font-size:14px;color:#4a4340;margin:0 0 18px;line-height:1.65;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0"><strong>${escape(prospect.name)}</strong> affiche <strong>${prospect.google_rating}/5</strong> sur Google avec ${prospect.google_reviews_count} avis — une réputation que peu peuvent se vanter d'avoir${cityStr}. Cette maquette est à la hauteur de ça.</p>`;
+    } else if (prospect.google_rating >= 4.0) {
+      ratingHook = `<p style="font-size:14px;color:#4a4340;margin:0 0 18px;line-height:1.65">Vos ${prospect.google_reviews_count} avis Google (${prospect.google_rating}/5) témoignent de votre qualité. Voici une maquette qui leur donne une vitrine à la hauteur.</p>`;
+    }
+  }
+
+  // ── Bloc audit discret (site existant vieillissant) ──────────────────────
   const hasOutdatedSite = prospect.website
     && (prospect.site_quality === "poor" || prospect.site_quality === "average")
     && content.auditTeaser && content.auditTeaser.trim().length > 0;
 
   const auditBlock = hasOutdatedSite
-    ? `
-  <p style="font-size:14px;color:#4a4340;margin:16px 0;line-height:1.6;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">En jetant un œil à votre présence en ligne, j'ai noté ${escape(content.auditTeaser || "")}. J'ai appliqué ces axes directement dans la maquette.</p>`
+    ? `<p style="font-size:14px;color:#4a4340;margin:16px 0;line-height:1.6;padding:14px 18px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">En analysant votre présence en ligne, j'ai noté ${escape(content.auditTeaser || "")}. J'ai appliqué ces améliorations directement dans la maquette.</p>`
     : "";
+
+  // ── Feature bullets (ce que contient la maquette) ────────────────────────
+  const featureBullets = getEmailFeatureBullets(prospect.business_type);
+  const featureBulletsHtml = featureBullets
+    .map(b => `<li style="margin-bottom:9px;line-height:1.55;font-size:14px;color:#4a4340">${b}</li>`)
+    .join("");
+
+  // ── Gain bullets (ce qu'ils gagnent concrètement) ───────────────────────
+  const gainBullets = getEmailGainBullets(prospect.business_type);
+  const gainBulletsHtml = gainBullets
+    .map(b => `<li style="margin-bottom:9px;line-height:1.55;font-size:14px;color:#4a4340">${b}</li>`)
+    .join("");
+
+  // ── Bloc admin (objection "c'est trop compliqué à gérer") ───────────────
+  const adminBlock = getEmailAdminBlock(prospect.business_type);
 
   return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;padding:36px 28px;color:#1a1310;line-height:1.65;background:#ffffff">
 
-  <p style="font-size:15px;margin:0 0 18px">${greeting}</p>
+  <p style="font-size:15px;margin:0 0 18px">Bonjour,</p>
 
-  <p style="font-size:15px;margin:0 0 18px">J'ai créé une maquette de site web pour <strong>${escape(prospect.name)}</strong>${prospect.city ? ` à ${escape(prospect.city)}` : ""} — vous pouvez la voir ici&nbsp;:</p>
+  <p style="font-size:15px;margin:0 0 18px">J'ai créé une maquette de site pour <strong>${escape(prospect.name)}</strong>${cityStr}, basée sur votre activité et vos avis Google :</p>
 
+  ${ratingHook}
   ${auditBlock}
 
   <div style="text-align:center;margin:28px 0">
-    <a href="${mockupUrl}" style="display:inline-block;padding:15px 36px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:0.06em">Voir votre maquette →</a>
+    <a href="${mockupUrl}" style="display:inline-block;padding:16px 40px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:15px;letter-spacing:0.05em">Voir votre maquette →</a>
   </div>
 
-  <p style="font-size:14px;color:#4a4340;margin:0 0 10px;line-height:1.65">Site mobile-first, livré sous 5 jours, <strong>320&nbsp;€ TTC tout compris</strong>. Si vous souhaitez ajouter votre nom de domaine ou des mises à jour illimitées, c'est la formule Sérénité (320&nbsp;€ + 50&nbsp;€/mois).</p>
+  <p style="font-size:12px;color:#7a6a5a;margin:0 0 8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">Ce que contient votre maquette</p>
+  <ul style="margin:0 0 24px;padding-left:20px">
+    ${featureBulletsHtml}
+  </ul>
 
-  <p style="font-size:14px;color:#4a4340;margin:0 0 24px;line-height:1.65">Si quelque chose ne vous convient pas dans la maquette — photo, texte, couleur — répondez à ce mail, je m'en occupe.</p>
+  <p style="font-size:12px;color:#7a6a5a;margin:0 0 8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">Ce que vous y gagnez concrètement</p>
+  <ul style="margin:0 0 24px;padding-left:20px">
+    ${gainBulletsHtml}
+  </ul>
+
+  ${adminBlock}
+
+  <div style="background:#f9f5ef;border:1px solid #e8dfd0;border-radius:4px;padding:18px 20px;margin:24px 0">
+    <p style="font-size:14px;margin:0 0 6px"><strong>320 € TTC</strong> — site livré en 5 jours ouvrés</p>
+    <p style="font-size:13px;color:#6b5f54;margin:0">Ou 3× 110 € sans frais · Option Sérénité : 50 €/mois (mises à jour illimitées)</p>
+  </div>
+
+  <p style="font-size:14px;color:#4a4340;margin:0 0 24px;line-height:1.65">Si quelque chose ne vous convient pas dans la maquette — photo, texte, couleur — répondez simplement à cet email, je m'en occupe.</p>
 
   <div style="border-top:1px solid #e8dfd0;padding-top:20px;font-size:13px;color:#6b6b6b">
     <p style="margin:0 0 3px"><strong style="color:#1a1310">Tom Bauer</strong></p>
@@ -800,7 +841,6 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <p style="font-size:11px;color:#b5a894;margin-top:24px;border-top:1px solid #f0e9dc;padding-top:14px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. Pour ne plus être contacté, <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b5a894">cliquez ici pour vous désabonner</a>.</p>
 </div>`;
-  void firstName; // utilisé implicitement via greeting
 }
 
 /* ══════════════════════════════════════════
@@ -1119,7 +1159,7 @@ async function handleSend(req: NextRequest) {
 
         if (isRestaurant) {
           // Rich restaurant notif with cuisine + talking points for phone follow-up
-          const restoContent = await personalizeRestaurantWithClaude(p);
+          // NB: restoContent déjà calculé plus haut — on réutilise, pas de 2e appel IA.
           const talkingPointsTxt = restoContent.talkingPoints
             .slice(0, 5)
             .map((t, i) => `${i + 1}. ${escapeTelegram(t)}`)
