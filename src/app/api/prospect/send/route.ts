@@ -830,6 +830,9 @@ async function handleSend(req: NextRequest) {
   const prospect_id = typeof raw.prospect_id === "string" && /^[0-9a-f-]{10,64}$/i.test(raw.prospect_id)
     ? raw.prospect_id
     : null;
+  const prospect_slug = typeof raw.prospect_slug === "string" && /^[a-z0-9_-]{3,120}$/i.test(raw.prospect_slug.trim())
+    ? raw.prospect_slug.trim()
+    : null;
   const batch_size = Math.max(1, Math.min(150, Number.isFinite(Number(raw.batch_size)) ? Number(raw.batch_size) : 5));
   const dry_run = Boolean(raw.dry_run);
   // preview_email : surcharge l'adresse du prospect pour tests admin (jamais marqué comme "sent")
@@ -839,7 +842,7 @@ async function handleSend(req: NextRequest) {
 
   // COUVRE-FEU : pas d'envoi d'email entre 19h et 9h (heure Paris)
   // Sauf override explicite (prospect_id = envoi ciblé manuel par admin) ou dry_run
-  const override = Boolean(raw.force) || prospect_id !== null || dry_run;
+  const override = Boolean(raw.force) || prospect_id !== null || prospect_slug !== null || dry_run;
   if (!override && !isWithinSendingHours(9, 19)) {
     return NextResponse.json({
       success: true,
@@ -854,6 +857,9 @@ async function handleSend(req: NextRequest) {
 
   if (prospect_id) {
     const { data } = await supabase.from("prospects").select("*").eq("id", prospect_id).limit(1);
+    if (data) prospects = data as Prospect[];
+  } else if (prospect_slug) {
+    const { data } = await supabase.from("prospects").select("*").eq("slug", prospect_slug).limit(1);
     if (data) prospects = data as Prospect[];
   } else {
     // On fetch LARGE (10× batch_size) pour garantir qu'on récupère TOUS les
