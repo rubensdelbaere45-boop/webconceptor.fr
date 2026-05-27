@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Crown, Star, Loader2, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import {
@@ -57,7 +57,7 @@ const PLANS = [
   },
 ];
 
-export default function AbonnementPage() {
+function AbonnementInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<CaissioUser | null>(null);
@@ -331,5 +331,17 @@ export default function AbonnementPage() {
         Paiement sécurisé par Stripe · Annulation à tout moment · TVA non incluse · Facture automatique par email
       </div>
     </div>
+  );
+}
+
+export default function AbonnementPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <Loader2 style={{ width: 28, height: 28, color: "#4f46e5", animation: "spin 1s linear infinite" }} />
+      </div>
+    }>
+      <AbonnementInner />
+    </Suspense>
   );
 }
