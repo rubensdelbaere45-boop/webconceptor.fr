@@ -21,37 +21,82 @@ type DemoProduct = {
 };
 
 const DEMO_PRODUCTS: DemoProduct[] = [
-  // ─── Phares (affichés en grand) ───
-  { id: "1",  name: "Nutella 400g",       price: 3.99, cat: "e", stock: 5,  featured: true,  img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80", tva: 5.5 },
-  { id: "2",  name: "Croissant",          price: 1.20, cat: "b", stock: 12, featured: true,  img: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80", tva: 5.5 },
-  { id: "3",  name: "Coca-Cola 33cl",     price: 1.80, cat: "d", stock: 3,  featured: true,  img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=400&q=80", tva: 20  },
-  // ─── Boulangerie ───
-  { id: "4",  name: "Pain au chocolat",   price: 1.40, cat: "b", stock: 8,  img: "https://images.unsplash.com/photo-1604882941706-7adadb3cd688?w=400&q=80", tva: 5.5 },
-  { id: "5",  name: "Baguette tradition", price: 1.10, cat: "b", stock: 15, img: "https://images.unsplash.com/photo-1549931319-a545dcf3bc7b?w=400&q=80", tva: 5.5 },
-  { id: "6",  name: "Pain de campagne",   price: 3.50, cat: "b", stock: 6,  img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80", tva: 5.5 },
-  // ─── Boissons ───
-  { id: "7",  name: "Café expresso",      price: 2.00, cat: "d", stock: 50, img: "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&q=80", tva: 10  },
-  { id: "8",  name: "Eau Evian 50cl",     price: 1.00, cat: "d", stock: 24, img: "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400&q=80", tva: 5.5 },
-  { id: "9",  name: "Jus d'orange 1L",    price: 2.50, cat: "d", stock: 8,  img: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80", tva: 5.5 },
-  // ─── Épicerie ───
-  { id: "10", name: "Pâtes Barilla 500g", price: 1.85, cat: "e", stock: 14, img: "https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400&q=80", tva: 5.5 },
-  { id: "11", name: "Riz basmati 1kg",    price: 2.80, cat: "e", stock: 9,  img: "https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=400&q=80", tva: 5.5 },
-  // ─── Snacks ───
-  { id: "12", name: "Sandwich jambon",    price: 3.90, cat: "s", stock: 4,  img: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&q=80", tva: 10  },
-  { id: "13", name: "Chips Lay's 150g",   price: 1.80, cat: "s", stock: 10, img: "https://images.unsplash.com/photo-1621955511577-8e92da25e7bc?w=400&q=80", tva: 20  },
-  // ─── Fruits ───
-  { id: "14", name: "Bananes 1kg",        price: 1.90, cat: "f", stock: 20, img: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&q=80", tva: 5.5 },
-  { id: "15", name: "Pommes Golden 1kg",  price: 2.50, cat: "f", stock: 18, img: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&q=80", tva: 5.5 },
+  // ─── Boucherie / Charcuterie ───
+  { id: "v1",  name: "Bavette de bœuf / kg",          price: 38.35, cat: "v", stock: 5,  img: "", tva: 5.5 },
+  { id: "v2",  name: "Steak haché XXL 180g",           price: 4.76,  cat: "v", stock: 12, img: "", tva: 5.5 },
+  { id: "v3",  name: "Chipolatas x6 330g",             price: 5.55,  cat: "v", stock: 14, img: "", tva: 5.5 },
+  { id: "v4",  name: "Cuisse de poulet rôti x2 / kg", price: 19.28, cat: "v", stock: 6,  img: "", tva: 5.5 },
+  { id: "v5",  name: "Escalope de dinde / kg",         price: 22.87, cat: "v", stock: 7,  img: "", tva: 5.5 },
+  { id: "v6",  name: "Andouillette de Troyes 300g",    price: 4.93,  cat: "v", stock: 8,  img: "", tva: 5.5 },
+  { id: "v7",  name: "Boudin noir x2 250g",            price: 3.94,  cat: "v", stock: 10, img: "", tva: 5.5 },
+  { id: "v8",  name: "Boudin blanc Rethel 350g",       price: 7.15,  cat: "v", stock: 7,  img: "", tva: 5.5 },
+  { id: "v9",  name: "Knacks porc x10 350g",           price: 2.05,  cat: "v", stock: 18, featured: true, img: "", tva: 5.5 },
+  { id: "v10", name: "Jambon supérieur 4 tr.",         price: 3.53,  cat: "v", stock: 20, featured: true, img: "", tva: 5.5 },
+  { id: "v11", name: "Jambon de Bayonne 5 tr. 100g",   price: 4.39,  cat: "v", stock: 12, img: "", tva: 5.5 },
+  { id: "v12", name: "Jambon Serrano 100g",             price: 1.99,  cat: "v", stock: 15, img: "", tva: 5.5 },
+  { id: "v13", name: "Lardons fumés x2 200g",          price: 3.45,  cat: "v", stock: 18, featured: true, img: "", tva: 5.5 },
+  { id: "v14", name: "Poitrine fumée 4 tr. 300g",      price: 4.57,  cat: "v", stock: 12, img: "", tva: 5.5 },
+  { id: "v15", name: "Saucisson à l'ail fumé 300g",   price: 3.51,  cat: "v", stock: 10, img: "", tva: 5.5 },
+  // ─── Fromages ───
+  { id: "f1",  name: "Camembert Président 250g",       price: 2.58,  cat: "f", stock: 20, featured: true, img: "", tva: 5.5 },
+  { id: "f2",  name: "Camembert Cœur de Lion 250g",   price: 3.23,  cat: "f", stock: 15, img: "", tva: 5.5 },
+  { id: "f3",  name: "Coulommiers Président 350g",     price: 3.62,  cat: "f", stock: 10, img: "", tva: 5.5 },
+  { id: "f4",  name: "Brie Président 200g",            price: 2.65,  cat: "f", stock: 12, img: "", tva: 5.5 },
+  { id: "f5",  name: "Maroilles AOP 1/4",              price: 4.28,  cat: "f", stock: 8,  img: "", tva: 5.5 },
+  { id: "f6",  name: "Roquefort AOP 150g",             price: 3.74,  cat: "f", stock: 7,  img: "", tva: 5.5 },
+  { id: "f7",  name: "Comté AOP 250g",                 price: 6.25,  cat: "f", stock: 9,  img: "", tva: 5.5 },
+  { id: "f8",  name: "Beaufort Alpage AOP / kg",       price: 39.45, cat: "f", stock: 3,  img: "", tva: 5.5 },
+  { id: "f9",  name: "Emmental râpé x3 70g",          price: 2.75,  cat: "f", stock: 25, img: "", tva: 5.5 },
+  { id: "f10", name: "Raclette tranches 400g",         price: 6.20,  cat: "f", stock: 10, img: "", tva: 5.5 },
+  { id: "f11", name: "Babybel 200g",                   price: 3.11,  cat: "f", stock: 14, img: "", tva: 5.5 },
+  { id: "f12", name: "La Vache qui Rit x12",           price: 3.03,  cat: "f", stock: 16, img: "", tva: 5.5 },
+  { id: "f13", name: "Boursin ail & fines herbes 150g",price: 2.70,  cat: "f", stock: 12, img: "", tva: 5.5 },
+  // ─── Crémerie / Œufs ───
+  { id: "c1",  name: "Œufs x6 plein air",             price: 2.05,  cat: "c", stock: 30, featured: true, img: "", tva: 5.5 },
+  { id: "c2",  name: "Œufs x10",                      price: 2.45,  cat: "c", stock: 25, img: "", tva: 5.5 },
+  { id: "c3",  name: "Beurre doux 250g",               price: 3.20,  cat: "c", stock: 25, featured: true, img: "", tva: 5.5 },
+  { id: "c4",  name: "Beurre 1/2 sel 250g",           price: 3.20,  cat: "c", stock: 22, img: "", tva: 5.5 },
+  { id: "c5",  name: "Beurre Président 250g",          price: 3.48,  cat: "c", stock: 18, img: "", tva: 5.5 },
+  { id: "c6",  name: "Lait entier 1L",                 price: 2.04,  cat: "c", stock: 30, img: "", tva: 5.5 },
+  { id: "c7",  name: "Lait 1/2 écrémé 1L",           price: 1.36,  cat: "c", stock: 35, img: "", tva: 5.5 },
+  { id: "c8",  name: "Crème fraîche épaisse 50cl",    price: 2.78,  cat: "c", stock: 20, featured: true, img: "", tva: 5.5 },
+  { id: "c9",  name: "Crème liquide UHT 30% 1L",      price: 6.86,  cat: "c", stock: 12, img: "", tva: 5.5 },
+  { id: "c10", name: "Danette chocolat x4",            price: 1.85,  cat: "c", stock: 20, img: "", tva: 5.5 },
+  { id: "c11", name: "Danette vanille x4",             price: 1.85,  cat: "c", stock: 18, img: "", tva: 5.5 },
+  { id: "c12", name: "Yaourt nature Activia x4",       price: 1.77,  cat: "c", stock: 22, img: "", tva: 5.5 },
+  { id: "c13", name: "Fromage blanc nat. 1 kg",        price: 3.09,  cat: "c", stock: 12, img: "", tva: 5.5 },
+  { id: "c14", name: "Flanby vanille x6",              price: 1.98,  cat: "c", stock: 14, img: "", tva: 5.5 },
+  // ─── Poissonnerie ───
+  { id: "p1",  name: "Coquille St-Jacques trad. 140g", price: 4.44,  cat: "p", stock: 10, img: "", tva: 5.5 },
+  { id: "p2",  name: "Coquille saumon 150g",           price: 3.28,  cat: "p", stock: 12, img: "", tva: 5.5 },
+  { id: "p3",  name: "Coquille crevette 150g",         price: 3.56,  cat: "p", stock: 11, img: "", tva: 5.5 },
+  { id: "p4",  name: "Coquille crabe 170g",            price: 3.39,  cat: "p", stock: 9,  img: "", tva: 5.5 },
+  { id: "p5",  name: "Pavé de truite fumée 120g",      price: 6.80,  cat: "p", stock: 8,  img: "", tva: 5.5 },
+  { id: "p6",  name: "Coquille bretonne x2 140g",      price: 11.16, cat: "p", stock: 5,  img: "", tva: 5.5 },
+  { id: "p7",  name: "Hareng doux 200g",               price: 3.03,  cat: "p", stock: 7,  img: "", tva: 5.5 },
+  { id: "p8",  name: "Tarama crabe 120g",              price: 3.86,  cat: "p", stock: 10, img: "", tva: 5.5 },
+  { id: "p9",  name: "Bâtonnets surimi x12 180g",     price: 2.90,  cat: "p", stock: 15, featured: true, img: "", tva: 5.5 },
+  // ─── Traiteur / Préparé ───
+  { id: "t1",  name: "Rillettes de porc 220g",         price: 4.30,  cat: "t", stock: 10, img: "", tva: 5.5 },
+  { id: "t2",  name: "Mousse de foie 180g",            price: 1.89,  cat: "t", stock: 12, img: "", tva: 5.5 },
+  { id: "t3",  name: "Quiche lorraine 400g",           price: 3.19,  cat: "t", stock: 8,  featured: true, img: "", tva: 5.5 },
+  { id: "t4",  name: "Flamiche au Maroilles 360g",     price: 8.50,  cat: "t", stock: 6,  img: "", tva: 5.5 },
+  { id: "t5",  name: "Couscous royal 2,86 kg",         price: 14.33, cat: "t", stock: 5,  img: "", tva: 5.5 },
+  { id: "t6",  name: "Lasagnes bolognaise 1 kg",       price: 11.60, cat: "t", stock: 7,  img: "", tva: 5.5 },
+  { id: "t7",  name: "Cordon bleu dinde 200g",         price: 2.30,  cat: "t", stock: 10, img: "", tva: 5.5 },
+  { id: "t8",  name: "Sandwich jambon x3 230g",        price: 2.70,  cat: "t", stock: 8,  img: "", tva: 10  },
+  { id: "t9",  name: "Museau de porc 300g",            price: 3.05,  cat: "t", stock: 7,  img: "", tva: 5.5 },
+  { id: "t10", name: "Pâté ardennais / kg",           price: 9.55,  cat: "t", stock: 4,  img: "", tva: 5.5 },
 ];
 
 const INIT_STOCK = Object.fromEntries(DEMO_PRODUCTS.map((p) => [p.id, p.stock]));
 
 const DEMO_CATS = [
-  { id: "b", name: "Boulangerie", emoji: "🥐", color: "#f59e0b", light: "#fef3c7" },
-  { id: "d", name: "Boissons",    emoji: "🥤", color: "#3b82f6", light: "#dbeafe" },
-  { id: "e", name: "Épicerie",    emoji: "🛒", color: "#8b5cf6", light: "#ede9fe" },
-  { id: "s", name: "Snacks",      emoji: "🥪", color: "#10b981", light: "#d1fae5" },
-  { id: "f", name: "Fruits",      emoji: "🍎", color: "#f43f5e", light: "#ffe4e6" },
+  { id: "v", name: "Boucherie",    emoji: "🥩", color: "#dc2626", light: "#fee2e2" },
+  { id: "f", name: "Fromages",     emoji: "🧀", color: "#d97706", light: "#fef3c7" },
+  { id: "c", name: "Crémerie",     emoji: "🥛", color: "#3b82f6", light: "#dbeafe" },
+  { id: "p", name: "Poissonnerie", emoji: "🐟", color: "#0891b2", light: "#cffafe" },
+  { id: "t", name: "Traiteur",     emoji: "🥗", color: "#16a34a", light: "#dcfce7" },
 ];
 
 /* ─── FEATURES ──────────────────────────────────────── */
@@ -216,7 +261,7 @@ function DemoPOS() {
   const [showSearch, setShowSearch] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchQ, setSearchQ] = useState("");
-  const [addForm, setAddForm] = useState({ name: "", price: "", cat: "b", stock: "10" });
+  const [addForm, setAddForm] = useState({ name: "", price: "", cat: "v", stock: "10" });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
   const [stage, setStage] = useState<"pos" | "pay" | "ticket">("pos");
@@ -340,7 +385,7 @@ function DemoPOS() {
     };
     setExtraProducts((p) => [...p, newProd]);
     setStockState((s) => ({ ...s, [id]: parseInt(addForm.stock) || 10 }));
-    setAddForm({ name: "", price: "", cat: "b", stock: "10" });
+    setAddForm({ name: "", price: "", cat: "v", stock: "10" });
     setShowAddForm(false);
     setSelectedCat(addForm.cat);
   };
@@ -443,6 +488,33 @@ function DemoPOS() {
               </>
             )}
           </div>
+
+          {/* Accès rapide */}
+          {!selectedCat && (
+            <div style={{ flexShrink: 0, background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "8px 14px 10px" }}>
+              <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "#94a3b8", fontWeight: 700, marginBottom: 7 }}>⚡ Accès rapide</div>
+              <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2 }}>
+                {allProducts.filter((p) => p.featured).map((p) => {
+                  const avail = stockState[p.id] ?? 0;
+                  const inCart = cart.find((i) => i.id === p.id)?.qty ?? 0;
+                  const wcat = DEMO_CATS.find((c) => c.id === p.cat);
+                  return (
+                    <button key={p.id} onClick={() => avail > 0 && add(p)}
+                      style={{ flexShrink: 0, height: 50, padding: "0 12px", borderRadius: 12, border: `2px solid ${inCart > 0 ? wcat?.color : (wcat?.color ?? "#e2e8f0") + "40"}`, background: inCart > 0 ? wcat?.light : "#f8fafc", cursor: avail > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 8, opacity: avail === 0 ? 0.5 : 1, position: "relative" }}>
+                      <span style={{ fontSize: 16 }}>{wcat?.emoji}</span>
+                      <div style={{ textAlign: "left" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#0f172a", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                        <div style={{ fontSize: 12, fontWeight: 900, color: wcat?.color }}>{p.price.toFixed(2)} €</div>
+                      </div>
+                      {inCart > 0 && (
+                        <span style={{ position: "absolute", top: -5, right: -5, background: wcat?.color, color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: "50%", width: 15, height: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>{inCart}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Category grid */}
           {!selectedCat && (
