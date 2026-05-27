@@ -17,6 +17,20 @@ import { safeCompare } from "@/lib/security";
    elles ont souvent des commerces sans site web ou avec site vieillissant.
    ───────────────────────────────────────────────────────────────────────────── */
 const DEFAULT_QUERIES = [
+  // ── ZONE AUBENTON (≤60km) — priorité haute : ciblage local WebConceptor ──
+  "restaurant Laon", "restaurant Vervins", "restaurant Hirson", "restaurant Guise", "restaurant Fourmies",
+  "coiffeur Laon", "coiffeur Vervins", "coiffeur Hirson", "coiffeur Fourmies",
+  "boulangerie artisanale Laon", "boulangerie artisanale Vervins", "boulangerie artisanale Hirson",
+  "épicerie de proximité Laon", "épicerie de proximité Vervins",
+  "brasserie Laon", "brasserie Charleville-Mézières",
+  "garage auto Laon", "garage auto Vervins", "garage auto Charleville-Mézières",
+  "plombier Laon", "plombier Vervins", "plombier Hirson",
+  "électricien Laon", "électricien Vervins", "électricien Charleville-Mézières",
+  "fleuriste Laon", "fleuriste Charleville-Mézières",
+  "pizzeria Laon", "pizzeria Fourmies", "pizzeria Charleville-Mézières",
+  "institut de beauté Laon", "spa massage Laon",
+  "pharmacie indépendante Laon", "pharmacie indépendante Vervins",
+  "menuisier Laon", "menuisier Vervins", "peintre bâtiment Laon",
   // ── Restaurants / petites villes ──
   "restaurant Albi", "restaurant Angoulême", "restaurant Arles", "restaurant Aubagne",
   "restaurant Avignon", "restaurant Bayonne", "restaurant Belfort", "restaurant Béziers",

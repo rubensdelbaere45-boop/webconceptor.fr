@@ -8,6 +8,15 @@ import { safeCompare } from "@/lib/security";
    ══════════════════════════════════════════ */
 
 const RESTAURANT_QUERIES = [
+  // ── ZONE AUBENTON (≤60km) — priorité haute ──
+  "restaurant Laon", "restaurant Vervins", "restaurant Hirson", "restaurant Guise", "restaurant Fourmies",
+  "brasserie Laon", "brasserie Charleville-Mézières", "brasserie Guise",
+  "pizzeria Laon", "pizzeria Vervins", "pizzeria Fourmies", "pizzeria Charleville-Mézières",
+  "café restaurant Laon", "café restaurant Vervins", "café restaurant Hirson",
+  "crêperie Laon", "crêperie Charleville-Mézières",
+  "boulangerie café Laon", "boulangerie café Vervins", "boulangerie café Hirson",
+  "bistrot Laon", "bistrot Vervins", "bistrot Charleville-Mézières",
+  "restaurant gastronomique Laon", "restauration rapide Laon",
   // ── Restaurants génériques ──
   "restaurant Albi", "restaurant Angoulême", "restaurant Arles", "restaurant Aubagne",
   "restaurant Avignon", "restaurant Bayonne", "restaurant Belfort", "restaurant Béziers",

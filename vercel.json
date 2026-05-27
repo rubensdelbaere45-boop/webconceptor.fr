@@ -49,6 +49,12 @@
     "src/app/api/caissio/verify-chain/route.ts": {
       "maxDuration": 60
     },
+    "src/app/api/caissio/prospect/send/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/caissio/prospect/cron/route.ts": {
+      "maxDuration": 120
+    },
     "src/app/api/gmb/cron/route.ts": {
       "maxDuration": 120
     },
@@ -91,6 +97,8 @@
     { "path": "/api/gmb/cron", "schedule": "0 9 * * 1-6" },
     { "path": "/api/agentconceptor/posts/cron", "schedule": "0 7 * * 1" },
     { "path": "/api/agentconceptor/prospect/cron", "schedule": "0 8 * * 1-5" },
+    { "path": "/api/caissio/prospect/cron", "schedule": "0 8 * * *" },
+    { "path": "/api/caissio/prospect/cron", "schedule": "0 12 * * *" },
     { "path": "/api/monitor/n8n", "schedule": "0 8 * * *" }
   ]
 }

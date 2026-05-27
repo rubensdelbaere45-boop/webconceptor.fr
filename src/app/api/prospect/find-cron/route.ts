@@ -9,6 +9,23 @@ import { safeCompare } from "@/lib/security";
    ══════════════════════════════════════════ */
 
 const FIND_QUERIES = [
+  // ── ZONE AUBENTON (≤60km) — priorité haute : Laon, Vervins, Hirson, Guise, Fourmies, Charleville-Mézières ──
+  "épicerie de proximité Laon", "épicerie de proximité Vervins", "épicerie de proximité Hirson",
+  "épicerie de proximité Guise", "épicerie de proximité Fourmies",
+  "supérette alimentation Laon", "supérette alimentation Vervins", "supérette alimentation Hirson",
+  "boulangerie artisanale Laon", "boulangerie artisanale Vervins", "boulangerie artisanale Hirson",
+  "boulangerie artisanale Guise", "boulangerie artisanale Fourmies",
+  "boucherie artisanale Laon", "boucherie artisanale Vervins", "boucherie artisanale Hirson",
+  "restaurant Laon", "restaurant Vervins", "restaurant Hirson", "restaurant Guise", "restaurant Fourmies",
+  "brasserie Laon", "brasserie Charleville-Mézières", "pizzeria Laon", "pizzeria Fourmies",
+  "café bar Laon", "café bar Vervins", "café bar Hirson", "café bar Guise",
+  "coiffeur Laon", "coiffeur Vervins", "coiffeur Hirson", "coiffeur Fourmies",
+  "fleuriste Laon", "fleuriste Charleville-Mézières", "fleuriste Fourmies",
+  "primeur fruits légumes Laon", "primeur fruits légumes Vervins",
+  "garage auto Laon", "garage auto Vervins", "garage auto Charleville-Mézières",
+  "plombier Laon", "plombier Vervins", "plombier Hirson", "plombier Guise",
+  "électricien Laon", "électricien Vervins", "électricien Charleville-Mézières",
+  "menuisier Laon", "menuisier Vervins", "menuisier Charleville-Mézières",
   // ── Menuisiers ──
   "menuisier Albi", "menuisier Amiens", "menuisier Angers", "menuisier Avignon",
   "menuisier Bayonne", "menuisier Béziers", "menuisier Brest", "menuisier Caen",
