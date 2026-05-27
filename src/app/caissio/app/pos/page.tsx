@@ -13,7 +13,7 @@ import {
   getCustomCategories, saveCustomCategory, deleteCustomCategory,
   type Product, type Customer, type CustomCategory,
 } from "@/lib/caissio-store";
-import { detectQZ, printViaQZ, type TicketData } from "@/lib/caissio-printer";
+import { detectQZ, printViaQZ, openDrawerQZ, type TicketData } from "@/lib/caissio-printer";
 
 /* ── Types ───────────────────────────────────────── */
 type CartItem = { id: string; name: string; price: number; qty: number };
@@ -454,6 +454,7 @@ export default function POSPage() {
     });
     setCompletedSale({ ticketNum: sale.id.slice(-6).toUpperCase(), total, change });
     setStage("ticket");
+    detectQZ().then((ok) => { if (ok) openDrawerQZ().catch(() => {}); }).catch(() => {});
   };
 
   const numpadPress = (k: string) => setCashInput((v) => k === "." ? (v.includes(".") ? v : (v || "0") + ".") : v + k);
@@ -833,7 +834,7 @@ export default function POSPage() {
             { icon: Users, label: selectedCustomer ? selectedCustomer.name.split(" ")[0] : "Client", active: !!customerId, onClick: () => setCustomerId(null) },
             { icon: PauseCircle, label: "Pause", active: false, onClick: holdTicket, disabled: cart.length === 0 },
             { icon: RotateCcw, label: `Reprendre${held.length > 0 ? ` (${held.length})` : ""}`, active: showHeld, onClick: () => setShowHeld((v) => !v), disabled: held.length === 0 },
-            { icon: DoorOpen, label: "Tiroir", active: false, onClick: () => alert("Commande ESC/POS → tiroir") },
+            { icon: DoorOpen, label: "Tiroir", active: false, onClick: () => openDrawerQZ().catch(() => {}) },
           ].map((btn) => (
             <button key={btn.label} onClick={btn.onClick} disabled={btn.disabled}
               style={{ height: 54, borderRadius: 12, border: `1px solid ${btn.active ? "#4f46e5" : "#e2e8f0"}`, background: btn.active ? "#ede9fe" : btn.disabled ? "#f8fafc" : "#fff", cursor: btn.disabled ? "default" : "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, opacity: btn.disabled ? 0.4 : 1 }}>

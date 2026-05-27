@@ -10,6 +10,7 @@ import {
   seedDemoCatalog, seedDemoSales, saveProduct,
   type Product,
 } from "@/lib/caissio-store";
+import { supabase } from "@/lib/supabase";
 
 /* ── Types ── */
 type ImportedProduct = Omit<Product, "id"> & { _key: string };
@@ -168,6 +169,7 @@ export default function OnboardingPage() {
   const finish = (mode: "test" | "live") => {
     if (mode === "live") switchToLive();
     markOnboardingDone();
+    supabase.auth.updateUser({ data: { caissio_onboarding_done: true } }).catch(() => {});
     router.push("/caissio/app/pos");
   };
 

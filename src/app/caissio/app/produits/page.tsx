@@ -63,8 +63,62 @@ export default function ProduitsPage() {
 
   const margin = (p: Product) => p.price_buy ? ((p.price - p.price_buy) / p.price * 100).toFixed(0) + "%" : "—";
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+    if (["xlsx", "xls", "ods"].includes(ext)) {
+      try {
+        const XLSX = await import("xlsx");
+        const buffer = await file.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rawRows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: "" }) as unknown[][];
+        if (!rawRows.length) { setCsvRows([]); return; }
+
+        const headers = (rawRows[0] as string[]).map((h) => String(h ?? "").trim());
+        const colIdx = (...keys: string[]) => {
+          for (const k of keys) {
+            const i = headers.findIndex((h) => h.toLowerCase().includes(k.toLowerCase()));
+            if (i >= 0) return i;
+          }
+          return -1;
+        };
+
+        const nameIdx    = colIdx("nom de l'article", "nom", "name", "libelle");
+        const catIdx     = colIdx("catégorie", "categorie", "category", "rayon");
+        const priceIdx   = colIdx("prix de vente", "prix", "price");
+        const barcodeIdx = colIdx("code-barres", "code_barre", "barcode", "ean");
+        const tva5Idx    = colIdx("5.5");
+        const tva10Idx   = colIdx("10%", "tva 10");
+
+        const dataRows = rawRows.slice(1).filter((r) => {
+          const first = String((r as unknown[])[0] ?? "").toLowerCase();
+          return !first.includes("ne pas modifier");
+        });
+
+        const parsed: CsvRow[] = dataRows.map((r) => {
+          const row = r as unknown[];
+          const name     = nameIdx >= 0    ? String(row[nameIdx] ?? "").trim()   : "";
+          const category = catIdx >= 0     ? String(row[catIdx] ?? "").trim()    : "Import";
+          const price    = priceIdx >= 0   ? parseFloat(String(row[priceIdx] ?? "0").replace(",", ".")) || 0 : 0;
+          const barcode  = barcodeIdx >= 0 ? String(row[barcodeIdx] ?? "").trim() : "";
+          let tva = 20;
+          if (tva5Idx >= 0  && String(row[tva5Idx] ?? "").toLowerCase() === "oui") tva = 5.5;
+          else if (tva10Idx >= 0 && String(row[tva10Idx] ?? "").toLowerCase() === "oui") tva = 10;
+          const out: CsvRow = { name, price, price_buy: 0, category: category || "Import", barcode, stock: 0, stock_min: 5, tva };
+          if (!name) out.error = "Nom manquant";
+          return out;
+        }).filter((r) => r.name || r.error);
+
+        setCsvRows(parsed);
+      } catch {
+        setCsvRows([]);
+      }
+      return;
+    }
+
+    // CSV / texte
     const reader = new FileReader();
     reader.onload = (e) => { const text = e.target?.result as string; setCsvRows(parseCSV(text)); };
     reader.readAsText(file, "utf-8");
@@ -87,9 +141,9 @@ export default function ProduitsPage() {
           <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 32, fontWeight: 900, color: "#0f172a" }}>Produits</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <input ref={fileRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <input ref={fileRef} type="file" accept="*" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
           <button onClick={() => fileRef.current?.click()} style={{ height: 42, padding: "0 16px", borderRadius: 12, background: "#fff", border: "1px solid #e2e8f0", color: "#4f46e5", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-            <Upload style={{ width: 15, height: 15 }} /> Importer CSV
+            <Upload style={{ width: 15, height: 15 }} /> Importer
           </button>
           <button onClick={openCreate} style={{ height: 42, padding: "0 18px", borderRadius: 12, background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
             <Plus style={{ width: 16, height: 16 }} /> Nouveau produit
@@ -138,7 +192,7 @@ export default function ProduitsPage() {
         style={{ display: csvDrag ? "flex" : "flex", position: "fixed", inset: 0, zIndex: 40, background: "rgba(79,70,229,.12)", backdropFilter: "blur(4px)", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: csvDrag ? 1 : 0, pointerEvents: csvDrag ? "auto" : "none", transition: "opacity .2s" }}
       >
         <div style={{ background: "#fff", border: "2px dashed #4f46e5", borderRadius: 20, padding: "40px 60px", textAlign: "center", fontSize: 16, fontWeight: 700, color: "#4f46e5" }}>
-          Déposez votre fichier CSV ici
+          Déposez votre fichier ici
         </div>
       </div>
 
@@ -147,7 +201,7 @@ export default function ProduitsPage() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.5)", backdropFilter: "blur(6px)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#fff", borderRadius: 24, padding: 28, width: "100%", maxWidth: 700, boxShadow: "0 32px 80px rgba(0,0,0,.2)", maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Aperçu import CSV — {csvRows.length} ligne(s)</h2>
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Aperçu import — {csvRows.length} ligne(s)</h2>
               <button onClick={() => setCsvRows(null)} style={{ background: "none", border: "none", cursor: "pointer" }}><X style={{ width: 20, height: 20, color: "#94a3b8" }} /></button>
             </div>
             <div style={{ flex: 1, overflow: "auto", border: "1px solid #e2e8f0", borderRadius: 12 }}>

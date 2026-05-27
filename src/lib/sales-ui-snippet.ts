@@ -221,6 +221,13 @@ body{padding-top:50px !important}
   var LS_KEY = 'wc_buyer_snippet';
   var _domainVerified = null; // {name, tld, price_cents} ou null
 
+  // Si le template a déjà une CTA bar native, on cache notre barre mais on garde wcSxOpen
+  if (document.querySelector('.wc-cta-bar')) {
+    var _sxBar = document.getElementById('wc-sx-cta');
+    if (_sxBar) _sxBar.style.display = 'none';
+    document.body.style.paddingTop = '';
+  }
+
   /* ─── localStorage ────────────────────────────────────────── */
   function wcSxSave() {
     try {

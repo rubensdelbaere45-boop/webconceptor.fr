@@ -24,12 +24,13 @@ export default function CaissioAuthCallback() {
       const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split("@")[0];
       // Utilise l'ID Supabase comme identifiant stable (unique par utilisateur)
       const googleSub = user.id;
+      const onboardingDone = user.user_metadata?.caissio_onboarding_done === true;
 
       try {
         // Connexion si compte existant, sinon création
         const caissioUser =
           loginWithGoogle(googleSub, email) ??
-          registerWithGoogle({ name, email, google_sub: googleSub });
+          registerWithGoogle({ name, email, google_sub: googleSub, onboarding_done: onboardingDone });
 
         if (!caissioUser.onboarding_done) {
           router.replace("/caissio/onboarding");

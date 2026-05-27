@@ -218,6 +218,7 @@ export function registerWithGoogle(data: {
   email: string;
   google_sub: string;
   store_name?: string;
+  onboarding_done?: boolean;
 }): CaissioUser {
   const users = getUsers();
   const email = data.email.toLowerCase();
@@ -242,7 +243,7 @@ export function registerWithGoogle(data: {
     trial_ends_at: trialEndsAt,
     subscription_status: "trialing",
     mode: "test",
-    onboarding_done: false,
+    onboarding_done: data.onboarding_done ?? false,
   };
   set(KEY.users, [...users, user]);
   setSession(user);

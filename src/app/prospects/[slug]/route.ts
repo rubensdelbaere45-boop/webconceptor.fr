@@ -396,7 +396,7 @@ export async function GET(
   // Le restaurant a son propre CTA riche (réservation, domaine, chat IA)
   // dans mockup-restaurant.ts → on ne re-injecte pas chez lui.
   // ═══════════════════════════════════════════════════════════════════
-  const hasNativeSalesUi = injectedHtml.includes('class="wc-cta-bar"') || injectedHtml.includes('class="wc-sx-cta"');
+  const hasNativeSalesUi = injectedHtml.includes('class="wc-sx-cta"');
   const withSalesUi = hasNativeSalesUi
     ? injectedHtml
     : injectedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site") + "</body>");

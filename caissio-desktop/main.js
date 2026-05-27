@@ -1,6 +1,9 @@
 const { app, BrowserWindow, shell, Menu, nativeTheme } = require("electron");
 const path = require("path");
 
+// Activation des événements tactiles sur Windows (tablettes, écrans tactiles)
+app.commandLine.appendSwitch("touch-events", "enabled");
+
 // URL de production Caissio
 const CAISSIO_BASE = "https://www.webconceptor.fr/caissio";
 const CAISSIO_LOGIN = `${CAISSIO_BASE}/login`;
