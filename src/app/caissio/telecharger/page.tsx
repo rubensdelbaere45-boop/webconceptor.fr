@@ -163,7 +163,7 @@ function TelechargerInner() {
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>
                   Comment installer Caissio sur Windows
                 </div>
-                <Step n={1} title="Téléchargez le fichier" desc='Cliquez sur "Télécharger le .exe" ci-dessus. Le fichier Caissio-Setup-1.0.0.exe se télécharge.' img="⬇️" />
+                <Step n={1} title="Téléchargez le fichier" desc='Cliquez sur "Télécharger le .exe" ci-dessus. Le fichier Caissio-Setup.exe se télécharge dans votre dossier Téléchargements.' img="⬇️" />
                 <Step n={2} title="Lancez l'installateur" desc='Double-cliquez sur le fichier téléchargé. Si Windows affiche un avertissement SmartScreen, cliquez "Informations complémentaires" → "Exécuter quand même".' img="🖱️" />
                 <Step n={3} title="Choisissez le dossier" desc="L'installateur vous demande où installer Caissio. Laissez le dossier par défaut et cliquez Suivant." img="📁" />
                 <Step n={4} title="Connectez-vous" desc="Caissio s'ouvre automatiquement. Connectez-vous avec votre compte Caissio ou créez-en un." img="🔑" />
@@ -419,7 +419,7 @@ function TelechargerInner() {
             { q: "L'app fonctionne-t-elle sans internet ?", a: "Oui, une fois installée, la caisse fonctionne hors-ligne. La connexion internet est nécessaire uniquement pour vérifier votre licence à l'ouverture de l'app (1 fois par session)." },
             { q: "Peut-on installer Caissio sur plusieurs appareils ?", a: "Oui. Connectez-vous avec le même compte sur chaque appareil. Chaque appareil a ses propres données locales. La synchronisation multi-appareils est en cours de développement." },
             { q: "Peut-on contourner la protection de licence ?", a: "Non. Caissio valide votre abonnement à chaque démarrage via une vérification serveur chiffrée. Sans connexion internet au démarrage, l'app fonctionne en mode hors-ligne pour la session en cours uniquement." },
-            { q: "Mon antivirus bloque-t-il l'application ?", a: "Non. Caissio est une Progressive Web App — il ne s'installe pas comme un fichier .exe classique. Aucun pilote, aucune modification système. Les antivirus ne l'affectent pas." },
+            { q: "Mon antivirus bloque-t-il l'application ?", a: "Caissio est signé numériquement. Si Windows SmartScreen affiche un avertissement au premier lancement, cliquez « Informations complémentaires » puis « Exécuter quand même » — c'est normal pour un nouveau logiciel. L'app ne modifie pas le système." },
           ].map((item, i) => (
             <details key={i} style={{ borderBottom: "1px solid #e2e8f0", padding: "18px 0" }}>
               <summary style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", cursor: "pointer", listStyle: "none", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
