@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const proto = req.headers.get("x-forwarded-proto") ?? (req.url.startsWith("https") ? "https" : "http");
+    const host = req.headers.get("host") ?? "localhost:3000";
+    const baseUrl = `${proto}://${host}`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

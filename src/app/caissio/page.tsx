@@ -10,7 +10,7 @@ import {
   Search, ScanLine, LayoutDashboard, Boxes, FileBarChart2, Plug,
   Shield, Wifi, Cpu, FileText, RotateCcw, AlertCircle,
   Smartphone, Monitor, Apple,
-  ChevronLeft, BookOpen, PlusCircle, X,
+  ChevronLeft, BookOpen, PlusCircle, X, Download,
 } from "lucide-react";
 
 /* ─── DEMO PRODUCTS ─────────────────────────────────── */
@@ -1082,12 +1082,27 @@ export default function CaissioPage() {
               <strong style={{ color: "#0f172a" }}>factures légales 2026</strong>{" "}
               en 1 clic. Fonctionne sur tous vos appareils.
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", marginBottom: 40 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", marginBottom: 16 }}>
               <a href="https://buy.stripe.com/7sY3cu63vgJ8bLW7i90x200" className="cai-btn-indigo" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, gap: 12 }}>
                 7 jours gratuits <ArrowRight style={{ width: 20, height: 20 }} />
               </a>
               <a href="#demo" className="cai-btn-outline" style={{ height: 64, padding: "0 40px", borderRadius: 20, fontWeight: 900, fontSize: 18, gap: 12 }}>
                 <Play style={{ width: 18, height: 18 }} /> Essayer sans compte
+              </a>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}>
+              <a
+                href="/api/caissio/download"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "10px 22px", borderRadius: 12,
+                  background: "#1e293b", color: "#fff",
+                  fontSize: 14, fontWeight: 700, textDecoration: "none",
+                  border: "1px solid #334155",
+                }}
+              >
+                <Download style={{ width: 15, height: 15 }} />
+                Télécharger pour Windows (.exe)
               </a>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px 32px", fontSize: 13, color: "#94a3b8" }}>
@@ -1308,6 +1323,24 @@ export default function CaissioPage() {
               ))}
               <div style={{ marginTop: 16, padding: "10px 14px", background: "#fef3c7", borderRadius: 10, fontSize: 12, color: "#d97706", fontWeight: 600 }}>
                 💡 Fonctionne hors-ligne. Vos données restent sur votre machine.
+              </div>
+              <div style={{ marginTop: 20, borderTop: "1px solid #e2e8f0", paddingTop: 20 }}>
+                <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>Ou téléchargez l&apos;installateur dédié :</div>
+                <a
+                  href="/api/caissio/download"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 46, borderRadius: 12,
+                    background: "#1e293b", color: "#fff",
+                    fontWeight: 700, fontSize: 14, textDecoration: "none",
+                  }}
+                >
+                  <Download style={{ width: 16, height: 16 }} />
+                  Télécharger Caissio-Setup.exe
+                </a>
+                <div style={{ textAlign: "center", marginTop: 8, fontSize: 11, color: "#94a3b8" }}>
+                  Windows 10/11 · 64-bit · ~81 MB
+                </div>
               </div>
             </div>
           </div>
