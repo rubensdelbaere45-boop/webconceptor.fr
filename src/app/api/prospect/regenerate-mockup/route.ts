@@ -10,11 +10,12 @@ import type { DeepAudit } from "@/lib/deep-audit";
    Auth : x-admin-key
 
    Régénère le mockup_html de prospects existants avec le template
-   unifié (generateRestaurantMockupHtml) sans re-call Claude.
+   unifié (generateRestaurantMockupHtml) + copywriting IA via OpenRouter.
    Bénéfices immédiats :
      - Priorité aux website_photos (vraies URLs) vs proxy Google cassé
      - CTAs adaptés au métier (devis, RDV, commander…)
      - Thème visuel correct par métier
+     - IA : accroches et textes personnalisés basés sur les vrais avis Google
 
    Ne modifie PAS status / sent_at / opened_at.
 
@@ -24,6 +25,7 @@ import type { DeepAudit } from "@/lib/deep-audit";
    - ?priority=hot    → view_count >= 1 (les plus chauds d'abord)
    - ?limit=N         → max N par run (défaut 30)
    - ?slug=xxx        → régénère un seul prospect
+   - ?ai=false        → désactive la génération IA (fallback local uniquement)
    ══════════════════════════════════════════ */
 
 function getSupabaseAdmin() {
@@ -175,6 +177,111 @@ function buildFallbackMenu(businessType?: string) {
   return menus[t] ?? menus.restaurant;
 }
 
+/* ══════════════════════════════════════════
+   AI COPY GENERATION
+   Génère un copywriting personnalisé pour chaque prospect
+   en s'appuyant sur ses vrais avis Google, ville, activité.
+   Fallback transparent vers buildLocalContent() si erreur/timeout.
+   ══════════════════════════════════════════ */
+
+interface AICopyResult {
+  heroSubtitle?: string;
+  aboutText?: string;
+  talkingPoints?: string[];
+}
+
+async function generateAICopy(p: MinimalProspect, apiKey: string): Promise<AICopyResult | null> {
+  try {
+    const isOpenRouter = apiKey.startsWith("sk-or-");
+    const endpoint = isOpenRouter
+      ? "https://openrouter.ai/api/v1/chat/completions"
+      : "https://api.anthropic.com/v1/messages";
+
+    // Contexte réel du prospect
+    const businessType = p.business_type || "commerce";
+    const cityStr = p.city ? ` à ${p.city}` : "";
+    const ratingStr = p.google_rating ? `${p.google_rating}/5 (${p.google_reviews_count || 0} avis Google)` : "";
+
+    const reviewsText = (p.reviews || [])
+      .slice(0, 3)
+      .filter(r => r.text && r.text.length > 20)
+      .map(r => `• "${r.text.slice(0, 200)}" — ${r.author} (${r.rating}★)`)
+      .join("\n");
+
+    const aboutRaw = p.about_scraped
+      ? p.about_scraped.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 500)
+      : "";
+
+    const prompt = `Tu es expert en copywriting pour des sites web de PME françaises.
+
+Génère du contenu marketing PERSONNALISÉ et PERCUTANT pour ce ${businessType}${cityStr} :
+Nom : ${p.name}
+${ratingStr ? `Note : ${ratingStr}` : ""}
+${reviewsText ? `\nAvis clients réels (utilise ces infos !):\n${reviewsText}` : ""}
+${aboutRaw ? `\nDescription existante :\n${aboutRaw}` : ""}
+
+RÈGLES :
+- Sois SPÉCIFIQUE à cet établissement (mentionne la ville, des détails des avis si dispo)
+- Évite les clichés ultra-génériques ("passion", "excellence", "savoir-faire" seuls)
+- Ton humain, chaleureux, professionnel — pas robotique
+- 100% en français
+
+Réponds UNIQUEMENT avec ce JSON (aucun texte autour) :
+{
+  "heroSubtitle": "accroche courte 8-14 mots, unique à cet établissement",
+  "aboutText": "2-3 phrases authentiques qui parlent vraiment de CE commerce (utilise les avis/infos si dispo)",
+  "talkingPoints": ["point fort 1 (6-10 mots)", "point fort 2 (6-10 mots)", "point fort 3 (6-10 mots)"]
+}`;
+
+    const body = isOpenRouter
+      ? {
+          model: "meta-llama/llama-3.3-70b-instruct:free",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 500,
+          temperature: 0.7,
+        }
+      : {
+          model: "claude-haiku-4-5",
+          max_tokens: 500,
+          messages: [{ role: "user", content: prompt }],
+        };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: isOpenRouter
+        ? { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }
+        : { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(18000),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = isOpenRouter
+      ? data.choices?.[0]?.message?.content
+      : data.content?.[0]?.text;
+    if (!raw) return null;
+
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    return {
+      heroSubtitle: typeof parsed.heroSubtitle === "string" && parsed.heroSubtitle.length > 5
+        ? parsed.heroSubtitle.slice(0, 150)
+        : undefined,
+      aboutText: typeof parsed.aboutText === "string" && parsed.aboutText.length > 20
+        ? parsed.aboutText.slice(0, 800)
+        : undefined,
+      talkingPoints: Array.isArray(parsed.talkingPoints) && parsed.talkingPoints.length >= 2
+        ? parsed.talkingPoints.slice(0, 3).map((s: unknown) => String(s).slice(0, 80))
+        : undefined,
+    };
+  } catch {
+    return null; // toujours un fallback gracieux
+  }
+}
+
 export async function POST(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
   if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
@@ -185,7 +292,9 @@ export async function POST(req: NextRequest) {
   const priority = url.searchParams.get("priority") || "small";
   const limit    = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "30", 10)));
   const slug     = url.searchParams.get("slug");
+  const useAI    = url.searchParams.get("ai") !== "false"; // AI activée par défaut
   const origin   = "https://webconceptor.fr";
+  const aiApiKey = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
 
   const supabase = getSupabaseAdmin();
 
@@ -238,7 +347,23 @@ export async function POST(req: NextRequest) {
         html = generateCustomMockupHtml(custom, p.rich_audit, origin);
       } else {
         // Standard : template 5 thèmes unifié (tous métiers)
-        const content = buildLocalContent(p);
+        // Étape 1 — contenu local (synchrone, garanti)
+        const localContent = buildLocalContent(p);
+
+        // Étape 2 — enrichissement IA (asynchrone, fallback gracieux)
+        let aiContent: AICopyResult | null = null;
+        if (useAI && aiApiKey) {
+          aiContent = await generateAICopy(p, aiApiKey);
+        }
+
+        // Étape 3 — fusion : IA écrase le local uniquement si résultat valide
+        const content = {
+          ...localContent,
+          ...(aiContent?.heroSubtitle ? { heroSubtitle: aiContent.heroSubtitle } : {}),
+          ...(aiContent?.aboutText    ? { aboutText:    aiContent.aboutText    } : {}),
+          ...(aiContent?.talkingPoints ? { talkingPoints: aiContent.talkingPoints } : {}),
+        };
+
         const rProspect: RestaurantProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,
@@ -283,6 +408,7 @@ export async function POST(req: NextRequest) {
     regenerated: ok,
     errors: err,
     avg_chars: avgChars,
+    ai_enabled: useAI && !!aiApiKey,
     results,
   });
 }
