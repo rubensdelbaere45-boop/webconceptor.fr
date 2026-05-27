@@ -832,6 +832,10 @@ async function handleSend(req: NextRequest) {
     : null;
   const batch_size = Math.max(1, Math.min(150, Number.isFinite(Number(raw.batch_size)) ? Number(raw.batch_size) : 5));
   const dry_run = Boolean(raw.dry_run);
+  // preview_email : surcharge l'adresse du prospect pour tests admin (jamais marqué comme "sent")
+  const preview_email = typeof raw.preview_email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(raw.preview_email.trim())
+    ? raw.preview_email.trim().toLowerCase()
+    : null;
 
   // COUVRE-FEU : pas d'envoi d'email entre 19h et 9h (heure Paris)
   // Sauf override explicite (prospect_id = envoi ciblé manuel par admin) ou dry_run
@@ -1025,8 +1029,8 @@ async function handleSend(req: NextRequest) {
           mockup_html: html,
           email_subject: emailSubject,
           email_body: emailBody,
-          status: dry_run ? "ready" : "sent",
-          sent_at: dry_run ? null : new Date().toISOString(),
+          status: (dry_run || preview_email) ? "ready" : "sent",
+          sent_at: (dry_run || preview_email) ? null : new Date().toISOString(),
         })
         .eq("id", p.id);
 
@@ -1038,8 +1042,11 @@ async function handleSend(req: NextRequest) {
         // mail perso du patron est plus regardé que le contact@entreprise).
         // Cap à 2 emails max pour ne pas exploser le budget Brevo (4775 crédits).
         // ═══════════════════════════════════════════════════════════
-        const targetEmails: string[] = [p.email.toLowerCase()];
-        if (Array.isArray(p.additional_emails)) {
+        // preview_email surcharge toutes les adresses (test admin, pas de "sent")
+        const targetEmails: string[] = preview_email
+          ? [preview_email]
+          : [p.email.toLowerCase()];
+        if (!preview_email && Array.isArray(p.additional_emails)) {
           for (const extra of p.additional_emails) {
             if (typeof extra === "string" && extra.toLowerCase() !== p.email.toLowerCase() && targetEmails.length < 2) {
               targetEmails.push(extra.toLowerCase());
