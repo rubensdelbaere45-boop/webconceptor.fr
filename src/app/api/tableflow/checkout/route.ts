@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
               description: "QR code sur vos tables · Carte interactive · Visualisation IA · Admin en ligne · Sans engagement",
               images: [],
             },
-            unit_amount: 4900, // 49 € TTC (prix de lancement)
+            unit_amount: 3900, // 39 € TTC
             recurring: { interval: "month" },
           },
           quantity: 1,
