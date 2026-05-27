@@ -30,7 +30,7 @@ jobs:
 
       - name: Build Windows EXE (NSIS installer x64)
         working-directory: caissio-desktop
-        run: npm run build:win
+        run: npm run build:win -- --publish never
 
       - name: Verify build output
         working-directory: caissio-desktop
