@@ -244,7 +244,7 @@ Règles STRICTES :
 
     const body = isOpenRouter
       ? {
-          model: "meta-llama/llama-3.3-70b-instruct:free",
+          model: "deepseek/deepseek-v4-flash:free",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 1200,
         }
