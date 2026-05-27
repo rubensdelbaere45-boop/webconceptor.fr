@@ -221,11 +221,12 @@ body{padding-top:50px !important}
   var LS_KEY = 'wc_buyer_snippet';
   var _domainVerified = null; // {name, tld, priceCents} ou null
 
-  // Si le template a déjà une CTA bar native, on cache notre barre mais on garde wcSxOpen
+  // Si le template a une barre native (restaurant / tous métiers), on la cache
+  // pour garder seulement notre barre en haut, et on redirige pmOpen → wcSxOpen
   if (document.querySelector('.wc-cta-bar')) {
-    var _sxBar = document.getElementById('wc-sx-cta');
-    if (_sxBar) _sxBar.style.display = 'none';
-    document.body.style.paddingTop = '';
+    var _nativeBar = document.querySelector('.wc-cta-bar');
+    if (_nativeBar) _nativeBar.style.display = 'none';
+    window.pmOpen = function() { window.wcSxOpen(); };
   }
 
   /* ─── localStorage ────────────────────────────────────────── */
