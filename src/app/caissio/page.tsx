@@ -91,13 +91,31 @@ const DEMO_PRODUCTS: DemoProduct[] = [
 
 const INIT_STOCK = Object.fromEntries(DEMO_PRODUCTS.map((p) => [p.id, p.stock]));
 
-const DEMO_CATS = [
+type DemoCat = { id: string; name: string; emoji: string; color: string; light: string };
+
+const DEMO_CATS: DemoCat[] = [
   { id: "v", name: "Boucherie",    emoji: "🥩", color: "#dc2626", light: "#fee2e2" },
   { id: "f", name: "Fromages",     emoji: "🧀", color: "#d97706", light: "#fef3c7" },
   { id: "c", name: "Crémerie",     emoji: "🥛", color: "#3b82f6", light: "#dbeafe" },
   { id: "p", name: "Poissonnerie", emoji: "🐟", color: "#0891b2", light: "#cffafe" },
   { id: "t", name: "Traiteur",     emoji: "🥗", color: "#16a34a", light: "#dcfce7" },
 ];
+
+const CAT_COLOR_PRESETS: { color: string; light: string }[] = [
+  { color: "#dc2626", light: "#fee2e2" },
+  { color: "#d97706", light: "#fef3c7" },
+  { color: "#16a34a", light: "#dcfce7" },
+  { color: "#3b82f6", light: "#dbeafe" },
+  { color: "#8b5cf6", light: "#ede9fe" },
+  { color: "#0891b2", light: "#cffafe" },
+  { color: "#ec4899", light: "#fce7f3" },
+  { color: "#f97316", light: "#ffedd5" },
+  { color: "#0d9488", light: "#ccfbf1" },
+  { color: "#64748b", light: "#f1f5f9" },
+];
+
+const CAT_EMOJIS = ["🥩","🧀","🥛","🐟","🥗","🥐","🛒","🥤","🍎","🥦","🧁","🍕","🧴","💊","🔧","📦","🌿","🫙","🍷","☕","🥚","🧅","🧄","🍋","🫧","🏷️"];
+
 
 /* ─── FEATURES ──────────────────────────────────────── */
 
@@ -256,12 +274,15 @@ let _demoIdCtr = 100;
 
 function DemoPOS() {
   const [extraProducts, setExtraProducts] = useState<DemoProduct[]>([]);
+  const [extraCats, setExtraCats] = useState<DemoCat[]>([]);
   const [stockState, setStockState] = useState<Record<string, number>>({ ...INIT_STOCK });
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddCatForm, setShowAddCatForm] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [addForm, setAddForm] = useState({ name: "", price: "", cat: "v", stock: "10" });
+  const [addCatForm, setAddCatForm] = useState({ name: "", emoji: "🏷️", colorIdx: 4 });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
   const [stage, setStage] = useState<"pos" | "pay" | "ticket">("pos");
@@ -272,7 +293,8 @@ function DemoPOS() {
   const [printerStatus, setPrinterStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
 
   const allProducts = useMemo(() => [...DEMO_PRODUCTS, ...extraProducts], [extraProducts]);
-  const activeCat = DEMO_CATS.find((c) => c.id === selectedCat);
+  const allCats = useMemo(() => [...DEMO_CATS, ...extraCats], [extraCats]);
+  const activeCat = allCats.find((c) => c.id === selectedCat);
 
   const catProducts = useMemo(() => {
     if (!selectedCat) return [];
@@ -390,6 +412,17 @@ function DemoPOS() {
     setSelectedCat(addForm.cat);
   };
 
+  const handleAddCat = () => {
+    if (!addCatForm.name.trim()) return;
+    const preset = CAT_COLOR_PRESETS[addCatForm.colorIdx] ?? CAT_COLOR_PRESETS[4];
+    const id = `cat_${Date.now()}`;
+    const newCat: DemoCat = { id, name: addCatForm.name.trim(), emoji: addCatForm.emoji, color: preset.color, light: preset.light };
+    setExtraCats((cs) => [...cs, newCat]);
+    setAddCatForm({ name: "", emoji: "🏷️", colorIdx: 4 });
+    setShowAddCatForm(false);
+    setSelectedCat(id);
+  };
+
   return (
     <div style={{ borderRadius: 24, border: "1px solid #e2e8f0", background: "#f8fafc", overflow: "hidden", boxShadow: "0 24px 64px rgba(79,70,229,.12)", position: "relative" }}>
       {/* Browser chrome */}
@@ -497,7 +530,7 @@ function DemoPOS() {
                 {allProducts.filter((p) => p.featured).map((p) => {
                   const avail = stockState[p.id] ?? 0;
                   const inCart = cart.find((i) => i.id === p.id)?.qty ?? 0;
-                  const wcat = DEMO_CATS.find((c) => c.id === p.cat);
+                  const wcat = allCats.find((c) => c.id === p.cat);
                   return (
                     <button key={p.id} onClick={() => avail > 0 && add(p)}
                       style={{ flexShrink: 0, height: 50, padding: "0 12px", borderRadius: 12, border: `2px solid ${inCart > 0 ? wcat?.color : (wcat?.color ?? "#e2e8f0") + "40"}`, background: inCart > 0 ? wcat?.light : "#f8fafc", cursor: avail > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 8, opacity: avail === 0 ? 0.5 : 1, position: "relative" }}>
@@ -520,7 +553,7 @@ function DemoPOS() {
           {!selectedCat && (
             <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
-                {DEMO_CATS.map((dc) => {
+                {allCats.map((dc) => {
                   const count = allProducts.filter((p) => p.cat === dc.id).length;
                   return (
                     <button key={dc.id} className="demo-cat-card"
@@ -537,6 +570,13 @@ function DemoPOS() {
                     </button>
                   );
                 })}
+                <button className="demo-cat-card" onClick={() => setShowAddCatForm(true)}
+                  style={{ background: "#f0fdf4", border: "2px dashed #86efac", borderRadius: 18, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 130, gap: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <PlusCircle style={{ width: 20, height: 20, color: "#16a34a" }} />
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#16a34a" }}>Nouvelle catégorie</div>
+                </button>
                 <button className="demo-cat-card" onClick={() => setShowAddForm(true)}
                   style={{ background: "#f8fafc", border: "2px dashed #e2e8f0", borderRadius: 18, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 130, gap: 8 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -619,7 +659,7 @@ function DemoPOS() {
                 <div style={{ fontSize: 11 }}>Touchez un produit pour commencer.</div>
               </div>
             ) : cart.map((ci) => {
-              const icat = DEMO_CATS.find((c) => c.id === ci.cat);
+              const icat = allCats.find((c) => c.id === ci.cat);
               return (
                 <div key={ci.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
@@ -801,6 +841,64 @@ function DemoPOS() {
         </div>
       )}
 
+      {/* ── Add category modal ── */}
+      {showAddCatForm && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.65)", backdropFilter: "blur(8px)", borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 30 }}>
+          <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 380, boxShadow: "0 32px 80px rgba(0,0,0,.25)", overflow: "hidden" }}>
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Nouvelle catégorie</div>
+              <button onClick={() => setShowAddCatForm(false)} style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <X style={{ width: 13, height: 13 }} />
+              </button>
+            </div>
+            <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Aperçu */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 14, background: CAT_COLOR_PRESETS[addCatForm.colorIdx]?.light ?? "#f1f5f9", border: `2px solid ${CAT_COLOR_PRESETS[addCatForm.colorIdx]?.color ?? "#e2e8f0"}30` }}>
+                <span style={{ fontSize: 30 }}>{addCatForm.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>{addCatForm.name || "Nom de la catégorie"}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: CAT_COLOR_PRESETS[addCatForm.colorIdx]?.color }}>0 article</div>
+                </div>
+              </div>
+              {/* Nom */}
+              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b" }}>Nom</span>
+                <input autoFocus value={addCatForm.name} onChange={(e) => setAddCatForm((f) => ({ ...f, name: e.target.value }))} placeholder="ex: Épicerie fine"
+                  style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }} />
+              </label>
+              {/* Emoji */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b", marginBottom: 8 }}>Icône</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {CAT_EMOJIS.map((e) => (
+                    <button key={e} onClick={() => setAddCatForm((f) => ({ ...f, emoji: e }))}
+                      style={{ width: 36, height: 36, borderRadius: 8, border: addCatForm.emoji === e ? `2px solid ${CAT_COLOR_PRESETS[addCatForm.colorIdx]?.color}` : "1px solid #e2e8f0", background: addCatForm.emoji === e ? CAT_COLOR_PRESETS[addCatForm.colorIdx]?.light : "#f8fafc", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Couleur */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b", marginBottom: 8 }}>Couleur</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {CAT_COLOR_PRESETS.map((p, i) => (
+                    <button key={i} onClick={() => setAddCatForm((f) => ({ ...f, colorIdx: i }))}
+                      style={{ width: 28, height: 28, borderRadius: "50%", background: p.color, border: addCatForm.colorIdx === i ? `3px solid ${p.color}` : "3px solid transparent", outline: addCatForm.colorIdx === i ? `2px solid #0f172a` : "none", cursor: "pointer" }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "10px 18px 16px", display: "flex", gap: 10 }}>
+              <button onClick={() => setShowAddCatForm(false)} style={{ flex: 1, height: 42, borderRadius: 12, border: "1px solid #e2e8f0", background: "#f8fafc", fontWeight: 600, fontSize: 13, cursor: "pointer", color: "#64748b" }}>Annuler</button>
+              <button onClick={handleAddCat} disabled={!addCatForm.name.trim()} style={{ flex: 2, height: 42, borderRadius: 12, border: "none", background: addCatForm.name.trim() ? "#16a34a" : "#e2e8f0", color: addCatForm.name.trim() ? "#fff" : "#94a3b8", fontWeight: 700, fontSize: 13, cursor: addCatForm.name.trim() ? "pointer" : "not-allowed" }}>
+                Créer la catégorie
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Search modal ── */}
       {showSearch && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.65)", backdropFilter: "blur(8px)", borderRadius: 24, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", zIndex: 30 }}>
@@ -815,7 +913,7 @@ function DemoPOS() {
             </div>
             <div style={{ maxHeight: 360, overflowY: "auto" }}>
               {searchResults.map((p) => {
-                const scat = DEMO_CATS.find((c) => c.id === p.cat);
+                const scat = allCats.find((c) => c.id === p.cat);
                 const avail = stockState[p.id] ?? 0;
                 return (
                   <button key={p.id} onClick={() => { if (avail > 0) { add(p); setShowSearch(false); } }}
@@ -876,7 +974,7 @@ function DemoPOS() {
                 <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b" }}>Catégorie</span>
                 <select value={addForm.cat} onChange={(e) => setAddForm((f) => ({ ...f, cat: e.target.value }))}
                   style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}>
-                  {DEMO_CATS.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+                  {allCats.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
                 </select>
               </label>
             </div>
