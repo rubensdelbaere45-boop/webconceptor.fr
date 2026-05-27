@@ -105,7 +105,7 @@ export async function loadQZScript(): Promise<boolean> {
   if ((window as any).qz) return true;
   return new Promise((resolve) => {
     const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js";
+    s.src = "https://cdn.jsdelivr.net/npm/qz-tray@2.2.6/qz-tray.js";
     s.onload  = () => resolve(true);
     s.onerror = () => resolve(false);
     document.head.appendChild(s);

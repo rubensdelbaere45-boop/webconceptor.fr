@@ -175,27 +175,27 @@ export default function PeripheriquesPage() {
   const patch     = (id: string, p: Partial<ConnectedDevice>) => setDevices((prev) => prev.map((x) => x.id === id ? { ...x, ...p } : x));
   const remove    = (id: string) => setDevices((prev) => prev.filter((x) => x.id !== id));
 
-  /* ── QZ Tray — téléchargement direct selon l'OS ── */
+  /* ── QZ Tray — téléchargement direct selon l'OS (v2.2.6) ── */
   const downloadQZTray = () => {
-    const ua = navigator.userAgent;
+    const ua  = navigator.userAgent;
+    const arm = ua.toLowerCase().includes("arm") || ua.toLowerCase().includes("aarch64");
     let url: string;
-    let filename: string;
     if (ua.includes("Win")) {
-      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.exe";
-      filename = "qz-tray-2.2.4.exe";
+      url = arm
+        ? "https://github.com/qzind/tray/releases/download/v2.2.6/qz-tray-2.2.6-arm64.exe"
+        : "https://github.com/qzind/tray/releases/download/v2.2.6/qz-tray-2.2.6-x86_64.exe";
     } else if (ua.includes("Mac")) {
-      // PKG universel (Intel + Apple Silicon)
-      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.pkg";
-      filename = "qz-tray-2.2.4.pkg";
+      // x86_64 fonctionne sur Intel et Apple Silicon (Rosetta 2)
+      url = "https://github.com/qzind/tray/releases/download/v2.2.6/qz-tray-2.2.6-x86_64.pkg";
     } else {
-      // Linux
-      url      = "https://github.com/qzind/tray/releases/download/v2.2.4/qz-tray-2.2.4.deb";
-      filename = "qz-tray-2.2.4.deb";
+      // Linux — .run universel (chmod +x && ./qz-tray-*.run)
+      url = arm
+        ? "https://github.com/qzind/tray/releases/download/v2.2.6/qz-tray-2.2.6-arm64.run"
+        : "https://github.com/qzind/tray/releases/download/v2.2.6/qz-tray-2.2.6-x86_64.run";
     }
-    const a = document.createElement("a");
-    a.href     = url;
-    a.download = filename;
-    a.click();
+    // window.location.href suit les redirects GitHub → CDN avec Content-Disposition: attachment
+    // L'attribut `download` sur <a> est ignoré pour les URLs cross-origin — ce pattern est fiable.
+    window.location.href = url;
   };
 
   /* ── QZ Tray (impression silencieuse, tous navigateurs) ── */
