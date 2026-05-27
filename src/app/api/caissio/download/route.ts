@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/caissio/download (Windows)
- * Redirige vers la page de téléchargement avec le bon onglet.
- * Chrome / Edge proposent l'installation PWA depuis la barre d'adresse.
+ * Redirige vers le dernier installateur Windows (.exe) sur GitHub Releases.
+ * L'URL /releases/latest/download/{asset} pointe toujours sur la dernière release.
  */
 export async function GET() {
   return NextResponse.redirect(
-    "https://www.webconceptor.fr/caissio/telecharger?tab=windows",
+    "https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/latest/download/Caissio-Setup.exe",
     { status: 302 }
   );
 }

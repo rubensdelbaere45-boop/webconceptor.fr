@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/caissio/download/mac
- * Redirige vers la page de téléchargement avec l'onglet Mac.
- * Safari / Chrome proposent l'installation PWA.
+ * Redirige vers le dernier DMG macOS sur GitHub Releases.
  */
 export async function GET() {
   return NextResponse.redirect(
-    "https://www.webconceptor.fr/caissio/telecharger?tab=mac",
+    "https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/latest/download/Caissio.dmg",
     { status: 302 }
   );
 }

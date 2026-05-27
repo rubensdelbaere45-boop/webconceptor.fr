@@ -1,0 +1,63 @@
+name: Build Caissio Desktop (Windows EXE)
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: caissio-desktop/package-lock.json
+
+      - name: Install dependencies
+        working-directory: caissio-desktop
+        run: npm install
+
+      - name: Build Windows EXE (NSIS installer x64)
+        working-directory: caissio-desktop
+        run: npm run build:win
+
+      - name: Verify build output
+        working-directory: caissio-desktop
+        run: |
+          dir dist\
+          if not exist "dist\Caissio-Setup.exe" (
+            echo "BUILD FAILED — Caissio-Setup.exe not found"
+            exit 1
+          )
+        shell: cmd
+
+      - name: Create / update GitHub Release and upload EXE
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || 'desktop-latest' }}
+          name: "Caissio Desktop ${{ github.ref_name || 'latest' }}"
+          body: |
+            ## Caissio Desktop — Installateur Windows
+
+            **Téléchargez `Caissio-Setup.exe` ci-dessous** et double-cliquez pour installer.
+
+            - Windows 10 / 11 · 64-bit
+            - Si Windows affiche SmartScreen : cliquez « Informations complémentaires » → « Exécuter quand même »
+            - Vos données sont sauvegardées localement, connexion internet requise pour se connecter
+
+            ---
+            _Build automatique via GitHub Actions_
+          files: caissio-desktop/dist/Caissio-Setup.exe
+          draft: false
+          prerelease: false
