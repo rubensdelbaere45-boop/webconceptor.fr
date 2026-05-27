@@ -376,7 +376,7 @@ body{padding-top:50px !important}
         } else {
           _domainVerified = null;
           statusEl.className = 'ko';
-          statusEl.textContent = (data.error || (name + tld + ' n\'est pas disponible.'));
+          statusEl.textContent = (data.error || (name + tld + " n'est pas disponible."));
         }
         wcSxUpdatePriceSummary();
       })
