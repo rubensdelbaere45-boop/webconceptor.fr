@@ -804,7 +804,7 @@ function buildRestaurantEmailBody(prospect: Prospect, content: RestaurantContent
 
   <p style="font-size:15px;margin:0 0 18px">Bonjour,</p>
 
-  <p style="font-size:15px;margin:0 0 18px">J'ai créé une maquette de site pour <strong>${escape(prospect.name)}</strong>${cityStr}, basée sur votre activité et vos avis Google :</p>
+  <p style="font-size:15px;margin:0 0 18px">${escape(content.emailPitch)}</p>
 
   ${ratingHook}
   ${auditBlock}
