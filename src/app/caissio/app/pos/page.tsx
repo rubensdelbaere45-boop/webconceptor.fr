@@ -10,7 +10,8 @@ import {
   getProducts, getCustomers, recordSale, getStoreSettings,
   saveProduct, updateProduct, deleteProduct,
   migrateMissingCategories, migrateV2,
-  type Product, type Customer,
+  getCustomCategories, saveCustomCategory, deleteCustomCategory,
+  type Product, type Customer, type CustomCategory,
 } from "@/lib/caissio-store";
 import { detectQZ, printViaQZ, type TicketData } from "@/lib/caissio-printer";
 
@@ -36,6 +37,20 @@ const CAT_DEF: { name: string; emoji: string; color: string; light: string }[] =
 function getCatDef(name: string) {
   return CAT_DEF.find((c) => c.name === name) ?? { name, emoji: "📦", color: "#64748b", light: "#f1f5f9" };
 }
+
+const CAT_COLOR_PRESETS: { color: string; light: string }[] = [
+  { color: "#ef4444", light: "#fee2e2" },
+  { color: "#f97316", light: "#ffedd5" },
+  { color: "#f59e0b", light: "#fef3c7" },
+  { color: "#22c55e", light: "#dcfce7" },
+  { color: "#3b82f6", light: "#dbeafe" },
+  { color: "#8b5cf6", light: "#ede9fe" },
+  { color: "#ec4899", light: "#fce7f3" },
+  { color: "#06b6d4", light: "#cffafe" },
+  { color: "#64748b", light: "#f1f5f9" },
+  { color: "#0f172a", light: "#f8fafc" },
+];
+const CAT_EMOJIS = ["🥩","🧀","🥛","🐟","🥗","🥐","🛒","🥤","🍎","🥦","🧁","🍕","🧴","💊","🔧","📦","🌿","🫙","🍷","☕","🥚","🧅","🧄","🍋","🫧","🏷️"];
 
 /* ── Numpad ──────────────────────────────────────── */
 function Numpad({ onPress, onBack }: { onPress: (k: string) => void; onBack: () => void }) {
@@ -102,7 +117,7 @@ function ThermalTicket({ cart, total, subtotal, discount, payMode, cashGiven, ch
 }
 
 /* ── Article search modal ────────────────────────── */
-function ArticleModal({ products, onAdd, onClose }: { products: Product[]; onAdd: (p: Product) => void; onClose: () => void }) {
+function ArticleModal({ products, onAdd, onClose, getCatFn }: { products: Product[]; onAdd: (p: Product) => void; onClose: () => void; getCatFn?: (name: string) => { name: string; emoji: string; color: string; light: string } }) {
   const [q, setQ] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -130,7 +145,7 @@ function ArticleModal({ products, onAdd, onClose }: { products: Product[]; onAdd
           {results.length === 0 ? (
             <div style={{ padding: "40px 0", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>Aucun article trouvé</div>
           ) : results.map((p) => {
-            const cat = getCatDef(p.category);
+            const cat = getCatFn ? getCatFn(p.category) : getCatDef(p.category);
             return (
               <button key={p.id} onClick={() => { onAdd(p); onClose(); }}
                 style={{ width: "100%", padding: "13px 20px", border: "none", borderBottom: "1px solid #f8fafc", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}
@@ -170,15 +185,17 @@ type CtxMenu = { type: "cat"; catName: string; x: number; y: number }
 function ProductFormModal({
   initialCat,
   initialProduct,
+  extraCats,
   onSave,
   onClose,
 }: {
   initialCat?: string;
   initialProduct?: Product;
+  extraCats?: string[];
   onSave: (widget: boolean, category: string) => void;
   onClose: () => void;
 }) {
-  const cats = ["Boulangerie","Boissons","Snacks","Épicerie","Fruits","Légumes","Fromage","Charcuterie","Autre"];
+  const cats = [...["Boulangerie","Boissons","Snacks","Épicerie","Fruits","Légumes","Fromage","Charcuterie","Autre"], ...(extraCats ?? [])];
   const [form, setForm] = useState({
     name: initialProduct?.name ?? "",
     price: initialProduct?.price?.toString() ?? "",
@@ -322,6 +339,10 @@ export default function POSPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "cat" | "prod"; catName?: string; product?: Product } | null>(null);
   const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [customCatDefs, setCustomCatDefs] = useState<CustomCategory[]>([]);
+  const [showAddCatForm, setShowAddCatForm] = useState(false);
+  const [addCatForm, setAddCatForm] = useState({ name: "", emoji: "🏷️", color: "#8b5cf6", light: "#ede9fe" });
+
   /* Email ticket */
   const [emailStep, setEmailStep] = useState<null | "input" | "sending" | "done">(null);
   const [emailVal,  setEmailVal]  = useState("");
@@ -346,6 +367,7 @@ export default function POSPage() {
     setCustomers(getCustomers());
     const s = getStoreSettings();
     setSettings({ name: s.name, address: s.address || "", siret: s.siret || "", ticket_footer: s.ticket_footer || "" });
+    setCustomCatDefs(getCustomCategories());
   }, []);
 
   /* Barcode scanner */
@@ -370,16 +392,17 @@ export default function POSPage() {
     return () => { window.removeEventListener("keydown", onKey); clearTimeout(timer); };
   }, [scanBuffer, products]);
 
-  /* Categories that have products */
+  /* Categories that have products (or are custom) */
   const categories = useMemo(() => {
     const catOrder = CAT_DEF.map((c) => c.name);
     const existing = Array.from(new Set(products.map((p) => p.category)));
-    // sort by CAT_DEF order, then any extra categories
+    const customNames = customCatDefs.map((c) => c.name);
+    const all = Array.from(new Set([...existing, ...customNames]));
     return [
-      ...catOrder.filter((c) => existing.includes(c)),
-      ...existing.filter((c) => !catOrder.includes(c)),
+      ...catOrder.filter((c) => all.includes(c)),
+      ...all.filter((c) => !catOrder.includes(c)),
     ];
-  }, [products]);
+  }, [products, customCatDefs]);
 
   /* Filtered products for selected category */
   const catProducts = useMemo(() => {
@@ -437,7 +460,25 @@ export default function POSPage() {
   const numpadBack = () => setCashInput((v) => v.slice(0, -1));
   const selectedCustomer = customers.find((c) => c.id === customerId);
 
-  const activeCat = selectedCat ? getCatDef(selectedCat) : null;
+  const getCat = useCallback((name: string) => {
+    const custom = customCatDefs.find((c) => c.name === name);
+    return custom ?? getCatDef(name);
+  }, [customCatDefs]);
+
+  const activeCat = selectedCat ? getCat(selectedCat) : null;
+
+  const handleAddCat = () => {
+    if (!addCatForm.name.trim()) return;
+    saveCustomCategory({
+      name: addCatForm.name.trim(),
+      emoji: addCatForm.emoji,
+      color: addCatForm.color,
+      light: addCatForm.light,
+    });
+    setCustomCatDefs(getCustomCategories());
+    setShowAddCatForm(false);
+    setAddCatForm({ name: "", emoji: "🏷️", color: "#8b5cf6", light: "#ede9fe" });
+  };
 
   /* ── Impression ──────────────────────────────────── */
   const handlePrint = async () => {
@@ -576,44 +617,41 @@ export default function POSPage() {
           )}
         </div>
 
+        {/* ── Accès rapide bar (horizontal scroll, always visible when widgets exist) ── */}
+        {products.filter((p) => p.active && p.widget).length > 0 && (
+          <div style={{ flexShrink: 0, background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "8px 14px 10px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#94a3b8", marginBottom: 7 }}>⚡ Accès rapide</div>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+              {products.filter((p) => p.active && p.widget).map((p) => {
+                const wcat = getCat(p.category);
+                const inCart = cart.filter((i) => i.id === p.id).reduce((s, i) => s + i.qty, 0);
+                const outOfStock = p.stock === 0;
+                return (
+                  <button key={p.id} onClick={() => !outOfStock && addToCart(p)}
+                    disabled={outOfStock}
+                    style={{ position: "relative", flexShrink: 0, height: 52, padding: "0 16px", borderRadius: 13, border: `2px solid ${outOfStock ? "#e2e8f0" : wcat.color + "40"}`, background: outOfStock ? "#f8fafc" : wcat.light, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 9, opacity: outOfStock ? 0.55 : 1, transition: "all .12s" }}>
+                    {inCart > 0 && (
+                      <span style={{ position: "absolute", top: -5, right: -5, background: wcat.color, color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 9, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{inCart}</span>
+                    )}
+                    <span style={{ fontSize: 18 }}>{wcat.emoji}</span>
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>{p.name}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: wcat.color }}>{p.price.toFixed(2)} €</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── CATEGORY GRID ── */}
         {!selectedCat && (
           <div style={{ flex: 1, overflowY: "auto", padding: 16, position: "relative" }}>
 
-            {/* ── Widgets directs (accès rapide) ── */}
-            {(() => {
-              const widgets = products.filter((p) => p.active && p.widget);
-              if (widgets.length === 0) return null;
-              return (
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "#94a3b8", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                    <span>⚡</span> Accès rapide
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    {widgets.map((p) => {
-                      const cat = getCatDef(p.category);
-                      const outOfStock = p.stock === 0;
-                      return (
-                        <button key={p.id} onClick={() => !outOfStock && addToCart(p)}
-                          disabled={outOfStock}
-                          style={{ height: 52, padding: "0 18px", borderRadius: 14, border: `2px solid ${outOfStock ? "#e2e8f0" : cat.color + "40"}`, background: outOfStock ? "#f8fafc" : cat.light, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 10, opacity: outOfStock ? 0.55 : 1, transition: "all .12s" }}>
-                          <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                          <div style={{ textAlign: "left" }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>{p.name}</div>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: cat.color }}>{p.price.toFixed(2)} €</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div style={{ height: 1, background: "#e2e8f0", marginTop: 16 }} />
-                </div>
-              );
-            })()}
-
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
               {categories.map((catName) => {
-                const cat = getCatDef(catName);
+                const cat = getCat(catName);
                 const count = products.filter((p) => p.active && p.category === catName).length;
                 return (
                   <button key={catName} className="cat-card"
@@ -664,6 +702,14 @@ export default function POSPage() {
                 </div>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: "#4f46e5" }}>Nouvel article</div>
                 <div style={{ fontSize: 11, color: "#94a3b8" }}>Ou restez appuyé sur une case</div>
+              </button>
+
+              {/* ── Carte "Nouvelle catégorie" ── */}
+              <button className="cat-card"
+                onClick={() => setShowAddCatForm(true)}
+                style={{ background: "#f0fdf4", border: "2px dashed #86efac", borderRadius: 20, padding: 0, cursor: "pointer", overflow: "hidden", transition: "all .15s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 150, gap: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🗂️</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: "#16a34a" }}>Nouvelle catégorie</div>
               </button>
             </div>
 
@@ -882,7 +928,7 @@ export default function POSPage() {
       </aside>
 
       {/* Article modal */}
-      {showArticle && <ArticleModal products={products} onAdd={addToCart} onClose={() => setShowArticle(false)} />}
+      {showArticle && <ArticleModal products={products} onAdd={addToCart} onClose={() => setShowArticle(false)} getCatFn={getCat} />}
 
       {/* ── Context menu (long-press) ── */}
       {ctxMenu && (
@@ -973,6 +1019,8 @@ export default function POSPage() {
               <button onClick={() => {
                 if (deleteConfirm.type === "cat" && deleteConfirm.catName) {
                   products.filter((p) => p.category === deleteConfirm.catName).forEach((p) => deleteProduct(p.id));
+                  const customCat = customCatDefs.find((c) => c.name === deleteConfirm.catName);
+                  if (customCat) { deleteCustomCategory(customCat.id); setCustomCatDefs(getCustomCategories()); }
                 } else if (deleteConfirm.type === "prod" && deleteConfirm.product) {
                   deleteProduct(deleteConfirm.product.id);
                 }
@@ -1042,6 +1090,7 @@ export default function POSPage() {
         <ProductFormModal
           initialCat={productForm.cat}
           initialProduct={productForm.product}
+          extraCats={customCatDefs.map((c) => c.name)}
           onSave={(isWidget, category) => {
             reloadProducts();
             // Si sous-catégorie → auto-naviguer vers la catégorie pour voir l'article immédiatement
@@ -1052,6 +1101,62 @@ export default function POSPage() {
           }}
           onClose={() => setProductForm({ open: false })}
         />
+      )}
+
+      {/* ── Modal nouvelle catégorie ── */}
+      {showAddCatForm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 420, boxShadow: "0 32px 80px rgba(0,0,0,.25)", overflow: "hidden" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Nouvelle catégorie</div>
+              <button onClick={() => setShowAddCatForm(false)} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <X style={{ width: 14, height: 14, color: "#64748b" }} />
+              </button>
+            </div>
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Nom + aperçu */}
+              <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                <div style={{ width: 64, height: 64, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, background: addCatForm.light, border: `2px solid ${addCatForm.color}40`, flexShrink: 0 }}>
+                  {addCatForm.emoji}
+                </div>
+                <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b" }}>Nom de la catégorie</span>
+                  <input value={addCatForm.name} onChange={(e) => setAddCatForm((f) => ({ ...f, name: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && handleAddCat()} placeholder="ex: Boissons chaudes"
+                    autoFocus style={{ height: 40, padding: "0 12px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }} />
+                </label>
+              </div>
+              {/* Emoji */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b", marginBottom: 8 }}>Icône</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {CAT_EMOJIS.map((em) => (
+                    <button key={em} onClick={() => setAddCatForm((f) => ({ ...f, emoji: em }))}
+                      style={{ width: 38, height: 38, borderRadius: 9, border: `2px solid ${addCatForm.emoji === em ? addCatForm.color : "#e2e8f0"}`, background: addCatForm.emoji === em ? addCatForm.light : "#f8fafc", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Couleur */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "#64748b", marginBottom: 8 }}>Couleur</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {CAT_COLOR_PRESETS.map((preset) => (
+                    <button key={preset.color} onClick={() => setAddCatForm((f) => ({ ...f, color: preset.color, light: preset.light }))}
+                      style={{ width: 30, height: 30, borderRadius: 8, background: preset.color, border: addCatForm.color === preset.color ? "3px solid #0f172a" : "3px solid transparent", cursor: "pointer" }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #f1f5f9", display: "flex", gap: 10 }}>
+              <button onClick={() => setShowAddCatForm(false)} style={{ flex: 1, height: 44, borderRadius: 12, border: "1px solid #e2e8f0", background: "#f8fafc", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#64748b" }}>Annuler</button>
+              <button onClick={handleAddCat} disabled={!addCatForm.name.trim()}
+                style={{ flex: 2, height: 44, borderRadius: 12, border: "none", background: addCatForm.name.trim() ? "#16a34a" : "#d1fae5", color: addCatForm.name.trim() ? "#fff" : "#86efac", fontWeight: 700, fontSize: 14, cursor: addCatForm.name.trim() ? "pointer" : "not-allowed" }}>
+                Créer la catégorie
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Payment modal */}

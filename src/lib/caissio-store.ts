@@ -80,6 +80,14 @@ export type Supplier = {
   created_at: string;
 };
 
+export type CustomCategory = {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+  light: string;
+};
+
 export type StoreSettings = {
   name: string;
   siret?: string;
@@ -141,15 +149,16 @@ export type Invoice = {
 };
 
 const KEY = {
-  users:      "caissio_users",
-  session:    "caissio_session",
-  products:   "caissio_products",
-  sales:      "caissio_sales",        // live
-  sales_test: "caissio_sales_test",   // test
-  customers:  "caissio_customers",
-  suppliers:  "caissio_suppliers",
-  settings:   "caissio_settings",
-  invoices:   "caissio_invoices",
+  users:       "caissio_users",
+  session:     "caissio_session",
+  products:    "caissio_products",
+  sales:       "caissio_sales",        // live
+  sales_test:  "caissio_sales_test",   // test
+  customers:   "caissio_customers",
+  suppliers:   "caissio_suppliers",
+  settings:    "caissio_settings",
+  invoices:    "caissio_invoices",
+  categories:  "caissio_categories",
 };
 
 function get<T>(key: string): T[] {
@@ -770,4 +779,20 @@ export function migrateV2() {
     }
   });
   localStorage.setItem("caissio_mv2", "1");
+}
+
+/* ── Custom Categories ─────────────────────────────── */
+export function getCustomCategories(): CustomCategory[] {
+  return get<CustomCategory>(KEY.categories);
+}
+
+export function saveCustomCategory(cat: Omit<CustomCategory, "id">): CustomCategory {
+  const cats = getCustomCategories();
+  const newCat: CustomCategory = { ...cat, id: uid() };
+  set(KEY.categories, [...cats, newCat]);
+  return newCat;
+}
+
+export function deleteCustomCategory(id: string): void {
+  set(KEY.categories, getCustomCategories().filter((c) => c.id !== id));
 }
