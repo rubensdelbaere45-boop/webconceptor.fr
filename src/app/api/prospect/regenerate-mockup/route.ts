@@ -190,29 +190,66 @@ interface AICopyResult {
   talkingPoints?: string[];
 }
 
-async function generateAICopy(p: MinimalProspect, apiKey: string): Promise<AICopyResult | null> {
+/** Appelle un modèle OpenRouter et retourne le résultat parsé + un score de complétude */
+async function callModel(prompt: string, apiKey: string, model: string): Promise<{ result: AICopyResult; score: number } | null> {
   try {
-    const isOpenRouter = apiKey.startsWith("sk-or-");
-    const endpoint = isOpenRouter
-      ? "https://openrouter.ai/api/v1/chat/completions"
-      : "https://api.anthropic.com/v1/messages";
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(18000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content;
+    if (!raw) return null;
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]);
 
-    // Contexte réel du prospect
-    const businessType = p.business_type || "commerce";
-    const cityStr = p.city ? ` à ${p.city}` : "";
-    const ratingStr = p.google_rating ? `${p.google_rating}/5 (${p.google_reviews_count || 0} avis Google)` : "";
+    const result: AICopyResult = {
+      heroSubtitle: typeof parsed.heroSubtitle === "string" && parsed.heroSubtitle.length > 5
+        ? parsed.heroSubtitle.slice(0, 150) : undefined,
+      aboutText: typeof parsed.aboutText === "string" && parsed.aboutText.length > 20
+        ? parsed.aboutText.slice(0, 800) : undefined,
+      talkingPoints: Array.isArray(parsed.talkingPoints) && parsed.talkingPoints.length >= 2
+        ? parsed.talkingPoints.slice(0, 3).map((s: unknown) => String(s).slice(0, 80)) : undefined,
+    };
 
-    const reviewsText = (p.reviews || [])
-      .slice(0, 3)
-      .filter(r => r.text && r.text.length > 20)
-      .map(r => `• "${r.text.slice(0, 200)}" — ${r.author} (${r.rating}★)`)
-      .join("\n");
+    // Score de complétude : 1 pt heroSubtitle + 2 pts aboutText long + 2 pts 3 talkingPoints
+    let score = 0;
+    if (result.heroSubtitle) score += 1;
+    if (result.aboutText && result.aboutText.length > 80) score += 2;
+    if (result.talkingPoints && result.talkingPoints.length >= 3) score += 2;
 
-    const aboutRaw = p.about_scraped
-      ? p.about_scraped.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 500)
-      : "";
+    return { result, score };
+  } catch {
+    return null;
+  }
+}
 
-    const prompt = `Tu es expert en copywriting pour des sites web de PME françaises.
+async function generateAICopy(p: MinimalProspect, apiKey: string): Promise<AICopyResult | null> {
+  // Contexte réel du prospect
+  const businessType = p.business_type || "commerce";
+  const cityStr = p.city ? ` à ${p.city}` : "";
+  const ratingStr = p.google_rating ? `${p.google_rating}/5 (${p.google_reviews_count || 0} avis Google)` : "";
+
+  const reviewsText = (p.reviews || [])
+    .slice(0, 3)
+    .filter(r => r.text && r.text.length > 20)
+    .map(r => `• "${r.text.slice(0, 200)}" — ${r.author} (${r.rating}★)`)
+    .join("\n");
+
+  const aboutRaw = p.about_scraped
+    ? p.about_scraped.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 500)
+    : "";
+
+  const prompt = `Tu es expert en copywriting pour des sites web de PME françaises.
 
 Génère du contenu marketing PERSONNALISÉ et PERCUTANT pour ce ${businessType}${cityStr} :
 Nom : ${p.name}
@@ -233,53 +270,24 @@ Réponds UNIQUEMENT avec ce JSON (aucun texte autour) :
   "talkingPoints": ["point fort 1 (6-10 mots)", "point fort 2 (6-10 mots)", "point fort 3 (6-10 mots)"]
 }`;
 
-    const body = isOpenRouter
-      ? {
-          model: (process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free"),
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 500,
-          temperature: 0.7,
-        }
-      : {
-          model: "claude-haiku-4-5",
-          max_tokens: 500,
-          messages: [{ role: "user", content: prompt }],
-        };
+  // Collecte tous les modèles configurés (1 à 3)
+  const models = [
+    process.env.OPENROUTER_MODEL   || "meta-llama/llama-3.3-70b-instruct:free",
+    process.env.OPENROUTER_MODEL_2,
+    process.env.OPENROUTER_MODEL_3,
+  ].filter(Boolean) as string[];
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: isOpenRouter
-        ? { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }
-        : { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(18000),
-    });
+  // Appels parallèles — on garde le résultat le plus complet
+  const settled = await Promise.allSettled(models.map(m => callModel(prompt, apiKey, m)));
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    const raw = isOpenRouter
-      ? data.choices?.[0]?.message?.content
-      : data.content?.[0]?.text;
-    if (!raw) return null;
-
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      heroSubtitle: typeof parsed.heroSubtitle === "string" && parsed.heroSubtitle.length > 5
-        ? parsed.heroSubtitle.slice(0, 150)
-        : undefined,
-      aboutText: typeof parsed.aboutText === "string" && parsed.aboutText.length > 20
-        ? parsed.aboutText.slice(0, 800)
-        : undefined,
-      talkingPoints: Array.isArray(parsed.talkingPoints) && parsed.talkingPoints.length >= 2
-        ? parsed.talkingPoints.slice(0, 3).map((s: unknown) => String(s).slice(0, 80))
-        : undefined,
-    };
-  } catch {
-    return null; // toujours un fallback gracieux
+  let best: { result: AICopyResult; score: number } | null = null;
+  for (const s of settled) {
+    if (s.status === "fulfilled" && s.value && s.value.score > (best?.score ?? -1)) {
+      best = s.value;
+    }
   }
+
+  return best?.result ?? null;
 }
 
 export async function POST(req: NextRequest) {
