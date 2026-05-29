@@ -167,7 +167,7 @@ export interface RestaurantReview {
   timeAgo: string;
 }
 
-export type RestaurantVibe = "classic" | "rustic" | "modern" | "coastal" | "sunny";
+export type RestaurantVibe = "classic" | "rustic" | "modern" | "coastal" | "sunny" | "luxury";
 
 export interface RestaurantContent {
   heroTitle: string;
@@ -212,6 +212,7 @@ interface Theme {
   warm: string;
   stone: string;
   shadow: string;
+  darkMode?: boolean;  // true → applique la couche CSS dark luxury (fond #0C0C0C)
 }
 
 const THEMES: Theme[] = [
@@ -225,6 +226,9 @@ const THEMES: Theme[] = [
   { id: "charcoal-rose", ink: "#181818", accent: "#b87f7a", accentDark: "#8f615d", deep: "#3d2226", cream: "#f4efed", warm: "#faf6f4", stone: "#767170", shadow: "rgba(24,24,24,0.88)" },
   // 5 — Sunny (glaciers, bars d'été, salons de thé ensoleillés) → vibe: sunny
   { id: "sunny", ink: "#2d2417", accent: "#f59e0b", accentDark: "#c17f0a", deep: "#b45309", cream: "#fff7ed", warm: "#fffbf2", stone: "#8c7a5c", shadow: "rgba(45,36,23,0.82)" },
+  // 6 — Dark Luxury (restaurant bistronomique premium, gastronomique) → vibe: luxury
+  // Inspiré du design Blink : fond #0C0C0C, or chaud, Playfair Display + Manrope
+  { id: "dark-luxury", ink: "#0C0C0C", accent: "#C9A96E", accentDark: "#9E7A42", deep: "#1E1400", cream: "#1A1A1A", warm: "#0C0C0C", stone: "#9A8B7A", shadow: "rgba(0,0,0,0.96)", darkMode: true },
 ];
 
 // Mapping vibe → theme + fonts. Utilisé quand Claude donne un vibe.
@@ -234,6 +238,7 @@ const VIBE_TO_THEME: Record<RestaurantVibe, string> = {
   coastal: "teal-copper",    // fruits de mer, crêperies Bretagne, Nice
   modern: "charcoal-rose",   // gastro contemporaine, pâtisserie haute couture, urbain
   sunny: "sunny",            // glaciers, bar plage, salons de thé ensoleillés
+  luxury: "dark-luxury",     // restaurant bistronomique premium, gastronomique
 };
 
 const VIBE_TO_FONT_INDEX: Record<RestaurantVibe, number> = {
@@ -242,17 +247,18 @@ const VIBE_TO_FONT_INDEX: Record<RestaurantVibe, number> = {
   coastal: 1,   // Playfair Display + Montserrat + Dancing Script
   modern: 2,    // EB Garamond + Work Sans + Pinyon Script (minimal)
   sunny: 1,     // Playfair Display + Montserrat + Dancing Script (festif)
+  luxury: 4,    // Playfair Display + Manrope (dark luxury, inspiré Blink)
 };
 
 // ── Vibe FORCÉ par business_type ──────────────────────────────────────────
 // Priorité absolue sur le choix de Claude — garantit que chaque métier reçoit
 // le bon design (glacier → sunny, boulangerie → rustic, etc.)
 export const BUSINESS_TYPE_VIBE: Record<string, RestaurantVibe> = {
-  // ── Restauration ───────────────────────────────────────────────────────────
-  restaurant:    "classic",
-  brasserie:     "classic",
-  gastronomique: "classic",
-  bistrot:       "rustic",
+  // ── Restauration — dark luxury (fond #0C0C0C, Playfair + Manrope) ──────────
+  restaurant:    "luxury",
+  brasserie:     "luxury",
+  gastronomique: "luxury",
+  bistrot:       "luxury",
   pizzeria:      "rustic",
   creperie:      "coastal",
   bar:           "modern",
@@ -478,6 +484,16 @@ const FONT_PAIRS: FontPair[] = [
     sansParam: "Lato:wght@300;400;700;900",
     script: "'Petit Formal Script',cursive",
     scriptParam: "Petit+Formal+Script",
+  },
+  // 5 — Playfair Display + Manrope (dark luxury — inspiré du design Blink)
+  {
+    id: "playfair-manrope",
+    serif: "'Playfair Display',Georgia,serif",
+    serifParam: "Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400",
+    sans: "'Manrope',system-ui,sans-serif",
+    sansParam: "Manrope:wght@200;300;400;500;600;700",
+    script: "'Playfair Display',Georgia,serif",
+    scriptParam: "Playfair+Display:ital,wght@1,400",
   },
 ];
 
@@ -1163,9 +1179,123 @@ footer{padding:40px 40px 80px;background:var(--ink);color:rgba(249,245,239,0.5);
 }
 /* Padding-bottom sur le body pour ne pas cacher les sections derrière le CTA + watermark */
 body{padding-bottom:110px}
+
+/* ══════════════════════════════════════════
+   DARK LUXURY MODE (.dlux)
+   Activé pour restaurant/brasserie/bistrot/gastronomique
+   Inspiré du design Blink : fond #0C0C0C, or chaud, Playfair + Manrope
+   ══════════════════════════════════════════ */
+body.dlux{background:#0C0C0C;color:rgba(245,240,232,0.9)}
+body.dlux .top-strip{background:#161616;border-bottom:1px solid rgba(255,255,255,0.05)}
+body.dlux nav{background:rgba(12,12,12,0.85)!important;border-bottom:1px solid rgba(255,255,255,0.07)!important;backdrop-filter:blur(24px)}
+body.dlux .logo-name{color:#F5F0E8}
+body.dlux .logo-sub{color:var(--accent)}
+body.dlux .nav-links a{color:rgba(245,240,232,0.72)}
+body.dlux .nav-links a:hover{color:var(--accent)}
+body.dlux .nav-cta{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18);color:#F5F0E8}
+body.dlux .nav-cta:hover{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
+body.dlux .hero-bg img{filter:brightness(0.32)}
+body.dlux .hero-bg::after{background:linear-gradient(to bottom,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.5) 60%,rgba(0,0,0,0.82) 100%)}
+body.dlux .about{background:#0C0C0C}
+body.dlux .about-text h2{color:#F5F0E8}
+body.dlux .about-text p{color:rgba(245,240,232,0.62)}
+body.dlux .about-signature{color:#F5F0E8}
+body.dlux .gallery{background:#111111}
+body.dlux .gallery h2{color:#F5F0E8}
+body.dlux .reviews{background:#0C0C0C}
+body.dlux .reviews h2{color:#F5F0E8}
+body.dlux .reviews-rating-global{color:rgba(245,240,232,0.55)}
+body.dlux .reviews-rating-global strong{color:#F5F0E8}
+body.dlux .review-card{background:#1A1A1A;border-color:rgba(255,255,255,0.05);box-shadow:none}
+body.dlux .review-card:hover{box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+body.dlux .review-text{color:rgba(245,240,232,0.88)}
+body.dlux .review-author{border-top-color:rgba(255,255,255,0.07)}
+body.dlux .review-name{color:#F5F0E8}
+body.dlux .review-time{color:rgba(245,240,232,0.4)}
+body.dlux .info{background:#141414}
+body.dlux .info-block h3{color:#F5F0E8}
+body.dlux .info-block p{color:rgba(245,240,232,0.58)}
+body.dlux .info-block strong{color:#F5F0E8}
+body.dlux .info-icon{border-color:rgba(201,169,110,0.5)}
+body.dlux .bk-modal{background:#1A1A1A}
+body.dlux .bk-header{border-bottom-color:rgba(255,255,255,0.07)}
+body.dlux .bk-header h3{color:#F5F0E8}
+body.dlux .bk-header p{color:rgba(245,240,232,0.5)}
+body.dlux .bk-label{color:rgba(245,240,232,0.5)}
+body.dlux .bk-month-label{color:#F5F0E8}
+body.dlux .bk-field input,body.dlux .bk-field textarea{color:#F5F0E8;border-bottom-color:rgba(255,255,255,0.12)}
+body.dlux .bk-field input::placeholder,body.dlux .bk-field textarea::placeholder{color:rgba(245,240,232,0.3)}
+body.dlux .bk-date{color:rgba(245,240,232,0.78);border-color:rgba(255,255,255,0.07)}
+body.dlux .bk-date:hover:not(.disabled){background:#252525;border-color:var(--accent)}
+body.dlux .bk-date.selected{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
+body.dlux .bk-date.disabled{color:rgba(245,240,232,0.18)}
+body.dlux .bk-time{color:rgba(245,240,232,0.78);border-color:rgba(255,255,255,0.09)}
+body.dlux .bk-time:hover{background:#252525;border-color:var(--accent)}
+body.dlux .bk-time.selected{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
+body.dlux .bk-guest{color:rgba(245,240,232,0.78);border-color:rgba(255,255,255,0.09)}
+body.dlux .bk-guest:hover{background:#252525;border-color:var(--accent)}
+body.dlux .bk-guest.selected{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
+body.dlux .bk-summary{background:#222222}
+body.dlux .bk-sum-row{border-bottom-color:rgba(255,255,255,0.05)}
+body.dlux .bk-sum-row strong{color:#F5F0E8}
+body.dlux .bk-sum-row span{color:rgba(245,240,232,0.55)}
+body.dlux .bk-success h4{color:#F5F0E8}
+body.dlux .bk-success p{color:rgba(245,240,232,0.6)}
+body.dlux .bk-step-dot{background:rgba(255,255,255,0.15)}
+body.dlux .bk-btn-back{color:rgba(245,240,232,0.45)}
+body.dlux .bk-btn-back:hover{color:#F5F0E8}
+body.dlux .bk-btn-next{background:var(--accent);border-color:var(--accent);color:#0C0C0C;font-weight:700}
+body.dlux .bk-btn-next:hover{background:#fff;color:#0C0C0C;border-color:#fff}
+body.dlux .bk-btn-next:disabled{background:rgba(255,255,255,0.12);border-color:transparent;color:rgba(255,255,255,0.4)}
+body.dlux .bk-close{background:rgba(255,255,255,0.07);color:#F5F0E8}
+body.dlux .bk-close:hover{background:rgba(255,255,255,0.15)}
+body.dlux .bk-confirm-box{background:#1A1A1A}
+body.dlux .bk-confirm-box h5{color:#F5F0E8}
+body.dlux .bk-confirm-box p{color:rgba(245,240,232,0.62)}
+body.dlux .bk-confirm-phone{background:#222;border-color:var(--accent);color:#F5F0E8}
+body.dlux .bk-confirm-cancel{color:rgba(245,240,232,0.45);border-color:rgba(255,255,255,0.14)}
+body.dlux .bk-confirm-cancel:hover{color:#F5F0E8;border-color:#F5F0E8}
+body.dlux .bk-confirm-ok{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
+body.dlux .bk-confirm-ok:hover{background:#fff;color:#0C0C0C}
+body.dlux .pm-modal{background:#1A1A1A}
+body.dlux .pm-header{border-bottom-color:rgba(255,255,255,0.07)}
+body.dlux .pm-header h3{color:#F5F0E8}
+body.dlux .pm-header p{color:rgba(245,240,232,0.5)}
+body.dlux .pm-label{color:rgba(245,240,232,0.5)}
+body.dlux .pm-plan{background:#222;border-color:rgba(255,255,255,0.07)}
+body.dlux .pm-plan:hover{border-color:var(--accent)}
+body.dlux .pm-plan.selected{background:#2A2A2A;border-color:var(--accent)}
+body.dlux .pm-plan-title{color:#F5F0E8}
+body.dlux .pm-plan li{color:rgba(245,240,232,0.72)}
+body.dlux .pm-field input,body.dlux .pm-field select{background:#222;border-color:rgba(255,255,255,0.1);color:#F5F0E8}
+body.dlux .pm-total{background:#222}
+body.dlux .pm-total-row{color:#F5F0E8}
+body.dlux .pm-close{background:rgba(255,255,255,0.07);color:#F5F0E8}
+body.dlux .pm-close:hover{background:rgba(255,255,255,0.15)}
+body.dlux .pm-reassurance{background:rgba(201,169,110,0.06);border-color:rgba(201,169,110,0.2)}
+body.dlux .pm-reassurance-item strong{color:#F5F0E8}
+body.dlux .pm-reassurance-item span{color:rgba(245,240,232,0.55)}
+body.dlux .pm-reassurance-item{border-bottom-color:rgba(255,255,255,0.05)}
+body.dlux .wc-chat-panel{background:#1A1A1A;border-color:rgba(255,255,255,0.06)}
+body.dlux .wc-chat-messages{background:#111}
+body.dlux .wc-chat-msg.bot{background:#222;color:#F5F0E8;border-color:rgba(255,255,255,0.05)}
+body.dlux .wc-chat-input-row{background:#1A1A1A;border-top-color:rgba(255,255,255,0.07)}
+body.dlux .wc-chat-input{background:#222;border-color:rgba(255,255,255,0.1);color:#F5F0E8}
+body.dlux .wc-chat-input::placeholder{color:rgba(245,240,232,0.3)}
+body.dlux .wc-chat-escalate{background:#222;border-color:rgba(255,255,255,0.08);color:#F5F0E8}
+body.dlux .wc-chat-escalate:hover{background:var(--accent);color:#0C0C0C}
+body.dlux .wc-msg-box{background:#1A1A1A}
+body.dlux .wc-msg-box h4{color:#F5F0E8}
+body.dlux .wc-msg-box>p{color:rgba(245,240,232,0.58)}
+body.dlux .wc-msg-field label{color:rgba(245,240,232,0.5)}
+body.dlux .wc-msg-field input,body.dlux .wc-msg-field textarea{background:#222;border-color:rgba(255,255,255,0.1);color:#F5F0E8}
+body.dlux .wc-msg-btn-cancel{color:rgba(245,240,232,0.45);border-color:rgba(255,255,255,0.14)}
+body.dlux .wc-msg-btn-cancel:hover{color:#F5F0E8;border-color:#F5F0E8}
+body.dlux .wc-msg-btn-send{background:var(--accent);color:#0C0C0C}
+body.dlux .wc-msg-btn-send:hover{background:#fff;color:#0C0C0C}
 </style>
 </head>
-<body>
+<body${theme.darkMode ? ' class="dlux"' : ''}>
 
 <a href="https://webconceptor.fr" class="wc-home-btn" title="Retour WebConceptor">
   <span class="wc-home-btn-logo">W</span>
