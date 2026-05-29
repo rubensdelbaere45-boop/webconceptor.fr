@@ -1192,10 +1192,16 @@ body.dlux .logo-name{color:#F5F0E8}
 body.dlux .logo-sub{color:var(--accent)}
 body.dlux .nav-links a{color:rgba(245,240,232,0.72)}
 body.dlux .nav-links a:hover{color:var(--accent)}
-body.dlux .nav-cta{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18);color:#F5F0E8}
-body.dlux .nav-cta:hover{background:var(--accent);border-color:var(--accent);color:#0C0C0C}
-body.dlux .hero-bg img{filter:brightness(0.32)}
-body.dlux .hero-bg::after{background:linear-gradient(to bottom,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.5) 60%,rgba(0,0,0,0.82) 100%)}
+body.dlux .nav-cta{background:var(--accent);border-color:var(--accent);color:#0C0C0C;border-radius:100px;font-weight:700}
+body.dlux .nav-cta:hover{background:#F5F0E8;border-color:#F5F0E8;color:#0C0C0C}
+/* Nav flottante sur la photo */
+body.dlux nav{position:fixed!important;top:0!important;left:0!important;right:0!important;height:72px!important}
+body.dlux .hero{padding-top:0;min-height:100vh}
+body.dlux .hero-inner{padding-top:160px!important}
+body.dlux .hero-bg img{filter:brightness(0.45)}
+body.dlux .hero-bg::after{background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.4) 60%,rgba(0,0,0,0.72) 100%)}
+/* Kicker : petites caps fines, large tracking — pas de script */
+body.dlux .hero-kicker{font-family:var(--sans);font-size:12px!important;font-weight:300;letter-spacing:0.45em;text-transform:uppercase;color:rgba(245,240,232,0.75);margin-bottom:20px}
 body.dlux .about{background:#0C0C0C}
 body.dlux .about-text h2{color:#F5F0E8}
 body.dlux .about-text p{color:rgba(245,240,232,0.62)}
@@ -1324,12 +1330,12 @@ body.dlux .wc-msg-btn-send:hover{background:#fff;color:#0C0C0C}
 <section class="hero">
   <div class="hero-bg">${img(photoUrls[0], FALLBACK_PHOTOS[0], prospect.name, 'loading="eager"')}</div>
   <div class="hero-inner">
-    <div class="hero-kicker">Bienvenue</div>
+    <div class="hero-kicker">${esc(content.cuisineType || labels.topStrip)}</div>
     <h1>${esc(content.heroTitle)}</h1>
     <p class="hero-desc">${esc(content.heroSubtitle)}</p>
     <div class="hero-ctas">
       <button class="btn-primary" onclick="bkOpen()">${esc(labels.ctaVerb)} →</button>
-      <a href="#menu" class="btn-outline">Voir la carte</a>
+      <a href="#menu" class="btn-outline">${esc(labels.menuSectionTitle || "Voir la carte")}</a>
     </div>
     ${
       prospect.google_rating
