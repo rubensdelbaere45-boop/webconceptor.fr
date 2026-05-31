@@ -21,6 +21,13 @@ const HARD_BOUNCE_EVENTS = new Set([
 ]);
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Vérification du token Brevo (configuré dans l'interface webhook)
+  const token = req.headers.get("x-brevo-token") || req.headers.get("authorization") || "";
+  const expectedToken = process.env.ADMIN_SECRET_KEY || "";
+  if (expectedToken && !token.includes(expectedToken)) {
+    return NextResponse.json({ ok: true }); // 200 silencieux — pas de 401 (Brevo abandonne en cas d'erreur)
+  }
+
   try {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ ok: true });
