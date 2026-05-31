@@ -445,6 +445,10 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
   INTERDIT pour non-restaurant : "Entrée du jour", "Plat signature", "Dessert maison".
 ],`;
 
+  // Nom court pour le sujet (max 20 chars)
+  const shortName = prospect.name.split(/[-–—|,]/)[0].trim().slice(0, 22);
+  const cityShort = prospect.city ? prospect.city.split(/[-–\s]/)[0].trim().slice(0, 14) : "";
+
   const prompt = `Génère le texte JSON pour la maquette de site de ce ${label.name}.
 
 ${infoLines}
@@ -454,8 +458,8 @@ Réponds avec UNIQUEMENT ce JSON (clés exactes) :
 "heroTitle": "4-7 mots évoquant LE MÉTIER PRÉCIS — pas le nom du lieu",
 "heroSubtitle": "12-16 mots, spécifique au métier + ville",
 "aboutText": "55-75 mots, SPÉCIFIQUE AU MÉTIER. glacier=glaces/sorbets/parfums artisanaux. boulangerie=pain/levain/four. coiffeur=coupe/style/soin. Si texte du site fourni, inspire-toi du ton sans recopier. JAMAIS cuisine/produits de saison pour un glacier ou coiffeur.",${menuKeySpec}
-"emailSubject": "≤55 chars, inclut le nom, percutant",
-"emailPitch": "2 phrases. Personnalisation prouvée (ville/note/avis cité). Vouvoiement. Pas opportunité."
+"emailSubject": "RÈGLE STRICTE : utilise EXACTEMENT ce format : '[NOM_COURT] — j'ai créé votre site' où NOM_COURT = '${shortName}'. ≤45 chars TOTAL. Minuscules sauf nom. Pas de 'maquette', 'WebConceptor', 'offre'. Exemples valides : '${shortName} — j'ai créé votre site' / '${shortName}${cityShort ? `, ${cityShort}` : ""} — votre site est prêt'",
+"emailPitch": "2 phrases COURTES. Ton humain, direct, vouvoiement. Phrase 1 : ce que vous avez créé pour eux spécifiquement (mentionner ville ou avis si dispo). Phrase 2 : une preuve concrète (note Google, ou ce qui distingue leur établissement). JAMAIS : 'opportunité', 'je me permets', 'je suis développeur'."
 }
 
 JSON valide uniquement, aucun commentaire.`;
@@ -774,43 +778,59 @@ function buildShortEmail(
   mockupUrl: string,
   tier: ProspectTier,
 ): string {
-  // Ligne de preuve sociale (note Google) — si pertinente
+  // Preview text caché — visible dans l'aperçu inbox AVANT l'ouverture
+  // Formule : curiosité + valeur + urgence implicite
+  const previewText = prospect.google_rating && prospect.google_rating >= 4.0
+    ? `J'ai créé une maquette spécialement pour vous — basée sur vos ${prospect.google_reviews_count || ""} avis Google. À voir.`
+    : `J'ai passé du temps sur votre maquette. Elle attend votre retour.`;
+
+  // Ligne de preuve sociale — seulement si note ≥ 4.3 et ≥ 20 avis
   let proofLine = "";
-  if (prospect.google_rating && prospect.google_reviews_count && prospect.google_reviews_count >= 10) {
-    if (prospect.google_rating >= 4.3) {
-      proofLine = `<p style="font-size:14px;color:#4a4340;margin:0 0 16px;line-height:1.65;padding:12px 16px;background:#fafaf7;border-left:3px solid #c19a56;border-radius:0 4px 4px 0">${prospect.google_rating}/5 sur Google · ${prospect.google_reviews_count} avis — votre réputation mérite une présence en ligne à la hauteur.</p>`;
-    }
+  if (prospect.google_rating && prospect.google_reviews_count && prospect.google_reviews_count >= 20 && prospect.google_rating >= 4.3) {
+    const stars = "★".repeat(Math.round(prospect.google_rating));
+    proofLine = `<p style="font-size:14px;color:#3d2e1e;margin:0 0 18px;padding:12px 16px;background:#fdf8f0;border-left:3px solid #c9a96e;border-radius:0 6px 6px 0;line-height:1.6">${stars} ${prospect.google_rating}/5 · ${prospect.google_reviews_count} avis Google — cette réputation mérite une vitrine à la hauteur.</p>`;
   }
 
-  // Ligne d'urgence pour HOT seulement
+  // Urgence discrète HOT sans site uniquement
   const urgencyLine = tier === "HOT" && prospect.site_quality === "none"
-    ? `<p style="font-size:14px;color:#4a4340;margin:0 0 16px;line-height:1.65">Vos concurrents ont déjà un site — c'est le bon moment pour prendre de l'avance.</p>`
+    ? `<p style="font-size:14px;color:#5a4a3a;margin:0 0 18px;line-height:1.65">Vos concurrents directs ont déjà un site. C'est le bon moment pour prendre de l'avance.</p>`
     : "";
 
-  return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1a1310;line-height:1.65;background:#ffffff">
+  return `<div style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;background:#ffffff">
 
-  <p style="font-size:15px;margin:0 0 16px">Bonjour,</p>
+  <!-- Preview text (caché, visible uniquement dans l'aperçu inbox) -->
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#ffffff;line-height:1">${escape(previewText)}&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;</div>
 
-  <p style="font-size:15px;margin:0 0 16px">${escape(content.emailPitch)}</p>
+  <div style="padding:36px 28px;color:#1a1310;line-height:1.7">
 
-  ${proofLine}
-  ${urgencyLine}
+    <p style="font-size:15px;margin:0 0 18px;color:#1a1310">Bonjour,</p>
 
-  <div style="text-align:center;margin:24px 0 20px">
-    <a href="${mockupUrl}" style="display:inline-block;padding:15px 38px;background:#1a3a5c;color:#FFD700;text-decoration:none;border-radius:4px;font-weight:700;font-size:15px;letter-spacing:0.04em">Voir votre maquette →</a>
+    <p style="font-size:15px;margin:0 0 18px;color:#1a1310;line-height:1.75">${escape(content.emailPitch)}</p>
+
+    ${proofLine}
+    ${urgencyLine}
+
+    <div style="margin:28px 0 24px;text-align:center">
+      <a href="${mockupUrl}"
+         style="display:inline-block;padding:17px 44px;background:#c9a96e;color:#ffffff;text-decoration:none;border-radius:3px;font-weight:700;font-size:15px;letter-spacing:0.05em;line-height:1">
+        Voir ma maquette →
+      </a>
+    </div>
+
+    <p style="font-size:13px;color:#7a6a5a;margin:0 0 28px;line-height:1.65">Si un texte ou une photo ne vous convient pas, répondez directement à cet email — je modifie gratuitement.</p>
+
+    <div style="border-top:1px solid #ece4d8;padding-top:20px;font-size:13px;color:#5a5045">
+      <p style="margin:0 0 3px;font-weight:600;color:#1a1310">Tom Bauer — WebConceptor</p>
+      <p style="margin:0 0 3px"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a> &nbsp;·&nbsp; <a href="mailto:contact@webconceptor.fr" style="color:#5a5045;text-decoration:none">contact@webconceptor.fr</a></p>
+      <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
+    </div>
+
   </div>
 
-  <p style="font-size:13px;color:#6b5f54;text-align:center;margin:0 0 28px">Site livré en 5 jours · <strong>320 € TTC</strong> · 3× sans frais</p>
-
-  <p style="font-size:13px;color:#7a6a5a;margin:0 0 24px;line-height:1.6">Si quelque chose ne vous plaît pas — photo, texte, couleur — répondez à cet email, je le change.</p>
-
-  <div style="border-top:1px solid #e8dfd0;padding-top:18px;font-size:13px;color:#6b6b6b">
-    <p style="margin:0 0 2px"><strong style="color:#1a1310">Tom Bauer</strong> — WebConceptor</p>
-    <p style="margin:0 0 2px"><a href="mailto:contact@webconceptor.fr" style="color:#1a3a5c;text-decoration:none">contact@webconceptor.fr</a> &middot; <a href="tel:+33635592471" style="color:#1a3a5c;text-decoration:none">06 35 59 24 71</a></p>
-    <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
+  <div style="padding:12px 28px 16px;border-top:1px solid #f0e8db">
+    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
   </div>
 
-  <p style="font-size:11px;color:#b5a894;margin-top:22px;border-top:1px solid #f0e9dc;padding-top:12px">Vous recevez cet email car votre établissement est référencé publiquement sur Google. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b5a894">Se désabonner</a>.</p>
 </div>`;
 }
 
@@ -884,6 +904,7 @@ async function handleSend(req: NextRequest) {
       .in("status", ["found", "ready"])
       .not("email", "is", null)
       .is("unsubscribed_at", null)   // Jamais envoyer à quelqu'un qui s'est désabonné
+      .neq("email_bounced", true)    // Jamais renvoyer sur une adresse en hard bounce
       .order("created_at", { ascending: true })
       .limit(batch_size * 10);
     if (data) {
