@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
   // Récupère et incrémente view_count de manière (presque) atomique
   const { data: current, error: fetchErr } = await supabase
     .from("prospects")
-    .select("id, view_count, opened_at, status")
+    .select("id, view_count, opened_at, status, name, phone, email, city, google_rating, google_reviews_count, site_quality")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -112,11 +112,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Prospect introuvable" }, { status: 404 });
   }
 
-  const nextCount = ((current.view_count as number | null) ?? 0) + 1;
+  const prevCount = ((current.view_count as number | null) ?? 0);
+  const nextCount = prevCount + 1;
   const updates: Record<string, unknown> = { view_count: nextCount };
+  const isFirstView = !current.opened_at;
 
   // Première ouverture humaine vérifiée ? On met à jour opened_at et status
-  if (!current.opened_at) {
+  if (isFirstView) {
     updates.opened_at = new Date().toISOString();
     if (current.status === "sent" || current.status === "ready") {
       updates.status = "opened";
@@ -124,6 +126,49 @@ export async function POST(req: NextRequest) {
   }
 
   await supabase.from("prospects").update(updates).eq("id", current.id);
+
+  // ── Alerte Telegram IMMÉDIATE sur 1ère vue ────────────────────────────────
+  // C'est le signal le plus chaud possible : un prospect HUMAIN regarde ta maquette.
+  // Appelle-le dans les 5 minutes → taux de conversion 9× plus élevé.
+  if (isFirstView || nextCount === 2) {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (token && chatId) {
+      const p = current as Record<string, unknown>;
+      const name = String(p.name || "Inconnu");
+      const city = String(p.city || "—");
+      const phone = String(p.phone || "—");
+      const email = String(p.email || "—");
+      const rating = p.google_rating ? `${p.google_rating}/5 · ${p.google_reviews_count || 0} avis` : "—";
+      const siteLabel = p.site_quality === "none" ? "❌ AUCUN site" : p.site_quality === "poor" ? "⚠️ Site vieillissant" : "Site existant";
+      const mockupUrl = `https://webconceptor.fr/prospects/${slug}`;
+      const phoneLink = phone !== "—" ? `\n\n<a href="tel:${phone.replace(/\s/g, "")}">📞 Appeler ${phone}</a>` : "";
+
+      const msg = isFirstView
+        ? `🔥 <b>MAQUETTE OUVERTE — APPELLE MAINTENANT</b>\n\n` +
+          `<b>${name}</b> · ${city}\n` +
+          `📞 ${phone}\n` +
+          `✉️ ${email}\n` +
+          `⭐ ${rating}\n` +
+          `🌐 ${siteLabel}\n` +
+          `${phoneLink}\n\n` +
+          `⏱ <i>Appelle dans les 5 min = 9× plus de chances de vendre</i>\n\n` +
+          `<a href="${mockupUrl}">→ Voir sa maquette</a>`
+        : `👀 <b>2ÈME VUE</b> — ${name} revient sur sa maquette !\n` +
+          `📞 ${phone} · ${city}\n<a href="${mockupUrl}">→ Maquette</a>`;
+
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        }),
+      }).catch(() => {});
+    }
+  }
 
   return NextResponse.json({ success: true, counted: true, view_count: nextCount });
 }
