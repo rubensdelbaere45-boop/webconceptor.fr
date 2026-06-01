@@ -1229,7 +1229,7 @@ body.dlux .pm-reassurance-item{border-bottom-color:rgba(255,255,255,0.05)}
     <div class="wc-order-bar-trust">
       <span class="wc-trust-item">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Livraison en 5 jours
+        Livraison rapide et suivie
       </span>
       <span class="wc-trust-sep">·</span>
       <span class="wc-trust-item">
