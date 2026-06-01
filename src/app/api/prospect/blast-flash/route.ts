@@ -125,8 +125,8 @@ async function handler(req: NextRequest) {
 
   // BLAST : tous les prospects avec email + maquette existante,
   // pas encore blast flash, pas déjà convertis.
-  // Limite 150/run (~5 crédits Brevo × 150 = 300 crédits = 6% du budget)
-  const MAX_BLAST = 150;
+  // 500/run × 2 runs/jour = 1 000 relances/jour → épuise 18k en ~18 jours
+  const MAX_BLAST = 500;
   const { data: prospects } = await supabase
     .from("prospects")
     .select("id, name, slug, email, additional_emails, status")

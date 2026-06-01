@@ -103,6 +103,11 @@
     { "path": "/api/prospect/follow-up", "schedule": "0 10 * * *" },
     { "path": "/api/prospect/follow-up", "schedule": "0 14 * * *" },
     { "path": "/api/prospect/hot-lead-sms", "schedule": "0 11 * * *" },
-    { "path": "/api/prospect/hot-lead-sms", "schedule": "0 15 * * *" }
+    { "path": "/api/prospect/hot-lead-sms", "schedule": "0 15 * * *" },
+    { "path": "/api/prospect/blast-flash", "schedule": "0 9 * * *" },
+    { "path": "/api/prospect/blast-flash", "schedule": "0 16 * * *" },
+    { "path": "/api/prospect/final-push", "schedule": "0 13 * * *" },
+    { "path": "/api/prospect/email-reminders", "schedule": "0 11 * * *" },
+    { "path": "/api/prospect/email-reminders", "schedule": "0 17 * * *" }
   ]
 }
