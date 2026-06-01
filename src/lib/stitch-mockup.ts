@@ -189,10 +189,7 @@ export async function generateStitchMockup(
   if (!process.env.STITCH_API_KEY) return null;
 
   try {
-    // Import dynamique isolé — empêche Next.js de l'évaluer au build
-    // si STITCH_API_KEY absent. Le ?. évite l'init du singleton sans clé.
-    const sdkPath = "@google/stitch-sdk";
-    const { stitch } = await import(/* webpackIgnore: true */ sdkPath) as typeof import("@google/stitch-sdk");
+    const { stitch } = await import("@google/stitch-sdk");
 
     const prompt = buildStitchPrompt(prospect);
     const projectName = `${prospect.name} — WebConceptor`;
