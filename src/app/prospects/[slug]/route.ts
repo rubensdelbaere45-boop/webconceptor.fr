@@ -116,7 +116,7 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality, menu_items, reviews, about_scraped, website_photos, site_style_dna, hours")
+    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality, menu_items, reviews, about_scraped, website_photos, site_style_dna, hours, is_luxury")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -477,7 +477,7 @@ export async function GET(
   // (restaurant) : il cache cette barre et redirige pmOpen → wcSxOpen.
   // ═══════════════════════════════════════════════════════════════════
   const cleanedHtml = stripOldSnippet(injectedHtml);
-  const withSalesUi = cleanedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site", false) + "</body>");
+  const withSalesUi = cleanedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site", Boolean(data.is_luxury)) + "</body>");
 
   // ═══════════════════════════════════════════════════════════════════
   // BEACON VIEW TRACKING — fire uniquement sur interaction humaine réelle
