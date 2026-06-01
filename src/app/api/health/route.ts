@@ -73,8 +73,19 @@ async function checkGooglePlaces(): Promise<{ ok: boolean; detail?: string }> {
   return { ok: true };
 }
 
+async function checkStitch(): Promise<{ ok: boolean; detail?: string }> {
+  if (!process.env.STITCH_API_KEY) return { ok: false, detail: "STITCH_API_KEY manquante" };
+  try {
+    const { stitch } = await import("@google/stitch-sdk");
+    const projects = await stitch.projects();
+    return { ok: true, detail: `${projects.length} projets existants` };
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message.slice(0, 150) : "Stitch SDK error" };
+  }
+}
+
 export async function GET() {
-  const [supabase, stripe, ionos, brevo, claude, telegram, google] = await Promise.all([
+  const [supabase, stripe, ionos, brevo, claude, telegram, google, stitchCheck] = await Promise.all([
     checkSupabase(),
     checkStripe(),
     checkIonos(),
@@ -82,6 +93,7 @@ export async function GET() {
     checkClaude(),
     checkTelegram(),
     checkGooglePlaces(),
+    checkStitch(),
   ]);
 
   const checks = {
@@ -92,6 +104,7 @@ export async function GET() {
     claude: claude.ok ? "✅" : `❌ ${claude.detail}`,
     telegram: telegram.ok ? "✅" : `❌ ${telegram.detail}`,
     google_places: google.ok ? "✅" : `❌ ${google.detail}`,
+    stitch: stitchCheck.ok ? `✅ ${stitchCheck.detail}` : `❌ ${stitchCheck.detail}`,
   };
 
   const criticalDown = !supabase.ok || !stripe.ok || !brevo.ok || !claude.ok || !google.ok;
