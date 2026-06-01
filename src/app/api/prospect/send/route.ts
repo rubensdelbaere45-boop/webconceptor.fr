@@ -1112,51 +1112,10 @@ async function handleSend(req: NextRequest) {
       };
 
       // ─── Génération maquette HTML ────────────────────────────────────────
-      // Priorité :
-      //   1. LUXURY + STITCH_API_KEY → Google Stitch (IA générative, rendu premium)
-      //   2. rich_audit dispo         → mockup-custom (couleurs/sections extraites du site)
-      //   3. Sinon                    → mockup-restaurant (template 5 thèmes, tous métiers)
+      // Stitch généré ASYNC par Railway Agent 7 (pas de timeout Vercel).
+      // Ici : template rapide pour l'email. Railway met à jour dans les 30 min.
       let html: string;
-      let stitchUsed = false;
-
-      // Si la maquette existante est déjà Stitch → on la garde, on ne régénère pas
-      const alreadyStitch = typeof p.mockup_html === "string" && p.mockup_html.includes("STITCH_GENERATED");
-
-      // Stitch pour TOUS les prospects si la clé est présente (sauf si déjà généré)
-      // LUXURY → prompt ultra-complet (860€), standard → prompt beau (320€)
-      if (!alreadyStitch && isStitchEnabled()) {
-        const stitchProspect: StitchProspect = {
-          id: p.id, slug: p.slug, name: p.name,
-          city: p.city, address: p.address, phone: p.phone,
-          website: p.website, business_type: p.business_type,
-          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-          about_scraped: p.about_scraped,
-          menu_items: p.menu_items,
-          reviews: p.reviews,
-          site_style_dna: p.site_style_dna,
-          rich_audit: p.rich_audit,
-        };
-        const stitchHtml = await generateStitchMockup(stitchProspect, prospectScore.is_luxury);
-        if (stitchHtml) {
-          html = stitchHtml;
-          stitchUsed = true;
-        } else if (p.rich_audit) {
-          // Stitch a échoué → fallback custom
-          const custom: CustomProspect = {
-            id: p.id, slug: p.slug, name: p.name,
-            city: p.city, address: p.address, phone: p.phone,
-            website: p.website, email: p.email,
-            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
-            photos: p.photos, hours: p.hours, business_type: p.business_type,
-            reviews: p.reviews,
-            website_photos: p.website_photos || undefined,
-          };
-          html = generateCustomMockupHtml(custom, p.rich_audit, origin);
-        } else {
-          const contentWithReviews = { ...restoContent, reviews: p.reviews || undefined };
-          html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
-        }
-      } else if (p.rich_audit) {
+      if (p.rich_audit) {
         const custom: CustomProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,
@@ -1168,15 +1127,9 @@ async function handleSend(req: NextRequest) {
         };
         html = generateCustomMockupHtml(custom, p.rich_audit, origin);
       } else {
-        // Template principal : 5 thèmes visuels, CTAs adaptés au métier,
-        // menus/services, reviews Google — couvre TOUS les business_type.
-        const contentWithReviews = {
-          ...restoContent,
-          reviews: p.reviews || undefined,
-        };
+        const contentWithReviews = { ...restoContent, reviews: p.reviews || undefined };
         html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
       }
-      void stitchUsed; // disponible pour logs futurs
 
       const emailBody = buildShortEmail(p, restoContent, mockupUrl, prospectScore.tier);
 
