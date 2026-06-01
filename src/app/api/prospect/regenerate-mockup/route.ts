@@ -361,7 +361,7 @@ export async function POST(req: NextRequest) {
         const stitchHtml = await generateStitchMockup(stitchProspect);
         if (stitchHtml) {
           html = stitchHtml;
-          await supabase.from("prospects").update({ mockup_html: html, stitch_generated: true, updated_at: new Date().toISOString() }).eq("id", p.id);
+          await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
           results.push({ slug: p.slug, name: p.name, status: "stitch_ok" });
           continue;
         }
