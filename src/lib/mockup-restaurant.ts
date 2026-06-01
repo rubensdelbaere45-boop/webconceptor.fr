@@ -1617,10 +1617,10 @@ ${
         <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">✨ Prestige</div>
           <div class="pm-plan-price">860 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
-          <div class="pm-plan-price-sub" style="color:#c9a96e;font-weight:600">Création sur-mesure par Google Stitch</div>
+          <div class="pm-plan-price-sub" style="color:#c9a96e;font-weight:600">Création exclusive sur-mesure</div>
           <div class="pm-plan-price-sub">ou 4× sans frais (4 × 215 €)</div>
           <ul>
-            <li>✓ <strong>Design généré par IA Google Stitch</strong></li>
+            <li>✓ <strong>Design exclusif créé sur-mesure</strong></li>
             <li>✓ Unique — pas un template</li>
             <li>✓ Livraison sous 7 jours ouvrés</li>
             <li>✓ Module réservation intégré (0 commission)</li>

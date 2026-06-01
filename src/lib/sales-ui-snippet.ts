@@ -27,7 +27,7 @@ export function buildSalesUiSnippet(slug: string, prospectName: string, isLuxury
   const subPrice = isLuxury ? "75" : "50";
   const klarna = isLuxury ? "3 × 286,67&nbsp;€" : "3 × 106,67&nbsp;€";
   const planLabel = isLuxury ? "Création Exclusive" : "Simple";
-  const planSub = isLuxury ? "Maquette IA sur-mesure, design premium" : "ou 3× sans frais (106,67&nbsp;€)";
+  const planSub = isLuxury ? "Design exclusif sur-mesure, livraison 7 jours" : "ou 3× sans frais (106,67&nbsp;€)";
   void basePrice; // used below via template literals
   const safeName = prospectName.replace(/[<>"'&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "&": "&amp;" }[c]!));
   const safeSlug = slug.replace(/[^a-z0-9_-]/gi, "").slice(0, 100);
@@ -156,7 +156,7 @@ body{padding-top:50px !important}
           <div class="wc-sx-plan-sub">${planSub}</div>
           <ul>
             <li>Livré sous 5 jours</li>
-            <li>${isLuxury ? "Design IA Google Stitch sur-mesure" : "Design premium responsive"}</li>
+            <li>${isLuxury ? "Design exclusif sur-mesure par nos créatifs" : "Design premium responsive"}</li>
             <li>URL provisoire offerte</li>
             <li>${isLuxury ? "Modifications illimitées 30j" : "2 rounds de modifications"}</li>
           </ul>
