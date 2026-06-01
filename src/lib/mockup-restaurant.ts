@@ -696,11 +696,16 @@ a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
 /* ── Barre "Je commande ce site" — seul élément WebConceptor visible ── */
-.wc-order-bar{position:fixed;top:0;left:0;right:0;z-index:10001;height:38px;background:rgba(0,30,90,0.97);display:flex;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(10px)}
-.wc-order-bar-label{color:rgba(255,255,255,0.65);font-size:11px;font-weight:400;letter-spacing:0.05em}
-.wc-order-btn{padding:6px 20px;background:var(--accent);color:#0a0a0a;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:100px;cursor:pointer;border:none;transition:all 0.2s;font-family:var(--sans)}
-.wc-order-btn:hover{background:#fff;transform:scale(1.03)}
-@media(max-width:560px){.wc-order-bar-label{display:none}.wc-order-btn{font-size:10px;padding:6px 14px}}
+.wc-order-bar{position:fixed;top:0;left:0;right:0;z-index:10001;height:44px;background:#0a0a0a;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:10px}
+.wc-order-bar-left{display:flex;align-items:center;gap:16px;flex:1}
+.wc-order-bar-label{color:rgba(255,255,255,0.75);font-size:11px;font-weight:500;letter-spacing:0.04em;white-space:nowrap}
+.wc-order-bar-trust{display:flex;align-items:center;gap:12px}
+.wc-trust-item{display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.5);font-size:10px;font-weight:500;white-space:nowrap}
+.wc-trust-item svg{flex-shrink:0;opacity:0.7}
+.wc-trust-sep{color:rgba(255,255,255,0.15);font-size:10px}
+.wc-order-btn{padding:7px 22px;background:#ffffff;color:#0a0a0a;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:100px;cursor:pointer;border:none;transition:all 0.18s;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
+.wc-order-btn:hover{background:var(--accent);transform:scale(1.03)}
+@media(max-width:640px){.wc-order-bar-trust{display:none}.wc-order-bar-label{font-size:10px}.wc-order-btn{font-size:10px;padding:6px 14px}}
 
 /* ── Boutons flottants contact direct ── */
 .wc-contact-btns{position:fixed;bottom:28px;right:20px;z-index:9998;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
@@ -1219,7 +1224,25 @@ body.dlux .pm-reassurance-item{border-bottom-color:rgba(255,255,255,0.05)}
 <body${theme.darkMode ? ' class="dlux"' : ''}>
 
 <div class="wc-order-bar">
-  <span class="wc-order-bar-label">Votre site web professionnel</span>
+  <div class="wc-order-bar-left">
+    <span class="wc-order-bar-label">Votre site web professionnel</span>
+    <div class="wc-order-bar-trust">
+      <span class="wc-trust-item">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Livraison en 5 jours
+      </span>
+      <span class="wc-trust-sep">·</span>
+      <span class="wc-trust-item">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Satisfait ou remboursé 14j
+      </span>
+      <span class="wc-trust-sep">·</span>
+      <span class="wc-trust-item">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Paiement sécurisé
+      </span>
+    </div>
+  </div>
   <button class="wc-order-btn" onclick="pmOpen()">Je commande ce site →</button>
 </div>
 
