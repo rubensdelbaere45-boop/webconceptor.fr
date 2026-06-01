@@ -165,11 +165,24 @@ function buildStitchPrompt(p: StitchProspect): string {
 
 async function downloadStitchHtml(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    console.log("[stitch] download URL:", url.slice(0, 120));
+    // Essaie d'abord sans auth (URL signée publique)
+    let res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    // Si 401/403 → réessaie avec l'API key
+    if (!res.ok && (res.status === 401 || res.status === 403)) {
+      console.log("[stitch] retry avec Authorization header, status:", res.status);
+      res = await fetch(url, {
+        signal: AbortSignal.timeout(30_000),
+        headers: { Authorization: `Bearer ${process.env.STITCH_API_KEY}` },
+      });
+    }
+    console.log("[stitch] download status:", res.status);
     if (!res.ok) return null;
     const html = await res.text();
+    console.log("[stitch] HTML length:", html.length);
     return html.length > 500 ? html : null;
-  } catch {
+  } catch (e) {
+    console.warn("[stitch] download error:", e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -195,19 +208,26 @@ export async function generateStitchMockup(
     const projectName = `${prospect.name} — WebConceptor`;
 
     // Crée le projet et génère l'écran
+    console.log("[stitch] createProject:", projectName);
     const project = await stitch.createProject(projectName);
+    console.log("[stitch] project id:", project.id);
+
+    console.log("[stitch] generating screen...");
     const screen = await project.generate(prompt);
+    console.log("[stitch] screen id:", screen.id);
 
     // Récupère l'URL de téléchargement du HTML
+    console.log("[stitch] getHtml()...");
     const htmlUrl = await screen.getHtml();
+    console.log("[stitch] htmlUrl:", htmlUrl ? htmlUrl.slice(0, 100) : "NULL");
     if (!htmlUrl) return null;
 
     // Télécharge le contenu HTML réel
     const html = await downloadStitchHtml(htmlUrl);
+    console.log("[stitch] final html:", html ? html.length + " chars" : "NULL");
     return html;
   } catch (err) {
-    // Ne jamais crasher send/ à cause de Stitch
-    console.warn("[stitch-mockup] erreur (fallback template):", err instanceof Error ? err.message : err);
+    console.warn("[stitch-mockup] erreur:", err instanceof Error ? err.message : String(err));
     return null;
   }
 }
