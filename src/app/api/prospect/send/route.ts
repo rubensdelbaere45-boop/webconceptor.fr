@@ -1112,7 +1112,9 @@ async function handleSend(req: NextRequest) {
       let html: string;
       let stitchUsed = false;
 
-      if (prospectScore.is_luxury && isStitchEnabled()) {
+      // Stitch pour TOUS les prospects si la clé est présente
+      // LUXURY → prompt ultra-complet (860€), standard → prompt beau (320€)
+      if (isStitchEnabled()) {
         const stitchProspect: StitchProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,
@@ -1124,7 +1126,7 @@ async function handleSend(req: NextRequest) {
           site_style_dna: p.site_style_dna,
           rich_audit: p.rich_audit,
         };
-        const stitchHtml = await generateStitchMockup(stitchProspect);
+        const stitchHtml = await generateStitchMockup(stitchProspect, prospectScore.is_luxury);
         if (stitchHtml) {
           html = stitchHtml;
           stitchUsed = true;

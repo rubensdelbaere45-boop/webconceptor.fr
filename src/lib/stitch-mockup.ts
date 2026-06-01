@@ -165,6 +165,72 @@ function buildStitchPrompt(p: StitchProspect): string {
 }
 
 /* ══════════════════════════════════════════
+   Prompt LUXURY — ultra-complet pour 860 €
+   ══════════════════════════════════════════ */
+
+function buildStitchPromptLuxury(p: StitchProspect): string {
+  const label = getStitchLabel(p.business_type);
+  const city = p.city || "France";
+  const rating = p.google_rating ? `${p.google_rating}/5 (${p.google_reviews_count ?? "many"} reviews)` : "";
+  const colorsHint = p.site_style_dna?.dominantColors?.slice(0, 3).join(", ");
+  const ambianceHint = p.site_style_dna?.keywords?.slice(0, 4).join(", ");
+  const aboutSnippet = p.about_scraped?.slice(0, 500).replace(/\s+/g, " ") ?? "";
+  const allItems = (p.menu_items ?? []).slice(0, 10)
+    .map((m) => `• ${m.name}${m.price ? ` — ${m.price}` : ""}${m.description ? ` (${m.description})` : ""}`)
+    .join("\n");
+  const reviews = (p.reviews ?? []).slice(0, 3)
+    .map((r) => `"${r.text.slice(0, 180)}" — ${r.author} ★${r.rating}`)
+    .join("\n");
+
+  return [
+    `Design a PREMIUM, luxury website for "${p.name}", an exceptional ${label.en} in ${city}, France.`,
+    `This is a high-end establishment that commands premium pricing. The design must reflect exclusivity, craftsmanship and prestige.`,
+    "",
+    `Style: ${label.style}. ${ambianceHint ? `Atmosphere: ${ambianceHint}.` : ""}`,
+    colorsHint ? `Brand colors: ${colorsHint}.` : "",
+    rating ? `Reputation: ${rating} — showcase this prominently.` : "",
+    "",
+    "=== SECTION 1 — HERO (cinematic) ===",
+    `Full-screen hero with dramatic background. Business name "${p.name}" in large elegant serif font, WHITE with strong dark overlay.`,
+    `Tagline: "L'excellence au cœur de ${city}"`,
+    `Two CTAs: "Découvrir nos prestations" and "Prendre rendez-vous"`,
+    "",
+    "=== SECTION 2 — SIGNATURE / IDENTITÉ ===",
+    aboutSnippet ? `Story section with this real content: "${aboutSnippet}"` : "Brand story and values section.",
+    "Include a prestigious award/certification badge or 'Depuis [year]' heritage element.",
+    "",
+    "=== SECTION 3 — PRESTATIONS SIGNATURE ===",
+    "Luxury card grid with full descriptions and prices:",
+    allItems || "Showcase key premium services with elegant cards.",
+    "",
+    "=== SECTION 4 — GALERIE ===",
+    "Full-width image gallery section with 6 placeholder spots — atmospheric, premium visuals.",
+    "",
+    "=== SECTION 5 — AVIS & RÉPUTATION ===",
+    reviews ? `Real client testimonials:\n${reviews}` : "Premium testimonials section.",
+    rating ? `Feature Google rating: ${rating}` : "",
+    "",
+    "=== SECTION 6 — RÉSERVATION / CONTACT ===",
+    `Phone: ${p.phone ?? ""}`,
+    `Address: ${p.address ?? city}`,
+    "Elegant contact form with name, email, message, preferred date.",
+    "Map embed placeholder.",
+    "",
+    "=== LUXURY DESIGN REQUIREMENTS ===",
+    "- Dark, cinematic hero with overlay — text MUST be white and fully legible.",
+    "- Refined typography: elegant serif for headings, clean sans-serif for body.",
+    "- Generous whitespace — luxury breathes.",
+    "- Gold or deep accent color for CTAs and decorative elements.",
+    "- Sticky navigation with logo, menu links, and 'Réserver' CTA.",
+    "- Smooth scroll animations (CSS only).",
+    "- Premium card designs with subtle shadows and borders.",
+    "- Footer with address, hours, social links.",
+    "- All text in French.",
+    "- No generic stock-photo feel — make it feel bespoke and prestigious.",
+  ].filter(Boolean).join("\n");
+}
+
+/* ══════════════════════════════════════════
    Téléchargement du HTML depuis l'URL Stitch
    ══════════════════════════════════════════ */
 
@@ -198,19 +264,21 @@ async function downloadStitchHtml(url: string): Promise<string | null> {
 
 /**
  * Génère une maquette HTML via Google Stitch.
+ * - isLuxury=true → prompt ultra-complet (6-8 sections, galerie, pricing) pour 860€
+ * - isLuxury=false → prompt standard beau pour 320€
  * Retourne null si STITCH_API_KEY absent, quota dépassé, ou toute erreur.
- * → la route send/ doit toujours prévoir un fallback template.
  */
 export async function generateStitchMockup(
-  prospect: StitchProspect
+  prospect: StitchProspect,
+  isLuxury = false
 ): Promise<string | null> {
   if (!process.env.STITCH_API_KEY) return null;
 
   try {
     const { stitch } = await import("@google/stitch-sdk");
 
-    const prompt = buildStitchPrompt(prospect);
-    const projectName = `${prospect.name} — WebConceptor`;
+    const prompt = isLuxury ? buildStitchPromptLuxury(prospect) : buildStitchPrompt(prospect);
+    const projectName = `${prospect.name} — WebConceptor${isLuxury ? " LUXURY" : ""}`;
 
     // Crée le projet et génère l'écran
     console.log("[stitch] createProject:", projectName);
