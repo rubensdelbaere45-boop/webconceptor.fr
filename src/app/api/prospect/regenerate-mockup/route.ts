@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateRestaurantMockupHtml, type RestaurantProspect, BUSINESS_TYPE_VIBE } from "@/lib/mockup-restaurant";
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
+import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
 import type { DeepAudit } from "@/lib/deep-audit";
 
 /* ══════════════════════════════════════════
@@ -338,9 +339,34 @@ export async function POST(req: NextRequest) {
 
   const results: Array<{ slug: string; name: string; status: string; chars?: number; error?: string }> = [];
 
+  // ?stitch=true → force génération Stitch pour tous les prospects du run
+  const forceStitch = req.nextUrl.searchParams.get("stitch") === "true";
+
   for (const p of prospects) {
     try {
       let html: string;
+
+      // Stitch forcé via ?stitch=true (admin) ou prospect luxury avec clé dispo
+      if (forceStitch && process.env.STITCH_API_KEY) {
+        const stitchProspect: StitchProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, business_type: p.business_type,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          about_scraped: p.about_scraped,
+          menu_items: p.menu_items,
+          reviews: p.reviews,
+          rich_audit: p.rich_audit,
+        };
+        const stitchHtml = await generateStitchMockup(stitchProspect);
+        if (stitchHtml) {
+          html = stitchHtml;
+          await supabase.from("prospects").update({ mockup_html: html, stitch_generated: true, updated_at: new Date().toISOString() }).eq("id", p.id);
+          results.push({ slug: p.slug, name: p.name, status: "stitch_ok" });
+          continue;
+        }
+        // Stitch a échoué → fallback template ci-dessous
+      }
 
       if (p.rich_audit) {
         // Premium : template custom basé sur l'audit du site existant
