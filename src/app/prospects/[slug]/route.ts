@@ -103,6 +103,8 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const promoParam = new URL(req.url).searchParams.get("promo");
+  const promoDiscount = promoParam === "20" ? 20 : 0; // % de réduction
 
   if (!slug || slug.length > 100) {
     return new NextResponse("Not Found", { status: 404 });
@@ -336,6 +338,36 @@ export async function GET(
     .replace(/prix\s*[:=]\s*599/gi, "prix: 320");
 
   // ═══════════════════════════════════════════════════════════════════
+  // PATCH PROMO -20% : appliqué si ?promo=20 dans l'URL
+  // Agent 5 envoie ce lien aux prospects hésitants (2+ vues sans achat).
+  // 320€ → 256€  |  3×106,67€ → 3×85,33€
+  // Un bandeau rouge compte à rebours 24h est injecté en haut de page.
+  // ═══════════════════════════════════════════════════════════════════
+  const promoHtml = promoDiscount > 0
+    ? patchedHtml
+        .replace(/320\s*€\s*TTC/g, '<span style="text-decoration:line-through;opacity:.5;font-size:.85em">320&nbsp;€</span> <strong style="color:#e53e3e">256&nbsp;€ TTC</strong>')
+        .replace(/320\s*€(?!\s*TTC)(?!\s*<)/g, '256&nbsp;€')
+        .replace(/3\s*×\s*106[,.]67\s*€/g, "3 × 85,33 €")
+        .replace(/Obtenez-le pour 320/g, "Obtenez-le pour 256")
+        // Bandeau promo injecté juste après <body
+        .replace(
+          /(<body[^>]*>)/i,
+          `$1<div id="wc-promo-banner" style="background:#e53e3e;color:#fff;text-align:center;padding:12px 16px;font-family:sans-serif;font-size:14px;font-weight:600;position:sticky;top:0;z-index:9999">
+  🎁 Offre exclusive -20&nbsp;% · <strong>256&nbsp;€ au lieu de 320&nbsp;€</strong> · Expire dans <span id="wc-promo-timer">24:00:00</span>
+  <script>
+  (function(){var e=document.getElementById('wc-promo-timer');if(!e)return;
+  var k='wc_promo_exp_${slug}';var exp=localStorage.getItem(k);
+  if(!exp){exp=Date.now()+86400000;localStorage.setItem(k,exp);}
+  function upd(){var s=Math.max(0,Math.floor((exp-Date.now())/1000));
+  if(s===0){e.textContent='Expirée';return;}
+  e.textContent=[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(function(n){return n<10?'0'+n:n;}).join(':');
+  setTimeout(upd,1000);}upd();})();
+  <\/script>
+</div>`
+        )
+    : patchedHtml;
+
+  // ═══════════════════════════════════════════════════════════════════
   // PATCH RUNTIME : retirer le bouton "Réserver une table" pour les métiers
   // qui ne font pas de réservation (glaciers, boulangeries, etc.)
   // Le template génère systématiquement un bouton bkOpen() — on le remplace
@@ -345,7 +377,7 @@ export async function GET(
   const phoneLink = data.phone ? `tel:+33${data.phone.replace(/^0/, "").replace(/[^0-9]/g, "")}` : "#contact";
   const phoneLabel = data.phone || "Nous appeler";
   const noBookingHtml = NO_BOOKING_TYPES.has(data.business_type || "")
-    ? patchedHtml
+    ? promoHtml
         // Bouton nav (petit)
         .replace(
           /<button class="nav-cta"[^>]*onclick="bkOpen\(\)"[^>]*>[^<]*<\/button>/g,
@@ -366,7 +398,7 @@ export async function GET(
           /<div[^>]*id="wc-booking-modal"[^>]*>[\s\S]*?<\/div>\s*<!-- \/booking/,
           "<!-- booking-modal masqué pour ce type de commerce -->"
         )
-    : patchedHtml;
+    : promoHtml;
 
   // ═══════════════════════════════════════════════════════════════════
   // INJECTION LEVIERS DE CONVERSION (pour les anciennes maquettes)
