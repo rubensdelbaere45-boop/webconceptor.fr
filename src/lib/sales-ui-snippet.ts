@@ -149,7 +149,7 @@ body{padding-top:50px !important}
           <ul>
             <li>Livré sous 5 jours</li>
             <li>Design premium responsive</li>
-            <li>URL provisoire WebConceptor</li>
+            <li>URL provisoire offerte</li>
             <li>2 rounds de modifications</li>
           </ul>
         </div>

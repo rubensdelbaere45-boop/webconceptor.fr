@@ -887,11 +887,9 @@ footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);
 </head>
 <body>
 
-<a href="https://webconceptor.fr" class="wc-home-btn" title="Retour WebConceptor">
   <span class="wc-home-btn-logo">W</span>
   <span>WebConceptor</span>
 </a>
-<div class="wc-demo-badge" title="Tous les badges WebConceptor disparaissent automatiquement à l'achat">Maquette · retirée à l'achat</div>
 
 ${topStripContent ? `<div class="top-strip">${escape(topStripContent)}</div>` : ""}
 

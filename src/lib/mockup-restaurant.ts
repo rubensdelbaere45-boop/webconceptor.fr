@@ -1219,7 +1219,7 @@ body.dlux .pm-reassurance-item{border-bottom-color:rgba(255,255,255,0.05)}
 <body${theme.darkMode ? ' class="dlux"' : ''}>
 
 <div class="wc-order-bar">
-  <span class="wc-order-bar-label">Votre site clé en main par WebConceptor</span>
+  <span class="wc-order-bar-label">Votre site web professionnel</span>
   <button class="wc-order-btn" onclick="pmOpen()">Je commande ce site →</button>
 </div>
 
@@ -1439,7 +1439,7 @@ ${
 </section>
 
 <footer>
-  © 2026 — ${esc(prospect.name)} · Maquette générée par WebConceptor
+  © 2026 — ${esc(prospect.name)}
 </footer>
 
 <!-- ─────────────────────────────────── -->

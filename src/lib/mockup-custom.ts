@@ -872,8 +872,6 @@ ${buildCss(ctx)}
 </style>
 </head>
 <body>
-<a href="https://webconceptor.fr" class="wc-home-btn" title="Retour WebConceptor"><span class="wc-home-btn-logo">W</span><span>WebConceptor</span></a>
-<div class="wc-demo-badge" title="Toutes les mentions WebConceptor disparaissent automatiquement à l'achat">Maquette · retirée à l'achat</div>
 
 ${sectionsHtml}
 
