@@ -767,10 +767,57 @@ function getEmailGainBullets(businessType?: string): string[] {
 
 /* ══════════════════════════════════════════
    EMAIL COURT — Cold outreach optimisé
-   80-120 mots, adapté au tier HOT/WARM.
-   Le job de l'email = obtenir le clic.
-   Le job de la maquette = convertir.
+   HOT/WARM  : 80-120 mots, curiosité + clic
+   LUXURY    : ton exclusif, maquette sur-mesure, 860€
    ══════════════════════════════════════════ */
+
+function buildLuxuryEmail(
+  prospect: Prospect,
+  content: RestaurantContent,
+  mockupUrl: string,
+): string {
+  const previewText = `J'ai travaillé plusieurs heures sur une création exclusive pour ${prospect.name}. Je pense qu'elle va vous surprendre.`;
+  const rating = prospect.google_rating
+    ? `${prospect.google_rating}/5 · ${prospect.google_reviews_count || 0} avis`
+    : null;
+
+  return `<div style="font-family:'Georgia',serif;max-width:580px;margin:0 auto;background:#ffffff">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#ffffff;line-height:1">${escape(previewText)}&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;</div>
+
+  <div style="padding:48px 36px;color:#1a1310;line-height:1.8">
+
+    <p style="font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#9a8b7a;margin:0 0 32px">WebConceptor · Création exclusive</p>
+
+    <p style="font-size:16px;margin:0 0 20px;color:#1a1310">Bonjour,</p>
+
+    <p style="font-size:16px;margin:0 0 20px;color:#1a1310;line-height:1.85">${escape(content.emailPitch)}</p>
+
+    ${rating ? `<p style="font-size:14px;color:#5a4a3a;margin:0 0 20px;font-style:italic">${rating} — votre réputation d'exception mérite une présence en ligne à sa hauteur.</p>` : ""}
+
+    <p style="font-size:15px;margin:0 0 32px;color:#1a1310;line-height:1.85">J'ai créé pour vous une maquette entièrement sur-mesure — pas un template, une vraie création pensée pour <strong>${escape(prospect.name)}</strong>. Je vous invite à la découvrir.</p>
+
+    <div style="margin:32px 0;text-align:center">
+      <a href="${mockupUrl}"
+         style="display:inline-block;padding:18px 52px;background:#1a1310;color:#c9a96e;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;line-height:1">
+        Découvrir ma maquette exclusive
+      </a>
+    </div>
+
+    <p style="font-size:13px;color:#7a6a5a;margin:0 0 32px;line-height:1.7;font-style:italic">Cette création est réservée exclusivement à votre établissement. Si elle ne vous convient pas — répondez, je modifie sans frais.</p>
+
+    <div style="border-top:1px solid #e8dfd0;padding-top:24px;font-size:13px;color:#5a5045">
+      <p style="margin:0 0 4px;font-weight:600;color:#1a1310;font-family:-apple-system,sans-serif">Tom Bauer — WebConceptor</p>
+      <p style="margin:0 0 4px;font-family:-apple-system,sans-serif"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a></p>
+      <p style="margin:0;font-family:-apple-system,sans-serif"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
+    </div>
+
+  </div>
+
+  <div style="padding:12px 36px 16px;border-top:1px solid #f0e8db">
+    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5;font-family:-apple-system,sans-serif">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
+  </div>
+</div>`;
+}
 
 function buildShortEmail(
   prospect: Prospect,
@@ -778,8 +825,10 @@ function buildShortEmail(
   mockupUrl: string,
   tier: ProspectTier,
 ): string {
+  // ── Email LUXURY — traitement VIP ─────────────────────────────────────────
+  if (tier === "LUXURY") return buildLuxuryEmail(prospect, content, mockupUrl);
+
   // Preview text caché — visible dans l'aperçu inbox AVANT l'ouverture
-  // Formule : curiosité + valeur + urgence implicite
   const previewText = prospect.google_rating && prospect.google_rating >= 4.0
     ? `J'ai créé une maquette spécialement pour vous — basée sur vos ${prospect.google_reviews_count || ""} avis Google. À voir.`
     : `J'ai passé du temps sur votre maquette. Elle attend votre retour.`;
@@ -1011,17 +1060,25 @@ async function handleSend(req: NextRequest) {
       continue;
     }
 
-    // ── Scoring prospect — skip COLD (< 40 pts) ──────────────────────────
+    // ── Scoring prospect — skip COLD, traitement VIP pour LUXURY ────────
     const prospectScore = scoreProspect({
       google_rating: p.google_rating,
       google_reviews_count: p.google_reviews_count,
       site_quality: p.site_quality,
       business_type: p.business_type,
+      city: p.city,
     });
     if (prospectScore.tier === "COLD" && !prospect_id && !prospect_slug) {
-      // COLD + envoi batch → on skip. Si slug/id direct → admin force, on envoie quand même.
       results.push({ id: p.id, name: p.name, status: "skipped_cold_score" });
       continue;
+    }
+
+    // ── LUXURY : marque en base + sujet et email différents ──────────────
+    if (prospectScore.is_luxury) {
+      await supabase.from("prospects")
+        .update({ is_luxury: true })
+        .eq("id", p.id)
+        .is("is_luxury", null); // évite d'écraser une valeur existante
     }
 
     // Note : on NE skip PAS les sites "good" — le tri par priorité gère l'ordre
@@ -1071,7 +1128,11 @@ async function handleSend(req: NextRequest) {
       }
 
       const emailBody = buildShortEmail(p, restoContent, mockupUrl, prospectScore.tier);
-      const emailSubject = restoContent.emailSubject;
+
+      // Sujet luxury — plus exclusif, pas de "maquette"
+      const emailSubject = prospectScore.is_luxury
+        ? `${p.name} — une création exclusive vous attend`
+        : restoContent.emailSubject;
 
       // Save mockup + email content to DB
       await supabase
@@ -1139,7 +1200,9 @@ async function handleSend(req: NextRequest) {
         const noSiteBadge = p.site_quality === "none"
           ? `🆕 <b>PAS DE SITE — PRIO MAX POUR APPEL</b>\n\n`
           : "";
-        const scoreBadge = `🎯 Score : <b>${prospectScore.score}/100</b> · ${prospectScore.tier}\n`;
+        const scoreBadge = prospectScore.is_luxury
+          ? `✨ <b>LUXURY — 860€</b> · Score ${prospectScore.score}/100\n`
+          : `🎯 Score : <b>${prospectScore.score}/100</b> · ${prospectScore.tier}\n`;
 
         // Libellé + emoji adapté au métier (plus de "Restaurant contacté" sur coiffeurs/plombiers/etc.)
         const metierMap: Record<string, { emoji: string; label: string }> = {

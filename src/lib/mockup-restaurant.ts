@@ -22,6 +22,8 @@ export interface RestaurantProspect {
   website_photos?: string[];
   // Type métier — détermine le libellé des CTAs (réserver vs rdv vs devis, etc.)
   business_type?: string;
+  // Tier luxury — maquette Stitch sur-mesure, prix 860€
+  is_luxury?: boolean;
 }
 
 /* Libellés CTA adaptés au métier (évite "Réserver une table" chez un coiffeur) */
@@ -1587,6 +1589,34 @@ ${
     <div class="pm-body">
       <span class="pm-label">Choisissez votre formule</span>
       <div class="pm-plans">
+        ${prospect.is_luxury ? `
+        <!-- LUXURY : tarifs prestige 860€ -->
+        <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
+          <div class="pm-plan-title">✨ Prestige</div>
+          <div class="pm-plan-price">860 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
+          <div class="pm-plan-price-sub" style="color:#c9a96e;font-weight:600">Création sur-mesure par Google Stitch</div>
+          <div class="pm-plan-price-sub">ou 4× sans frais (4 × 215 €)</div>
+          <ul>
+            <li>✓ <strong>Design généré par IA Google Stitch</strong></li>
+            <li>✓ Unique — pas un template</li>
+            <li>✓ Livraison sous 7 jours ouvrés</li>
+            <li>✓ Module réservation intégré (0 commission)</li>
+            <li>✓ 3 rounds de modifications inclus</li>
+          </ul>
+        </div>
+        <div class="pm-plan selected recommended" data-plan="serenite" onclick="pmSelectPlan('serenite')">
+          <div class="pm-plan-title">Prestige + Sérénité</div>
+          <div class="pm-plan-price">860 € <span style="font-size:13px;opacity:0.6">+ 75 €/mois</span></div>
+          <div class="pm-plan-price-sub">Tout inclus, service blanc-gant</div>
+          <ul>
+            <li>✓ <strong>Nom de domaine premium</strong> (.fr, .com, .eu…)</li>
+            <li>✓ Hébergement haute performance + CDN</li>
+            <li>✓ <strong>Modifications illimitées</strong></li>
+            <li>✓ Support prioritaire 7j/7 sous 4h</li>
+            <li>✓ Monitoring 24/7 + rapport mensuel</li>
+          </ul>
+        </div>` : `
+        <!-- Standard : tarifs 320€ -->
         <div class="pm-plan" data-plan="simple" onclick="pmSelectPlan('simple')">
           <div class="pm-plan-title">Simple</div>
           <div class="pm-plan-price"><span style="text-decoration:line-through;opacity:0.4;font-size:20px;font-weight:400;margin-right:8px">490€</span>320 € <span style="font-size:13px;opacity:0.6">TTC</span></div>
@@ -1611,7 +1641,7 @@ ${
             <li>✓ Support prioritaire sous 24 h</li>
             <li>✓ Monitoring 24/7 (on vous alerte si souci)</li>
           </ul>
-        </div>
+        </div>`}
       </div>
       <div class="pm-reassurance">
         <div class="pm-reassurance-item">
@@ -1691,7 +1721,7 @@ ${
       <div class="pm-total">
         <div class="pm-total-row"><span>Site web</span><span>320,00 €</span></div>
         <div class="pm-total-row" id="pm-total-domain" style="display:none"><span id="pm-total-domain-label">Nom de domaine</span><span id="pm-total-domain-price">—</span></div>
-        <div class="pm-total-row" id="pm-total-serenite" style="display:none"><span>Formule Sérénité (1er mois)</span><span>50,00 €</span></div>
+        <div class="pm-total-row" id="pm-total-serenite" style="display:none"><span>${prospect.is_luxury ? "Sérénité Prestige (1er mois)" : "Formule Sérénité (1er mois)"}</span><span>${prospect.is_luxury ? "75,00 €" : "50,00 €"}</span></div>
         <div class="pm-total-row grand"><span>Total TTC</span><span id="pm-total-grand">320,00 €</span></div>
       </div>
 
