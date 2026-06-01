@@ -36,19 +36,26 @@ export function buildSalesUiSnippet(slug: string, prospectName: string, isLuxury
 <!-- WC-SX-START -->
 <style>
 /* ─── CTA bar fixe en haut ─────────────────────────────────── */
-.wc-sx-cta{position:fixed;top:0;left:0;right:0;z-index:9996;background:#0a0a0a;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 16px rgba(0,0,0,0.35);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;font-size:13px}
-.wc-sx-cta-btn{padding:10px 22px;background:#FFD700;color:#0a0a0a;font-weight:800;font-size:13px;border:none;border-radius:100px;cursor:pointer;letter-spacing:0.04em;transition:transform 0.15s,box-shadow 0.15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.wc-sx-cta-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,215,0,0.35)}
-/* ─── Override : les pills WebConceptor (home-btn + demo-badge) descendent sous la CTA bar */
-.wc-home-btn{top:54px !important}
-.wc-demo-badge{top:54px !important}
-body{padding-top:50px !important}
-@media(max-width:600px){
-  .wc-sx-cta{padding:8px 12px;font-size:12px}
-  .wc-sx-cta-btn{padding:8px 14px;font-size:12px}
-  body{padding-top:52px !important}
-  .wc-home-btn{top:58px !important}
-  .wc-demo-badge{top:58px !important}
+.wc-sx-cta{position:fixed;top:0;left:0;right:0;z-index:9996;background:#111;height:54px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 2px 24px rgba(0,0,0,0.5);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif}
+.wc-sx-cta-left{display:flex;align-items:center;gap:24px;flex:1;min-width:0;overflow:hidden}
+.wc-sx-cta-title{color:#fff;font-size:15px;font-weight:700;white-space:nowrap}
+.wc-sx-cta-trust{display:flex;align-items:center;gap:10px}
+.wc-sx-cta-t{color:rgba(255,255,255,0.5);font-size:12px;white-space:nowrap}
+.wc-sx-cta-dot{color:rgba(255,255,255,0.2);font-size:12px}
+.wc-sx-cta-btn{padding:11px 26px;background:#FFD700;color:#0a0a0a;font-weight:800;font-size:14px;border:none;border-radius:100px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:transform 0.15s,box-shadow 0.15s;white-space:nowrap;flex-shrink:0}
+.wc-sx-cta-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,215,0,0.45)}
+/* ─── Override : les pills WebConceptor descendent sous la CTA bar */
+.wc-home-btn{top:64px !important}
+.wc-demo-badge{top:64px !important}
+body{padding-top:54px !important}
+@media(max-width:760px){.wc-sx-cta-trust{display:none}}
+@media(max-width:500px){
+  .wc-sx-cta{padding:0 14px;height:50px}
+  .wc-sx-cta-title{font-size:13px}
+  .wc-sx-cta-btn{padding:9px 16px;font-size:12px}
+  body{padding-top:50px !important}
+  .wc-home-btn{top:60px !important}
+  .wc-demo-badge{top:60px !important}
 }
 
 /* ─── Modal overlay ──────────────────────────────────────────── */
@@ -129,8 +136,17 @@ body{padding-top:50px !important}
 </style>
 
 <div class="wc-sx-cta" id="wc-sx-cta" role="region" aria-label="Commandez votre site WebConceptor">
-  <span style="font-size:13px;color:#ccc;font-weight:500">Votre site web professionnel</span>
-  <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande ce site →</button>
+  <div class="wc-sx-cta-left">
+    <span class="wc-sx-cta-title">Votre site web professionnel</span>
+    <div class="wc-sx-cta-trust">
+      <span class="wc-sx-cta-t">✓ Livraison rapide et suivie</span>
+      <span class="wc-sx-cta-dot">·</span>
+      <span class="wc-sx-cta-t">Remboursé 14j</span>
+      <span class="wc-sx-cta-dot">·</span>
+      <span class="wc-sx-cta-t">Paiement sécurisé</span>
+    </div>
+  </div>
+  <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande → ${basePriceNbsp}</button>
 </div>
 
 <div class="wc-sx-overlay" id="wc-sx-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)wcSxClose()">
