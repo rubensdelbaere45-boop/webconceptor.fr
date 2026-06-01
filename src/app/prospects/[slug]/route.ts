@@ -61,6 +61,9 @@ function stripOldSnippet(html: string): string {
   // Retire la barre CTA fixe et le modal overlay (gestion des divs imbriqués)
   clean = stripDivById(clean, 'wc-sx-cta');
   clean = stripDivById(clean, 'wc-sx-overlay');
+  // Cas 3 : ancienne barre Stitch injectée directement dans le mockup_html en DB
+  // (marqueur <!-- STITCH_GENERATED --> + style .wc-bar + div + spacer 44px)
+  clean = clean.replace(/<!--\s*STITCH_GENERATED\s*-->[\s\S]*?<div style="height:44px"><\/div>/g, '');
   return clean;
 }
 
