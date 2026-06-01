@@ -804,7 +804,13 @@ function buildLuxuryEmail(
       </a>
     </div>
 
-    <p style="font-size:13px;color:#7a6a5a;margin:0 0 32px;line-height:1.7;font-style:italic">Cette création est réservée exclusivement à votre établissement. Si elle ne vous convient pas — répondez, je modifie sans frais.</p>
+    <p style="font-size:13px;color:#7a6a5a;margin:0 0 24px;line-height:1.7;font-style:italic">Cette création est réservée exclusivement à votre établissement. Si elle ne vous convient pas — répondez, je modifie sans frais.</p>
+
+    <div style="background:#fdf8f0;border:1px solid #e8dfd0;border-radius:6px;padding:16px 20px;margin-bottom:28px">
+      <p style="font-size:12px;color:#9a8b7a;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px">Investissement</p>
+      <p style="font-size:20px;font-weight:800;color:#1a1310;margin:0 0 4px"><strong>860 € TTC</strong> <span style="font-size:13px;font-weight:400;color:#7a6a5a">— création sur-mesure, livraison 7 jours</span></p>
+      <p style="font-size:12px;color:#9a8b7a;margin:0">Option Sérénité Premium : <strong>75 €/mois</strong> — hébergement, mises à jour illimitées, support dédié</p>
+    </div>
 
     <div style="border-top:1px solid #e8dfd0;padding-top:24px;font-size:13px;color:#5a5045">
       <p style="margin:0 0 4px;font-weight:600;color:#1a1310;font-family:-apple-system,sans-serif">Tom Bauer — WebConceptor</p>

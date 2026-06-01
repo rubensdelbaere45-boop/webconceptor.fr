@@ -20,7 +20,15 @@
  * Retourne le bloc <style>+<div>+<script> à injecter avant </body> des
  * maquettes qui n'ont pas de CTA d'achat natif.
  */
-export function buildSalesUiSnippet(slug: string, prospectName: string): string {
+export function buildSalesUiSnippet(slug: string, prospectName: string, isLuxury = false): string {
+  // Pricing adapté au tier
+  const basePrice = isLuxury ? "860" : "320";
+  const basePriceNbsp = isLuxury ? "860&nbsp;€" : "320&nbsp;€";
+  const subPrice = isLuxury ? "75" : "50";
+  const klarna = isLuxury ? "3 × 286,67&nbsp;€" : "3 × 106,67&nbsp;€";
+  const planLabel = isLuxury ? "Création Exclusive" : "Simple";
+  const planSub = isLuxury ? "Maquette IA sur-mesure, design premium" : "ou 3× sans frais (106,67&nbsp;€)";
+  void basePrice; // used below via template literals
   const safeName = prospectName.replace(/[<>"'&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "&": "&amp;" }[c]!));
   const safeSlug = slug.replace(/[^a-z0-9_-]/gi, "").slice(0, 100);
 
@@ -143,19 +151,19 @@ body{padding-top:50px !important}
       <span class="wc-sx-label">Choisissez votre formule</span>
       <div class="wc-sx-plans">
         <div class="wc-sx-plan selected" data-plan="simple" onclick="wcSxSelectPlan('simple')">
-          <div class="wc-sx-plan-title">Simple</div>
-          <div class="wc-sx-plan-price">320&nbsp;€</div>
-          <div class="wc-sx-plan-sub">ou 3× sans frais (106,67&nbsp;€)</div>
+          <div class="wc-sx-plan-title">${planLabel}</div>
+          <div class="wc-sx-plan-price">${basePriceNbsp}</div>
+          <div class="wc-sx-plan-sub">${planSub}</div>
           <ul>
             <li>Livré sous 5 jours</li>
-            <li>Design premium responsive</li>
+            <li>${isLuxury ? "Design IA Google Stitch sur-mesure" : "Design premium responsive"}</li>
             <li>URL provisoire offerte</li>
-            <li>2 rounds de modifications</li>
+            <li>${isLuxury ? "Modifications illimitées 30j" : "2 rounds de modifications"}</li>
           </ul>
         </div>
         <div class="wc-sx-plan recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
-          <div class="wc-sx-plan-title">Sérénité</div>
-          <div class="wc-sx-plan-price">320&nbsp;€ <span style="font-size:10px;opacity:0.7;font-weight:400">+ 50€/mois</span></div>
+          <div class="wc-sx-plan-title">Sérénité ${isLuxury ? "Premium" : ""}</div>
+          <div class="wc-sx-plan-price">${basePriceNbsp} <span style="font-size:10px;opacity:0.7;font-weight:400">+ ${subPrice}€/mois</span></div>
           <div class="wc-sx-plan-sub">Tout compris, zéro prise de tête</div>
           <ul>
             <li><strong>Nom de domaine</strong> inclus</li>
@@ -335,8 +343,8 @@ body{padding-top:50px !important}
     if (!recap) return;
     var plan = wcSxGetSelectedPlan();
     var label = plan === 'serenite'
-      ? '<strong>Sérénité</strong> — 320&nbsp;€ + 50€/mois'
-      : '<strong>Simple</strong> — 320&nbsp;€';
+      ? '<strong>Sérénité${isLuxury ? " Premium" : ""}</strong> — ${basePriceNbsp} + ${subPrice}€/mois'
+      : '<strong>${planLabel}</strong> — ${basePriceNbsp}';
     recap.innerHTML = 'Formule : ' + label;
   }
 
