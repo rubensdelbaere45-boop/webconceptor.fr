@@ -703,8 +703,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .wc-trust-item{display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.5);font-size:10px;font-weight:500;white-space:nowrap}
 .wc-trust-item svg{flex-shrink:0;opacity:0.7}
 .wc-trust-sep{color:rgba(255,255,255,0.15);font-size:10px}
-.wc-order-btn{padding:7px 22px;background:#ffffff;color:#0a0a0a;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:100px;cursor:pointer;border:none;transition:all 0.18s;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
-.wc-order-btn:hover{background:var(--accent);transform:scale(1.03)}
+.wc-order-btn{padding:8px 24px;background:#FFD700;color:#0a0a0a;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border-radius:100px;cursor:pointer;border:none;transition:all 0.18s;font-family:var(--sans);white-space:nowrap;flex-shrink:0;box-shadow:0 0 0 0 rgba(255,215,0,0.5)}
+.wc-order-btn:hover{background:#fff;transform:scale(1.04);box-shadow:0 4px 20px rgba(255,215,0,0.4)}
 @media(max-width:640px){.wc-order-bar-trust{display:none}.wc-order-bar-label{font-size:10px}.wc-order-btn{font-size:10px;padding:6px 14px}}
 
 /* ── Boutons flottants contact direct ── */
