@@ -51,6 +51,7 @@ interface Prospect {
     keywords?: string[];
   } | null;
   rich_audit?: DeepAudit | null;
+  mockup_html?: string | null;
 }
 
 // Libellés naturels par business_type — utilisés dans les prompts Claude et fallbacks.
