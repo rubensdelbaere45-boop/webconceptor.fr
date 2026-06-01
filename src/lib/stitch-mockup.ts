@@ -298,7 +298,8 @@ export async function generateStitchMockup(
     // Télécharge le contenu HTML réel
     const html = await downloadStitchHtml(htmlUrl);
     console.log("[stitch] final html:", html ? html.length + " chars" : "NULL");
-    return html;
+    // Marque le HTML pour éviter l'écrasement par les crons
+    return html ? `<!-- STITCH_GENERATED -->\n${html}` : null;
   } catch (err) {
     console.warn("[stitch-mockup] erreur:", err instanceof Error ? err.message : String(err));
     return null;

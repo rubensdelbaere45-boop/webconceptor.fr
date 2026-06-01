@@ -1118,9 +1118,12 @@ async function handleSend(req: NextRequest) {
       let html: string;
       let stitchUsed = false;
 
-      // Stitch pour TOUS les prospects si la clé est présente
+      // Si la maquette existante est déjà Stitch → on la garde, on ne régénère pas
+      const alreadyStitch = typeof p.mockup_html === "string" && p.mockup_html.includes("STITCH_GENERATED");
+
+      // Stitch pour TOUS les prospects si la clé est présente (sauf si déjà généré)
       // LUXURY → prompt ultra-complet (860€), standard → prompt beau (320€)
-      if (isStitchEnabled()) {
+      if (!alreadyStitch && isStitchEnabled()) {
         const stitchProspect: StitchProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,

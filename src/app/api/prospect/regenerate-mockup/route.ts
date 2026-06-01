@@ -343,6 +343,13 @@ export async function POST(req: NextRequest) {
   const forceStitch = req.nextUrl.searchParams.get("stitch") === "true";
 
   for (const p of prospects) {
+    // Protection : ne jamais écraser une maquette Stitch avec le template
+    // sauf si ?stitch=true (régénération explicite) ou ?force=true
+    const forceOverwrite = req.nextUrl.searchParams.get("force") === "true";
+    if (!forceStitch && !forceOverwrite && p.mockup_html?.includes("STITCH_GENERATED")) {
+      results.push({ slug: p.slug, name: p.name, status: "skipped_stitch" });
+      continue;
+    }
     try {
       let html: string;
 
