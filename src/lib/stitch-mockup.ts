@@ -109,51 +109,56 @@ function buildStitchPrompt(p: StitchProspect): string {
 
   // ── Prompt structuré ──────────────────────────────────────────────────────
   const lines: string[] = [
-    `Design a beautiful, professional website for "${p.name}", a ${label.en} located in ${city}, France.`,
+    `Design a beautiful, professional single-page website for "${p.name}", a ${label.en} located in ${city}, France.`,
     "",
     `Overall style: ${label.style}.`,
   ];
 
-  if (colorsHint) lines.push(`Color palette inspired by their brand: ${colorsHint}.`);
-  if (ambianceHint) lines.push(`Ambiance keywords: ${ambianceHint}.`);
-  if (fontHint) lines.push(`Typography feel: inspired by ${fontHint}.`);
+  if (colorsHint) lines.push(`Color palette: ${colorsHint}.`);
+  if (ambianceHint) lines.push(`Ambiance: ${ambianceHint}.`);
 
-  lines.push("", "The website must include these sections:");
-  lines.push("1. HERO — full-width header with business name, tagline, and a clear call-to-action button.");
+  lines.push("", "=== SECTION 1 — HERO ===");
+  lines.push(`Full-width hero with a beautiful background image of a massage/spa setting.`);
+  lines.push(`Business name displayed prominently: "${p.name}" — use a large, bold, WHITE font with a dark semi-transparent overlay (rgba 0,0,0,0.45) so the text is clearly readable.`);
+  lines.push(`Subtitle: "Votre instant de détente personnalisé au cœur d'${city}"`);
+  lines.push(`CTA button: "Réserver votre séance"`);
 
   if (aboutSnippet) {
-    lines.push(`2. ABOUT — short story paragraph. Use this real content: "${aboutSnippet.slice(0, 300)}"`);
-  } else {
-    lines.push("2. ABOUT — a compelling 'Our Story' section.");
+    lines.push("", "=== SECTION 2 — À PROPOS ===");
+    lines.push(`Use this real content: "${aboutSnippet.slice(0, 400)}"`);
+    lines.push(`Philosophy quote in italics: "Notre corps est notre élément de vie, prenons soin de lui."`);
   }
 
   if (topItems) {
-    lines.push(`3. SERVICES / HIGHLIGHTS — showcase these real offerings: ${topItems}`);
-  } else {
-    lines.push("3. SERVICES — a clean grid showing key services or offerings.");
+    lines.push("", "=== SECTION 3 — NOS SOINS ===");
+    lines.push(`Display these REAL services as beautiful cards with icon, name, description and price:`);
+    lines.push(topItems);
+    lines.push(`Also include: Massages en duo (sur réservation), Cartes cadeaux valables 1 an.`);
   }
 
   if (bestReview) {
-    lines.push(`4. TESTIMONIALS — include this real customer review: "${bestReview.text.slice(0, 180)}" — ${bestReview.author} ★${bestReview.rating}`);
-  } else if (rating) {
-    lines.push(`4. SOCIAL PROOF — highlight their Google rating of ${rating}.`);
+    lines.push("", "=== SECTION 4 — AVIS CLIENTS ===");
+    lines.push(`Include this real Google review: "${bestReview.text.slice(0, 200)}" — ${bestReview.author} ★${bestReview.rating}`);
+    if (rating) lines.push(`Google rating: ${rating}`);
   }
 
-  lines.push("5. CONTACT — phone number, address, opening hours, and a simple contact form.");
-
-  if (p.phone) lines.push(``, `Phone: ${p.phone}`);
+  lines.push("", "=== SECTION 5 — CONTACT & HORAIRES ===");
+  if (p.phone) lines.push(`Phone: ${p.phone}`);
   if (p.address) lines.push(`Address: ${p.address}`);
+  lines.push(`Hours: Lundi au Vendredi 10h–19h`);
+  lines.push(`Include a simple booking/contact form.`);
 
   lines.push(
     "",
-    "Design requirements:",
-    "- Mobile-first, fully responsive layout.",
-    "- Modern CSS (no tables for layout, no deprecated tags).",
-    "- Clean typography hierarchy with contrast.",
-    "- Smooth hover effects on buttons and cards.",
-    "- Professional, conversion-optimised design.",
-    "- Include a sticky navigation bar.",
-    "- All text must be in French.",
+    "=== DESIGN REQUIREMENTS ===",
+    "- CRITICAL: Hero title must be WHITE and fully readable — use a dark overlay on the background image.",
+    "- Mobile-first, fully responsive.",
+    "- Sticky navigation bar with the business name and a 'Réserver' button.",
+    "- Smooth hover effects on service cards.",
+    "- All text in French.",
+    "- Elegant, zen, wellness aesthetic — soft greens, warm beiges, white space.",
+    "- Service cards: icon + name + short description + price badge.",
+    "- No WebConceptor branding.",
   );
 
   return lines.join("\n");
