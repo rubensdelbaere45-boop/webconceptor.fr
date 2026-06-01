@@ -156,6 +156,47 @@ async function fetchUrl(url: string, timeout = 8000): Promise<string | null> {
 }
 
 /* ══════════════════════════════════════════
+   SCRAPLING FALLBACK — service Python Railway
+   Appelé uniquement si les scrapers Node renvoient vide.
+   ══════════════════════════════════════════ */
+
+interface ScraplingResult {
+  emails: string[];
+  about: string | null;
+  photos: string[];
+}
+
+async function callScraplingFallback(
+  websiteUrl: string,
+  tasks: ("emails" | "about" | "photos")[]
+): Promise<ScraplingResult> {
+  const serviceUrl = process.env.SCRAPLING_SERVICE_URL;
+  const secret = process.env.SCRAPLING_SECRET;
+  if (!serviceUrl) return { emails: [], about: null, photos: [] };
+
+  try {
+    const res = await fetch(`${serviceUrl}/enrich`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify({ url: websiteUrl, tasks }),
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (!res.ok) return { emails: [], about: null, photos: [] };
+    const data = await res.json();
+    return {
+      emails: Array.isArray(data.emails) ? data.emails : [],
+      about: typeof data.about === "string" ? data.about : null,
+      photos: Array.isArray(data.photos) ? data.photos : [],
+    };
+  } catch {
+    return { emails: [], about: null, photos: [] };
+  }
+}
+
+/* ══════════════════════════════════════════
    MENU SCRAPING — extract real dishes from restaurant website
    ══════════════════════════════════════════ */
 
@@ -948,6 +989,24 @@ export async function POST(req: NextRequest) {
         siteAudit = results[4].status === "fulfilled" ? (results[4].value as SiteAudit | null) : null;
         styleDna = results[5].status === "fulfilled" ? (results[5].value as SiteStyleDNA | null) : null;
         deepAudit = results[6].status === "fulfilled" ? (results[6].value as DeepAudit | null) : null;
+
+        // Scrapling fallback : si les scrapers Node ont échoué (Cloudflare, anti-bot, etc.),
+        // on appelle le service Python Railway pour les données encore manquantes.
+        const scraplingTasks: ("emails" | "about" | "photos")[] = [];
+        if (!email) scraplingTasks.push("emails");
+        if (!aboutScraped) scraplingTasks.push("about");
+        if (!websitePhotos.length) scraplingTasks.push("photos");
+
+        if (scraplingTasks.length > 0 && process.env.SCRAPLING_SERVICE_URL) {
+          const fallback = await callScraplingFallback(place.websiteUri, scraplingTasks);
+          if (!email && fallback.emails.length) {
+            email = fallback.emails[0];
+            additionalEmails = fallback.emails.slice(1);
+          }
+          if (!aboutScraped && fallback.about) aboutScraped = fallback.about;
+          if (!websitePhotos.length && fallback.photos.length) websitePhotos = fallback.photos;
+        }
+
         if (email) stats.withEmail++;
       }
       // Pas de site = opportunité max (site_quality = "none")
@@ -1079,6 +1138,19 @@ export async function POST(req: NextRequest) {
           additionalEmails = allEmails.slice(email ? 0 : 1).filter((e) => e.toLowerCase() !== (email || "").toLowerCase()).slice(0, 2);
           websitePhotos = results[1].status === "fulfilled" ? (results[1].value as string[]) : [];
           siteAudit = results[2].status === "fulfilled" ? (results[2].value as SiteAudit | null) : null;
+
+          // Scrapling fallback pour les données encore manquantes
+          const scraplingTasksExt: ("emails" | "about" | "photos")[] = [];
+          if (!email) scraplingTasksExt.push("emails");
+          if (!websitePhotos.length) scraplingTasksExt.push("photos");
+          if (scraplingTasksExt.length > 0 && process.env.SCRAPLING_SERVICE_URL) {
+            const fallbackExt = await callScraplingFallback(p.website, scraplingTasksExt);
+            if (!email && fallbackExt.emails.length) {
+              email = fallbackExt.emails[0];
+              additionalEmails = fallbackExt.emails.slice(1);
+            }
+            if (!websitePhotos.length && fallbackExt.photos.length) websitePhotos = fallbackExt.photos;
+          }
         } catch { /* silent */ }
       }
 

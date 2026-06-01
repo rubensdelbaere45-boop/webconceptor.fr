@@ -10,6 +10,7 @@ import {
 } from "@/lib/mockup-restaurant";
 // generateAdaptiveMockupHtml supprimé — tous les métiers passent par generateRestaurantMockupHtml
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
+import { generateStitchMockup, isStitchEnabled, type StitchProspect } from "@/lib/stitch-mockup";
 import type { DeepAudit } from "@/lib/deep-audit";
 
 function getSupabaseAdmin() {
@@ -1103,10 +1104,47 @@ async function handleSend(req: NextRequest) {
         business_type: p.business_type, // CTAs adaptés au métier via getBusinessLabels()
       };
 
-      // Maquette HTML : priorité au rich_audit (couleurs/sections custom extraites du site actuel)
-      // sinon on utilise le template 5-thèmes × business_type de mockup-restaurant.ts.
+      // ─── Génération maquette HTML ────────────────────────────────────────
+      // Priorité :
+      //   1. LUXURY + STITCH_API_KEY → Google Stitch (IA générative, rendu premium)
+      //   2. rich_audit dispo         → mockup-custom (couleurs/sections extraites du site)
+      //   3. Sinon                    → mockup-restaurant (template 5 thèmes, tous métiers)
       let html: string;
-      if (p.rich_audit) {
+      let stitchUsed = false;
+
+      if (prospectScore.is_luxury && isStitchEnabled()) {
+        const stitchProspect: StitchProspect = {
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city, address: p.address, phone: p.phone,
+          website: p.website, business_type: p.business_type,
+          google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+          about_scraped: p.about_scraped,
+          menu_items: p.menu_items,
+          reviews: p.reviews,
+          site_style_dna: p.site_style_dna,
+          rich_audit: p.rich_audit,
+        };
+        const stitchHtml = await generateStitchMockup(stitchProspect);
+        if (stitchHtml) {
+          html = stitchHtml;
+          stitchUsed = true;
+        } else if (p.rich_audit) {
+          // Stitch a échoué → fallback custom
+          const custom: CustomProspect = {
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city, address: p.address, phone: p.phone,
+            website: p.website, email: p.email,
+            google_rating: p.google_rating, google_reviews_count: p.google_reviews_count,
+            photos: p.photos, hours: p.hours, business_type: p.business_type,
+            reviews: p.reviews,
+            website_photos: p.website_photos || undefined,
+          };
+          html = generateCustomMockupHtml(custom, p.rich_audit, origin);
+        } else {
+          const contentWithReviews = { ...restoContent, reviews: p.reviews || undefined };
+          html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
+        }
+      } else if (p.rich_audit) {
         const custom: CustomProspect = {
           id: p.id, slug: p.slug, name: p.name,
           city: p.city, address: p.address, phone: p.phone,
@@ -1126,6 +1164,7 @@ async function handleSend(req: NextRequest) {
         };
         html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
       }
+      void stitchUsed; // disponible pour logs futurs
 
       const emailBody = buildShortEmail(p, restoContent, mockupUrl, prospectScore.tier);
 
