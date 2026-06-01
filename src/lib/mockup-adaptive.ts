@@ -750,7 +750,6 @@ export function generateAdaptiveMockupHtml(
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--warm);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;position:relative}
 ::selection{background:var(--primary);color:#fff}
-body::after{content:'WEBCONCEPTOR · APERÇU';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.05);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 
@@ -761,14 +760,7 @@ a{color:inherit;text-decoration:none}
 .wc-home-btn-logo{width:22px;height:22px;background:#0066ff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px}
 /* Bandeau info flottant : rassure le prospect que les mentions WebConceptor
    disparaissent au moment du paiement — bloqueur fréquent de conversion. */
-.wc-reassurance{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:9997;background:#fff;color:#1a1a1a;padding:10px 20px;border-radius:100px;font-size:12px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,0.14);border:1px solid rgba(0,102,255,0.2);display:inline-flex;align-items:center;gap:10px;max-width:92vw;font-family:var(--sans)}
-.wc-reassurance .wc-reassurance-icon{width:22px;height:22px;background:#0066ff;color:#fff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
-.wc-reassurance strong{color:#0066ff;font-weight:700}
-.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#2A1B26,var(--primary));padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:rgba(255,255,255,0.95);letter-spacing:0.05em;font-weight:600;font-family:var(--sans);text-align:center;flex-wrap:wrap}
-.wc-watermark strong{color:#fff;letter-spacing:0.12em;text-transform:uppercase}
-.wc-watermark a{color:#FFD700;font-weight:700;text-decoration:underline}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-@media(max-width:640px){.wc-reassurance{font-size:11px;padding:9px 14px;bottom:48px}.wc-watermark{font-size:10px}}
 
 .top-strip{background:var(--primary);color:${isLight(theme.primary) ? "#1a1a1a" : "#fff"};text-align:center;padding:9px 20px;font-size:12px;font-weight:500;position:relative;z-index:2;letter-spacing:0.01em}
 nav{position:sticky;top:0;z-index:100;height:72px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,253,248,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,0.05)}
@@ -1016,13 +1008,8 @@ ${reviewsHtml}
 
 <footer>&copy; 2026 — Maquette générée par WebConceptor</footer>
 
-<div class="wc-reassurance" title="Les mentions WebConceptor disparaissent automatiquement au moment du paiement">
-  <span class="wc-reassurance-icon">W</span>
-  <span>Badges WebConceptor <strong>retirés automatiquement</strong> dès l'achat</span>
 </div>
 
-<div class="wc-watermark">
-  <strong>APERÇU WEBCONCEPTOR</strong> &middot;
   les mentions ci-présentes sont retirées à l'achat &middot;
   <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
 </div>

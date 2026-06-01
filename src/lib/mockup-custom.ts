@@ -633,7 +633,6 @@ function buildCss(ctx: RenderCtx): string {
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);font-size:${theme.baseFontSize};background:#fff;color:var(--text);line-height:1.6;letter-spacing:var(--tracking);-webkit-font-smoothing:antialiased;position:relative}
 ::selection{background:var(--primary);color:var(--on-primary)}
-body::after{content:'WEBCONCEPTOR · APERÇU';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(0,0,0,0.05);letter-spacing:0.1em;white-space:nowrap;pointer-events:none;z-index:0;user-select:none}
 img{display:block;max-width:100%;height:auto}
 a{color:inherit;text-decoration:none}
 .container{max-width:1200px;margin:0 auto}
@@ -643,12 +642,6 @@ a{color:inherit;text-decoration:none}
 .wc-demo-badge::before{content:'';width:7px;height:7px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
 .wc-home-btn{position:fixed;top:72px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06)}
 .wc-home-btn-logo{width:22px;height:22px;background:#0066ff;color:#fff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:11px}
-.wc-reassurance{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:9997;background:#fff;color:#1a1a1a;padding:10px 20px;border-radius:100px;font-size:12px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,0.14);border:1px solid rgba(0,102,255,0.2);display:inline-flex;align-items:center;gap:10px}
-.wc-reassurance-ico{width:22px;height:22px;background:#0066ff;color:#fff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px}
-.wc-reassurance strong{color:#0066ff;font-weight:700}
-.wc-watermark{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#2A1B26,var(--primary));padding:10px 20px;text-align:center;font-size:11px;color:rgba(255,255,255,0.95);font-weight:600}
-.wc-watermark strong{color:#fff;letter-spacing:0.12em;text-transform:uppercase}
-.wc-watermark a{color:#FFD700;font-weight:700;text-decoration:underline}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
 /* ─── Hero variants ─── */
@@ -875,8 +868,6 @@ ${buildCss(ctx)}
 
 ${sectionsHtml}
 
-<div class="wc-reassurance"><span class="wc-reassurance-ico">W</span><span>Badges WebConceptor <strong>retirés automatiquement</strong> dès l'achat</span></div>
-<div class="wc-watermark"><strong>APERÇU WEBCONCEPTOR</strong> &middot; les mentions ci-présentes sont retirées à l'achat &middot; <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a></div>
 </body>
 </html>`;
 }
