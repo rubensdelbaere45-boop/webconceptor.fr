@@ -139,6 +139,71 @@ Return ONLY the HTML code, nothing else.`
   return { html, source: 'openrouter' }
 }
 
+// ── Génération contenu commercial personnalisé ───────────────────
+async function generateSalesContent(prospect) {
+  if (!OPENROUTER_KEY) throw new Error('OPENROUTER_KEY manquante')
+
+  const { name, city, business_type, google_rating, google_reviews_count, website, site_quality, about_scraped, phone } = prospect
+  const mockupUrl = `https://webconceptor.fr/prospects/${prospect.slug}`
+
+  const systemPrompt = `Tu es un commercial B2B spécialisé dans la vente de sites vitrines à 320 €.
+Tu travailles pour WebConceptor (contact@webconceptor.fr).
+Le ton doit être professionnel, concis et crédible.
+Ne jamais exagérer les résultats ni faire de promesses non vérifiables.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication.`
+
+  const userPrompt = `Analyse cette entreprise et génère le contenu commercial :
+
+ENTREPRISE : ${name}
+VILLE : ${city || 'France'}
+SECTEUR : ${business_type || 'commerce'}
+NOTE GOOGLE : ${google_rating || 'N/A'}/5 (${google_reviews_count || 0} avis)
+SITE ACTUEL : ${website || 'Aucun'}
+QUALITÉ SITE : ${site_quality || 'none'}
+DESCRIPTION : ${about_scraped ? String(about_scraped).slice(0, 200) : 'Non disponible'}
+LIEN MAQUETTE : ${mockupUrl}
+
+Génère en JSON :
+{
+  "email_subject": "Objet de l'email (max 60 caractères, accrocheur)",
+  "email_body": "Email personnalisé de moins de 100 mots. Mentionne le nom de l'entreprise, sa ville, et un point spécifique à son activité. Inclure le lien vers la maquette. Signer 'L'équipe WebConceptor'.",
+  "linkedin_message": "Message LinkedIn court (max 80 mots). Direct et personnel.",
+  "call_script": "Script d'appel de 30 secondes. Commence par se présenter, mentionne avoir créé une maquette gratuite, propose de la montrer.",
+  "value_proposition": "Proposition de valeur en 1 phrase adaptée à ce secteur.",
+  "weaknesses": ["3 faiblesses de sa présence en ligne"],
+  "opportunities": ["3 opportunités d'amélioration"]
+}`
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENROUTER_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.0-flash-001',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+      response_format: { type: 'json_object' }
+    })
+  })
+
+  if (!res.ok) throw new Error(`OpenRouter ${res.status}`)
+  const data = await res.json()
+  let content = data.choices?.[0]?.message?.content || ''
+  content = content.replace(/```json\n?/gi, '').replace(/```/g, '').trim()
+
+  try {
+    return JSON.parse(content)
+  } catch {
+    return { error: 'JSON invalide', raw: content.slice(0, 300) }
+  }
+}
+
 // ── Endpoint principal ───────────────────────────────────────────
 async function handleGenerate(body) {
   const { prompt, slug } = body
@@ -224,6 +289,29 @@ const server = http.createServer(async (req, res) => {
       const parsed = JSON.parse(body)
       const result = await handleGenerate(parsed)
       res.writeHead(result.status || 200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(result))
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: e.message }))
+    }
+    return
+  }
+
+  // Sales Content — POST /sales-content
+  // Génère email personnalisé + script d'appel + LinkedIn + proposition de valeur
+  if (req.url === '/sales-content' && req.method === 'POST') {
+    const authHeader = req.headers.authorization || ''
+    if (SERVER_SECRET && authHeader !== `Bearer ${SERVER_SECRET}`) {
+      res.writeHead(401, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Unauthorized' }))
+      return
+    }
+    let body = ''
+    for await (const chunk of req) body += chunk
+    try {
+      const parsed = JSON.parse(body)
+      const result = await generateSalesContent(parsed)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(result))
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' })
@@ -340,7 +428,18 @@ async function runNightBatch() {
         if (result.html && result.html.length > 500) {
           const pixel = `<img src="https://webconceptor.fr/api/prospect/track-view" data-slug="${p.slug}" style="display:none" width="1" height="1">`
           const finalHtml = result.html.includes('</body>') ? result.html.replace('</body>', `${pixel}\n</body>`) : result.html
-          await sbPatch(p.slug, { mockup_html: finalHtml, stitch_generated: true, updated_at: new Date().toISOString() })
+          // Génère aussi le contenu commercial personnalisé
+          let salesData = {}
+          try {
+            salesData = await generateSalesContent(p)
+          } catch (e) { console.log(`[batch] ⚠ sales content: ${e.message?.slice(0,40)}`) }
+
+          await sbPatch(p.slug, {
+            mockup_html: finalHtml,
+            stitch_generated: true,
+            updated_at: new Date().toISOString(),
+            ...(salesData.email_subject ? { notes: JSON.stringify({ sales: salesData }) } : {})
+          })
           return { ok: true, name: p.name, chars: finalHtml.length, source: result.source }
         }
         return { ok: false, name: p.name, error: 'HTML vide' }
