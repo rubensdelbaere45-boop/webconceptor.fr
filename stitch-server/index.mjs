@@ -326,26 +326,38 @@ async function runNightBatch() {
 
   await telegramNotify(`🌙 <b>Batch nocturne démarré</b>\n${prospects.length} maquettes à générer\n${found?.length || 0} nouveaux + ${opened?.length || 0} upgrades`)
 
-  for (const p of prospects) {
-    console.log(`[batch] ${batchStatus.done + batchStatus.errors + 1}/${prospects.length} ${p.name}`)
-    try {
-      const prompt = buildPromptFromProspect(p)
-      const result = await handleGenerate({ prompt, slug: p.slug })
-      if (result.html && result.html.length > 500) {
-        const pixel = `<img src="https://webconceptor.fr/api/prospect/track-view" data-slug="${p.slug}" style="display:none" width="1" height="1">`
-        const finalHtml = result.html.includes('</body>') ? result.html.replace('</body>', `${pixel}\n</body>`) : result.html
-        await sbPatch(p.slug, { mockup_html: finalHtml, stitch_generated: true, updated_at: new Date().toISOString() })
+  // TURBO MODE — 3 générations en parallèle (1 par clé)
+  const PARALLEL = Math.min(STITCH_KEYS.length, 3)
+  for (let i = 0; i < prospects.length; i += PARALLEL) {
+    const batch = prospects.slice(i, i + PARALLEL)
+    const lot = Math.floor(i / PARALLEL) + 1
+    console.log(`[batch] Lot ${lot} — ${batch.map(p => p.name.slice(0, 25)).join(' | ')}`)
+
+    const results = await Promise.allSettled(
+      batch.map(async (p) => {
+        const prompt = buildPromptFromProspect(p)
+        const result = await handleGenerate({ prompt, slug: p.slug })
+        if (result.html && result.html.length > 500) {
+          const pixel = `<img src="https://webconceptor.fr/api/prospect/track-view" data-slug="${p.slug}" style="display:none" width="1" height="1">`
+          const finalHtml = result.html.includes('</body>') ? result.html.replace('</body>', `${pixel}\n</body>`) : result.html
+          await sbPatch(p.slug, { mockup_html: finalHtml, stitch_generated: true, updated_at: new Date().toISOString() })
+          return { ok: true, name: p.name, chars: finalHtml.length, source: result.source }
+        }
+        return { ok: false, name: p.name, error: 'HTML vide' }
+      })
+    )
+
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value.ok) {
         batchStatus.done++
-        console.log(`[batch] ✅ ${finalHtml.length} chars via ${result.source}`)
+        console.log(`[batch] ✅ ${r.value.name.slice(0,30)} — ${r.value.chars} chars via ${r.value.source}`)
       } else {
         batchStatus.errors++
-        console.log(`[batch] ❌ HTML vide ou trop court`)
+        const err = r.status === 'fulfilled' ? r.value.error : r.reason?.message
+        console.log(`[batch] ❌ ${err?.slice(0, 60)}`)
       }
-    } catch (e) {
-      batchStatus.errors++
-      console.log(`[batch] ❌ ${e.message?.slice(0, 80)}`)
     }
-    // Pause entre chaque (pas de rate limit)
+
     await new Promise(r => setTimeout(r, 3000))
   }
 
