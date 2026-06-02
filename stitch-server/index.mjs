@@ -232,9 +232,152 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
+  // Batch nocturne — POST /batch
+  if (req.url === '/batch' && req.method === 'POST') {
+    const authHeader = req.headers.authorization || ''
+    if (SERVER_SECRET && authHeader !== `Bearer ${SERVER_SECRET}`) {
+      res.writeHead(401, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Unauthorized' }))
+      return
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ started: true, message: 'Batch nocturne lancé en arrière-plan' }))
+    // Lance en background
+    runNightBatch().catch(e => console.error('[batch] crash:', e.message))
+    return
+  }
+
+  // Status batch
+  if (req.url === '/batch/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify(batchStatus))
+    return
+  }
+
   res.writeHead(404)
   res.end('Not Found')
 })
+
+// ── Batch nocturne automatique ───────────────────────────────────
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xmheiewlglvvneeuugvg.supabase.co'
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || ''
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
+const TELEGRAM_CHAT = process.env.TELEGRAM_CHAT_ID || ''
+
+let batchStatus = { running: false, done: 0, errors: 0, total: 0, lastRun: null }
+
+function buildPromptFromProspect(p) {
+  const bt = p.business_type || 'business'
+  const city = p.city || 'France'
+  const rating = p.google_rating ? `${p.google_rating}/5 (${p.google_reviews_count || 0} avis)` : ''
+  const about = p.about_scraped ? `Description: "${String(p.about_scraped).slice(0, 250)}"` : ''
+  const items = (p.menu_items || []).slice(0, 5).map(m => `• ${m.name}${m.price ? ` — ${m.price}` : ''}`).join('\n')
+  return [
+    `Design a beautiful professional website for "${p.name}", a ${bt} in ${city}, France.`,
+    rating, about,
+    '1. HERO — Large WHITE bold title on dark overlay background image. CTA.',
+    '2. ABOUT — Warm French local tone, 2-3 paragraphs.',
+    items ? `3. SERVICES:\n${items}` : '3. SERVICES — Key offerings as elegant cards.',
+    `4. CONTACT — ${p.phone || ''}, ${city}`,
+    'REQUIREMENTS: White hero text, sticky nav, all French, modern responsive design.'
+  ].filter(Boolean).join('\n')
+}
+
+async function sbGet(path) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  })
+  return r.json()
+}
+
+async function sbPatch(slug, body) {
+  await fetch(`${SUPABASE_URL}/rest/v1/prospects?slug=eq.${slug}`, {
+    method: 'PATCH',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(body)
+  })
+}
+
+async function telegramNotify(msg) {
+  if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT) return
+  fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: TELEGRAM_CHAT, text: msg, parse_mode: 'HTML' })
+  }).catch(() => {})
+}
+
+async function runNightBatch() {
+  if (batchStatus.running) { console.log('[batch] Déjà en cours'); return }
+  batchStatus = { running: true, done: 0, errors: 0, total: 0, lastRun: new Date().toISOString() }
+
+  // Reset les clés mortes au début de chaque batch
+  deadKeys.clear()
+
+  const fields = 'slug,name,city,business_type,google_rating,google_reviews_count,phone,email,about_scraped,menu_items,reviews'
+  // Priorité : found d'abord (pas encore contactés), puis opened (upgrade)
+  const [found, opened] = await Promise.all([
+    sbGet(`prospects?status=eq.found&stitch_generated=eq.false&email=not.is.null&select=${fields}&order=google_rating.desc&limit=100`),
+    sbGet(`prospects?status=eq.opened&stitch_generated=eq.false&select=${fields}&order=google_rating.desc&limit=100`),
+  ])
+  const prospects = [...(found || []), ...(opened || [])]
+  batchStatus.total = prospects.length
+  console.log(`[batch] 🌙 Batch nocturne — ${prospects.length} maquettes (${found?.length || 0} found + ${opened?.length || 0} opened)`)
+
+  await telegramNotify(`🌙 <b>Batch nocturne démarré</b>\n${prospects.length} maquettes à générer\n${found?.length || 0} nouveaux + ${opened?.length || 0} upgrades`)
+
+  for (const p of prospects) {
+    console.log(`[batch] ${batchStatus.done + batchStatus.errors + 1}/${prospects.length} ${p.name}`)
+    try {
+      const prompt = buildPromptFromProspect(p)
+      const result = await handleGenerate({ prompt, slug: p.slug })
+      if (result.html && result.html.length > 500) {
+        const pixel = `<img src="https://webconceptor.fr/api/prospect/track-view" data-slug="${p.slug}" style="display:none" width="1" height="1">`
+        const finalHtml = result.html.includes('</body>') ? result.html.replace('</body>', `${pixel}\n</body>`) : result.html
+        await sbPatch(p.slug, { mockup_html: finalHtml, stitch_generated: true, updated_at: new Date().toISOString() })
+        batchStatus.done++
+        console.log(`[batch] ✅ ${finalHtml.length} chars via ${result.source}`)
+      } else {
+        batchStatus.errors++
+        console.log(`[batch] ❌ HTML vide ou trop court`)
+      }
+    } catch (e) {
+      batchStatus.errors++
+      console.log(`[batch] ❌ ${e.message?.slice(0, 80)}`)
+    }
+    // Pause entre chaque (pas de rate limit)
+    await new Promise(r => setTimeout(r, 3000))
+  }
+
+  batchStatus.running = false
+  console.log(`[batch] ✅ Terminé — ${batchStatus.done} OK, ${batchStatus.errors} erreurs`)
+  await telegramNotify(`✅ <b>Batch nocturne terminé</b>\n\n🟢 ${batchStatus.done} maquettes générées\n🔴 ${batchStatus.errors} erreurs\n\nLes emails partiront automatiquement demain matin via N8N.`)
+}
+
+// ── Cron nocturne : lance le batch à 22h Paris ───────────────────
+function scheduleNightBatch() {
+  const now = new Date()
+  const paris = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+  const hour = paris.getHours()
+
+  // Si entre 22h et 5h et pas déjà en cours → lance
+  if (hour >= 22 || hour < 5) {
+    if (!batchStatus.running) {
+      // Vérifie qu'on n'a pas déjà lancé aujourd'hui
+      const lastRun = batchStatus.lastRun ? new Date(batchStatus.lastRun) : null
+      const sameDay = lastRun && lastRun.toDateString() === now.toDateString()
+      if (!sameDay) {
+        console.log('[cron] 🌙 22h Paris — lancement batch nocturne')
+        runNightBatch().catch(e => console.error('[cron] crash:', e.message))
+      }
+    }
+  }
+}
+
+// Vérifie toutes les 10 minutes si c'est l'heure du batch
+setInterval(scheduleNightBatch, 10 * 60 * 1000)
+// Check immédiat au démarrage
+setTimeout(scheduleNightBatch, 5000)
 
 server.listen(PORT, () => {
   console.log(`\n🚀 WebConceptor Stitch Server`)
