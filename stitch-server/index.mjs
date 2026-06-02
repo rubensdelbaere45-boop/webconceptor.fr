@@ -14,13 +14,12 @@
 import http from 'node:http'
 
 // ── Clés Stitch ──────────────────────────────────────────────────
+// Seules les clés 1, 2, 3 fonctionnent pour generate_screen_from_text
+// Les clés 4, 5, 6 ont des erreurs OAuth sur generate (marchent pour create_project seulement)
 const STITCH_KEYS = [
-  process.env.STITCH_API_KEY_4,
-  process.env.STITCH_API_KEY_5,
-  process.env.STITCH_API_KEY_6,
-  process.env.STITCH_API_KEY_3,
-  process.env.STITCH_API_KEY_2,
-  process.env.STITCH_API_KEY,
+  process.env.STITCH_API_KEY,    // clé 1 — confirmée ✅
+  process.env.STITCH_API_KEY_2,  // clé 2 — confirmée ✅
+  process.env.STITCH_API_KEY_3,  // clé 3 — confirmée ✅
 ].filter(Boolean)
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || ''
@@ -38,29 +37,61 @@ function getNextAliveKey() {
   return alive[keyIndex]
 }
 
-// ── Stitch via SDK ───────────────────────────────────────────────
+// ── Stitch via process enfant (contourne le cache connexion MCP du SDK) ──
+import { execFile } from 'node:child_process'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+
+// Crée le script worker au démarrage
+const WORKER_SCRIPT = `
+import { stitch } from '@google/stitch-sdk'
+let input = ''
+for await (const chunk of process.stdin) input += chunk
+const { prompt } = JSON.parse(input)
+try {
+  const project = await stitch.createProject('WC-' + Date.now())
+  const screen = await project.generate(prompt)
+  let htmlUrl = null
+  for (let i = 0; i < 5; i++) {
+    htmlUrl = await screen.getHtml()
+    if (htmlUrl) break
+    await new Promise(r => setTimeout(r, 4000))
+  }
+  if (!htmlUrl) { console.log(JSON.stringify({ok:false,error:'HTML_EMPTY'})); process.exit(0) }
+  const res = await fetch(htmlUrl)
+  const html = await res.text()
+  console.log(JSON.stringify({ok:true,html}))
+} catch(e) {
+  console.log(JSON.stringify({ok:false,error:e.message?.slice(0,150)}))
+}
+`
+try { mkdirSync('/tmp/stitch-worker', { recursive: true }) } catch {}
+writeFileSync('/tmp/stitch-worker/worker.mjs', WORKER_SCRIPT)
+
 async function generateViaStitch(prompt) {
   const key = getNextAliveKey()
   if (!key) throw new Error('ALL_KEYS_DEAD')
 
-  process.env.STITCH_API_KEY = key
-  // Force re-import pour utiliser la nouvelle clé
-  const { stitch } = await import('@google/stitch-sdk')
-
-  const project = await stitch.createProject(`WC-${Date.now()}`)
-  const screen = await project.generate(prompt)
-
-  // Retry getHtml
-  for (let i = 0; i < 6; i++) {
-    const url = await screen.getHtml()
-    if (url) {
-      const res = await fetch(url)
-      const html = await res.text()
-      if (html.length > 500) return { html, source: 'stitch', key: key.slice(-8) }
-    }
-    if (i < 5) await new Promise(r => setTimeout(r, 4000))
-  }
-  throw new Error('HTML_EMPTY')
+  return new Promise((resolve, reject) => {
+    const child = execFile('node', ['/tmp/stitch-worker/worker.mjs'], {
+      env: { ...process.env, STITCH_API_KEY: key, NODE_OPTIONS: '' },
+      timeout: 120000,
+    }, (err, stdout) => {
+      try {
+        const lines = stdout.trim().split('\n')
+        const result = JSON.parse(lines[lines.length - 1])
+        if (result.ok && result.html?.length > 500) {
+          resolve({ html: result.html, source: 'stitch', key: key.slice(-8) })
+        } else {
+          reject(new Error(result.error || 'HTML_EMPTY'))
+        }
+      } catch {
+        reject(new Error(err?.message || 'worker crash'))
+      }
+    })
+    child.stdin.write(JSON.stringify({ prompt }))
+    child.stdin.end()
+  })
 }
 
 // ── Fallback OpenRouter (Gemini Flash) ───────────────────────────
