@@ -416,12 +416,19 @@ body{padding-top:54px !important}
   function wcSxUpdatePriceSummary() {
     var el = document.getElementById('wcsx-price-summary');
     if (!el) return;
+    var promo = window.__WC_PROMO || null;
+    var basePrice = promo ? promo.price : 320;
     var html = '';
-    var total = 320;
-    html += '<div>Création du site : <strong>320,00 €</strong></div>';
+    if (promo) {
+      html += '<div style="color:#e53e3e;font-weight:700">🎁 Réduction -' + promo.percent + '% appliquée</div>';
+      html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong>' + basePrice.toFixed(2).replace('.',',') + ' €</strong></div>';
+    } else {
+      html += '<div>Création du site : <strong>320,00 €</strong></div>';
+    }
+    var total = basePrice;
     if (_domainVerified) {
       var domEuros = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
-      total = 320 + _domainVerified.priceCents / 100;
+      total = basePrice + _domainVerified.priceCents / 100;
       html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEuros + ' €</strong></div>';
     }
     html += '<div class="ps-total">Total : ' + total.toFixed(2).replace('.',',') + ' €</div>';
@@ -471,6 +478,7 @@ body{padding-top:54px !important}
     var payload = {
       prospect_slug: SLUG,
       plan: plan,
+      promo_code: (window.__WC_PROMO && window.__WC_PROMO.code) || undefined,
       buyer: { prenom: prenom, nom: nom, email: email, telephone: tel, adresse: adresse, cp: cp, ville: ville },
     };
     if (_domainVerified) {

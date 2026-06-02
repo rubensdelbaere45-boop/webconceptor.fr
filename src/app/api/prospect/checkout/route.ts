@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
   const plan = raw.plan === "serenite" ? "serenite" : "simple";
   const rawDomain = (raw.domain ?? null) as Record<string, unknown> | null;
   const rawBuyer = (raw.buyer ?? {}) as Record<string, unknown>;
+  const promoCode = typeof raw.promo_code === "string" ? raw.promo_code.slice(0, 30).toUpperCase() : null;
 
   if (!prospect_slug) {
     return NextResponse.json({ error: "Maquette non identifiée" }, { status: 400 });
@@ -211,13 +212,12 @@ export async function POST(req: NextRequest) {
 
       session = await stripe.checkout.sessions.create({
         mode: "payment",
-        payment_method_types: ["card"], // card uniquement — nécessaire pour la récurrence
+        payment_method_types: ["card"],
         line_items: sereniteLineItems,
         customer_email: buyer.email,
-        customer_creation: "always", // nécessaire pour retrouver le customer dans le webhook
-        payment_intent_data: {
-          setup_future_usage: "off_session", // sauvegarde la carte pour l'abonnement
-        },
+        customer_creation: "always",
+        payment_intent_data: { setup_future_usage: "off_session" },
+        ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
         success_url: successUrl,
         cancel_url:  cancelUrl,
         locale: "fr",
@@ -261,6 +261,7 @@ export async function POST(req: NextRequest) {
         line_items: simpleLineItems,
         customer_email: buyer.email,
         customer_creation: "always",
+        ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
         success_url: successUrl,
         cancel_url:  cancelUrl,
         locale: "fr",

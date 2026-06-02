@@ -107,7 +107,8 @@ export async function GET(
 ) {
   const { slug } = await params;
   const promoParam = new URL(req.url).searchParams.get("promo");
-  const promoDiscount = promoParam === "20" ? 20 : 0; // % de réduction
+  const promoDiscount = promoParam === "20" ? 20 : promoParam === "15" ? 15 : 0;
+  const promoCode = promoDiscount === 15 ? "AMELIE15" : promoDiscount === 20 ? "PROMO20" : null;
 
   if (!slug || slug.length > 100) {
     return new NextResponse("Not Found", { status: 404 });
@@ -346,26 +347,25 @@ export async function GET(
   // 320€ → 256€  |  3×106,67€ → 3×85,33€
   // Un bandeau rouge compte à rebours 24h est injecté en haut de page.
   // ═══════════════════════════════════════════════════════════════════
+  const promoPrice = promoDiscount > 0 ? Math.round(320 * (1 - promoDiscount / 100)) : 320;
   const promoHtml = promoDiscount > 0
     ? patchedHtml
-        .replace(/320\s*€\s*TTC/g, '<span style="text-decoration:line-through;opacity:.5;font-size:.85em">320&nbsp;€</span> <strong style="color:#e53e3e">256&nbsp;€ TTC</strong>')
-        .replace(/320\s*€(?!\s*TTC)(?!\s*<)/g, '256&nbsp;€')
-        .replace(/3\s*×\s*106[,.]67\s*€/g, "3 × 85,33 €")
-        .replace(/Obtenez-le pour 320/g, "Obtenez-le pour 256")
-        // Bandeau promo injecté juste après <body
+        .replace(/320\s*€\s*TTC/g, `<span style="text-decoration:line-through;opacity:.5;font-size:.85em">320&nbsp;€</span> <strong style="color:#e53e3e">${promoPrice}&nbsp;€ TTC</strong>`)
+        .replace(/320\s*€(?!\s*TTC)(?!\s*<)/g, `${promoPrice}&nbsp;€`)
+        .replace(/3\s*×\s*106[,.]67\s*€/g, `3 × ${(promoPrice / 3).toFixed(2).replace(".", ",")} €`)
+        .replace(/Obtenez-le pour 320/g, `Obtenez-le pour ${promoPrice}`)
         .replace(
           /(<body[^>]*>)/i,
-          `$1<div id="wc-promo-banner" style="background:#e53e3e;color:#fff;text-align:center;padding:12px 16px;font-family:sans-serif;font-size:14px;font-weight:600;position:sticky;top:0;z-index:9999">
-  🎁 Offre exclusive -20&nbsp;% · <strong>256&nbsp;€ au lieu de 320&nbsp;€</strong> · Expire dans <span id="wc-promo-timer">24:00:00</span>
-  <script>
-  (function(){var e=document.getElementById('wc-promo-timer');if(!e)return;
-  var k='wc_promo_exp_${slug}';var exp=localStorage.getItem(k);
-  if(!exp){exp=Date.now()+86400000;localStorage.setItem(k,exp);}
+          `$1<script>window.__WC_PROMO={percent:${promoDiscount},price:${promoPrice},code:"${promoCode}"}<\/script>
+<div id="wc-promo-banner" style="background:#e53e3e;color:#fff;text-align:center;padding:12px 16px;font-family:sans-serif;font-size:14px;font-weight:600;position:sticky;top:0;z-index:9999">
+  🎁 Offre exclusive -${promoDiscount}&nbsp;% · <strong>${promoPrice}&nbsp;€ au lieu de 320&nbsp;€</strong> · Expire dans <span id="wc-promo-timer">48:00:00</span>
+  <script>(function(){var e=document.getElementById('wc-promo-timer');if(!e)return;
+  var k='wc_promo_exp_${slug}';var exp=parseInt(localStorage.getItem(k)||'0');
+  if(!exp){exp=Date.now()+172800000;localStorage.setItem(k,exp);}
   function upd(){var s=Math.max(0,Math.floor((exp-Date.now())/1000));
   if(s===0){e.textContent='Expirée';return;}
   e.textContent=[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(function(n){return n<10?'0'+n:n;}).join(':');
-  setTimeout(upd,1000);}upd();})();
-  <\/script>
+  setTimeout(upd,1000);}upd();})();<\/script>
 </div>`
         )
     : patchedHtml;
