@@ -1086,7 +1086,7 @@ async function handleSend(req: NextRequest) {
       await supabase.from("prospects")
         .update({ is_luxury: true })
         .eq("id", p.id)
-        .is("is_luxury", null); // évite d'écraser une valeur existante
+        .neq("is_luxury", true); // met à jour si pas encore true (corrige false aussi)
     }
 
     // Note : on NE skip PAS les sites "good" — le tri par priorité gère l'ordre
