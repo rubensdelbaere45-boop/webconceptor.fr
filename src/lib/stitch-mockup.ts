@@ -301,36 +301,49 @@ async function getHtmlWithRetry(screen: { getHtml(): Promise<string> }, maxAttem
   return null;
 }
 
+/**
+ * Génère une maquette via le Stitch Generation Server (Railway).
+ * Le serveur gère : rotation 6 clés, détection clés mortes, fallback OpenRouter.
+ * Vercel n'a besoin que de l'URL du serveur — pas de clés Stitch en local.
+ */
 export async function generateStitchMockup(
   prospect: StitchProspect,
   isLuxury = false
 ): Promise<string | null> {
-  const apiKey = getStitchKey();
-  if (!apiKey) return null;
+  const serverUrl = process.env.STITCH_SERVER_URL;
+  if (!serverUrl) {
+    console.warn("[stitch] STITCH_SERVER_URL non configurée — génération impossible");
+    return null;
+  }
+
+  const prompt = isLuxury ? buildStitchPromptLuxury(prospect) : buildStitchPrompt(prospect);
 
   try {
-    process.env.STITCH_API_KEY = apiKey;
-    const { stitch } = await import("@google/stitch-sdk");
+    console.log(`[stitch] → ${serverUrl}/generate (${isLuxury ? "LUXURY" : "standard"})`);
+    const res = await fetch(`${serverUrl}/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STITCH_SERVER_SECRET || ""}`,
+      },
+      body: JSON.stringify({ prompt, slug: prospect.slug }),
+      signal: AbortSignal.timeout(120_000), // 2 min max
+    });
 
-    const prompt = isLuxury ? buildStitchPromptLuxury(prospect) : buildStitchPrompt(prospect);
-    const projectName = `${prospect.name} — WebConceptor${isLuxury ? " LUXURY" : ""} ${Date.now()}`;
+    if (!res.ok) {
+      const err = await res.text().catch(() => "");
+      console.warn(`[stitch] serveur erreur ${res.status}: ${err.slice(0, 100)}`);
+      return null;
+    }
 
-    console.log("[stitch] createProject:", projectName);
-    const project = await stitch.createProject(projectName);
-    console.log("[stitch] project id:", project.id);
+    const data = await res.json();
+    if (!data.html || data.html.length < 500) {
+      console.warn("[stitch] HTML trop court ou absent");
+      return null;
+    }
 
-    console.log("[stitch] generating screen...");
-    const screen = await project.generate(prompt);
-    console.log("[stitch] screen id:", screen.id);
-
-    console.log("[stitch] getHtml() avec retry...");
-    const htmlUrl = await getHtmlWithRetry(screen);
-    console.log("[stitch] htmlUrl:", htmlUrl ? "OK" : "NULL après retry");
-    if (!htmlUrl) return null;
-
-    const html = await downloadStitchHtml(htmlUrl);
-    console.log("[stitch] final html:", html ? html.length + " chars" : "NULL");
-    return html ? `<!-- STITCH_GENERATED -->\n${html}` : null;
+    console.log(`[stitch] ✅ ${data.html.length} chars via ${data.source} — ${prospect.name}`);
+    return `<!-- STITCH_GENERATED -->\n${data.html}`;
   } catch (err) {
     console.warn("[stitch-mockup] erreur:", err instanceof Error ? err.message : String(err));
     return null;
