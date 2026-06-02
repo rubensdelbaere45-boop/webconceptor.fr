@@ -268,11 +268,13 @@ async function downloadStitchHtml(url: string): Promise<string | null> {
  * - isLuxury=false → prompt standard beau pour 320€
  * Retourne null si STITCH_API_KEY absent, quota dépassé, ou toute erreur.
  */
-// Rotation des clés Stitch (jusqu'à 3 comptes = 1200 crédits/jour)
+// Rotation des clés Stitch (6 comptes = 2400 crédits/jour)
 let _stitchKeyIndex = 0;
 function getStitchKey(): string | null {
-  // Clé 3 en premier — clés 1+2 ont des erreurs OAuth sur generate()
   const keys = [
+    process.env.STITCH_API_KEY_4,  // nouvelles clés en priorité
+    process.env.STITCH_API_KEY_5,
+    process.env.STITCH_API_KEY_6,
     process.env.STITCH_API_KEY_3,
     process.env.STITCH_API_KEY_2,
     process.env.STITCH_API_KEY,
@@ -282,7 +284,8 @@ function getStitchKey(): string | null {
 }
 function rotateStitchKey() {
   _stitchKeyIndex++;
-  console.log("[stitch] 🔄 rotation clé →", (_stitchKeyIndex % 3) + 1);
+  const keys = [process.env.STITCH_API_KEY_4, process.env.STITCH_API_KEY_5, process.env.STITCH_API_KEY_6, process.env.STITCH_API_KEY_3, process.env.STITCH_API_KEY_2, process.env.STITCH_API_KEY].filter(Boolean);
+  console.log("[stitch] 🔄 rotation clé →", (_stitchKeyIndex % keys.length) + 1 + "/" + keys.length);
 }
 
 async function getHtmlWithRetry(screen: { getHtml(): Promise<string> }, maxAttempts = 6, delayMs = 4000): Promise<string | null> {
