@@ -268,19 +268,49 @@ async function downloadStitchHtml(url: string): Promise<string | null> {
  * - isLuxury=false → prompt standard beau pour 320€
  * Retourne null si STITCH_API_KEY absent, quota dépassé, ou toute erreur.
  */
+// Rotation des clés Stitch (jusqu'à 3 comptes = 1200 crédits/jour)
+let _stitchKeyIndex = 0;
+function getStitchKey(): string | null {
+  const keys = [
+    process.env.STITCH_API_KEY,
+    process.env.STITCH_API_KEY_2,
+    process.env.STITCH_API_KEY_3,
+  ].filter(Boolean) as string[];
+  if (!keys.length) return null;
+  return keys[_stitchKeyIndex % keys.length];
+}
+function rotateStitchKey() {
+  _stitchKeyIndex++;
+  console.log("[stitch] 🔄 rotation clé →", (_stitchKeyIndex % 3) + 1);
+}
+
+async function getHtmlWithRetry(screen: { getHtml(): Promise<string> }, maxAttempts = 6, delayMs = 4000): Promise<string | null> {
+  for (let i = 1; i <= maxAttempts; i++) {
+    const url = await screen.getHtml();
+    if (url) return url;
+    if (i === Math.floor(maxAttempts / 2)) rotateStitchKey();
+    if (i < maxAttempts) {
+      console.log(`[stitch] ⏳ htmlCode pas prêt, tentative ${i}/${maxAttempts}…`);
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return null;
+}
+
 export async function generateStitchMockup(
   prospect: StitchProspect,
   isLuxury = false
 ): Promise<string | null> {
-  if (!process.env.STITCH_API_KEY) return null;
+  const apiKey = getStitchKey();
+  if (!apiKey) return null;
 
   try {
+    process.env.STITCH_API_KEY = apiKey;
     const { stitch } = await import("@google/stitch-sdk");
 
     const prompt = isLuxury ? buildStitchPromptLuxury(prospect) : buildStitchPrompt(prospect);
-    const projectName = `${prospect.name} — WebConceptor${isLuxury ? " LUXURY" : ""}`;
+    const projectName = `${prospect.name} — WebConceptor${isLuxury ? " LUXURY" : ""} ${Date.now()}`;
 
-    // Crée le projet et génère l'écran
     console.log("[stitch] createProject:", projectName);
     const project = await stitch.createProject(projectName);
     console.log("[stitch] project id:", project.id);
@@ -289,16 +319,13 @@ export async function generateStitchMockup(
     const screen = await project.generate(prompt);
     console.log("[stitch] screen id:", screen.id);
 
-    // Récupère l'URL de téléchargement du HTML
-    console.log("[stitch] getHtml()...");
-    const htmlUrl = await screen.getHtml();
-    console.log("[stitch] htmlUrl:", htmlUrl ? htmlUrl.slice(0, 100) : "NULL");
+    console.log("[stitch] getHtml() avec retry...");
+    const htmlUrl = await getHtmlWithRetry(screen);
+    console.log("[stitch] htmlUrl:", htmlUrl ? "OK" : "NULL après retry");
     if (!htmlUrl) return null;
 
-    // Télécharge le contenu HTML réel
     const html = await downloadStitchHtml(htmlUrl);
     console.log("[stitch] final html:", html ? html.length + " chars" : "NULL");
-    // Marque le HTML pour éviter l'écrasement par les crons
     return html ? `<!-- STITCH_GENERATED -->\n${html}` : null;
   } catch (err) {
     console.warn("[stitch-mockup] erreur:", err instanceof Error ? err.message : String(err));
