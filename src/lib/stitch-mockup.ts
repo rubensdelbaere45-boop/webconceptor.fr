@@ -271,10 +271,11 @@ async function downloadStitchHtml(url: string): Promise<string | null> {
 // Rotation des clés Stitch (jusqu'à 3 comptes = 1200 crédits/jour)
 let _stitchKeyIndex = 0;
 function getStitchKey(): string | null {
+  // Clé 3 en premier — clés 1+2 ont des erreurs OAuth sur generate()
   const keys = [
-    process.env.STITCH_API_KEY,
-    process.env.STITCH_API_KEY_2,
     process.env.STITCH_API_KEY_3,
+    process.env.STITCH_API_KEY_2,
+    process.env.STITCH_API_KEY,
   ].filter(Boolean) as string[];
   if (!keys.length) return null;
   return keys[_stitchKeyIndex % keys.length];
