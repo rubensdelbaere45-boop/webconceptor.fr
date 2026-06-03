@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isPrivateOrUnsafeUrl, safeCompare, safeFetch } from "@/lib/security";
+import { isPrivateOrUnsafeUrl, safeCompare, safeFetch, isBusinessTypeCoherent } from "@/lib/security";
 import { searchPagesJaunes } from "@/lib/sources/pages-jaunes";
 import { searchOverpass } from "@/lib/sources/overpass";
 import { checkEmailMx } from "@/lib/email-mx-check";
@@ -925,15 +925,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Cohérence nom ↔ business_type : évite d'envoyer un email de plombier à un menuisier
-      const nameLower = place.displayName.text.toLowerCase();
-      const WRONG_TYPE_KEYWORDS: Record<string, string[]> = {
-        plombier: ["menuiser", "menuisier", "ébénist", "charpent", "serrurier", "vitrier", "peintre", "maçon", "carreleur"],
-        electricien: ["menuiser", "menuisier", "plombier", "chauffag", "peintre", "maçon"],
-        restaurant: ["menuiser", "garage", "plombier", "electrici", "avocat", "notaire"],
-      };
-      const wrongKeywords = WRONG_TYPE_KEYWORDS[businessType] || [];
-      if (wrongKeywords.some(kw => nameLower.includes(kw))) {
-        continue; // skip — le nom ne correspond pas au type cherché
+      if (!isBusinessTypeCoherent(place.displayName.text, businessType)) {
+        continue;
       }
 
       // Distance filter (only for Proxi / épicerie prospects)

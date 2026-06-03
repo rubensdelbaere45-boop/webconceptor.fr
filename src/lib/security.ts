@@ -228,6 +228,28 @@ export function getClientIp(headers: Headers): string {
    Cleanup old rate-limit buckets (prevents memory leak)
    ══════════════════════════════════════════ */
 
+/**
+ * Sécurité métier : vérifie que le nom du prospect correspond à son business_type.
+ * Retourne true si le prospect est valide (nom cohérent avec le type).
+ * Retourne false si incohérent (ex: "Menuiserie X" classé "plombier").
+ */
+export function isBusinessTypeCoherent(name: string, businessType: string): boolean {
+  const n = (name || "").toLowerCase();
+  const MISMATCH: Record<string, string[]> = {
+    plombier: ["menuiser", "ébénist", "charpent", "serrurier", "vitrier", "peintre", "maçon", "carreleur", "couvreur"],
+    electricien: ["menuiser", "plombier", "chauffag", "peintre", "maçon", "couvreur"],
+    restaurant: ["menuiser", "garage", "plombier", "electrici", "avocat", "notaire", "assurance"],
+    garage: ["menuiser", "plombier", "restaurant", "boulanger"],
+    coiffeur: ["menuiser", "plombier", "electrici", "garage"],
+    institut: ["menuiser", "plombier", "electrici", "garage", "avocat"],
+    osteo: ["menuiser", "plombier", "electrici", "garage", "restaurant"],
+    boulangerie: ["menuiser", "plombier", "electrici", "garage", "avocat"],
+    dentiste: ["menuiser", "plombier", "electrici", "garage", "restaurant"],
+  };
+  const badWords = MISMATCH[businessType] || [];
+  return !badWords.some(w => n.includes(w));
+}
+
 if (typeof globalThis.setInterval === "function") {
   setInterval(() => {
     const now = Date.now();

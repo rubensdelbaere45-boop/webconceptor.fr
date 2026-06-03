@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { escapeTelegram, safeCompare, isWithinSendingHours } from "@/lib/security";
+import { escapeTelegram, safeCompare, isWithinSendingHours, isBusinessTypeCoherent } from "@/lib/security";
 import { scoreProspect, type ProspectTier } from "@/lib/prospect-scoring";
 import {
   generateRestaurantMockupHtml,
@@ -1065,6 +1065,12 @@ async function handleSend(req: NextRequest) {
     // Skip grandes franchises nationales — décision digitale = centrale, pas locale.
     if (isBigFranchise(p.name)) {
       results.push({ id: p.id, name: p.name, status: "skipped_franchise" });
+      continue;
+    }
+
+    // Sécurité métier : vérifie que le nom correspond au business_type
+    if (!isBusinessTypeCoherent(p.name, p.business_type || "")) {
+      results.push({ id: p.id, name: p.name, status: "skipped_type_mismatch" });
       continue;
     }
 
