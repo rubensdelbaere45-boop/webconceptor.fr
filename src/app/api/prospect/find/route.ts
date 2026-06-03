@@ -924,6 +924,18 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      // Cohérence nom ↔ business_type : évite d'envoyer un email de plombier à un menuisier
+      const nameLower = place.displayName.text.toLowerCase();
+      const WRONG_TYPE_KEYWORDS: Record<string, string[]> = {
+        plombier: ["menuiser", "menuisier", "ébénist", "charpent", "serrurier", "vitrier", "peintre", "maçon", "carreleur"],
+        electricien: ["menuiser", "menuisier", "plombier", "chauffag", "peintre", "maçon"],
+        restaurant: ["menuiser", "garage", "plombier", "electrici", "avocat", "notaire"],
+      };
+      const wrongKeywords = WRONG_TYPE_KEYWORDS[businessType] || [];
+      if (wrongKeywords.some(kw => nameLower.includes(kw))) {
+        continue; // skip — le nom ne correspond pas au type cherché
+      }
+
       // Distance filter (only for Proxi / épicerie prospects)
       const dKm = distanceKm(AUBENTON_LAT, AUBENTON_LNG, place.location.latitude, place.location.longitude);
       if (applyDistanceFilter && dKm < EXCLUSION_RADIUS_KM) {
