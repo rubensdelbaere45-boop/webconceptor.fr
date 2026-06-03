@@ -411,7 +411,19 @@ async function personalizeRestaurantWithClaude(prospect: Prospect): Promise<Rest
   /* ── Contexte minimal pour Claude ───────────────────────────────────────
      On ne donne que ce dont il a besoin pour personnaliser le TEXTE.
      Le design (vibe, talkingPoints, cuisineType, auditTeaser) est déjà fait. */
-  const aboutExcerpt = (prospect.about_scraped || "").slice(0, 600);
+  // Nettoie le about scrappé : retire HTML, menus de nav, entités, et garde le texte utile
+  const rawAbout = (prospect.about_scraped || "");
+  const cleanAbout = rawAbout
+    .replace(/&[a-z]+;/gi, " ")                    // entités HTML (&eacute; etc.)
+    .replace(/&#x?[0-9a-f]+;/gi, " ")             // entités numériques
+    .replace(/<[^>]+>/g, " ")                       // tags HTML résiduels
+    .replace(/(Fermer|Recherche|Passer au contenu|Menu|Accueil|Contact|À propos|CGV|Mentions légales|Newsletter|Se connecter|Connexion|Panier|Mon compte)[^\n.]*/gi, "") // menus de nav
+    .replace(/\s{2,}/g, " ")                        // espaces multiples
+    .trim()
+    .slice(0, 400);
+  // Prend la première phrase cohérente (au moins 30 chars)
+  const sentences = cleanAbout.split(/(?<=[.!?])\s+/).filter(s => s.length > 30);
+  const aboutExcerpt = sentences.slice(0, 3).join(" ") || cleanAbout.slice(0, 200);
   const reviewsSample = (prospect.reviews || [])
     .slice(0, 2)
     .map((r) => `${r.rating}★ "${r.text.slice(0, 150)}"`)

@@ -553,35 +553,42 @@ export function generateRestaurantMockupHtml(
     ? FALLBACK_PHOTOS_BY_TYPE[prospect.business_type]
     : FALLBACK_PHOTOS_DEFAULT;
 
-  // Stratégie photos (priorité) :
-  // 1. Photos scrapées du SITE du prospect (URLs directes, toujours valides) ← PRIO 1
-  // 2. Photos Google Places via proxy (peuvent expirer/retourner 400)          ← PRIO 2
-  // 3. Fallback Unsplash thématique                                            ← PRIO 3
+  // Stratégie photos (priorité inversée — qualité d'abord) :
+  // 1. Unsplash thématiques de haute qualité (toujours beau)        ← PRIO 1
+  // 2. Photos Google Places via proxy (qualité variable)             ← PRIO 2
+  // 3. Photos scrapées du site UNIQUEMENT si haute qualité           ← PRIO 3
+  // Résultat : les maquettes sont toujours belles, pas de banners moches.
   const photoUrls: string[] = [];
   const websitePhotosArr = Array.isArray(prospect.website_photos) ? prospect.website_photos : [];
   const googlePhotosArr = Array.isArray(prospect.photos) ? prospect.photos : [];
 
-  // Filtre anti-logos sociaux à la volée
-  const isSocialLogo = (u: string): boolean =>
-    /(tripadvisor|instagram|fbcdn|facebook|twimg|twitter|youtube|ytimg|pinterest|linkedin|yelp|trustpilot|gstatic|doubleclick|adservice|widgets\.|logo|icon|favicon|sprite|avatar|button|\/btn|social)/i.test(u);
+  // Filtre anti-junk : exclut logos, banners pub, widgets, petites images
+  const isJunkPhoto = (u: string): boolean =>
+    /(tripadvisor|instagram|fbcdn|facebook|twimg|twitter|youtube|ytimg|pinterest|linkedin|yelp|trustpilot|gstatic|doubleclick|adservice|widgets\.|logo|icon|favicon|sprite|avatar|button|\/btn|social|banner|240_240|160x|120x|static\.pro\.|badge|flag|star)/i.test(u);
 
-  const allSources: string[] = [];
+  // PRIORITÉ 1 : Unsplash thématiques (toujours beau)
+  const thematic = FALLBACK_PHOTOS.slice(0, 5);
 
-  // PRIORITÉ 1 : photos scrapées du site (URLs directes = toujours accessibles)
-  for (const wp of websitePhotosArr) {
-    if (typeof wp === "string" && /^https?:\/\//.test(wp) && !isSocialLogo(wp)) {
-      allSources.push(wp);
-    }
-  }
-  // PRIORITÉ 2 : Google Places proxy (en fallback — référence peut expirer)
+  // PRIORITÉ 2 : Google Places (qualité décente en général)
+  const googleSources: string[] = [];
   for (const ref of googlePhotosArr) {
     if (typeof ref === "string" && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(ref)) {
-      allSources.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
+      googleSources.push(`${origin}/api/prospect/photo?ref=${encodeURIComponent(ref)}`);
     }
   }
 
+  // PRIORITÉ 3 : photos scrappées du site (filtrées strictement)
+  const siteSources: string[] = [];
+  for (const wp of websitePhotosArr) {
+    if (typeof wp === "string" && /^https?:\/\//.test(wp) && !isJunkPhoto(wp)) {
+      siteSources.push(wp);
+    }
+  }
+
+  // Compose : Google d'abord si dispo (photos réelles du commerce), sinon Unsplash
+  const allSources = [...googleSources.slice(0, 2), ...siteSources.slice(0, 1), ...thematic];
   for (let i = 0; i < 5; i++) {
-    photoUrls.push(allSources[i] || FALLBACK_PHOTOS[i % FALLBACK_PHOTOS.length]);
+    photoUrls.push(allSources[i] || thematic[i % thematic.length]);
   }
 
   // 3-step onerror chain :
