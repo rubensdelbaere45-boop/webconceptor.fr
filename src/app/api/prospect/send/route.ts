@@ -1149,6 +1149,19 @@ async function handleSend(req: NextRequest) {
         html = generateRestaurantMockupHtml(restoProspect, contentWithReviews, origin);
       }
 
+      // ── QA Agent : vérifie et corrige la maquette avant envoi ─────────
+      const qa = qualityCheck(html, {
+        name: p.name,
+        city: p.city,
+        business_type: p.business_type,
+        phone: p.phone,
+        google_rating: p.google_rating,
+      });
+      html = qa.html;
+      if (qa.fixes.length > 0) {
+        console.log(`[QA] ${p.name}: score ${qa.score}/100 — ${qa.fixes.join(", ")}`);
+      }
+
       const emailBody = buildShortEmail(p, restoContent, mockupUrl, prospectScore.tier);
 
       // Sujet luxury — plus exclusif, pas de "maquette"
