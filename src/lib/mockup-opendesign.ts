@@ -229,12 +229,44 @@ function esc(s: string): string {
  * Génère une maquette HTML complète avec un design system Open Design.
  * Indépendant de Stitch — gratuit, instantané, illimité.
  */
+// Re-détection du métier à partir du nom (fail-safe).
+// Si le nom contient "menuiserie" mais business_type = plombier, on refuse de générer
+// une maquette plombier — on tombe sur "default" (warm-editorial neutre).
+function detectMetierFromName(name: string): string | null {
+  const n = (name || "").toLowerCase();
+  if (/menuiser|menuiserie|ébénist|charpent/.test(n)) return "menuisier";
+  if (/plomb|chauffag|sanitair/.test(n)) return "plombier";
+  if (/electrici|électrici|électrique|elec\b/.test(n)) return "electricien";
+  if (/garage|carrosseri|mécanic|auto\b/.test(n)) return "garage";
+  if (/serruri/.test(n)) return "serrurier";
+  if (/carrele/.test(n)) return "carreleur";
+  if (/peintr/.test(n)) return "peintre";
+  if (/couvreur|toiture/.test(n)) return "couvreur";
+  if (/maçon|macon/.test(n)) return "macon";
+  if (/restaur|bistr|brasser|pizz/.test(n)) return "restaurant";
+  if (/boulang/.test(n)) return "boulangerie";
+  if (/pâtisser|patisser/.test(n)) return "patisserie";
+  if (/coiffeur|coiffure|barber|salon de coiffure/.test(n)) return "coiffeur";
+  if (/institut|spa\b|beauté|esthétique/.test(n)) return "institut";
+  if (/glacier|gelat/.test(n)) return "glacier";
+  if (/fleurist/.test(n)) return "fleuriste";
+  if (/dentiste|dentaire/.test(n)) return "dentiste";
+  if (/ostéo|osteo|kiné|kine\b/.test(n)) return "osteo";
+  if (/auto.école|auto-école|moniteur/.test(n)) return "auto_ecole";
+  return null;
+}
+
 export function generateOpenDesignMockup(
   prospect: OpenDesignProspect,
   content: MockupContent,
   origin: string = "https://webconceptor.fr"
 ): string {
-  const bt = prospect.business_type || "default";
+  // ── Fail-safe métier : si nom dit "menuiserie" mais type = plombier,
+  //    on utilise le type détecté du nom (la donnée la plus fiable)
+  const declaredType = prospect.business_type || "default";
+  const detectedType = detectMetierFromName(prospect.name);
+  const bt = (detectedType && detectedType !== declaredType) ? detectedType : declaredType;
+
   const designKey = BUSINESS_TO_DESIGN[bt]?.name || "warm-editorial";
   const tokens = DESIGN_TOKENS[designKey] || DESIGN_TOKENS["warm-editorial"];
 
