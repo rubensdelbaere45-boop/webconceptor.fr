@@ -12,23 +12,38 @@
  */
 
 // Mapping métier → design system Open Design
+// Artisans (plombier, electricien, garage) = budget élevé → design "artisan-premium" sur-mesure.
 const BUSINESS_TO_DESIGN: Record<string, { name: string; emoji: string }> = {
-  restaurant:   { name: "warm-editorial", emoji: "🍽️" },
-  boulangerie:  { name: "cafe",          emoji: "🥖" },
-  patisserie:   { name: "elegant",       emoji: "🍰" },
-  cafe:         { name: "cafe",          emoji: "☕" },
-  glacier:      { name: "warm-editorial",emoji: "🍦" },
-  coiffeur:     { name: "premium",       emoji: "💇" },
-  institut:     { name: "elegant",       emoji: "💆" },
-  plombier:     { name: "clean",         emoji: "🔧" },
-  electricien:  { name: "clean",         emoji: "⚡" },
-  garage:       { name: "bold",          emoji: "🔧" },
-  osteo:        { name: "minimal",       emoji: "🦴" },
-  dentiste:     { name: "minimal",       emoji: "🦷" },
-  fleuriste:    { name: "warm-editorial",emoji: "💐" },
-  salle_sport:  { name: "energetic",     emoji: "💪" },
-  auto_ecole:   { name: "professional",  emoji: "🚗" },
-  epicerie:     { name: "warm-editorial",emoji: "🛒" },
+  // ── HORECA ────────────────────────────────────────────
+  restaurant:   { name: "warm-editorial",   emoji: "🍽️" },
+  boulangerie:  { name: "cafe",             emoji: "🥖" },
+  patisserie:   { name: "elegant",          emoji: "🍰" },
+  cafe:         { name: "cafe",             emoji: "☕" },
+  glacier:      { name: "warm-editorial",   emoji: "🍦" },
+  // ── BEAUTÉ / BIEN-ÊTRE ───────────────────────────────
+  coiffeur:     { name: "premium",          emoji: "💇" },
+  institut:     { name: "elegant",          emoji: "💆" },
+  // ── ARTISANS — design premium métier ─────────────────
+  // Style "artisan-premium" : sombre, doré, robuste, confiance
+  // → ces métiers paient plus, méritent du sur-mesure
+  plombier:     { name: "artisan-premium",  emoji: "🔧" },
+  electricien:  { name: "artisan-premium",  emoji: "⚡" },
+  garage:       { name: "artisan-premium",  emoji: "🚙" },
+  menuisier:    { name: "artisan-premium",  emoji: "🪚" },
+  serrurier:    { name: "artisan-premium",  emoji: "🔐" },
+  carreleur:    { name: "artisan-premium",  emoji: "🧱" },
+  peintre:      { name: "artisan-premium",  emoji: "🎨" },
+  couvreur:     { name: "artisan-premium",  emoji: "🏠" },
+  macon:        { name: "artisan-premium",  emoji: "🧱" },
+  charpentier:  { name: "artisan-premium",  emoji: "🪵" },
+  // ── SANTÉ ─────────────────────────────────────────────
+  osteo:        { name: "minimal",          emoji: "🦴" },
+  dentiste:     { name: "minimal",          emoji: "🦷" },
+  // ── AUTRES ───────────────────────────────────────────
+  fleuriste:    { name: "warm-editorial",   emoji: "💐" },
+  salle_sport:  { name: "energetic",        emoji: "💪" },
+  auto_ecole:   { name: "professional",     emoji: "🚗" },
+  epicerie:     { name: "warm-editorial",   emoji: "🛒" },
 };
 
 // Tokens CSS embarqués (extraits d'Open Design)
@@ -96,6 +111,16 @@ const DESIGN_TOKENS: Record<string, string> = {
     --text-base:16px;--text-2xl:38px;--text-3xl:56px;--text-4xl:80px;--leading-body:1.55;
     --radius:6px;
   `,
+  // Design sur-mesure pour les artisans (plombier, électricien, garage, menuisier...)
+  // Style : sombre/anthracite, accent doré chaleureux, robuste, confiance
+  // Cible un budget premium et un univers métier (chantier, savoir-faire)
+  "artisan-premium": `
+    --bg:#0f1419;--surface:#1a1f26;--surface-warm:#252b33;--fg:#f5f1e8;--fg-2:#c9c2b3;--muted:#8a8275;
+    --accent:#d4a557;--accent-hover:#b8893c;--border:#2d343d;--success:#5fa066;
+    --font-display:"Bebas Neue","Inter Tight",Inter,sans-serif;--font-body:Inter,system-ui,sans-serif;
+    --text-base:16px;--text-2xl:44px;--text-3xl:68px;--text-4xl:96px;--leading-body:1.6;
+    --radius:4px;
+  `,
 };
 
 // Photos Unsplash de haute qualité par métier
@@ -107,9 +132,16 @@ const HERO_PHOTOS: Record<string, string> = {
   glacier: "https://images.unsplash.com/photo-1567206563114-c179900d7065?w=2000&q=90&auto=format&fit=crop",
   coiffeur: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=2000&q=90&auto=format&fit=crop",
   institut: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=2000&q=90&auto=format&fit=crop",
-  plombier: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=2000&q=90&auto=format&fit=crop",
-  electricien: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=2000&q=90&auto=format&fit=crop",
-  garage: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=2000&q=90&auto=format&fit=crop",
+  plombier: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=2000&q=90&auto=format&fit=crop",
+  electricien: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=2000&q=90&auto=format&fit=crop",
+  garage: "https://images.unsplash.com/photo-1632823471565-1ecdf5664c1e?w=2000&q=90&auto=format&fit=crop",
+  menuisier: "https://images.unsplash.com/photo-1601058268499-e52658b8bb88?w=2000&q=90&auto=format&fit=crop",
+  serrurier: "https://images.unsplash.com/photo-1582138825658-c5dc3b3a1ec1?w=2000&q=90&auto=format&fit=crop",
+  carreleur: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=2000&q=90&auto=format&fit=crop",
+  peintre: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=2000&q=90&auto=format&fit=crop",
+  couvreur: "https://images.unsplash.com/photo-1599692392708-09c0a59d6c7c?w=2000&q=90&auto=format&fit=crop",
+  macon: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=2000&q=90&auto=format&fit=crop",
+  charpentier: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=2000&q=90&auto=format&fit=crop",
   osteo: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=2000&q=90&auto=format&fit=crop",
   dentiste: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=2000&q=90&auto=format&fit=crop",
   fleuriste: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=2000&q=90&auto=format&fit=crop",
@@ -139,6 +171,26 @@ const SECONDARY_PHOTOS: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=1200&q=80",
     "https://images.unsplash.com/photo-1576506542790-51244b486a6b?w=1200&q=80",
     "https://images.unsplash.com/photo-1488900128323-21503983a07e?w=1200&q=80",
+  ],
+  plombier: [
+    "https://images.unsplash.com/photo-1521207418485-99c705420785?w=1200&q=80",  // robinet pro
+    "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=1200&q=80",  // intervention
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80",     // chaudière
+  ],
+  electricien: [
+    "https://images.unsplash.com/photo-1565608438257-fac3c27beb36?w=1200&q=80",  // tableau électrique
+    "https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=1200&q=80",  // installation
+    "https://images.unsplash.com/photo-1573164574572-cb89e39749b4?w=1200&q=80",  // câblage
+  ],
+  garage: [
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&q=80",  // garage moderne
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80",  // voiture luxe
+    "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=1200&q=80",  // moteur
+  ],
+  menuisier: [
+    "https://images.unsplash.com/photo-1565195456-ab0a8b25b85b?w=1200&q=80",     // atelier bois
+    "https://images.unsplash.com/photo-1572297972019-2d61e7a5fa5b?w=1200&q=80",  // travail bois
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80",     // meuble pro
   ],
   default: [
     "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&q=80",
@@ -207,7 +259,7 @@ export function generateOpenDesignMockup(
 <title>${esc(prospect.name)} ${city ? `— ${esc(city)}` : ""}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {${tokens}}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
