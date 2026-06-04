@@ -11,6 +11,7 @@ import {
 // generateAdaptiveMockupHtml supprimé — tous les métiers passent par generateRestaurantMockupHtml
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
 import { generateStitchMockup, isStitchEnabled, type StitchProspect } from "@/lib/stitch-mockup";
+import { qualityCheck } from "@/lib/mockup-qa";
 import type { DeepAudit } from "@/lib/deep-audit";
 
 function getSupabaseAdmin() {
