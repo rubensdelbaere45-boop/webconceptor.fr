@@ -362,6 +362,17 @@ ${rating > 0 ? `.hero-rating{margin-top:36px;display:inline-flex;align-items:cen
 .gallery-item{aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius);position:relative}
 .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
 .gallery-item:hover img{transform:scale(1.08)}
+
+/* ── Photo placeholder (s'affiche si img casse) ───────── */
+.wc-photo-wrap{position:relative;width:100%;height:100%;overflow:hidden}
+.wc-photo-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.wc-photo-wrap.broken img{display:none}
+.wc-photo-ph{position:absolute;inset:0;background:linear-gradient(135deg,var(--surface-warm),var(--border));display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;transition:background .2s;border:2px dashed rgba(0,0,0,0.12);padding:24px;text-align:center}
+.wc-photo-wrap.broken .wc-photo-ph{display:flex}
+.wc-photo-ph:hover{background:linear-gradient(135deg,var(--border),var(--surface-warm))}
+.wc-photo-ph-icon{width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:300;line-height:1;box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.wc-photo-ph-text{font-size:14px;font-weight:600;color:var(--fg-2);letter-spacing:0.02em}
+.wc-photo-ph-sub{font-size:12px;color:var(--muted);font-weight:400}
 @media(max-width:768px){.gallery{padding:80px 20px}}
 
 ${reviews.length ? `/* ── Reviews ─────────────────────────────────────────── */
@@ -422,7 +433,16 @@ ${reviews.length ? `/* ── Reviews ──────────────
 
 <section id="about" class="about">
   <div class="about-inner">
-    <div class="about-img"><img src="${photos[0] || heroPhoto}" alt="${esc(prospect.name)}" loading="lazy"></div>
+    <div class="about-img">
+      <div class="wc-photo-wrap" data-photo-id="about-1" onclick="wcPickPhoto(this)">
+        <img src="${photos[0] || heroPhoto}" alt="${esc(prospect.name)}" loading="lazy" onerror="this.parentElement.classList.add('broken')">
+        <div class="wc-photo-ph">
+          <div class="wc-photo-ph-icon">+</div>
+          <div class="wc-photo-ph-text">Ajouter votre photo</div>
+          <div class="wc-photo-ph-sub">Cliquez pour importer</div>
+        </div>
+      </div>
+    </div>
     <div class="about-text">
       <div class="about-kicker">Notre histoire</div>
       <h2>${esc(content.aboutTitle || `Un ${bt} qui prend soin de vous`)}</h2>
@@ -457,7 +477,16 @@ ${reviews.length ? `/* ── Reviews ──────────────
       <p class="gallery-sub">Plongez dans l'ambiance de ${esc(prospect.name)}</p>
     </div>
     <div class="gallery-grid">
-      ${photos.slice(0, 3).map((p, i) => `<div class="gallery-item"><img src="${p}" alt="Photo ${i + 1}" loading="lazy"></div>`).join("")}
+      ${photos.slice(0, 3).map((p, i) => `<div class="gallery-item">
+        <div class="wc-photo-wrap" data-photo-id="gallery-${i}" onclick="wcPickPhoto(this)">
+          <img src="${p}" alt="Photo ${i + 1}" loading="lazy" onerror="this.parentElement.classList.add('broken')">
+          <div class="wc-photo-ph">
+            <div class="wc-photo-ph-icon">+</div>
+            <div class="wc-photo-ph-text">Ajouter votre photo</div>
+            <div class="wc-photo-ph-sub">Cliquez pour importer</div>
+          </div>
+        </div>
+      </div>`).join("")}
     </div>
   </div>
 </section>
@@ -499,6 +528,49 @@ ${reviews.length ? `<section class="reviews">
   © ${new Date().getFullYear()} ${esc(prospect.name)}${city ? ` — ${esc(city)}` : ""}
 </footer>
 
+<input type="file" id="wc-photo-input" accept="image/*" style="display:none">
+<script>
+// Photo picker — clic sur placeholder → ouvre sélecteur → remplace l'image
+(function(){
+  var currentTarget = null;
+  var input = document.getElementById('wc-photo-input');
+  window.wcPickPhoto = function(wrap) {
+    if (!wrap.classList.contains('broken')) return; // image OK → ne rien faire
+    currentTarget = wrap;
+    input.click();
+  };
+  input.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file || !currentTarget) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = currentTarget.querySelector('img');
+      img.src = ev.target.result;
+      img.onerror = null;
+      currentTarget.classList.remove('broken');
+      // Sauvegarde en localStorage pour persister la photo
+      try {
+        var id = currentTarget.dataset.photoId;
+        localStorage.setItem('wc-photo-' + id, ev.target.result);
+      } catch(e) {}
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+    currentTarget = null;
+  });
+  // Restaure les photos importées au chargement
+  document.querySelectorAll('.wc-photo-wrap').forEach(function(wrap) {
+    try {
+      var saved = localStorage.getItem('wc-photo-' + wrap.dataset.photoId);
+      if (saved) {
+        var img = wrap.querySelector('img');
+        img.src = saved;
+        wrap.classList.remove('broken');
+      }
+    } catch(e) {}
+  });
+})();
+</script>
 <img src="${origin}/api/prospect/track-view" data-slug="${esc(prospect.name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}" style="display:none" width="1" height="1" aria-hidden="true">
 </body>
 </html>`;
