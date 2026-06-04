@@ -52,14 +52,26 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Headers globaux (sauf CSP qui casse les maquettes prospect)
+    const globalSecHeaders = securityHeaders.filter(h => h.key !== "Content-Security-Policy");
     return [
       {
-        // Applique les headers à toutes les routes Caissio
+        // Tous les routes — headers de sécurité de base
+        source: "/:path*",
+        headers: globalSecHeaders,
+      },
+      {
+        // Caissio = CSP stricte en plus
         source: "/caissio/:path*",
         headers: securityHeaders,
       },
       {
-        // Headers spécifiques pour le service worker (cache control)
+        // Admin = CSP stricte (protection XSS sur la dashboard)
+        source: "/admin/:path*",
+        headers: securityHeaders,
+      },
+      {
+        // Service worker
         source: "/caissio-sw.js",
         headers: [
           { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
