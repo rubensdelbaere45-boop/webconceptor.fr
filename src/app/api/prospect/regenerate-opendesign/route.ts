@@ -125,7 +125,6 @@ export async function POST(req: NextRequest) {
           .from("prospects")
           .update({
             mockup_html: html,
-            mockup_type: "opendesign",  // marqueur pour ne pas le retoucher
             updated_at: new Date().toISOString(),
           })
           .eq("id", p.id);
