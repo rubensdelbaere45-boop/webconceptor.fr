@@ -304,10 +304,11 @@ async function runCron(req: NextRequest) {
 
   const query = req.nextUrl.searchParams.get("query")?.trim().slice(0, 200) || "";
   const batchParam = Number(req.nextUrl.searchParams.get("batch"));
-  // 80 emails par run × 12 runs/jour = 960 emails/jour → ~20k en 21 jours ✅
+  // BURN MODE 5-17 juin : 130 emails × 12 runs/jour = 1560/jour → 18 720 en 12 jours ✅
+  // Après le 17 juin → revenir à 80 (Listmonk/Resend gratuit, pas besoin de tout cramer)
   const batch_size = Number.isFinite(batchParam) && batchParam > 0
-    ? Math.min(80, Math.max(1, Math.floor(batchParam)))
-    : 80;
+    ? Math.min(150, Math.max(1, Math.floor(batchParam)))
+    : 130;
 
   // Rotation par fenêtre de 1h (crons horaires) pour varier les requêtes à chaque run
   const queries: string[] = query ? [query] : (() => {
