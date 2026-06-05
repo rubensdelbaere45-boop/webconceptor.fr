@@ -259,11 +259,42 @@ const DEFAULT_QUERIES = [
   "cave à vins La Rochelle", "cave à vins Le Mans", "cave à vins Limoges",
   "cave à vins Metz", "cave à vins Nancy", "cave à vins Orléans",
   "cave à vins Pau", "cave à vins Rouen", "cave à vins Toulon",
+
+  // ═══════════════════════════════════════════════════════════════
+  // VAGUE MASSIVE ARTISANS — France entière
+  // 50 villes × 12 métiers d'artisanat = 600 queries
+  // Les artisans = budget plus élevé (jusqu'à 860€/site), moins concurrencé
+  // que la restauration. Cible prioritaire.
+  // ═══════════════════════════════════════════════════════════════
+  ...((): string[] => {
+    const VILLES = [
+      "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Montpellier", "Strasbourg",
+      "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Saint-Étienne", "Toulon", "Grenoble",
+      "Dijon", "Angers", "Nîmes", "Villeurbanne", "Saint-Denis", "Aix-en-Provence", "Le Mans",
+      "Brest", "Tours", "Amiens", "Limoges", "Annecy", "Perpignan", "Boulogne-Billancourt",
+      "Besançon", "Orléans", "Metz", "Rouen", "Argenteuil", "Mulhouse", "Caen", "Saint-Paul",
+      "Nancy", "Roubaix", "Tourcoing", "Nanterre", "Vitry-sur-Seine", "Avignon", "Créteil",
+      "Poitiers", "Dunkerque", "Versailles", "Aubervilliers", "Asnières-sur-Seine",
+    ];
+    const METIERS_ARTISANS = [
+      "plombier", "électricien", "chauffagiste", "menuisier",
+      "serrurier", "carreleur", "peintre en bâtiment", "couvreur",
+      "maçon", "carrosserie auto", "garage automobile", "ramoneur",
+    ];
+    const out: string[] = [];
+    for (const ville of VILLES) {
+      for (const metier of METIERS_ARTISANS) {
+        out.push(`${metier} ${ville}`);
+      }
+    }
+    return out;
+  })(),
 ];
 
-// 3 queries par run × 12 runs/jour = 36 queries/jour
-// Chaque query renvoie ~20 places → ~720 places/jour → ~200 prospects avec email/jour
-const QUERIES_PER_RUN = 3;
+// 8 queries par run × 12 runs/jour = 96 queries/jour
+// Avec ~1100 queries totales (artisans inclus), rotation complète en 12 jours
+// Chaque query renvoie ~20 places → ~1900 places/jour → ~500-700 prospects avec email/jour
+const QUERIES_PER_RUN = 8;
 
 function inferBusinessType(query: string): string {
   const q = query.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
