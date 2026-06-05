@@ -12,7 +12,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import './admin-tokens.css'; // ou globals.css si tokens déjà importés
+import './admin.css'; // tokens + classes utilitaires du handoff
 import {
   LayoutDashboard, Users, ShoppingBag, Settings,
   Search, Bell, RefreshCw,
