@@ -1,0 +1,110 @@
+{
+  "name": "05 — Scrape Artisans Pages Jaunes (4x/jour)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 6,12,18,23 * * *" }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "c1e2f3d4-a5b6-7890-cdef-1234567890ab",
+      "name": "Schedule — 6h, 12h, 18h, 23h Paris",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/scrape-artisans",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ pagesPerQuery: 3 }) }}",
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "d2c3e4f5-b6a7-8901-defa-234567890bcd",
+      "name": "POST /api/admin/scrape-artisans",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "ok-condition",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "e3d4f5a6-c7b8-9012-efab-345678901cde",
+      "name": "Succès ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=🔍 *Scrape Pages Jaunes terminé*\n\n📊 Queries: {{ $json.queries_run }}\n🎯 Trouvés: {{ $json.total_found }}\n✅ Insérés: {{ $json.inserted }}\n🔁 Doublons: {{ $json.skipped_dupes }}\n⚠️ Mismatch métier: {{ $json.skipped_mismatch }}\n❌ Erreurs: {{ $json.errors }}\n\n*Top 5 nouveaux artisans:*\n{{ ($json.sample || []).slice(0,5).map(s => '• ' + s).join('\\n') }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "f4e5a6b7-d8c9-0123-fabc-456789012def",
+      "name": "Telegram OK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 200],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=⚠️ *Scrape Pages Jaunes échoué*\n\nHTTP: {{ $json.error || 'erreur inconnue' }}\nResponse: ```{{ JSON.stringify($json).slice(0, 500) }}```",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "a5f6b7c8-e9d0-1234-abcd-567890123ef0",
+      "name": "Telegram ERREUR",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 400],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule — 6h, 12h, 18h, 23h Paris": {
+      "main": [[{ "node": "POST /api/admin/scrape-artisans", "type": "main", "index": 0 }]]
+    },
+    "POST /api/admin/scrape-artisans": {
+      "main": [[{ "node": "Succès ?", "type": "main", "index": 0 }]]
+    },
+    "Succès ?": {
+      "main": [
+        [{ "node": "Telegram OK", "type": "main", "index": 0 }],
+        [{ "node": "Telegram ERREUR", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
