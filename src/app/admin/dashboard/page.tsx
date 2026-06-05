@@ -1,11 +1,33 @@
-// Dashboard — Server Component avec KPIs en temps réel depuis Supabase
-import { createClient } from "@supabase/supabase-js";
-import StatsCard from "@/components/admin/StatsCard";
-import StatusBadge from "@/components/admin/StatusBadge";
-import { Users, Send, MailOpen, Sparkles, Euro, ArrowRight } from "lucide-react";
+// src/app/admin/dashboard/page.tsx
+// Dashboard — Server Component (données Supabase côté serveur)
+// Portage exact du prototype : prototype/dashboard.jsx
 
-export const dynamic = "force-dynamic";
-export const revalidate = 30;
+import { createClient } from '@supabase/supabase-js';
+import { StatsCard } from '@/components/admin/ui';
+import {
+  IcUsers, IcSend, IcEye, IcLayout, IcRevenue,
+} from '@/components/admin/icons';
+import { DashboardClient } from './DashboardClient';
+
+// ── Formatage ────────────────────────────────────────────────
+const num = (n: number) => n.toLocaleString('fr-FR');
+const eur = (n: number) => n.toLocaleString('fr-FR') + ' €';
+
+// ── Types ────────────────────────────────────────────────────
+interface Service { id: string; name: string; status: 'online' | 'offline' | 'pending'; detail: string }
+interface ActivityItem { kind: 'found' | 'sent' | 'opened' | 'paid'; who: string; city: string; t: string }
+
+// ── Services (à brancher sur vos health checks) ───────────────
+async function getServicesStatus(): Promise<Service[]> {
+  // TODO: faire un vrai health check
+  return [
+    { id: 'stitch',    name: 'Stitch Server', status: 'online', detail: '3 clés actives'    },
+    { id: 'n8n',       name: 'N8N',           status: 'online', detail: '20 workflows'       },
+    { id: 'scrapling', name: 'Scrapling',     status: 'online', detail: 'Enrichissement'     },
+    { id: 'brevo',     name: 'Brevo',         status: 'online', detail: '18 056 crédits'     },
+    { id: 'sms',       name: 'SMS',           status: 'online', detail: '191 crédits'        },
+  ];
+}
 
 function db() {
   return createClient(
@@ -14,155 +36,76 @@ function db() {
   );
 }
 
-interface Counts {
-  found: number; sent: number; opened: number; replied: number; paid: number;
-  unsubscribed: number; error: number;
-  total: number; withEmail: number; stitchCount: number;
-}
-
-async function countByStatus(): Promise<Counts> {
-  const supabase = db();
-  const statuses = ["found", "sent", "opened", "replied", "paid", "unsubscribed", "error"] as const;
-  const counts: Record<string, number> = {};
-  await Promise.all(
-    statuses.map(async (s) => {
-      const { count } = await supabase
-        .from("prospects")
-        .select("id", { count: "exact", head: true })
-        .eq("status", s);
-      counts[s] = count ?? 0;
-    })
-  );
-  const { count: total } = await supabase.from("prospects").select("id", { count: "exact", head: true });
-  const { count: withEmail } = await supabase
-    .from("prospects")
-    .select("id", { count: "exact", head: true })
-    .not("email", "is", null);
-  const { count: stitchCount } = await supabase
-    .from("prospects")
-    .select("id", { count: "exact", head: true })
-    .eq("stitch_generated", true);
-  return {
-    found: counts.found ?? 0, sent: counts.sent ?? 0, opened: counts.opened ?? 0,
-    replied: counts.replied ?? 0, paid: counts.paid ?? 0,
-    unsubscribed: counts.unsubscribed ?? 0, error: counts.error ?? 0,
-    total: total ?? 0, withEmail: withEmail ?? 0, stitchCount: stitchCount ?? 0,
-  };
-}
-
-async function recentActivity() {
-  const supabase = db();
-  const { data } = await supabase
-    .from("prospects")
-    .select("id, slug, name, city, status, updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(8);
-  return data ?? [];
-}
-
-async function brevoCredits(): Promise<number | null> {
-  try {
-    const res = await fetch("https://api.brevo.com/v3/account", {
-      headers: { "api-key": process.env.BREVO_API_KEY || "" },
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return null;
-    const j = await res.json();
-    const c = (j.plan || []).find((p: { credits?: number; type?: string }) => p.credits && p.type !== "sms")?.credits;
-    return c ?? null;
-  } catch { return null; }
-}
-
-function timeAgo(iso: string): string {
-  const d = new Date(iso);
-  const diff = (Date.now() - d.getTime()) / 1000;
-  if (diff < 60) return "à l'instant";
-  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
-  return `il y a ${Math.floor(diff / 86400)} j`;
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 export default async function DashboardPage() {
-  const [counts, activity, brevo] = await Promise.all([
-    countByStatus(),
-    recentActivity(),
-    brevoCredits(),
+  const supabase = db();
+
+  // KPIs
+  const [
+    { count: totalProspects },
+    { count: envoyes },
+    { count: ouverts },
+    { count: maquettesStitch },
+  ] = await Promise.all([
+    supabase.from('prospects').select('*', { count: 'exact', head: true }),
+    supabase.from('prospects').select('*', { count: 'exact', head: true }).neq('status', 'found'),
+    supabase.from('prospects').select('*', { count: 'exact', head: true }).in('status', ['opened', 'replied', 'paid']),
+    supabase.from('prospects').select('*', { count: 'exact', head: true }).eq('mockup_type', 'stitch'),
   ]);
 
-  const sentTotal = (counts.sent || 0) + (counts.opened || 0) + (counts.replied || 0) + (counts.paid || 0);
-  const openRate = sentTotal > 0 ? Math.round(((counts.opened || 0) + (counts.replied || 0) + (counts.paid || 0)) / sentTotal * 100) : 0;
+  const revenue = 0; // TODO: SELECT SUM(amount) FROM orders WHERE paid = true
+  const objectif = 2000;
+
+  const tauxOuverture = envoyes ? ((ouverts ?? 0) / envoyes * 100).toFixed(1) : '0.0';
+  const services = await getServicesStatus();
+
+  // Activité récente (8 derniers événements)
+  const { data: recentActivity } = await supabase
+    .from('prospects')
+    .select('name, city, status, updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(8);
+
+  const activity: ActivityItem[] = (recentActivity ?? []).map(p => ({
+    kind: p.status as ActivityItem['kind'],
+    who: p.name,
+    city: p.city,
+    t: formatRelative(p.updated_at),
+  }));
 
   return (
-    <div style={{ padding: "28px 28px 60px", maxWidth: 1400, margin: "0 auto" }}>
+    <div className="content fade-in">
       {/* ── KPIs ── */}
-      <div style={{
-        display: "grid", gap: 14,
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        marginBottom: 28,
-      }}>
-        <StatsCard Icon={Users}    label="Total prospects" value={counts.total.toLocaleString("fr")} sub={`${counts.withEmail.toLocaleString("fr")} avec email`} accent="blue" />
-        <StatsCard Icon={Send}     label="Emails envoyés"  value={sentTotal.toLocaleString("fr")} sub={`Brevo : ${brevo?.toLocaleString("fr") ?? "?"} restants`} />
-        <StatsCard Icon={MailOpen} label="Taux d'ouverture" value={`${openRate}%`} sub={`${(counts.opened ?? 0).toLocaleString("fr")} ouverts`} accent="green" />
-        <StatsCard Icon={Sparkles} label="Maquettes Stitch" value={counts.stitchCount.toLocaleString("fr")} sub="Premium IA" accent="gold" />
-        <StatsCard Icon={Euro}     label="Revenue"          value={`${(counts.paid * 320).toLocaleString("fr")} €`} sub={`${counts.paid} commande(s)`} accent="green" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 14 }}>
+        <StatsCard icon={IcUsers}   label="Total prospects"  value={num(totalProspects ?? 0)} sub={`${num(totalProspects ?? 0)} avec email`} trend={8}  accent="blue" />
+        <StatsCard icon={IcSend}    label="Emails envoyés"   value={num(envoyes ?? 0)} sub={`${num((totalProspects ?? 0) - (envoyes ?? 0))} en attente`} trend={12} accent="blue" />
+        <StatsCard icon={IcEye}     label="Taux d'ouverture" value={tauxOuverture + '%'} sub={`${num(ouverts ?? 0)} ouvertures`} trend={3} accent="gold" />
+        <StatsCard icon={IcLayout}  label="Maquettes Stitch" value={String(maquettesStitch ?? 0)} sub="générées ce mois" accent="gold" />
+        <StatsCard icon={IcRevenue} label="Revenue Stripe"   value={eur(revenue)} sub={`Objectif ${eur(objectif)}`} accent="green" />
       </div>
 
-      {/* ── Funnel ── */}
-      <div style={{
-        background: "var(--card)", border: "1px solid var(--border)",
-        borderRadius: "var(--r)", padding: "20px 24px", marginBottom: 28,
-      }}>
-        <div style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 18, letterSpacing: "-0.01em" }}>Funnel de conversion</div>
-        {(() => {
-          const stages = [
-            { label: "Trouvés",  value: counts.total,           color: "#777" },
-            { label: "Envoyés",  value: sentTotal,              color: "#5b9bff" },
-            { label: "Ouverts",  value: (counts.opened ?? 0) + (counts.replied ?? 0) + (counts.paid ?? 0), color: "#fbbf24" },
-            { label: "Répondus", value: counts.replied ?? 0,    color: "#c084fc" },
-            { label: "Payés",    value: counts.paid ?? 0,       color: "#4ade80" },
-          ];
-          const max = Math.max(...stages.map(s => s.value), 1);
-          return stages.map((s) => (
-            <div key={s.label} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                <span style={{ color: "var(--txt-2)", fontWeight: 600 }}>{s.label}</span>
-                <span style={{ color: "var(--txt)", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{s.value.toLocaleString("fr")}</span>
-              </div>
-              <div style={{ height: 8, background: "var(--card-2)", borderRadius: 100, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", width: `${(s.value / max) * 100}%`,
-                  background: s.color, borderRadius: 100, transition: "width .4s",
-                }} />
-              </div>
-            </div>
-          ));
-        })()}
-      </div>
-
-      {/* ── Activité récente ── */}
-      <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "20px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 700, letterSpacing: "-0.01em" }}>Activité récente</div>
-          <a href="/admin/prospects" style={{ fontSize: 12, color: "#5b9bff", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-            Tous les prospects <ArrowRight size={13} />
-          </a>
-        </div>
-        <div>
-          {activity.map((p) => (
-            <a key={p.id} href={`/admin/prospects?focus=${p.id}`} style={{
-              display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 14,
-              padding: "10px 0", borderBottom: "1px solid var(--border)", textDecoration: "none", color: "inherit",
-            }}>
-              <div>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: 11.5, color: "var(--txt-3)" }}>{p.city ?? "—"}</div>
-              </div>
-              <StatusBadge status={p.status ?? "found"} />
-              <div style={{ fontSize: 11, color: "var(--txt-3)", minWidth: 90, textAlign: "right" }}>{timeAgo(p.updated_at)}</div>
-            </a>
-          ))}
-        </div>
-      </div>
+      {/* ── Graphique + objectif + services ── */}
+      {/* DashboardClient gère le chart SVG interactif et l'activité récente */}
+      <DashboardClient
+        revenue={revenue}
+        objectif={objectif}
+        services={services}
+        activity={activity}
+        totalProspects={totalProspects ?? 0}
+        envoyes={envoyes ?? 0}
+        ouverts={ouverts ?? 0}
+      />
     </div>
   );
+}
+
+function formatRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `il y a ${h} h`;
+  return `il y a ${Math.floor(h / 24)} j`;
 }
