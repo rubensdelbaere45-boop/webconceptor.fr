@@ -30,5 +30,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "motion-teasers",
+    "stitch-server",
+    "scrapling-service",
+    "listmonk-service",
+    "n8n-service"
+  ]
 }

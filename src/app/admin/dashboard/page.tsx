@@ -14,9 +14,15 @@ function db() {
   );
 }
 
-async function countByStatus() {
+interface Counts {
+  found: number; sent: number; opened: number; replied: number; paid: number;
+  unsubscribed: number; error: number;
+  total: number; withEmail: number; stitchCount: number;
+}
+
+async function countByStatus(): Promise<Counts> {
   const supabase = db();
-  const statuses = ["found", "sent", "opened", "replied", "paid", "unsubscribed", "error"];
+  const statuses = ["found", "sent", "opened", "replied", "paid", "unsubscribed", "error"] as const;
   const counts: Record<string, number> = {};
   await Promise.all(
     statuses.map(async (s) => {
@@ -36,7 +42,12 @@ async function countByStatus() {
     .from("prospects")
     .select("id", { count: "exact", head: true })
     .eq("stitch_generated", true);
-  return { ...counts, total: total ?? 0, withEmail: withEmail ?? 0, stitchCount: stitchCount ?? 0 };
+  return {
+    found: counts.found ?? 0, sent: counts.sent ?? 0, opened: counts.opened ?? 0,
+    replied: counts.replied ?? 0, paid: counts.paid ?? 0,
+    unsubscribed: counts.unsubscribed ?? 0, error: counts.error ?? 0,
+    total: total ?? 0, withEmail: withEmail ?? 0, stitchCount: stitchCount ?? 0,
+  };
 }
 
 async function recentActivity() {
