@@ -5,8 +5,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ServiceDot } from '@/components/admin/ui';
-import { IcUsers, IcSend, IcEye, IcRevenue } from '@/components/admin/icons';
+import { ServiceDot, StatsCard } from '@/components/admin/ui';
+import { IcUsers, IcSend, IcEye, IcLayout, IcRevenue } from '@/components/admin/icons';
 
 // ── Types ────────────────────────────────────────────────────
 interface Service { id: string; name: string; status: 'online' | 'offline' | 'pending'; detail: string }
@@ -20,7 +20,13 @@ interface Props {
   totalProspects: number;
   envoyes: number;
   ouverts: number;
+  maquettesStitch: number;
+  tauxOuverture: string;
 }
+
+// ── Formatage ──────────────────────────────────────────────
+const num = (n: number) => n.toLocaleString('fr-FR');
+const eur = (n: number) => n.toLocaleString('fr-FR') + ' €';
 
 // ── Données graphique (30 jours) — à remplacer par vraies données ─
 function generateChartData() {
@@ -176,11 +182,20 @@ function Funnel({ totalProspects, envoyes, ouverts }: { totalProspects: number; 
 }
 
 // ── Export principal ─────────────────────────────────────────
-export function DashboardClient({ revenue, objectif, services, activity, totalProspects, envoyes, ouverts }: Props) {
+export function DashboardClient({ revenue, objectif, services, activity, totalProspects, envoyes, ouverts, maquettesStitch, tauxOuverture }: Props) {
   const progress = Math.min(100, objectif > 0 ? (revenue / objectif) * 100 : 0);
 
   return (
-    <>
+    <div className="content fade-in">
+      {/* ── KPIs ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 14 }}>
+        <StatsCard icon={IcUsers}   label="Total prospects"  value={num(totalProspects)} sub={`${num(totalProspects)} avec email`} trend={8}  accent="blue" />
+        <StatsCard icon={IcSend}    label="Emails envoyés"   value={num(envoyes)} sub={`${num(Math.max(0, totalProspects - envoyes))} en attente`} trend={12} accent="blue" />
+        <StatsCard icon={IcEye}     label="Taux d'ouverture" value={tauxOuverture + '%'} sub={`${num(ouverts)} ouvertures`} trend={3} accent="gold" />
+        <StatsCard icon={IcLayout}  label="Maquettes Stitch" value={String(maquettesStitch)} sub="générées ce mois" accent="gold" />
+        <StatsCard icon={IcRevenue} label="Revenue Stripe"   value={eur(revenue)} sub={`Objectif ${eur(objectif)}`} accent="green" />
+      </div>
+
       {/* Graphique + objectif + services */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 14, marginBottom: 14 }}>
         <div className="card card-pad">
@@ -242,6 +257,6 @@ export function DashboardClient({ revenue, objectif, services, activity, totalPr
           <Funnel totalProspects={totalProspects} envoyes={envoyes} ouverts={ouverts} />
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -3,15 +3,7 @@
 // Portage exact du prototype : prototype/dashboard.jsx
 
 import { createClient } from '@supabase/supabase-js';
-import { StatsCard } from '@/components/admin/ui';
-import {
-  IcUsers, IcSend, IcEye, IcLayout, IcRevenue,
-} from '@/components/admin/icons';
 import { DashboardClient } from './DashboardClient';
-
-// ── Formatage ────────────────────────────────────────────────
-const num = (n: number) => n.toLocaleString('fr-FR');
-const eur = (n: number) => n.toLocaleString('fr-FR') + ' €';
 
 // ── Types ────────────────────────────────────────────────────
 interface Service { id: string; name: string; status: 'online' | 'offline' | 'pending'; detail: string }
@@ -76,28 +68,17 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="content fade-in">
-      {/* ── KPIs ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 14 }}>
-        <StatsCard icon={IcUsers}   label="Total prospects"  value={num(totalProspects ?? 0)} sub={`${num(totalProspects ?? 0)} avec email`} trend={8}  accent="blue" />
-        <StatsCard icon={IcSend}    label="Emails envoyés"   value={num(envoyes ?? 0)} sub={`${num((totalProspects ?? 0) - (envoyes ?? 0))} en attente`} trend={12} accent="blue" />
-        <StatsCard icon={IcEye}     label="Taux d'ouverture" value={tauxOuverture + '%'} sub={`${num(ouverts ?? 0)} ouvertures`} trend={3} accent="gold" />
-        <StatsCard icon={IcLayout}  label="Maquettes Stitch" value={String(maquettesStitch ?? 0)} sub="générées ce mois" accent="gold" />
-        <StatsCard icon={IcRevenue} label="Revenue Stripe"   value={eur(revenue)} sub={`Objectif ${eur(objectif)}`} accent="green" />
-      </div>
-
-      {/* ── Graphique + objectif + services ── */}
-      {/* DashboardClient gère le chart SVG interactif et l'activité récente */}
-      <DashboardClient
-        revenue={revenue}
-        objectif={objectif}
-        services={services}
-        activity={activity}
-        totalProspects={totalProspects ?? 0}
-        envoyes={envoyes ?? 0}
-        ouverts={ouverts ?? 0}
-      />
-    </div>
+    <DashboardClient
+      revenue={revenue}
+      objectif={objectif}
+      services={services}
+      activity={activity}
+      totalProspects={totalProspects ?? 0}
+      envoyes={envoyes ?? 0}
+      ouverts={ouverts ?? 0}
+      maquettesStitch={maquettesStitch ?? 0}
+      tauxOuverture={tauxOuverture}
+    />
   );
 }
 
