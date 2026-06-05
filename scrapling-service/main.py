@@ -74,10 +74,30 @@ LOGO_PATH_RE = re.compile(
 )
 
 
+def _fetch_with_cloakbrowser(url: str) -> Optional[str]:
+    """
+    Fallback ultime : utilise CloakBrowser (Chromium stealth source-level).
+    Passe Cloudflare Turnstile, FingerprintJS, BrowserScan où StealthyFetcher échoue.
+    Plus lent (~5s) mais quasi-imparable.
+    """
+    try:
+        from cloakbrowser import launch  # type: ignore
+        browser = launch(headless=True)
+        page = browser.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        # Attend que le contenu se charge (Cloudflare peut prendre 3-5s)
+        page.wait_for_timeout(3000)
+        html = page.content()
+        browser.close()
+        return html if html and len(html) > 2000 else None
+    except Exception:
+        return None
+
+
 def fetch_html(url: str, force_stealth: bool = False) -> tuple[Optional[str], bool]:
     """
     Retourne (html, used_stealth).
-    Essaie Fetcher (rapide) d'abord, puis StealthyFetcher si échec/Cloudflare.
+    Cascade : Fetcher rapide → StealthyFetcher Scrapling → CloakBrowser (Cloudflare).
 
     force_stealth=True → saute Fetcher rapide et va direct en stealth
     (utile pour sites avec Cloudflare comme Pages Jaunes).
@@ -99,7 +119,7 @@ def fetch_html(url: str, force_stealth: bool = False) -> tuple[Optional[str], bo
         except Exception:
             pass
 
-    # Tentative 2 : navigateur stealth (bypass Cloudflare)
+    # Tentative 2 : navigateur stealth Scrapling
     try:
         from scrapling.fetchers import StealthyFetcher  # type: ignore
         page = StealthyFetcher.fetch(
@@ -110,9 +130,16 @@ def fetch_html(url: str, force_stealth: bool = False) -> tuple[Optional[str], bo
             humanize=True,  # mouse jitter pour bypass anti-bot
         )
         if page and page.status == 200:
-            return str(page.html), True
+            html_str = str(page.html)
+            if len(html_str) > 2000 and "challenge-platform" not in html_str:
+                return html_str, True
     except Exception:
         pass
+
+    # Tentative 3 : CloakBrowser (Chromium stealth source-level — bypass Cloudflare Turnstile)
+    cloak_html = _fetch_with_cloakbrowser(url)
+    if cloak_html:
+        return cloak_html, True
 
     return None, False
 
