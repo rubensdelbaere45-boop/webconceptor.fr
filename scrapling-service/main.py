@@ -74,24 +74,41 @@ LOGO_PATH_RE = re.compile(
 )
 
 
-def fetch_html(url: str) -> tuple[Optional[str], bool]:
+def fetch_html(url: str, force_stealth: bool = False) -> tuple[Optional[str], bool]:
     """
     Retourne (html, used_stealth).
     Essaie Fetcher (rapide) d'abord, puis StealthyFetcher si échec/Cloudflare.
+
+    force_stealth=True → saute Fetcher rapide et va direct en stealth
+    (utile pour sites avec Cloudflare comme Pages Jaunes).
     """
-    # Tentative 1 : HTTP rapide avec spoofing TLS
-    try:
-        from scrapling.fetchers import Fetcher  # type: ignore
-        page = Fetcher.get(url, stealthy_headers=True, timeout=FETCH_TIMEOUT)
-        if page and page.status == 200:
-            return str(page.html), False
-    except Exception:
-        pass
+    # Détection automatique : domaines connus pour Cloudflare → force stealth
+    if not force_stealth and any(s in url.lower() for s in ["pagesjaunes.fr", "societe.com", "infogreffe.fr"]):
+        force_stealth = True
+
+    if not force_stealth:
+        # Tentative 1 : HTTP rapide avec spoofing TLS
+        try:
+            from scrapling.fetchers import Fetcher  # type: ignore
+            page = Fetcher.get(url, stealthy_headers=True, timeout=FETCH_TIMEOUT)
+            if page and page.status == 200:
+                html_str = str(page.html)
+                # Détection page Cloudflare (challenge JS) → fallback stealth
+                if "challenge-platform" not in html_str and "cf-challenge" not in html_str:
+                    return html_str, False
+        except Exception:
+            pass
 
     # Tentative 2 : navigateur stealth (bypass Cloudflare)
     try:
         from scrapling.fetchers import StealthyFetcher  # type: ignore
-        page = StealthyFetcher.fetch(url, headless=True, timeout=STEALTH_TIMEOUT, network_idle=True)
+        page = StealthyFetcher.fetch(
+            url,
+            headless=True,
+            timeout=STEALTH_TIMEOUT,
+            network_idle=True,
+            humanize=True,  # mouse jitter pour bypass anti-bot
+        )
         if page and page.status == 200:
             return str(page.html), True
     except Exception:
