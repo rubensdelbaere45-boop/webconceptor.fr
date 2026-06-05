@@ -199,7 +199,7 @@ const SECONDARY_PHOTOS: Record<string, string[]> = {
   ],
 };
 
-interface OpenDesignProspect {
+export interface OpenDesignProspect {
   name: string;
   city?: string;
   phone?: string;
@@ -212,7 +212,7 @@ interface OpenDesignProspect {
   reviews?: Array<{ author: string; rating: number; text: string }>;
 }
 
-interface MockupContent {
+export interface MockupContent {
   heroTitle: string;
   heroSubtitle: string;
   aboutTitle: string;

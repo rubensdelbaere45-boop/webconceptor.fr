@@ -27,7 +27,7 @@ export interface SendEmailParams {
 export interface SendEmailResult {
   ok: boolean;
   messageId?: string;
-  provider: "brevo" | "listmonk" | "resend";
+  provider: "brevo" | "listmonk" | "resend" | "smtp";
   error?: string;
 }
 
@@ -182,22 +182,86 @@ async function sendViaResend(params: SendEmailParams): Promise<SendEmailResult> 
   }
 }
 
-// ── Entrée publique ──────────────────────────────────────────────
-// EMAIL_PROVIDER = "brevo" (défaut) | "listmonk" | "resend"
+// ── SMTP direct via Nodemailer (illimité, gratuit) ──────────────
+// Utilise un compte SMTP réel : IONOS (pro@webconceptor.fr), Gmail,
+// OVH, etc. Pas de quota fournisseur — limité uniquement par la
+// politique anti-spam de ton hébergeur SMTP.
 //
-// Failover automatique : si Brevo échoue (quota épuisé, erreur HTTP),
-// on retombe sur Resend si RESEND_API_KEY est définie. Garantit que les
-// emails partent même en cas de panne provider principal.
+// Variables :
+//   SMTP_HOST       (ex: smtp.ionos.fr)
+//   SMTP_PORT       (defaut 587)
+//   SMTP_SECURE     ('true' pour port 465, sinon false → STARTTLS)
+//   SMTP_USER       (adresse complète : contact@webconceptor.fr)
+//   SMTP_PASS       (mot de passe du compte mail)
+//   SMTP_FROM_EMAIL (optionnel : adresse from override)
+//   SMTP_FROM_NAME  (optionnel : nom from override)
+let _smtpTransporter: ReturnType<typeof import("nodemailer").createTransport> | null = null;
+async function getSmtpTransporter() {
+  if (_smtpTransporter) return _smtpTransporter;
+  const nodemailer = await import("nodemailer");
+  _smtpTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.ionos.fr",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    },
+    tls: { minVersion: "TLSv1.2" },
+  });
+  return _smtpTransporter;
+}
+
+async function sendViaSmtp(params: SendEmailParams): Promise<SendEmailResult> {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return { ok: false, provider: "smtp", error: "SMTP_USER ou SMTP_PASS manquant" };
+  }
+  try {
+    const transporter = await getSmtpTransporter();
+    const fromEmail = params.fromEmail || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER!;
+    const fromName = params.fromName || process.env.SMTP_FROM_NAME || FROM_NAME_DEFAULT;
+    const headers: Record<string, string> = { ...(params.headers || {}) };
+    if (params.listUnsubscribeUrl) {
+      headers["List-Unsubscribe"] = `<${params.listUnsubscribeUrl}>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    }
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: params.toName ? `"${params.toName}" <${params.to}>` : params.to,
+      subject: params.subject,
+      html: params.html,
+      ...(params.text ? { text: params.text } : {}),
+      ...(Object.keys(headers).length ? { headers } : {}),
+    });
+    return { ok: true, provider: "smtp", messageId: info.messageId };
+  } catch (e) {
+    return { ok: false, provider: "smtp", error: e instanceof Error ? e.message.slice(0, 200) : "smtp error" };
+  }
+}
+
+// ── Entrée publique ──────────────────────────────────────────────
+// EMAIL_PROVIDER = "brevo" (défaut) | "listmonk" | "resend" | "smtp"
+//
+// Failover automatique : si le provider principal échoue,
+// on tente SMTP puis Resend (selon ce qui est configuré).
+// Garantit que les emails partent même en cas de panne.
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const provider = (process.env.EMAIL_PROVIDER || "brevo").toLowerCase();
   const hasResendFallback = !!process.env.RESEND_API_KEY;
+  const hasSmtpFallback = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
 
   let result: SendEmailResult;
-  if (provider === "resend")   result = await sendViaResend(params);
+  if      (provider === "smtp")     result = await sendViaSmtp(params);
+  else if (provider === "resend")   result = await sendViaResend(params);
   else if (provider === "listmonk") result = await sendViaListmonk(params);
-  else                          result = await sendViaBrevo(params);
+  else                              result = await sendViaBrevo(params);
 
-  // Failover si le provider principal échoue et qu'on a Resend dispo
+  // Failover en cascade : SMTP > Resend
+  if (!result.ok && provider !== "smtp" && hasSmtpFallback) {
+    console.warn(`[email-provider] ${result.provider} a échoué (${result.error?.slice(0, 80)}), failover SMTP`);
+    const fallback = await sendViaSmtp(params);
+    if (fallback.ok) return fallback;
+  }
   if (!result.ok && provider !== "resend" && hasResendFallback) {
     console.warn(`[email-provider] ${result.provider} a échoué (${result.error?.slice(0, 80)}), failover Resend`);
     const fallback = await sendViaResend(params);
