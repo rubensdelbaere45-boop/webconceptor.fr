@@ -260,3 +260,154 @@ def enrich(req: EnrichRequest, _token: str = Depends(verify_token)) -> EnrichRes
 
     result.used_stealth = used_stealth
     return result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# /scrape-pj — Scrape massif Pages Jaunes (artisans, restaurants, etc.)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class ScrapePjRequest(BaseModel):
+    activity: str   # ex: "plombier", "menuisier", "restaurant"
+    location: str   # ex: "Paris", "75001", "Île-de-France"
+    pages: int = 3  # nombre de pages PJ à scraper (1 page = ~20 résultats)
+
+
+class ScrapedBusiness(BaseModel):
+    name: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+
+
+class ScrapePjResponse(BaseModel):
+    results: list[ScrapedBusiness] = []
+    pages_scraped: int = 0
+    used_stealth: bool = False
+    error: Optional[str] = None
+
+
+@app.post("/scrape-pj", response_model=ScrapePjResponse)
+def scrape_pj(req: ScrapePjRequest, _: str = Depends(verify_token)):
+    """
+    Scrape Pages Jaunes pour une activité + localisation.
+    Utilise StealthyFetcher (bypass Cloudflare).
+    Retourne jusqu'à 60 résultats (3 pages × 20).
+    """
+    from urllib.parse import quote
+
+    activity_q = quote(req.activity[:80])
+    location_q = quote(req.location[:60])
+
+    all_results: list[ScrapedBusiness] = []
+    seen_names: set[str] = set()
+    used_stealth = False
+    pages_done = 0
+
+    for page in range(1, min(req.pages, 5) + 1):
+        page_param = f"&page={page}" if page > 1 else ""
+        url = f"https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui={activity_q}&ou={location_q}{page_param}"
+
+        html, stealth = fetch_html(url)
+        used_stealth = used_stealth or stealth
+
+        if not html or len(html) < 2000:
+            break  # Cloudflare ou pas de résultats
+
+        pages_done += 1
+        # Parse les blocs <article class="bi ...">
+        # On utilise des regex défensives qui tolèrent les variations Pages Jaunes
+        article_blocks = re.split(r'<article[^>]+class="[^"]*\bbi\b', html, flags=re.IGNORECASE)
+
+        for i in range(1, len(article_blocks)):
+            block = article_blocks[i]
+
+            # Nom
+            name_match = (
+                re.search(r'class="[^"]*denomination[^"]*"[^>]*title="([^"]+)"', block, re.IGNORECASE)
+                or re.search(r'<h3[^>]*>([^<]+)</h3>', block, re.IGNORECASE)
+                or re.search(r'itemprop="name"[^>]*>([^<]+)<', block, re.IGNORECASE)
+            )
+            name = _decode_entities(name_match.group(1)).strip() if name_match else ""
+            if not name or len(name) < 2 or name in seen_names:
+                continue
+            seen_names.add(name)
+
+            # Adresse
+            street_match = (
+                re.search(r'itemprop="streetAddress"[^>]*>([^<]+)<', block, re.IGNORECASE)
+                or re.search(r'class="[^"]*address[^"]*"[^>]*>\s*<[^>]*>([^<]+)<', block, re.IGNORECASE)
+            )
+            cp_match = (
+                re.search(r'itemprop="postalCode"[^>]*>([^<]+)<', block, re.IGNORECASE)
+                or re.search(r'>(\d{5})\s+[A-ZÀ-ÿ]', block)
+            )
+            city_match = re.search(r'itemprop="addressLocality"[^>]*>([^<]+)<', block, re.IGNORECASE)
+
+            street = _decode_entities(street_match.group(1)).strip() if street_match else ""
+            postal_code = cp_match.group(1).strip() if cp_match else ""
+            city = _decode_entities(city_match.group(1)).strip() if city_match else ""
+            address = " ".join(filter(None, [street, postal_code, city]))
+
+            # Téléphone
+            phone_match = (
+                re.search(r'class="[^"]*(?:num-tel|coord-numero)[^"]*"[^>]*>\s*([^<]+)', block, re.IGNORECASE)
+                or re.search(r'itemprop="telephone"[^>]*>([^<]+)<', block, re.IGNORECASE)
+                or re.search(r'data-phone="([^"]+)"', block, re.IGNORECASE)
+            )
+            phone = _clean_phone(_decode_entities(phone_match.group(1))) if phone_match else ""
+
+            # Site web
+            website_match = (
+                re.search(r'href="([^"]+)"[^>]*class="[^"]*(?:site-internet|website-link|lvs-link)', block, re.IGNORECASE)
+                or re.search(r'itemprop="url"[^>]*href="([^"]+)"', block, re.IGNORECASE)
+            )
+            website = _decode_entities(website_match.group(1)).strip() if website_match else ""
+            if website and not re.match(r'^https?://', website, re.IGNORECASE):
+                website = ""
+
+            all_results.append(ScrapedBusiness(
+                name=name,
+                address=address or None,
+                city=city or None,
+                postal_code=postal_code or None,
+                phone=phone or None,
+                website=website or None,
+            ))
+
+            if len(all_results) >= 100:
+                break
+
+        if len(all_results) >= 100:
+            break
+
+    return ScrapePjResponse(
+        results=all_results,
+        pages_scraped=pages_done,
+        used_stealth=used_stealth,
+    )
+
+
+def _decode_entities(s: str) -> str:
+    """Décode les entités HTML basiques."""
+    if not s:
+        return ""
+    return (
+        s.replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", '"')
+        .replace("&#39;", "'")
+        .replace("&apos;", "'")
+        .replace("&nbsp;", " ")
+    )
+
+
+def _clean_phone(raw: str) -> str:
+    """Nettoie un numéro de téléphone."""
+    if not raw:
+        return ""
+    cleaned = re.sub(r"\s+", " ", raw)
+    cleaned = re.sub(r"[^\d +.\-()]", "", cleaned)
+    return cleaned.strip()[:20]
