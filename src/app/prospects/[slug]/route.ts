@@ -54,17 +54,59 @@ function stripOldSnippet(html: string): string {
   // Cas 1 : snippet récent avec marqueurs (rapide et précis)
   clean = clean.replace(/<!--\s*WC-SX-START\s*-->[\s\S]*?<!--\s*WC-SX-END\s*-->/g, '');
   // Cas 2 : ancien snippet sans marqueurs (contenu DB historique)
-  // Retire le <script> contenant l'IIFE wcSxInit
   clean = clean.replace(/<script>\s*\(function wcSxInit\b[\s\S]*?<\/script>/g, '');
-  // Retire le <style> du snippet (seul bloc style commençant par ce commentaire)
   clean = clean.replace(/<style>\s*\/\* ─── CTA bar fixe en haut[\s\S]*?<\/style>/g, '');
-  // Retire la barre CTA fixe et le modal overlay (gestion des divs imbriqués)
   clean = stripDivById(clean, 'wc-sx-cta');
   clean = stripDivById(clean, 'wc-sx-overlay');
   // Cas 3 : ancienne barre Stitch injectée directement dans le mockup_html en DB
-  // (marqueur <!-- STITCH_GENERATED --> + style .wc-bar + div + spacer 44px)
   clean = clean.replace(/<!--\s*STITCH_GENERATED\s*-->[\s\S]*?<div style="height:44px"><\/div>/g, '');
+  // Cas 4 : badges WebConceptor des anciens templates mockup-adaptive / mockup-custom
+  // → bouton "W WebConceptor" en haut à gauche, badge "MAQUETTE RETIRÉE À L'ACHAT" en haut à droite,
+  //   barre flottante "Badges WebConceptor retirés automatiquement",
+  //   footer "APERÇU WEBCONCEPTOR — les mentions ci-présentes...",
+  //   watermark CSS qui répète "WebConceptor" en fond
+  clean = stripDivByClass(clean, 'wc-home-btn');
+  clean = stripDivByClass(clean, 'wc-demo-badge');
+  clean = stripDivByClass(clean, 'wc-watermark');
+  clean = stripDivByClass(clean, 'wc-info-banner');
+  clean = stripDivByClass(clean, 'wc-footer-info');
+  clean = stripDivByClass(clean, 'wc-aperçu-footer');
+  // Footer "Design, code et intégration : WebConceptor" / "Maquette générée par WebConceptor"
+  clean = clean.replace(/<footer[^>]*>[^<]*WebConceptor[^<]*<\/footer>/gi, '');
+  clean = clean.replace(/<div[^>]*class="[^"]*wc-aperçu[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+  // Meta tags author/copyright WebConceptor
+  clean = clean.replace(/<meta[^>]+(?:author|copyright)[^>]*WebConceptor[^>]*>/gi, '');
   return clean;
+}
+
+function stripDivByClass(html: string, className: string): string {
+  // Trouve un <div class="...className..."> et retire tout jusqu'à son </div> correspondant
+  const re = new RegExp(`<div\\s+[^>]*class="[^"]*\\b${className}\\b[^"]*"[^>]*>`, 'i');
+  let result = html;
+  let match;
+  while ((match = re.exec(result)) !== null) {
+    const start = match.index;
+    let depth = 1;
+    let i = start + match[0].length;
+    while (depth > 0 && i < result.length) {
+      const nextOpen = result.indexOf('<div', i);
+      const nextClose = result.indexOf('</div>', i);
+      if (nextClose === -1) break;
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        i = nextOpen + 4;
+      } else {
+        depth--;
+        i = nextClose + 6;
+      }
+    }
+    if (depth === 0) {
+      result = result.slice(0, start) + result.slice(i);
+    } else {
+      break; // structure cassée → on s'arrête
+    }
+  }
+  return result;
 }
 
 // Normalise un numéro français pour le lien tel: (garde seulement digits + préfixe +33)
