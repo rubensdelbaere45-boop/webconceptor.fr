@@ -27,7 +27,7 @@ export interface SendEmailParams {
 export interface SendEmailResult {
   ok: boolean;
   messageId?: string;
-  provider: "brevo" | "listmonk";
+  provider: "brevo" | "listmonk" | "resend";
   error?: string;
 }
 
@@ -130,11 +130,80 @@ async function sendViaListmonk(params: SendEmailParams): Promise<SendEmailResult
   }
 }
 
+// ── Resend (fallback gratuit / production post-Brevo) ──────────
+async function sendViaResend(params: SendEmailParams): Promise<SendEmailResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return { ok: false, provider: "resend", error: "RESEND_API_KEY manquante" };
+
+  // Domaine vérifié obligatoire pour from sur ton domaine.
+  // Tant que webconceptor.fr pas vérifié sur Resend → onboarding@resend.dev
+  // ou utilise contact@webconceptor.fr SI domaine DNS validé.
+  const from = `${params.fromName || FROM_NAME_DEFAULT} <${params.fromEmail || (process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev")}>`;
+
+  const body = {
+    from,
+    to: [params.to],
+    subject: params.subject,
+    html: params.html,
+    ...(params.text ? { text: params.text } : {}),
+    ...(params.headers || params.listUnsubscribeUrl
+      ? {
+          headers: {
+            ...(params.listUnsubscribeUrl
+              ? {
+                  "List-Unsubscribe": `<${params.listUnsubscribeUrl}>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                }
+              : {}),
+            ...params.headers,
+          },
+        }
+      : {}),
+  };
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      return { ok: false, provider: "resend", error: `HTTP ${res.status}: ${t.slice(0, 150)}` };
+    }
+    const data = await res.json();
+    return { ok: true, provider: "resend", messageId: data.id || "" };
+  } catch (e) {
+    return { ok: false, provider: "resend", error: e instanceof Error ? e.message : "error" };
+  }
+}
+
 // ── Entrée publique ──────────────────────────────────────────────
+// EMAIL_PROVIDER = "brevo" (défaut) | "listmonk" | "resend"
+//
+// Failover automatique : si Brevo échoue (quota épuisé, erreur HTTP),
+// on retombe sur Resend si RESEND_API_KEY est définie. Garantit que les
+// emails partent même en cas de panne provider principal.
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const provider = (process.env.EMAIL_PROVIDER || "brevo").toLowerCase();
-  if (provider === "listmonk") return sendViaListmonk(params);
-  return sendViaBrevo(params);
+  const hasResendFallback = !!process.env.RESEND_API_KEY;
+
+  let result: SendEmailResult;
+  if (provider === "resend")   result = await sendViaResend(params);
+  else if (provider === "listmonk") result = await sendViaListmonk(params);
+  else                          result = await sendViaBrevo(params);
+
+  // Failover si le provider principal échoue et qu'on a Resend dispo
+  if (!result.ok && provider !== "resend" && hasResendFallback) {
+    console.warn(`[email-provider] ${result.provider} a échoué (${result.error?.slice(0, 80)}), failover Resend`);
+    const fallback = await sendViaResend(params);
+    if (fallback.ok) return fallback;
+  }
+  return result;
 }
 
 /**
@@ -157,6 +226,11 @@ export async function getEmailCredits(): Promise<{ provider: string; credits: nu
       return { provider: "brevo", credits: null };
     }
   }
-  // Listmonk = pas de quota (self-hosted), Resend a 3000/mois (à check via API Resend si besoin)
-  return { provider: "listmonk", credits: 3_000 };
+  if (provider === "resend") {
+    // Resend free tier = 3000/mois. Pas d'API publique pour le quota restant.
+    // On retourne le total pour info, le tracking précis se fait via Resend dashboard.
+    return { provider: "resend", credits: 3_000 };
+  }
+  // Listmonk = pas de quota (self-hosted SMTP via Resend ou autre)
+  return { provider: "listmonk", credits: null };
 }
