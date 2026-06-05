@@ -233,21 +233,90 @@ export function getClientIp(headers: Headers): string {
  * Retourne true si le prospect est valide (nom cohérent avec le type).
  * Retourne false si incohérent (ex: "Menuiserie X" classé "plombier").
  */
-export function isBusinessTypeCoherent(name: string, businessType: string): boolean {
+/**
+ * Détecte le VRAI métier d'un commerce à partir de son nom.
+ * Retourne null si aucun métier connu n'est détecté.
+ *
+ * Utilisé comme garde-fou : si le nom révèle un métier différent du
+ * business_type déclaré, on rejette le prospect (jamais d'email envoyé).
+ */
+export function detectBusinessFromName(name: string): string | null {
   const n = (name || "").toLowerCase();
-  const MISMATCH: Record<string, string[]> = {
-    plombier: ["menuiser", "ébénist", "charpent", "serrurier", "vitrier", "peintre", "maçon", "carreleur", "couvreur"],
-    electricien: ["menuiser", "plombier", "chauffag", "peintre", "maçon", "couvreur"],
-    restaurant: ["menuiser", "garage", "plombier", "electrici", "avocat", "notaire", "assurance"],
-    garage: ["menuiser", "plombier", "restaurant", "boulanger"],
-    coiffeur: ["menuiser", "plombier", "electrici", "garage"],
-    institut: ["menuiser", "plombier", "electrici", "garage", "avocat"],
-    osteo: ["menuiser", "plombier", "electrici", "garage", "restaurant"],
-    boulangerie: ["menuiser", "plombier", "electrici", "garage", "avocat"],
-    dentiste: ["menuiser", "plombier", "electrici", "garage", "restaurant"],
+
+  // Ordre des tests : du plus spécifique au plus général.
+  // Important : "boulanger" doit matcher AVANT "patissier" car "boulangerie-pâtisserie" → boulangerie prioritaire.
+
+  // ── BLANCHISSERIE / PRESSING ──────────────────────
+  if (/blanchisser|pressing|laverie|nettoyage à sec|teinturerie/.test(n)) return "blanchisserie";
+  // ── MENUISIER / ÉBÉNISTE ──────────────────────────
+  if (/menuiser|menuiserie|ébénist|ebenist|charpent/.test(n)) return "menuisier";
+  // ── PLOMBIER / CHAUFFAGISTE ───────────────────────
+  if (/plomb|chauffag|sanitair/.test(n)) return "plombier";
+  // ── ÉLECTRICIEN ──────────────────────────────────
+  if (/electrici|électrici|électrique|\belec\b|\belectricite\b/.test(n)) return "electricien";
+  // ── GARAGE / AUTO / CARROSSERIE ───────────────────
+  if (/garage|carrosseri|mécanic|mecanic|\bauto\b|automobile/.test(n)) return "garage";
+  // ── SERRURIER ────────────────────────────────────
+  if (/serruri/.test(n)) return "serrurier";
+  // ── CARRELEUR ────────────────────────────────────
+  if (/carrele/.test(n)) return "carreleur";
+  // ── PEINTRE ──────────────────────────────────────
+  if (/\bpeintr/.test(n)) return "peintre";
+  // ── COUVREUR / TOITURE ───────────────────────────
+  if (/couvreur|toiture|étanchéité/.test(n)) return "couvreur";
+  // ── MAÇON ────────────────────────────────────────
+  if (/maçon|macon\b/.test(n)) return "macon";
+  // ── HORECA ───────────────────────────────────────
+  if (/boulang/.test(n)) return "boulangerie";
+  if (/pâtisser|patisser|chocolat/.test(n)) return "patisserie";
+  if (/restaur|bistr|brasser|pizz|crêper|creperie|food.truck/.test(n)) return "restaurant";
+  if (/glacier|gelat|sorbets/.test(n)) return "glacier";
+  if (/\bcafé\b|cafe\b|salon de thé/.test(n)) return "cafe";
+  // ── BEAUTÉ ───────────────────────────────────────
+  if (/coiffeur|coiffure|barber|salon de coiffure/.test(n)) return "coiffeur";
+  if (/institut|\bspa\b|beauté|esthétique|esthetique|onglerie/.test(n)) return "institut";
+  // ── COMMERCE ALIMENTAIRE ─────────────────────────
+  if (/épicerie|epicerie|supérette|superette|alimentation/.test(n)) return "epicerie";
+  // ── SANTÉ ────────────────────────────────────────
+  if (/dentiste|dentaire/.test(n)) return "dentiste";
+  if (/ostéo|osteo|kiné|kine\b/.test(n)) return "osteo";
+  // ── AUTRES ───────────────────────────────────────
+  if (/fleurist/.test(n)) return "fleuriste";
+  if (/auto.école|auto-école|moniteur/.test(n)) return "auto_ecole";
+  if (/salle de sport|fitness|crossfit|gym\b/.test(n)) return "salle_sport";
+
+  return null; // aucun métier identifié dans le nom
+}
+
+/**
+ * Vérifie que le nom d'un commerce est cohérent avec son business_type déclaré.
+ *
+ * Stratégie : si le nom révèle un métier (via detectBusinessFromName), il DOIT
+ * correspondre au type déclaré. Si le nom ne révèle rien (ex: "Chez Jean"), on
+ * fait confiance au type Google Places.
+ *
+ * Exemples :
+ *  - "Provence Blanchisserie" + type="epicerie"  → false ❌ (mismatch)
+ *  - "Menuiserie X" + type="plombier"            → false ❌ (mismatch)
+ *  - "Le Pain Doré" + type="boulangerie"         → true  ✅ (cohérent)
+ *  - "Chez Jean" + type="restaurant"             → true  ✅ (nom neutre, on fait confiance)
+ */
+export function isBusinessTypeCoherent(name: string, businessType: string): boolean {
+  const detected = detectBusinessFromName(name);
+  if (!detected) return true; // nom neutre → on fait confiance au type Google
+
+  // Équivalences acceptées (boulangerie-pâtisserie est OK pour les deux)
+  const EQUIVALENT: Record<string, string[]> = {
+    boulangerie: ["patisserie", "boulangerie"],
+    patisserie:  ["patisserie", "boulangerie"],
+    restaurant:  ["restaurant", "cafe", "glacier"],
+    cafe:        ["cafe", "restaurant"],
+    institut:    ["institut", "coiffeur"],
+    coiffeur:    ["coiffeur", "institut"],
   };
-  const badWords = MISMATCH[businessType] || [];
-  return !badWords.some(w => n.includes(w));
+
+  const accepted = EQUIVALENT[businessType] || [businessType];
+  return accepted.includes(detected);
 }
 
 if (typeof globalThis.setInterval === "function") {
