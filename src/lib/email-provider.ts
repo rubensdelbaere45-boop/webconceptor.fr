@@ -256,15 +256,18 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   else if (provider === "listmonk") result = await sendViaListmonk(params);
   else                              result = await sendViaBrevo(params);
 
-  // Failover en cascade : SMTP > Resend
-  if (!result.ok && provider !== "smtp" && hasSmtpFallback) {
-    console.warn(`[email-provider] ${result.provider} a échoué (${result.error?.slice(0, 80)}), failover SMTP`);
-    const fallback = await sendViaSmtp(params);
-    if (fallback.ok) return fallback;
-  }
+  // Failover en cascade : Resend (déjà prêt, gratuit 3000/mois) → SMTP (illimité)
+  // 1️⃣ Si le provider principal échoue → Resend tente
   if (!result.ok && provider !== "resend" && hasResendFallback) {
-    console.warn(`[email-provider] ${result.provider} a échoué (${result.error?.slice(0, 80)}), failover Resend`);
+    console.warn(`[email-provider] ${result.provider} échoué (${result.error?.slice(0, 80)}), failover #1 Resend`);
     const fallback = await sendViaResend(params);
+    if (fallback.ok) return fallback;
+    result = fallback; // garde l'erreur du dernier essai pour l'étape suivante
+  }
+  // 2️⃣ Si Resend a aussi échoué (ou n'est pas dispo) → SMTP en dernier recours
+  if (!result.ok && provider !== "smtp" && hasSmtpFallback) {
+    console.warn(`[email-provider] ${result.provider} échoué (${result.error?.slice(0, 80)}), failover #2 SMTP`);
+    const fallback = await sendViaSmtp(params);
     if (fallback.ok) return fallback;
   }
   return result;
