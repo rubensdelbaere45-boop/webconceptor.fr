@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { safeCompare } from "@/lib/security";
+import { requireAdminGuard } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    POST /api/admin/send-follow-up
@@ -30,10 +30,10 @@ function getSupabaseAdmin() {
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 export async function POST(req: NextRequest) {
-  const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
-    return NextResponse.json({ error: "Non autorise" }, { status: 401 });
-  }
+  // Auth + rate-limit : max 20 follow-ups manuels / min
+  const guard = requireAdminGuard(req, { limit: 20, windowSec: 60, routeKey: "send-follow-up" });
+  if (guard) return guard;
+  const adminKey = req.headers.get("x-admin-key") || ""; // pour propagation aval
 
   let body: { prospect_id?: string; email?: string };
   try {

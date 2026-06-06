@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { safeCompare } from "@/lib/security";
+import { requireAdminGuard } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    POST /api/admin/test-sms
@@ -29,15 +29,13 @@ function gsmSafe(s: string): string {
   return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E\n\r]/g, "");
 }
 
-// KILL SWITCH SMS — cohérent avec hot-lead-sms et sms-reminders.
-// Remettre à false après validation ARCEP du sender alphanumérique.
-const SMS_DISABLED = true;
+// KILL SWITCH SMS — contrôlable via env (cohérent avec autres routes SMS)
+const SMS_DISABLED = process.env.SMS_DISABLED === "true";
 
 async function handler(req: NextRequest) {
-  const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
-    return NextResponse.json({ error: "Non autorise" }, { status: 401 });
-  }
+  // Auth + rate-limit : max 10 tests SMS / min (évite gaspillage crédits)
+  const guard = requireAdminGuard(req, { limit: 10, windowSec: 60, routeKey: "test-sms" });
+  if (guard) return guard;
 
   if (SMS_DISABLED) {
     return NextResponse.json({

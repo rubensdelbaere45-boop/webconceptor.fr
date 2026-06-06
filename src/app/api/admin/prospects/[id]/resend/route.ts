@@ -1,9 +1,15 @@
 // POST /api/admin/prospects/[id]/resend — relance email à 1 prospect
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdminGuard } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Auth + rate-limit (était GROS TROU : aucune auth, attaquant pouvait harceler
+  // n'importe quel prospect en hitant POST /api/admin/prospects/[id]/resend)
+  const guard = requireAdminGuard(req, { limit: 20, windowSec: 60, routeKey: "resend" });
+  if (guard) return guard;
+
   const { id } = await params;
   if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });
 
