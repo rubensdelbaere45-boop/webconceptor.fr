@@ -29,14 +29,23 @@ export interface LlmCallOpts {
 
 type Provider = "gemini" | "openrouter" | "mistral" | "anthropic";
 
+/** Récupère la clé OpenRouter quelle que soit la variable env utilisée par Tom. */
+function getOpenRouterKey(): string | undefined {
+  return (
+    process.env.OPENROUTER_API_KEY_KIMI ||   // ← variable nommée par Tom sur Vercel
+    process.env.OPENROUTER_API_KEY ||
+    process.env.OPENROUTER_KEY
+  );
+}
+
 function availableProviders(): Provider[] {
   // ORDRE PRIORITAIRE :
-  //  1. OpenRouter Kimi K2 (Moonshot) — contexte 1M, excellent FR, payant léger
+  //  1. OpenRouter Kimi K2 (Moonshot) — contexte 1M, excellent FR
   //  2. Anthropic Claude (premium)
   //  3. Gemini Flash (gratuit)
   //  4. Mistral (free tier)
   const list: Provider[] = [];
-  if (process.env.OPENROUTER_API_KEY) list.push("openrouter");
+  if (getOpenRouterKey()) list.push("openrouter");
   if (process.env.ANTHROPIC_API_KEY) list.push("anthropic");
   if (process.env.GEMINI_API_KEY) list.push("gemini");
   if (process.env.MISTRAL_API_KEY) list.push("mistral");
@@ -109,7 +118,7 @@ async function callGemini(opts: LlmCallOpts): Promise<string> {
 /* ── OpenRouter (modèles gratuits) ───────────────────── */
 
 async function callOpenRouter(opts: LlmCallOpts): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY!;
+  const apiKey = getOpenRouterKey()!;
   // Kimi K2 (Moonshot AI) par défaut : 1M tokens contexte, excellent FR,
   // ~0.15$ / 1M tokens input — meilleur ratio prix/qualité pour livres longs.
   // Override possible via OPENROUTER_MODEL.

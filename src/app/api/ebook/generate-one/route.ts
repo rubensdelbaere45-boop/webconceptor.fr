@@ -51,11 +51,17 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { /* opt */ }
 
   const emailTo = process.env.EBOOK_EMAIL_TO || "ru.delbaere@gmail.com";
-  const hasLlm = !!(process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.MISTRAL_API_KEY || process.env.ANTHROPIC_API_KEY);
+  const hasLlm = !!(
+    process.env.OPENROUTER_API_KEY_KIMI ||
+    process.env.OPENROUTER_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    process.env.MISTRAL_API_KEY ||
+    process.env.ANTHROPIC_API_KEY
+  );
   if (!hasLlm) {
     return NextResponse.json({
       error: "Aucune clé LLM configurée",
-      hint: "Crée une clé GEMINI gratuite sur https://aistudio.google.com/app/apikey (30s) et set GEMINI_API_KEY sur Vercel.",
+      hint: "Set OPENROUTER_API_KEY_KIMI ou GEMINI_API_KEY sur Vercel.",
     }, { status: 503 });
   }
 

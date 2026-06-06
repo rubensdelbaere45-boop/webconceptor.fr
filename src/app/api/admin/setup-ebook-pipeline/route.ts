@@ -74,12 +74,13 @@ export async function POST(req: NextRequest) {
     report.push({ step: "supabase", ok: false, detail: err instanceof Error ? err.message : "unknown" });
   }
 
-  // 3) LLM disponible
+  // 3) LLM disponible (reconnait OPENROUTER_API_KEY_KIMI = nom utilisé par Tom)
+  const hasOpenRouter = !!(process.env.OPENROUTER_API_KEY_KIMI || process.env.OPENROUTER_API_KEY);
   const llmProviders = [
-    process.env.GEMINI_API_KEY && "Gemini (gratuit)",
-    process.env.OPENROUTER_API_KEY && "OpenRouter (gratuit)",
-    process.env.MISTRAL_API_KEY && "Mistral",
+    hasOpenRouter && "OpenRouter Kimi K2",
     process.env.ANTHROPIC_API_KEY && "Anthropic Claude",
+    process.env.GEMINI_API_KEY && "Gemini (gratuit)",
+    process.env.MISTRAL_API_KEY && "Mistral",
   ].filter(Boolean);
   if (llmProviders.length === 0) {
     report.push({
