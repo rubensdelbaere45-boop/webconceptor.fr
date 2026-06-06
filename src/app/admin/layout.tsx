@@ -15,7 +15,7 @@ import { usePathname } from 'next/navigation';
 import './admin.css'; // tokens + classes utilitaires du handoff
 import {
   LayoutDashboard, Users, ShoppingBag, Settings,
-  Search, Bell, RefreshCw, Workflow, ExternalLink, Video,
+  Search, Bell, RefreshCw, Workflow, ExternalLink, Video, BookOpen,
 } from 'lucide-react'; // ou vos propres SVG
 
 // ─── Données nav ────────────────────────────────────────────
@@ -24,6 +24,7 @@ const NAV = [
   { href: '/admin/prospects', label: 'Prospects',  icon: Users,           section: 'pilotage' },
   { href: '/admin/commandes', label: 'Commandes',  icon: ShoppingBag,     section: 'pilotage' },
   { href: '/admin/tiktok',    label: 'TikTok',     icon: Video,           section: 'pilotage' },
+  { href: '/admin/ebooks',    label: 'E-books KDP',icon: BookOpen,        section: 'pilotage' },
   { href: '/admin/settings',  label: 'Settings',   icon: Settings,        section: 'systeme'  },
   {
     href: 'https://n8n-production-3b6a.up.railway.app',

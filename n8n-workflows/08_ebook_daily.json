@@ -1,0 +1,93 @@
+{
+  "name": "08 — E-books KDP quotidiens (2 livres / 6h Paris)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "eb-sched-6h",
+      "name": "Schedule 6h Paris",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/ebook/generate-daily?slot=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "eb-http-slot1",
+      "name": "E-book #1 (histoire)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "eb-wait",
+      "name": "Pause 30s entre les 2 livres",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/ebook/generate-daily?slot=2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "eb-http-slot2",
+      "name": "E-book #2 (actualité)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=📚 *2 e-books générés ce matin*\n\n*Livre 1 (histoire) :* {{ $('E-book #1 (histoire)').item.json.title || 'erreur' }}\n*Prix :* {{ $('E-book #1 (histoire)').item.json.price_eur }}€ • {{ $('E-book #1 (histoire)').item.json.pages }}p • Email: {{ $('E-book #1 (histoire)').item.json.email_sent ? '✅' : '❌' }}\n\n*Livre 2 (actualité) :* {{ $json.title || 'erreur' }}\n*Prix :* {{ $json.price_eur }}€ • {{ $json.pages }}p • Email: {{ $json.email_sent ? '✅' : '❌' }}\n\n🎯 Objectif : 200€/mois\nVérifie tes mails et publie sur KDP.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "eb-tg",
+      "name": "Telegram résumé",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 300],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule 6h Paris":               { "main": [[{ "node": "E-book #1 (histoire)", "type": "main", "index": 0 }]] },
+    "E-book #1 (histoire)":            { "main": [[{ "node": "Pause 30s entre les 2 livres", "type": "main", "index": 0 }]] },
+    "Pause 30s entre les 2 livres":    { "main": [[{ "node": "E-book #2 (actualité)", "type": "main", "index": 0 }]] },
+    "E-book #2 (actualité)":           { "main": [[{ "node": "Telegram résumé", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
