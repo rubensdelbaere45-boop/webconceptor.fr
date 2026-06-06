@@ -57,10 +57,11 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
       },
       body: JSON.stringify({
         // Expéditeur alphanumérique (max 11 chars sur Brevo FR).
-        // ON NE MET PAS LE VRAI NUMÉRO pour préserver la réputation du mobile
-        // perso de Rubens : si un destinataire signale l'SMS comme spam, c'est
-        // l'ID "WebConcept" qui prend, pas son 06.
-        sender: "WebConcept",
+        // "WebConceptor" fait 12 chars → impossible. Max compact = "WebConcept".
+        // ⚠️ DOIT être validé sur le compte Brevo (Settings > Senders > SMS),
+        // sinon Brevo fallback sur "BatiPilote" (sender générique par défaut).
+        // Override possible via env SMS_SENDER si besoin.
+        sender: (process.env.SMS_SENDER || "WebConcept").slice(0, 11),
         recipient: to,
         content,
         type: "transactional",
@@ -81,10 +82,12 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
   }
 }
 
-// KILL SWITCH SMS — voir hot-lead-sms pour contexte (sender "WebConcept"
-// pas validé ARCEP → SMS partaient sous "BatiPilote"). Remettre à false
-// uniquement après validation ARCEP du sender chez Brevo.
-const SMS_DISABLED = true;
+// KILL SWITCH SMS — contrôlable via env SMS_DISABLED.
+// Mettre SMS_DISABLED=true sur Vercel pour tout couper en urgence
+// (ex. si on découvre que ça part encore sous "BatiPilote").
+// Défaut : ACTIVÉ. Tom doit avoir validé "WebConcept" comme sender SMS
+// chez Brevo (Settings > Senders > SMS) — sinon Brevo fallback "BatiPilote".
+const SMS_DISABLED = process.env.SMS_DISABLED === "true";
 
 async function handler(req: NextRequest) {
   // Auth : accepte admin-key OU cron-secret
@@ -120,12 +123,17 @@ async function handler(req: NextRequest) {
   // Ceil max 30 SMS par run pour protéger les crédits (et éviter spam)
   const MAX_SMS_PER_RUN = 30;
 
-  // opened_at >= il y a 2 jours (48h)
-  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+  // opened_at >= il y a 20h ET <= il y a 32h (~ J+1)
+  // → Tom veut un SMS le LENDEMAIN de l'ouverture de la maquette,
+  //   pas 2 jours après. Fenêtre 20-32h pour attraper aussi ceux
+  //   manqués si le cron ne tourne pas exactement à H+24.
+  const now = Date.now();
+  const minAge = new Date(now - 20 * 60 * 60 * 1000).toISOString(); // ≤ 20h
+  const maxAge = new Date(now - 32 * 60 * 60 * 1000).toISOString(); // ≥ 32h
 
   // Prospects éligibles :
   // - opened_at IS NOT NULL (il a ouvert la maquette)
-  // - opened_at < now() - 2 days
+  // - opened_at entre J-32h et J-20h (≈ lendemain)
   // - sms_reminder_sent_at IS NULL (jamais relancé)
   // - phone IS NOT NULL
   // - status IN ('opened', 'sent')  — pas 'converted' (déjà payé) ni 'replied' (déjà répondu)
@@ -136,7 +144,8 @@ async function handler(req: NextRequest) {
     .is("sms_reminder_sent_at", null)
     .not("phone", "is", null)
     .in("status", ["opened", "sent"])
-    .lte("opened_at", twoDaysAgo)
+    .lte("opened_at", minAge)
+    .gte("opened_at", maxAge)
     .limit(MAX_SMS_PER_RUN);
 
   if (findErr) {

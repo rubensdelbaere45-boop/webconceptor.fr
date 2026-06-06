@@ -52,7 +52,10 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: "WebConcept",
+        // ⚠️ Doit être validé chez Brevo (Settings > Senders > SMS), sinon
+        // Brevo fallback "BatiPilote". Override possible via env SMS_SENDER.
+        // "WebConceptor" = 12 chars > limite 11 → forcément "WebConcept".
+        sender: (process.env.SMS_SENDER || "WebConcept").slice(0, 11),
         recipient: to,
         content,
         type: "transactional",
@@ -68,11 +71,10 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
   }
 }
 
-// KILL SWITCH SMS — mis à true par Rubens le 2026-04-23 suite à un problème
-// de sender (SMS partent sous "BatiPilote" au lieu de "WebConcept" car le
-// sender alphanumérique WebConcept n'est pas validé ARCEP sur le compte Brevo).
-// Remettre à false UNIQUEMENT après validation ARCEP côté Brevo.
-const SMS_DISABLED = true;
+// KILL SWITCH SMS — contrôlable via env SMS_DISABLED (défaut: ACTIF).
+// Mettre SMS_DISABLED=true sur Vercel pour tout couper en urgence.
+// Tom a validé "WebConcept" comme sender SMS chez Brevo le 2026-06-06.
+const SMS_DISABLED = process.env.SMS_DISABLED === "true";
 
 async function handler(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
