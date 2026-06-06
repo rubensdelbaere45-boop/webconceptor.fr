@@ -62,44 +62,26 @@ async function handler(req: NextRequest) {
   const e164 = toE164(to);
   if (!e164) return NextResponse.json({ error: "Numéro invalide, attendu format 06XX ou +336XX (mobile uniquement)" }, { status: 400 });
 
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "BREVO_API_KEY manquante côté serveur" }, { status: 500 });
-
-  try {
-    const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
-      method: "POST",
-      headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({
-        sender: "WebConcept",
-        recipient: e164,
-        content: gsmSafe(content).slice(0, 160),
-        type: "transactional",
-        unicodeEnabled: false,
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return NextResponse.json({
-        success: false,
-        error: data?.message || `HTTP ${res.status}`,
-        httpStatus: res.status,
-        detail: data,
-      }, { status: 502 });
-    }
-    return NextResponse.json({
-      success: true,
-      to: e164,
-      content: gsmSafe(content).slice(0, 160),
-      remaining_credits: typeof data?.remainingCredits === "number" ? data.remainingCredits : undefined,
-      brevo: data,
-    });
-  } catch (err) {
+  // Cascade OVHcloud → Brevo (voir src/lib/sms-provider.ts)
+  const { sendSms, getSmsProviderStatus } = await import("@/lib/sms-provider");
+  const safeContent = gsmSafe(content).slice(0, 160);
+  const r = await sendSms({ to: e164, content: safeContent });
+  if (!r.ok) {
     return NextResponse.json({
       success: false,
-      error: err instanceof Error ? err.message : "network error",
-    }, { status: 500 });
+      provider_used: r.provider,
+      error: r.error,
+      provider_status: getSmsProviderStatus(),
+    }, { status: 502 });
   }
+  return NextResponse.json({
+      success: true,
+      provider_used: r.provider,
+      sender_used: r.sender_used,
+      to: e164,
+      content: safeContent,
+      remaining_credits: r.credits_remaining,
+  });
 }
 
 export async function GET(req: NextRequest) { return handler(req); }

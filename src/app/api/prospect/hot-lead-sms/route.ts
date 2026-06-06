@@ -44,31 +44,12 @@ function buildHotLeadSms(prospectName: string, mockupUrl: string): string {
   return `Bonjour, Tom de WebConceptor. J'ai vu votre visite sur la maquette ${name}. Offre flash 199 EUR (-47%) expire dans 24h: ${mockupUrl}. Stop: STOP`.slice(0, 160);
 }
 
-async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean; credits?: number; error?: string }> {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) return { ok: false, error: "BREVO_API_KEY manquante" };
-  try {
-    const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
-      method: "POST",
-      headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({
-        // ⚠️ Doit être validé chez Brevo (Settings > Senders > SMS), sinon
-        // Brevo fallback "BatiPilote". Override possible via env SMS_SENDER.
-        // "WebConceptor" = 12 chars > limite 11 → forcément "WebConcept".
-        sender: (process.env.SMS_SENDER || "WebConcept").slice(0, 11),
-        recipient: to,
-        content,
-        type: "transactional",
-        unicodeEnabled: false,
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, error: data?.message || `HTTP ${res.status}` };
-    return { ok: true, credits: typeof data?.remainingCredits === "number" ? data.remainingCredits : undefined };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "network error" };
-  }
+// ─── SMS via cascade OVHcloud → Brevo (voir src/lib/sms-provider.ts) ───
+import { sendSms as cascadeSendSms } from "@/lib/sms-provider";
+
+async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean; credits?: number; error?: string; provider?: string }> {
+  const r = await cascadeSendSms({ to, content });
+  return { ok: r.ok, credits: r.credits_remaining, error: r.error, provider: r.provider };
 }
 
 // KILL SWITCH SMS — contrôlable via env SMS_DISABLED (défaut: ACTIF).
