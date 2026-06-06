@@ -119,8 +119,8 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  // Couvre-feu 9h-19h Paris — pas d'emails le soir (mauvaise délivrabilité)
-  if (!isWithinSendingHours(9, 19)) {
+  // Couvre-feu 5h-19h Paris — artisans se lèvent tôt, 1er email lu = arrivé à 5h
+  if (!isWithinSendingHours(5, 19)) {
     return NextResponse.json({ success: true, processed: 0, skipped_curfew: true });
   }
 

@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Pas d'envoi en dehors de la plage horaire (respect du prospect)
-  if (!isWithinSendingHours(9, 19)) {
+  if (!isWithinSendingHours(5, 19)) {
     return NextResponse.json({ success: true, processed: 0, skipped_curfew: true });
   }
 

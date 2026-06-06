@@ -85,7 +85,8 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  if (!isWithinSendingHours(9, 19)) {
+  // Couvre-feu 5h-19h (artisans se lèvent tôt)
+  if (!isWithinSendingHours(5, 19)) {
     return NextResponse.json({ success: true, processed: 0, skipped_curfew: true });
   }
 

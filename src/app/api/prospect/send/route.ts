@@ -944,7 +944,7 @@ async function handleSend(req: NextRequest) {
   // COUVRE-FEU : pas d'envoi d'email entre 19h et 9h (heure Paris)
   // Sauf override explicite (prospect_id = envoi ciblé manuel par admin) ou dry_run
   const override = Boolean(raw.force) || prospect_id !== null || prospect_slug !== null || dry_run;
-  if (!override && !isWithinSendingHours(9, 19)) {
+  if (!override && !isWithinSendingHours(5, 19)) {
     return NextResponse.json({
       success: true,
       processed: 0,

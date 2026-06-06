@@ -6,10 +6,15 @@ import { timingSafeEqual } from "node:crypto";
 
 /**
  * Renvoie true si l'heure actuelle (Europe/Paris) est dans la fenêtre
- * d'envoi autorisée [startHour, endHour) — 9h00 à 18h59 par défaut.
- * Utilisé pour ne pas spammer les patrons d'établissement en soirée/nuit.
+ * d'envoi autorisée [startHour, endHour) — 5h00 à 18h59 par défaut.
+ *
+ * Pourquoi 5h ? Les artisans (plombiers, boulangers, restaurateurs) se
+ * lèvent tôt — 5h-6h. Le 1er email lu = celui qui arrive en haut de la
+ * boîte à 5h. Cible ouverte = meilleure conversion.
+ *
+ * Utilisé pour ne pas spammer en soirée/nuit (19h+).
  */
-export function isWithinSendingHours(startHour = 9, endHour = 19): boolean {
+export function isWithinSendingHours(startHour = 5, endHour = 19): boolean {
   const hourStr = new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris",
     hour: "2-digit",

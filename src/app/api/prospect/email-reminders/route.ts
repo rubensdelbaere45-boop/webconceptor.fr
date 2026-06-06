@@ -111,8 +111,8 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  // COUVRE-FEU 9h-19h (heure Paris)
-  if (!isWithinSendingHours(9, 19)) {
+  // COUVRE-FEU 5h-19h (heure Paris) — les artisans se lèvent tôt
+  if (!isWithinSendingHours(5, 19)) {
     return NextResponse.json({
       success: true,
       processed: 0,
