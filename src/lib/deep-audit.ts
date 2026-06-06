@@ -601,7 +601,7 @@ function buildNoSiteAudit(opts: DeepAuditOptions, summary = "Aucun site web actu
     ],
     weaknesses: ["pas de présence web"],
     improvementBrief: {
-      heroConcept: "Hero avec photo Google Places + proposition de valeur claire + CTA contact",
+      heroConcept: "use_hero_with_photos_and_cta",
       featuredSections: ["hero", "services", "contact", "reviews"],
       featuresToAdd: [
         "formulaire de contact/devis simple",
@@ -646,7 +646,10 @@ function buildParseOnlyAudit(opts: DeepAuditOptions, parsed: ParsedPages): DeepA
     missingFeatures: missing,
     weaknesses,
     improvementBrief: {
-      heroConcept: "Hero moderne avec photos existantes + nom + ville",
+      // ⚠️ NE JAMAIS écrire de description ici qui ressemble à un sous-titre.
+      // Ce champ est un INDICATEUR INTERNE pour piloter la génération, pas un
+      // contenu destiné à apparaître dans la maquette.
+      heroConcept: "use_hero_with_photos",
       featuredSections: ["hero", "about", "services", "gallery", "contact"],
       featuresToAdd: missing,
       ctaStrategy: "Contact direct",

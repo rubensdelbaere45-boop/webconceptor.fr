@@ -262,7 +262,25 @@ function renderHero(ctx: RenderCtx): string {
   const city = prospect.city ? ` · ${escape(prospect.city)}` : "";
   const hero = photos[0] || "";
   const title = audit.contentToKeep.headingsH1H2?.[0] || prospect.name;
-  const subtitle = audit.improvementBrief.heroConcept || `${audit.brand.tone === "luxe" ? "L'excellence" : "La qualité"} artisanale${city}`;
+  // ⚠️ NE PAS utiliser audit.improvementBrief.heroConcept comme subtitle :
+  // c'est un INDICATEUR INTERNE de design (ex: "use_hero_with_photos"), pas
+  // un texte à afficher. Bug historique : ça affichait "Hero moderne avec
+  // photos existantes + nom + ville" sur les maquettes envoyées.
+  // On utilise une formulation propre basée sur le ton de marque détecté.
+  const cityText = prospect.city ? ` à ${escape(prospect.city)}` : "";
+  const subtitleByTone: Record<string, string> = {
+    luxe: `Une expérience d'exception${cityText}`,
+    chaleureux: `L'accueil convivial${cityText}`,
+    moderne: `Le savoir-faire contemporain${cityText}`,
+    artisanal: `Le savoir-faire artisanal${cityText}`,
+    pro: `Une équipe de professionnels${cityText}`,
+    simple: `À votre service${cityText}`,
+  };
+  let subtitle = subtitleByTone[audit.brand.tone] || `Votre adresse${cityText}`;
+  // Safety net ultime : si le subtitle contient encore une méta-instruction, on remet propre
+  if (/Hero\s+(?:moderne|élégant)|photos?\s+existantes?|\+\s*nom\s*\+\s*ville|use_hero_with_photos/i.test(subtitle)) {
+    subtitle = `Votre adresse${cityText}`;
+  }
   const toneLabels: Record<string, string> = { luxe: "Haut de gamme", chaleureux: "Convivial", moderne: "Contemporain", artisanal: "Artisanal", pro: "Professionnel", simple: "Essentiel" };
   const heroTag = toneLabels[audit.brand.tone] || audit.brand.tone;
 

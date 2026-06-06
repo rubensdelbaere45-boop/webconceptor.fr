@@ -89,6 +89,33 @@ const PLACEHOLDERS = [
   /\bxxx\b|\b___+\b/i,                      // placeholder XXX ou ____
 ];
 
+/**
+ * MÉTA-INSTRUCTIONS — patterns où l'IA a laissé un commentaire de design
+ * ou une description du contenu plutôt que le contenu lui-même.
+ *
+ * Exemple bug réel observé : "Hero moderne avec photos existantes + nom + ville"
+ * → c'est ce qu'on a DEMANDÉ à l'IA, pas ce qu'elle devait écrire.
+ *
+ * 🚫 La maquette est REJETÉE si UN de ces patterns est trouvé.
+ */
+const META_INSTRUCTIONS = [
+  /Hero (?:moderne|élégant|premium|sombre|cinematic|exclusif|épuré)\s+avec/i,
+  /avec\s+(?:photos?\s+existantes?|images?\s+du\s+site|nom\s+\+\s+ville)/i,
+  /\+\s*nom\s*\+\s*ville/i,
+  /(?:photos?|images?)\s+(?:scrap(?:p)?ées?|existantes?|du\s+commerce|du\s+site)/i,
+  /(?:remplacer|à\s+remplir|à\s+compléter|exemple\s+de\s+contenu)/i,
+  /\bvotre\s+(?:texte|contenu|description)\s+ici\b/i,
+  /\bpas\s+de\s+(?:texte|description|photo)\s+disponible\b/i,
+  /\baucune?\s+(?:donnée|info|photo)\s+(?:scrapée?|disponible)/i,
+  /\bn\/a\b|\bnot\s+available\b|\bundefined\b/i,
+  /\bmaquette\s+(?:générée|automatique|par\s+IA)/i,
+  /\bcontient\s+les?\s+(?:vraies?|réelles?)\s+(?:données|photos|coordonnées)/i,
+  /Section\s+(?:hero|services|témoignages|avis|contact)\s+avec/i,
+  /CTA\s+(?:button|principal|secondaire)/i,
+  /Image\s+de\s+fond\s+(?:floue|cinematic|hero)/i,
+  /\b(?:bgColor|primaryColor|accentColor)\b/,
+];
+
 const BROKEN_JS = [
   /Uncaught\s+(?:TypeError|ReferenceError|SyntaxError)/i,
   /window\.onerror/i,
@@ -128,10 +155,17 @@ export function strictGatekeeper(html: string, prospect: QAProspect): Gatekeeper
     }
   }
 
-  // 4) Pas de placeholder non remplacé
+  // 4a) Pas de placeholder non remplacé
   for (const pat of PLACEHOLDERS) {
     const m = html.match(pat);
     if (m) blocking.push(`Placeholder non remplacé : ${m[0].slice(0, 40)}`);
+  }
+
+  // 4b) MÉTA-INSTRUCTIONS — l'IA a laissé un texte de design au lieu du contenu
+  // (bug observé sur "Chez Stéphane" : "Hero moderne avec photos existantes + nom + ville")
+  for (const pat of META_INSTRUCTIONS) {
+    const m = html.match(pat);
+    if (m) blocking.push(`Méta-instruction visible : "${m[0].slice(0, 60)}"`);
   }
 
   // 5) Pas d'erreur JS visible dans le HTML
@@ -139,17 +173,34 @@ export function strictGatekeeper(html: string, prospect: QAProspect): Gatekeeper
     if (pat.test(html)) blocking.push(`Erreur JS détectée dans le HTML`);
   }
 
-  // 6) Au moins une image valide
-  const allSrcs = Array.from(html.matchAll(/<img[^>]*src\s*=\s*["']([^"']*)["']/gi)).map((m) => m[1]);
+  // 6) IMAGES — checks renforcés
+  // 6a) Toutes les <img> avec src
+  const allSrcs = Array.from(html.matchAll(/<img[^>]*\bsrc\s*=\s*["']([^"']*)["']/gi)).map((m) => m[1]);
   const validImages = allSrcs.filter(
-    (s) => !!s && !s.startsWith("data:image/svg") && !/^javascript:|^about:|^undefined$/.test(s)
+    (s) => !!s && s.length > 10 && !s.startsWith("data:image/svg") && !/^javascript:|^about:|^undefined$|^null$/i.test(s) && /^https?:\/\//i.test(s)
   );
-  if (validImages.length === 0) {
-    // Pas bloquant : un site peut être 100% CSS. Mais signaler.
-    warnings.push("Aucune image valide trouvée");
+  if (validImages.length === 0 && allSrcs.length > 0) {
+    blocking.push(`Toutes les images ont un src cassé`);
+  } else if (validImages.length === 0) {
+    warnings.push("Aucune image trouvée dans le HTML");
   }
   if (allSrcs.length > validImages.length) {
-    blocking.push(`${allSrcs.length - validImages.length} image(s) avec src vide ou cassée`);
+    blocking.push(`${allSrcs.length - validImages.length} image(s) avec src vide/data: vide/url cassée`);
+  }
+
+  // 6b) <img> sans attribut src du tout (bug "?" carré bleu)
+  const imgTags = html.match(/<img\b[^>]*>/gi) || [];
+  const imgsWithoutSrc = imgTags.filter((tag) => !/\bsrc\s*=\s*["'][^"']{5,}["']/i.test(tag)).length;
+  if (imgsWithoutSrc > 0) {
+    blocking.push(`${imgsWithoutSrc} <img> sans attribut src valide (cause des "?" cassés)`);
+  }
+
+  // 6c) src qui contiennent des mots placeholder évidents
+  const placeholderSrcs = allSrcs.filter((s) =>
+    /\bplaceholder\b|\bdefault[_-]?image\b|\bno[_-]?image\b|\bblank\.|\bspacer\.|exemple/i.test(s)
+  );
+  if (placeholderSrcs.length > 0) {
+    blocking.push(`${placeholderSrcs.length} image(s) avec URL placeholder ("default", "no-image", etc.)`);
   }
 
   // 7) Présence du nom du commerce

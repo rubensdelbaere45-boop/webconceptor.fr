@@ -63,12 +63,23 @@ function cleanScraped(raw: string): string {
 }
 
 /**
- * Vrai si la chaîne contient encore du Lorem Ipsum ou un placeholder résiduel.
+ * Vrai si la chaîne contient encore du Lorem Ipsum, un placeholder résiduel,
+ * OU une méta-instruction de design (bug observé "Hero moderne avec photos...").
  * Utilisé en post-validation pour rejeter les contenus pourris.
  */
 function containsForbiddenText(s: string): boolean {
   if (!s) return false;
-  return /lorem ipsum|dolor sit amet|consectetur adipiscing|\{\{[^}]+\}\}|\$\{[a-z_0-9]+\}|\[NOM\]|\[NAME\]|\[VILLE\]/i.test(s);
+  // Lorem Ipsum + placeholders
+  if (/lorem ipsum|dolor sit amet|consectetur adipiscing|\{\{[^}]+\}\}|\$\{[a-z_0-9]+\}|\[NOM\]|\[NAME\]|\[VILLE\]/i.test(s)) return true;
+  // Méta-instructions de design qui se retrouvent comme contenu (bug Stitch/OpenDesign)
+  if (/Hero\s+(?:moderne|élégant|premium|cinematic|sombre)\s+avec/i.test(s)) return true;
+  if (/avec\s+(?:photos?\s+existantes?|nom\s+\+\s+ville)/i.test(s)) return true;
+  if (/\+\s*nom\s*\+\s*ville/i.test(s)) return true;
+  if (/(?:photos?|images?)\s+(?:scrap(?:p)?ées?|du\s+commerce|du\s+site)/i.test(s)) return true;
+  if (/votre\s+(?:texte|contenu)\s+ici/i.test(s)) return true;
+  if (/pas\s+de\s+(?:texte|description)\s+disponible/i.test(s)) return true;
+  if (/\bN\/A\b|\bnot\s+available\b/i.test(s)) return true;
+  return false;
 }
 
 /**
@@ -80,9 +91,16 @@ export function buildContentFromProspect(p: Prospect): MockupContent {
   const label = BUSINESS_LABELS[bt] || BUSINESS_LABELS.restaurant;
   const city = p.city || "France";
 
-  // Hero
+  // Hero — TOUJOURS du contenu pur (jamais une instruction de design).
+  // Bug historique : certaines maquettes affichaient "Hero moderne avec photos
+  // existantes + nom + ville" → c'était le commentaire de prompt qui fuyait.
+  // Ici on force un sous-titre simple et lisible, basé sur les vraies données.
   const heroTitle = p.name;
-  const heroSubtitle = `Votre ${label.metier} à ${city}`;
+  let heroSubtitle = `Votre ${label.metier} à ${city}`;
+  // Safety net : si jamais quelque chose injecte une méta-instruction, on remet propre
+  if (containsForbiddenText(heroSubtitle)) {
+    heroSubtitle = `${label.metier.charAt(0).toUpperCase() + label.metier.slice(1)} à ${city}`;
+  }
 
   // About
   const aboutTitle = `Le savoir-faire d'un ${label.metier} passionné`;
