@@ -1,0 +1,51 @@
+{
+  "name": "10 — Signaux de détresse (pas de site OU note < 3.8) 2x/jour",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 11 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "sd-sched-1",
+      "name": "11h Paris (Lun-Ven)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 280]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 16 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "sd-sched-2",
+      "name": "16h Paris (Lun-Ven)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/prospect/distress-signals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 295000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "sd-http",
+      "name": "POST /api/prospect/distress-signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 340]
+    }
+  ],
+  "connections": {
+    "11h Paris (Lun-Ven)": { "main": [[{ "node": "POST /api/prospect/distress-signals", "type": "main", "index": 0 }]] },
+    "16h Paris (Lun-Ven)": { "main": [[{ "node": "POST /api/prospect/distress-signals", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

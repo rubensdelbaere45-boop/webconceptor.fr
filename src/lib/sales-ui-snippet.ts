@@ -143,6 +143,31 @@ body{padding-top:54px !important}
 .wc-sx-err{color:#c62828;font-size:12px;margin-top:8px;text-align:center;display:none;padding:8px;background:#ffebee;border-radius:6px}
 .wc-sx-err.show{display:block}
 
+/* ─── V2 MRR : toggle fréquence Mensuel/Annuel ───────────────── */
+.wc-sx-freq-toggle{display:flex;background:#f0f0f0;border-radius:100px;padding:3px;margin:14px 0;width:100%;max-width:280px;margin-left:auto;margin-right:auto}
+.wc-sx-freq-opt{flex:1;padding:7px 12px;border:none;background:transparent;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;letter-spacing:0.04em;color:#6b6b6b;text-transform:uppercase;transition:all 0.2s}
+.wc-sx-freq-opt.active{background:#0a0a0a;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+.wc-sx-freq-opt .wc-sx-freq-save{color:#16a34a;font-weight:800;margin-left:3px}
+.wc-sx-freq-opt.active .wc-sx-freq-save{color:#FFD700}
+
+/* ─── V2 MRR : addons récurrents ─────────────────────────────── */
+.wc-sx-addons{margin:14px 0 4px;display:flex;flex-direction:column;gap:7px}
+.wc-sx-addon{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:2px solid #eee;border-radius:10px;cursor:pointer;transition:all 0.15s;background:#fff}
+.wc-sx-addon:hover{border-color:#0066ff}
+.wc-sx-addon.checked{border-color:#0066ff;background:#f0f6ff}
+.wc-sx-addon input{margin-top:2px;flex-shrink:0;accent-color:#0066ff;width:16px;height:16px}
+.wc-sx-addon-body{flex:1;min-width:0}
+.wc-sx-addon-name{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:1px}
+.wc-sx-addon-desc{font-size:11px;color:#6b6b6b;line-height:1.4}
+.wc-sx-addon-price{font-size:12px;font-weight:800;color:#0066ff;white-space:nowrap;flex-shrink:0}
+.wc-sx-addon-old{font-size:10.5px;text-decoration:line-through;opacity:.55;font-weight:500;color:#6b6b6b;margin-right:3px}
+
+/* ─── V2 MRR : ligne récap récurrent ─────────────────────────── */
+#wcsx-price-summary .ps-line{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin:1px 0}
+#wcsx-price-summary .ps-line-sub{padding-left:10px;color:#525252;font-size:11.5px}
+#wcsx-price-summary .ps-rec-total{font-size:14px;font-weight:700;color:#0a0a0a;border-top:1px dashed #bfdbfe;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between}
+#wcsx-price-summary .ps-once-total{font-size:13px;font-weight:700;color:#0a0a0a;margin-top:6px;display:flex;justify-content:space-between}
+
 /* ─── Mobile-first overrides ────────────────────────────────── */
 @media(max-width:500px){
   .wc-sx-modal{padding:20px 16px 18px;border-radius:12px}
@@ -193,6 +218,13 @@ body{padding-top:54px !important}
     <!-- Étape 1 : choix du plan -->
     <div class="wc-sx-step active" id="wcsx-step1">
       <span class="wc-sx-label">Choisissez votre formule</span>
+
+      <!-- V2 : toggle Mensuel / Annuel -10% -->
+      <div class="wc-sx-freq-toggle" role="tablist" aria-label="Fréquence de facturation">
+        <button type="button" class="wc-sx-freq-opt active" data-freq="monthly" onclick="wcSxSetFreq('monthly')">Mensuel</button>
+        <button type="button" class="wc-sx-freq-opt" data-freq="yearly" onclick="wcSxSetFreq('yearly')">Annuel <span class="wc-sx-freq-save">-10%</span></button>
+      </div>
+
       <div class="wc-sx-plans">
         <div class="wc-sx-plan selected" data-plan="simple" onclick="wcSxSelectPlan('simple')">
           <div class="wc-sx-plan-title">${planLabel}</div>
@@ -206,15 +238,18 @@ body{padding-top:54px !important}
           </ul>
         </div>
         <div class="wc-sx-plan recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
-          <div class="wc-sx-plan-title">Sérénité ${isLuxury ? "Premium" : ""}</div>
-          <div class="wc-sx-plan-price"><span style="color:#16a34a">0&nbsp;€</span> <span style="font-size:11px;opacity:0.7;font-weight:500">aujourd'hui + ${subPrice}€/mois</span></div>
-          <div class="wc-sx-plan-sub"><strong style="color:#16a34a">Création offerte</strong> · tout compris, zéro prise de tête</div>
+          <div class="wc-sx-plan-title">Tout compris ${isLuxury ? "Luxury" : ""}</div>
+          <div class="wc-sx-plan-price">
+            <span id="wcsx-plan-sub-price">${basePriceNbsp}</span>
+            <span style="font-size:11px;opacity:0.7;font-weight:500"> + <span id="wcsx-plan-sub-rec">${subPrice}€/mois</span></span>
+          </div>
+          <div class="wc-sx-plan-sub"><strong style="color:#16a34a">Hébergement & maintenance inclus</strong> · sans engagement</div>
           <ul>
-            <li><strong>Création du site OFFERTE</strong> (au lieu de ${basePriceNbsp})</li>
-            <li><strong>Nom de domaine</strong> inclus</li>
-            <li>Hébergement + sauvegardes</li>
+            <li>Création du site sur-mesure (${basePriceNbsp} unique)</li>
+            <li><strong>Hébergement</strong> + SSL + sauvegardes</li>
             <li><strong>Modifications illimitées</strong></li>
             <li>Support prioritaire 24h</li>
+            <li>Résiliable à tout moment</li>
           </ul>
         </div>
       </div>
@@ -229,6 +264,10 @@ body{padding-top:54px !important}
     <div class="wc-sx-step" id="wcsx-step2">
       <button class="wc-sx-back" type="button" onclick="wcSxGoStep1()">← Changer de formule</button>
       <div class="wc-sx-plan-recap" id="wcsx-plan-recap"></div>
+
+      <!-- V2 : Options récurrentes (addons) -->
+      <span class="wc-sx-label">Options récurrentes (optionnel)</span>
+      <div class="wc-sx-addons" id="wcsx-addons"></div>
 
       <!-- Domaine -->
       <span class="wc-sx-label">Nom de domaine (optionnel)</span>
@@ -309,6 +348,103 @@ body{padding-top:54px !important}
     } catch(e){}
   }
 
+  /* ─── V2 MRR : Frequency & Addons state ──────────────────── */
+  var _freq = 'monthly'; // "monthly" | "yearly"
+  var _availableAddons = []; // ["universel", "restaurant", "artisan"]
+  var _selectedAddons = {}; // { universel: true, ... }
+  var _businessType = '';
+  var _prefilled = false;
+
+  var ADDON_DEFS = {
+    universel:  { name: 'Pack Visibilité (Google Ads + GMB)', desc: 'Campagne géolocalisée + fiche Google Business optimisée', monthlyEur: 30 },
+    restaurant: { name: 'Menu QR Code digital',               desc: 'Menu accessible via QR en salle, MAJ en temps réel',     monthlyEur: 15 },
+    artisan:    { name: 'Module de Devis en ligne 24/7',      desc: 'Vos clients génèrent un devis instantané sans appeler',  monthlyEur: 20 }
+  };
+
+  function availableAddonsForType(t) {
+    var list = ['universel'];
+    var lt = (t || '').toLowerCase();
+    if (/restaur|brasser|bistr|pizz|crêper|creperie|café|cafe|glacier|fast.?food|boulang|patisser/.test(lt)) list.push('restaurant');
+    if (/plomb|electrici|electric|menuis|serrur|carrele|peintr|couvr|maçon|macon|garage|carross|artisan|chauffag/.test(lt)) list.push('artisan');
+    return list;
+  }
+
+  function renderAddons() {
+    var container = document.getElementById('wcsx-addons');
+    if (!container) return;
+    container.innerHTML = '';
+    _availableAddons.forEach(function(key) {
+      var d = ADDON_DEFS[key];
+      var monthly = _freq === 'yearly' ? (d.monthlyEur * 0.9) : d.monthlyEur;
+      var monthlyStr = monthly.toFixed(2).replace('.', ',').replace(/,00$/, '');
+      var oldStr = _freq === 'yearly' ? '<span class="wc-sx-addon-old">' + d.monthlyEur + '€</span>' : '';
+      var label = document.createElement('label');
+      label.className = 'wc-sx-addon' + (_selectedAddons[key] ? ' checked' : '');
+      label.innerHTML =
+        '<input type="checkbox" data-addon="' + key + '"' + (_selectedAddons[key] ? ' checked' : '') + '>' +
+        '<div class="wc-sx-addon-body">' +
+          '<div class="wc-sx-addon-name">' + d.name + '</div>' +
+          '<div class="wc-sx-addon-desc">' + d.desc + '</div>' +
+        '</div>' +
+        '<div class="wc-sx-addon-price">' + oldStr + monthlyStr + '€<span style="font-weight:500;font-size:10.5px;opacity:0.7">/mo</span></div>';
+      var input = label.querySelector('input');
+      input.addEventListener('change', function(e) {
+        _selectedAddons[key] = e.target.checked;
+        label.classList.toggle('checked', e.target.checked);
+        wcSxUpdatePriceSummary();
+      });
+      container.appendChild(label);
+    });
+  }
+
+  window.wcSxSetFreq = function(f) {
+    _freq = f;
+    document.querySelectorAll('.wc-sx-freq-opt').forEach(function(el){
+      el.classList.toggle('active', el.getAttribute('data-freq') === f);
+    });
+    // Update prix mensuel affiché dans la card "tout compris"
+    var basePrice = ${isLuxury ? 75 : 50};
+    var perMonth = _freq === 'yearly' ? (basePrice * 0.9) : basePrice;
+    var pmStr = perMonth.toFixed(2).replace('.', ',').replace(/,00$/, '');
+    var recEl = document.getElementById('wcsx-plan-sub-rec');
+    if (recEl) recEl.textContent = pmStr + '€/mois' + (_freq === 'yearly' ? ' (annuel)' : '');
+    renderAddons();
+    wcSxUpdateRecap();
+    wcSxUpdatePriceSummary();
+  };
+
+  function prefillFromProspect() {
+    if (_prefilled) return;
+    _prefilled = true;
+    fetch('/api/prospect/details?slug=' + encodeURIComponent(SLUG))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.prefill) return;
+        var pf = d.prefill;
+        var setIfEmpty = function(id, val) {
+          var el = document.getElementById(id);
+          if (el && !el.value && val) el.value = val;
+        };
+        setIfEmpty('wcsx-prenom', pf.prenom);
+        setIfEmpty('wcsx-nom', pf.nom);
+        setIfEmpty('wcsx-email', pf.email);
+        setIfEmpty('wcsx-tel', pf.telephone);
+        setIfEmpty('wcsx-adresse', pf.adresse);
+        setIfEmpty('wcsx-cp', pf.cp);
+        setIfEmpty('wcsx-ville', pf.ville);
+        // Suggestion domaine
+        if (d.suggested_domain) {
+          var domEl = document.getElementById('wcsx-domain');
+          if (domEl && !domEl.value) domEl.value = d.suggested_domain;
+        }
+        // Addons disponibles selon métier
+        _businessType = d.business_type || '';
+        _availableAddons = availableAddonsForType(_businessType);
+        renderAddons();
+      })
+      .catch(function(){});
+  }
+
   /* ─── Open / Close ───────────────────────────────────────── */
   window.wcSxOpen = function() {
     var ov = document.getElementById('wc-sx-overlay');
@@ -317,6 +453,7 @@ body{padding-top:54px !important}
     document.body.style.overflow = 'hidden';
     wcSxRestore();
     wcSxUpdateRecap();
+    prefillFromProspect(); // V2 : auto-prefill depuis Supabase
     try {
       fetch('/api/prospect/modal-opened', {
         method: 'POST', headers: {'Content-Type':'application/json'},
@@ -390,11 +527,12 @@ body{padding-top:54px !important}
   function wcSxUpdateRecap() {
     var recap = document.getElementById('wcsx-plan-recap');
     if (!recap) return;
-    var plan = wcSxGetSelectedPlan();
-    var label = plan === 'serenite'
-      ? '<strong>Sérénité${isLuxury ? " Premium" : ""}</strong> — <span style="color:#16a34a;font-weight:700">0 €</span> aujourd\\'hui + ${subPrice}€/mois'
-      : '<strong>${planLabel}</strong> — ${basePriceNbsp}';
-    recap.innerHTML = 'Formule : ' + label;
+    var BASE_SETUP = ${isLuxury ? 860 : 320};
+    var BASE_HOST_MO = ${isLuxury ? 75 : 50};
+    var monthly = _freq === 'yearly' ? (BASE_HOST_MO * 0.9) : BASE_HOST_MO;
+    var freqLabel = _freq === 'yearly' ? 'annuel' : 'mensuel';
+    recap.innerHTML = 'Formule : <strong>${planLabel}</strong> — ' + BASE_SETUP + ' € + ' +
+      monthly.toFixed(2).replace('.', ',').replace(/,00$/, '') + ' €/mois (' + freqLabel + ')';
   }
 
   /* ─── Domain check ───────────────────────────────────────── */
@@ -449,40 +587,58 @@ body{padding-top:54px !important}
   function wcSxUpdatePriceSummary() {
     var el = document.getElementById('wcsx-price-summary');
     if (!el) return;
-    var plan = wcSxGetSelectedPlan();
     var promo = window.__WC_PROMO || null;
-    var isSerenite = plan === 'serenite';
+    var BASE_SETUP = ${isLuxury ? 860 : 320}; // setup fee
+    var BASE_HOST_MO = ${isLuxury ? 75 : 50}; // hébergement mensuel
+    var isYearly = _freq === 'yearly';
+
+    var fmt = function(n) { return n.toFixed(2).replace('.', ',') + ' €'; };
     var html = '';
 
-    if (isSerenite) {
-      // Plan Sérénité : création OFFERTE en échange de l'abonnement
-      html += '<div style="color:#16a34a;font-weight:700;margin-bottom:6px">🎁 Création OFFERTE avec l\\'abonnement Sérénité</div>';
-      html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong style="color:#16a34a">0,00 €</strong></div>';
-      var totalS = 0;
-      if (_domainVerified) {
-        var domEurosS = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
-        totalS = _domainVerified.priceCents / 100;
-        html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEurosS + ' €</strong></div>';
-      }
-      html += '<div class="ps-total">Aujourd\\'hui : ' + totalS.toFixed(2).replace('.',',') + ' €</div>';
-      html += '<div style="font-size:12px;color:#6b6b6b;margin-top:4px">Puis ' + ${subPrice} + ' €/mois — sans engagement, résiliable à tout moment.</div>';
+    // ── Ligne 1 : setup site (one-time) ──
+    var setup = promo ? promo.price : BASE_SETUP;
+    html += '<div class="ps-line"><span>Création du site</span>';
+    if (promo) {
+      html += '<span><span style="text-decoration:line-through;opacity:.5">' + fmt(BASE_SETUP) + '</span> <strong>' + fmt(setup) + '</strong></span></div>';
     } else {
-      // Plan Simple : 320€ one-shot, sans abonnement
-      var basePrice = promo ? promo.price : 320;
-      if (promo) {
-        html += '<div style="color:#e53e3e;font-weight:700">🎁 Réduction -' + promo.percent + '% appliquée</div>';
-        html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong>' + basePrice.toFixed(2).replace('.',',') + ' €</strong></div>';
-      } else {
-        html += '<div>Création du site : <strong>320,00 €</strong></div>';
-      }
-      var total = basePrice;
-      if (_domainVerified) {
-        var domEuros = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
-        total = basePrice + _domainVerified.priceCents / 100;
-        html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEuros + ' €</strong></div>';
-      }
-      html += '<div class="ps-total">Total : ' + total.toFixed(2).replace('.',',') + ' €</div>';
+      html += '<span><strong>' + fmt(setup) + '</strong></span></div>';
     }
+
+    // ── Lignes récurrentes ──
+    var recMonthly = isYearly ? (BASE_HOST_MO * 0.9) : BASE_HOST_MO;
+    html += '<div class="ps-line"><span>Hébergement ' + (isYearly ? 'annuel -10%' : 'mensuel') + '</span>';
+    html += '<span><strong>' + recMonthly.toFixed(2).replace('.', ',') + ' €/mois</strong></span></div>';
+
+    var totalRec = recMonthly;
+    Object.keys(_selectedAddons).forEach(function(k) {
+      if (!_selectedAddons[k]) return;
+      var d = ADDON_DEFS[k];
+      if (!d) return;
+      var m = isYearly ? (d.monthlyEur * 0.9) : d.monthlyEur;
+      totalRec += m;
+      html += '<div class="ps-line ps-line-sub"><span>+ ' + d.name + '</span>';
+      html += '<span>' + m.toFixed(2).replace('.', ',') + ' €/mois</span></div>';
+    });
+
+    // ── Domaine (one-time si fourni) ──
+    var oneTimeTotal = setup;
+    if (_domainVerified) {
+      var domE = _domainVerified.priceCents / 100;
+      oneTimeTotal += domE;
+      html += '<div class="ps-line"><span>Domaine ' + _domainVerified.name + _domainVerified.tld + '</span>';
+      html += '<span><strong>' + fmt(domE) + '</strong></span></div>';
+    }
+
+    // ── Totaux ──
+    html += '<div class="ps-once-total"><span>À payer aujourd\\'hui</span><span>' + fmt(oneTimeTotal) + '</span></div>';
+    if (isYearly) {
+      var yrly = totalRec * 12;
+      html += '<div class="ps-rec-total"><span>Puis ' + totalRec.toFixed(2).replace('.', ',') + ' €/mois</span><span>(' + yrly.toFixed(2).replace('.', ',') + ' €/an)</span></div>';
+      html += '<div style="font-size:11px;color:#16a34a;margin-top:3px;text-align:right;font-weight:600">Économie -10% vs mensuel</div>';
+    } else {
+      html += '<div class="ps-rec-total"><span>Puis ' + totalRec.toFixed(2).replace('.', ',') + ' €/mois</span><span></span></div>';
+    }
+
     el.innerHTML = html;
     el.classList.add('show');
   }
@@ -526,9 +682,13 @@ body{padding-top:54px !important}
     submit.disabled = true;
     submit.textContent = 'Redirection…';
 
+    // V2 : on collecte tier + frequency + addons
+    var selectedAddonKeys = Object.keys(_selectedAddons).filter(function(k){ return _selectedAddons[k]; });
     var payload = {
       prospect_slug: SLUG,
-      plan: plan,
+      tier: ${JSON.stringify(isLuxury ? "luxury" : "simple")},
+      frequency: _freq,
+      addons: selectedAddonKeys,
       promo_code: (window.__WC_PROMO && window.__WC_PROMO.code) || undefined,
       buyer: { prenom: prenom, nom: nom, email: email, telephone: tel, adresse: adresse, cp: cp, ville: ville },
     };

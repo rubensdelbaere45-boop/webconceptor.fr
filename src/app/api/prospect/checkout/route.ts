@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { rateLimit, getClientIp } from "@/lib/security";
+import {
+  SETUP_FEE_CENTS,
+  HOSTING_MONTHLY_CENTS,
+  ADDON_MONTHLY_CENTS,
+  ADDON_LABELS,
+  recurringStripeUnitCents,
+  type PlanTier,
+  type Frequency,
+  type AddonKey,
+} from "@/lib/checkout-pricing";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2026-03-25.dahlia",
@@ -15,23 +25,11 @@ function getSupabaseAdmin() {
 }
 
 /* ══════════════════════════════════════════
-   POST /api/prospect/checkout
-   Endpoint PUBLIC — appelé directement depuis le modal "Obtenir ce site"
-   de la maquette. Crée une Stripe Checkout Session avec les line items
-   adaptés au plan choisi, retourne l'URL de redirection.
-
-   Pas d'authentification (n'importe quel prospect peut payer).
-   Rate limit protège contre les abus.
-
-   Body :
-   {
-     prospect_slug: string,          // identifie le prospect/maquette
-     plan: "simple" | "serenite",   // plan choisi
-     domain?: { name, tld, priceCents },  // si serenite
-     buyer: { nom, email, telephone, adresse, ville, cp }
-   }
-
-   Retourne : { url: string }  // Stripe Checkout URL
+   POST /api/prospect/checkout — V2 MRR
+   ─ Site web (320€ Simple / 860€ Luxury) = setup fee one-time
+   ─ Hébergement de base = abonnement récurrent (mois ou année -10%)
+   ─ Upsells choisis = lignes récurrentes additionnelles
+   ─ Stripe mode "subscription" avec mix one-time + recurring
    ══════════════════════════════════════════ */
 
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -44,10 +42,11 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:3000",
 ]);
 
+const VALID_ADDONS: AddonKey[] = ["universel", "restaurant", "artisan"];
+
 export async function POST(req: NextRequest) {
-  // Rate limit : 5 tentatives / 10 min / IP (protection contre abus)
   const ip = getClientIp(req.headers);
-  const rl = rateLimit(`prospect-checkout:${ip}`, 20, 600); // 20 tentatives / 10 min
+  const rl = rateLimit(`prospect-checkout:${ip}`, 20, 600);
   if (!rl.ok) {
     return NextResponse.json(
       { error: `Trop de tentatives. Reessayez dans ${rl.retryAfter}s.` },
@@ -56,16 +55,30 @@ export async function POST(req: NextRequest) {
   }
 
   let raw: Record<string, unknown>;
-  try {
-    raw = await req.json();
-  } catch {
+  try { raw = await req.json(); } catch {
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   }
 
   const str = (v: unknown, max = 450): string => String(v ?? "").slice(0, max).trim();
 
   const prospect_slug = str(raw.prospect_slug, 100);
-  const plan = raw.plan === "serenite" ? "serenite" : "simple";
+
+  // ─── Nouveau format V2 ───
+  // tier : "simple" | "luxury"   (anciens noms : "simple" et "serenite" tolérés)
+  // frequency : "monthly" | "yearly"
+  // addons : ["universel", "restaurant", "artisan"]
+  let tier: PlanTier =
+    raw.tier === "luxury" || raw.plan === "luxury" ? "luxury" : "simple";
+  // rétrocompat : ancien plan "serenite" = simple + hosting (toujours le cas désormais)
+  if (raw.plan === "serenite") tier = tier === "luxury" ? "luxury" : "simple";
+
+  const frequency: Frequency = raw.frequency === "yearly" ? "yearly" : "monthly";
+
+  const rawAddons = Array.isArray(raw.addons) ? raw.addons : [];
+  const addons: AddonKey[] = rawAddons
+    .map((a) => String(a))
+    .filter((a): a is AddonKey => VALID_ADDONS.includes(a as AddonKey));
+
   const rawDomain = (raw.domain ?? null) as Record<string, unknown> | null;
   const rawBuyer = (raw.buyer ?? {}) as Record<string, unknown>;
   const promoCode = typeof raw.promo_code === "string" ? raw.promo_code.slice(0, 30).toUpperCase() : null;
@@ -75,7 +88,6 @@ export async function POST(req: NextRequest) {
   }
 
   const buyer = {
-    // Nouveaux champs séparés (indispensables pour l'API IONOS)
     prenom: str(rawBuyer.prenom, 60),
     nom: str(rawBuyer.nom, 60),
     email: str(rawBuyer.email, 200).toLowerCase(),
@@ -86,14 +98,12 @@ export async function POST(req: NextRequest) {
     entreprise: str(rawBuyer.entreprise, 120),
   };
 
-  // Rétro-compatibilité : si le formulaire envoie encore "nom" combiné, on split
   if (!buyer.prenom && buyer.nom.includes(" ")) {
     const parts = buyer.nom.trim().split(/\s+/);
     buyer.prenom = parts[0].slice(0, 60);
     buyer.nom = parts.slice(1).join(" ").slice(0, 60);
   }
 
-  // Adresse requise pour les deux plans (enregistrement domaine IONOS)
   if (!buyer.prenom || !buyer.nom || !buyer.email || !buyer.telephone) {
     return NextResponse.json({ error: "Prénom, nom, email et téléphone requis" }, { status: 400 });
   }
@@ -110,7 +120,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Code postal invalide" }, { status: 400 });
   }
 
-  // Validate domain if provided (both plans)
+  // Domaine
   let domainFull = "";
   let domainPriceCents = 0;
   if (rawDomain) {
@@ -142,19 +152,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cette maquette n'est pas finalisée" }, { status: 400 });
   }
 
-  // Origin allow-list (empêche qu'un attaquant forge le success_url)
   const reqOrigin = req.headers.get("origin") || "";
   const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
 
-  // Métadonnées communes aux deux plans
   const sharedMeta = {
-    source: "self_serve_mockup",
+    source: "self_serve_mockup_v2",
     prospect_id: prospect.id,
     prospect_slug: prospect.slug,
     prospect_name: prospect.name.slice(0, 200),
-    plan,
+    tier,
+    frequency,
+    addons: addons.join(","),
     domain: domainFull || "",
-    has_serenite: plan === "serenite" ? "true" : "false",
     buyer_prenom: buyer.prenom,
     buyer_nom: buyer.nom,
     buyer_nom_complet: `${buyer.prenom} ${buyer.nom}`.slice(0, 200),
@@ -169,120 +178,99 @@ export async function POST(req: NextRequest) {
   const successUrl = `${origin}/prospect/success?slug=${encodeURIComponent(prospect.slug)}&s={CHECKOUT_SESSION_ID}`;
   const cancelUrl  = `${origin}/prospects/${encodeURIComponent(prospect.slug)}`;
 
+  // ─── Construit les line items pour Stripe Checkout en mode subscription ───
+  // Stripe Checkout subscription accepte MIX one-time + recurring depuis 2023.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineItems: any[] = [];
+
+  const interval = frequency === "yearly" ? "year" : "month";
+
+  // 1) Setup fee site web (one-time)
+  lineItems.push({
+    price_data: {
+      currency: "eur",
+      product_data: {
+        name: tier === "luxury"
+          ? `Création Exclusive — ${prospect.name}`
+          : `Site web Simple — ${prospect.name}`,
+        description: tier === "luxury"
+          ? "Design exclusif sur-mesure, livraison 7 jours · frais de configuration uniques"
+          : "Création sur-mesure, livraison 5 jours · frais de configuration uniques",
+      },
+      unit_amount: SETUP_FEE_CENTS[tier],
+    },
+    quantity: 1,
+  });
+
+  // 2) Hébergement de base (récurrent)
+  lineItems.push({
+    price_data: {
+      currency: "eur",
+      product_data: {
+        name: `Hébergement ${tier === "luxury" ? "Luxury" : "Simple"} (${frequency === "yearly" ? "annuel" : "mensuel"})`,
+        description: tier === "luxury"
+          ? "Hébergement premium SSD, sauvegardes quotidiennes, SSL, modifications illimitées"
+          : "Hébergement SSD, sauvegardes hebdo, SSL, support 24h",
+      },
+      unit_amount: recurringStripeUnitCents(HOSTING_MONTHLY_CENTS[tier], frequency),
+      recurring: { interval: interval as "month" | "year" },
+    },
+    quantity: 1,
+  });
+
+  // 3) Addons (récurrents)
+  for (const a of addons) {
+    const lbl = ADDON_LABELS[a];
+    lineItems.push({
+      price_data: {
+        currency: "eur",
+        product_data: { name: `${lbl.name} (${frequency === "yearly" ? "annuel" : "mensuel"})`, description: lbl.description },
+        unit_amount: recurringStripeUnitCents(ADDON_MONTHLY_CENTS[a], frequency),
+        recurring: { interval: interval as "month" | "year" },
+      },
+      quantity: 1,
+    });
+  }
+
+  // 4) Domaine (one-time si fourni)
+  if (domainFull && domainPriceCents > 0) {
+    lineItems.push({
+      price_data: {
+        currency: "eur",
+        product_data: { name: `Nom de domaine ${domainFull}`, description: "Enregistrement pour 1 an" },
+        unit_amount: domainPriceCents,
+      },
+      quantity: 1,
+    });
+  }
+
   try {
-    let session: Stripe.Checkout.Session;
-
-    if (plan === "serenite") {
-      /* ══════════════════════════════════════════════════════════════════════
-         SÉRÉNITÉ → CRÉATION GRATUITE (0€ aujourd'hui)
-         ─ Le client souscrit à l'abonnement 50€/mois → la création est offerte
-         ─ Si pas de domaine demandé : mode "setup" (enregistre la carte, 0€)
-         ─ Si domaine demandé : mode "payment" avec uniquement le coût domaine
-         ─ Dans les 2 cas, la carte est sauvegardée pour facturer le mois 1
-           (le webhook crée l'abonnement 50€/mois après le checkout, trial 30j).
-         ─ Seule la carte est acceptée (nécessaire pour la récurrence).
-      ══════════════════════════════════════════════════════════════════════ */
-      if (domainFull && domainPriceCents > 0) {
-        // Avec domaine : on charge SEULEMENT le prix du domaine
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sereniteLineItems: any[] = [
-          {
-            price_data: {
-              currency: "eur",
-              product_data: {
-                name: `Domaine ${domainFull} (création de site OFFERTE)`,
-                description: "Site web sur-mesure · livraison 5 jours · puis 50 €/mois sans engagement",
-              },
-              unit_amount: domainPriceCents,
-            },
-            quantity: 1,
-          },
-        ];
-
-        session = await stripe.checkout.sessions.create({
-          mode: "payment",
-          payment_method_types: ["card"],
-          line_items: sereniteLineItems,
-          customer_email: buyer.email,
-          customer_creation: "always",
-          payment_intent_data: { setup_future_usage: "off_session" },
-          ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
-          success_url: successUrl,
-          cancel_url:  cancelUrl,
-          locale: "fr",
-          metadata: sharedMeta,
-        });
-      } else {
-        // Sans domaine : 0€ aujourd'hui → mode "setup" enregistre juste la carte
-        session = await stripe.checkout.sessions.create({
-          mode: "setup",
-          payment_method_types: ["card"],
-          customer_email: buyer.email,
-          customer_creation: "always",
-          success_url: successUrl,
-          cancel_url:  cancelUrl,
-          locale: "fr",
-          metadata: { ...sharedMeta, free_creation: "true" },
-        });
-      }
-    } else {
-      /* ══════════════════════════════════════════════════════════════════════
-         SIMPLE → mode: "payment" one-shot 320 €
-         Klarna + PayPal acceptés.
-      ══════════════════════════════════════════════════════════════════════ */
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const simpleLineItems: any[] = [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Site web WebConceptor — ${prospect.name}`,
-              description: "Création sur-mesure, livraison 5 jours ouvrables + 1 mois Sérénité offert",
-            },
-            unit_amount: 32000, // 320 €
-          },
-          quantity: 1,
-        },
-      ];
-      if (domainFull && domainPriceCents > 0) {
-        simpleLineItems.push({
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Domaine ${domainFull}`,
-              description: "Enregistrement pour 1 an",
-            },
-            unit_amount: domainPriceCents,
-          },
-          quantity: 1,
-        });
-      }
-      session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items: simpleLineItems,
-        customer_email: buyer.email,
-        customer_creation: "always",
-        ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
-        success_url: successUrl,
-        cancel_url:  cancelUrl,
-        locale: "fr",
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      customer_email: buyer.email,
+      ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
+      success_url: successUrl,
+      cancel_url:  cancelUrl,
+      locale: "fr",
+      metadata: sharedMeta,
+      subscription_data: {
+        description: `Abonnement WebConceptor ${tier} — ${frequency === "yearly" ? "annuel" : "mensuel"}`,
         metadata: sharedMeta,
-      });
-    }
+      },
+    });
 
-    // Log la tentative de paiement en DB (prospect → status="payment_initiated")
-    // On ne change pas "status" (il a un CHECK constraint) mais on log en notes.
     await supabase
       .from("prospects")
       .update({
-        notes: `Stripe session created ${new Date().toISOString()} — ${plan} — session ${session.id}`,
+        notes: `Stripe V2 session created ${new Date().toISOString()} — tier=${tier} freq=${frequency} addons=${addons.join("|")} — session ${session.id}`,
       })
       .eq("id", prospect.id);
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (err) {
-    console.error("[prospect/checkout] Stripe error:", err);
+    console.error("[prospect/checkout V2] Stripe error:", err);
     return NextResponse.json(
       { error: "Impossible de créer la session de paiement. Réessayez ou contactez contact@webconceptor.fr." },
       { status: 500 }
