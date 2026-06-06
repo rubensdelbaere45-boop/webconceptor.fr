@@ -52,10 +52,11 @@ async function sendBrevoSms(to: string, content: string): Promise<{ ok: boolean;
   return { ok: r.ok, credits: r.credits_remaining, error: r.error, provider: r.provider };
 }
 
-// KILL SWITCH SMS — contrôlable via env SMS_DISABLED (défaut: ACTIF).
-// Mettre SMS_DISABLED=true sur Vercel pour tout couper en urgence.
-// Tom a validé "WebConcept" comme sender SMS chez Brevo le 2026-06-06.
-const SMS_DISABLED = process.env.SMS_DISABLED === "true";
+// KILL SWITCH SMS — défaut DÉSACTIVÉ tant qu'OVH n'est pas configuré.
+// Brevo cassé (2026-06-06: 4.5 crédits/SMS, sender BatiPilote forcé).
+// SMS reprennent automatiquement dès que OVH_* env vars sont sur Vercel.
+import { getSmsProviderStatus as getSmsStatus } from "@/lib/sms-provider";
+const SMS_DISABLED = !getSmsStatus().ovh_configured;
 
 async function handler(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
