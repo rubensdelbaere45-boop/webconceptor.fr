@@ -207,9 +207,10 @@ body{padding-top:54px !important}
         </div>
         <div class="wc-sx-plan recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
           <div class="wc-sx-plan-title">Sérénité ${isLuxury ? "Premium" : ""}</div>
-          <div class="wc-sx-plan-price">${basePriceNbsp} <span style="font-size:10px;opacity:0.7;font-weight:400">+ ${subPrice}€/mois</span></div>
-          <div class="wc-sx-plan-sub">Tout compris, zéro prise de tête</div>
+          <div class="wc-sx-plan-price"><span style="color:#16a34a">0&nbsp;€</span> <span style="font-size:11px;opacity:0.7;font-weight:500">aujourd'hui + ${subPrice}€/mois</span></div>
+          <div class="wc-sx-plan-sub"><strong style="color:#16a34a">Création offerte</strong> · tout compris, zéro prise de tête</div>
           <ul>
+            <li><strong>Création du site OFFERTE</strong> (au lieu de ${basePriceNbsp})</li>
             <li><strong>Nom de domaine</strong> inclus</li>
             <li>Hébergement + sauvegardes</li>
             <li><strong>Modifications illimitées</strong></li>
@@ -391,7 +392,7 @@ body{padding-top:54px !important}
     if (!recap) return;
     var plan = wcSxGetSelectedPlan();
     var label = plan === 'serenite'
-      ? '<strong>Sérénité${isLuxury ? " Premium" : ""}</strong> — ${basePriceNbsp} + ${subPrice}€/mois'
+      ? '<strong>Sérénité${isLuxury ? " Premium" : ""}</strong> — <span style="color:#16a34a;font-weight:700">0 €</span> aujourd\\'hui + ${subPrice}€/mois'
       : '<strong>${planLabel}</strong> — ${basePriceNbsp}';
     recap.innerHTML = 'Formule : ' + label;
   }
@@ -448,22 +449,40 @@ body{padding-top:54px !important}
   function wcSxUpdatePriceSummary() {
     var el = document.getElementById('wcsx-price-summary');
     if (!el) return;
+    var plan = wcSxGetSelectedPlan();
     var promo = window.__WC_PROMO || null;
-    var basePrice = promo ? promo.price : 320;
+    var isSerenite = plan === 'serenite';
     var html = '';
-    if (promo) {
-      html += '<div style="color:#e53e3e;font-weight:700">🎁 Réduction -' + promo.percent + '% appliquée</div>';
-      html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong>' + basePrice.toFixed(2).replace('.',',') + ' €</strong></div>';
+
+    if (isSerenite) {
+      // Plan Sérénité : création OFFERTE en échange de l'abonnement
+      html += '<div style="color:#16a34a;font-weight:700;margin-bottom:6px">🎁 Création OFFERTE avec l\\'abonnement Sérénité</div>';
+      html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong style="color:#16a34a">0,00 €</strong></div>';
+      var totalS = 0;
+      if (_domainVerified) {
+        var domEurosS = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
+        totalS = _domainVerified.priceCents / 100;
+        html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEurosS + ' €</strong></div>';
+      }
+      html += '<div class="ps-total">Aujourd\\'hui : ' + totalS.toFixed(2).replace('.',',') + ' €</div>';
+      html += '<div style="font-size:12px;color:#6b6b6b;margin-top:4px">Puis ' + ${subPrice} + ' €/mois — sans engagement, résiliable à tout moment.</div>';
     } else {
-      html += '<div>Création du site : <strong>320,00 €</strong></div>';
+      // Plan Simple : 320€ one-shot, sans abonnement
+      var basePrice = promo ? promo.price : 320;
+      if (promo) {
+        html += '<div style="color:#e53e3e;font-weight:700">🎁 Réduction -' + promo.percent + '% appliquée</div>';
+        html += '<div>Création du site : <span style="text-decoration:line-through;opacity:.5">320,00 €</span> → <strong>' + basePrice.toFixed(2).replace('.',',') + ' €</strong></div>';
+      } else {
+        html += '<div>Création du site : <strong>320,00 €</strong></div>';
+      }
+      var total = basePrice;
+      if (_domainVerified) {
+        var domEuros = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
+        total = basePrice + _domainVerified.priceCents / 100;
+        html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEuros + ' €</strong></div>';
+      }
+      html += '<div class="ps-total">Total : ' + total.toFixed(2).replace('.',',') + ' €</div>';
     }
-    var total = basePrice;
-    if (_domainVerified) {
-      var domEuros = (_domainVerified.priceCents / 100).toFixed(2).replace('.',',');
-      total = basePrice + _domainVerified.priceCents / 100;
-      html += '<div>Domaine ' + _domainVerified.name + _domainVerified.tld + ' : <strong>' + domEuros + ' €</strong></div>';
-    }
-    html += '<div class="ps-total">Total : ' + total.toFixed(2).replace('.',',') + ' €</div>';
     el.innerHTML = html;
     el.classList.add('show');
   }

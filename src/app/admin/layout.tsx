@@ -15,7 +15,7 @@ import { usePathname } from 'next/navigation';
 import './admin.css'; // tokens + classes utilitaires du handoff
 import {
   LayoutDashboard, Users, ShoppingBag, Settings,
-  Search, Bell, RefreshCw,
+  Search, Bell, RefreshCw, Workflow, ExternalLink,
 } from 'lucide-react'; // ou vos propres SVG
 
 // ─── Données nav ────────────────────────────────────────────
@@ -24,6 +24,13 @@ const NAV = [
   { href: '/admin/prospects', label: 'Prospects',  icon: Users,           section: 'pilotage' },
   { href: '/admin/commandes', label: 'Commandes',  icon: ShoppingBag,     section: 'pilotage' },
   { href: '/admin/settings',  label: 'Settings',   icon: Settings,        section: 'systeme'  },
+  {
+    href: 'https://n8n-production-3b6a.up.railway.app',
+    label: 'N8N',
+    icon: Workflow,
+    section: 'systeme',
+    external: true,
+  },
 ];
 
 // ─── Types ──────────────────────────────────────────────────
@@ -73,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
           <NavLabel>Système</NavLabel>
           {NAV.filter(n => n.section === 'systeme').map(n => (
-            <NavItem key={n.href} href={n.href} Icon={n.icon} label={n.label} active={path.startsWith(n.href)} />
+            <NavItem key={n.href} href={n.href} Icon={n.icon} label={n.label} active={path.startsWith(n.href)} external={n.external} />
           ))}
 
           {/* Services mini-status */}
@@ -144,19 +151,20 @@ function NavLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavItem({ href, Icon, label, active }: {
-  href: string; Icon: React.ElementType; label: string; active: boolean;
+function NavItem({ href, Icon, label, active, external }: {
+  href: string; Icon: React.ElementType; label: string; active: boolean; external?: boolean;
 }) {
-  return (
-    <Link href={href} style={{
-      display: 'flex', alignItems: 'center', gap: 11,
-      padding: '9px 12px', borderRadius: 9,
-      color: active ? 'var(--txt)' : 'var(--txt-2)',
-      fontWeight: active ? 600 : 500, fontSize: 13.5,
-      background: active ? 'var(--card-2)' : 'transparent',
-      textDecoration: 'none', position: 'relative',
-      transition: 'background .15s, color .15s',
-    }}>
+  const style: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 11,
+    padding: '9px 12px', borderRadius: 9,
+    color: active ? 'var(--txt)' : 'var(--txt-2)',
+    fontWeight: active ? 600 : 500, fontSize: 13.5,
+    background: active ? 'var(--card-2)' : 'transparent',
+    textDecoration: 'none', position: 'relative',
+    transition: 'background .15s, color .15s',
+  };
+  const content = (
+    <>
       {active && (
         <span style={{
           position: 'absolute', left: -12, top: '50%', transform: 'translateY(-50%)',
@@ -164,9 +172,14 @@ function NavItem({ href, Icon, label, active }: {
         }} />
       )}
       <Icon size={18} />
-      {label}
-    </Link>
+      <span style={{ flex: 1 }}>{label}</span>
+      {external && <ExternalLink size={12} style={{ opacity: 0.5 }} />}
+    </>
   );
+  if (external) {
+    return <a href={href} target="_blank" rel="noopener noreferrer" style={style}>{content}</a>;
+  }
+  return <Link href={href} style={style}>{content}</Link>;
 }
 
 function ServiceDot({ status }: { status: Service['status'] }) {

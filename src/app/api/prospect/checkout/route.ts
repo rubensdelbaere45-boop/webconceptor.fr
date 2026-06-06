@@ -174,55 +174,57 @@ export async function POST(req: NextRequest) {
 
     if (plan === "serenite") {
       /* ══════════════════════════════════════════════════════════════════════
-         SÉRÉNITÉ → mode: "payment" + setup_future_usage: "off_session"
-         ─ Stripe Checkout n'accepte pas subscription_data.add_invoice_items
-         ─ On charge 320€ + domaine aujourd'hui en mode paiement unique
-         ─ La carte est sauvegardée via setup_future_usage:"off_session"
-         ─ Le webhook crée l'abonnement 50€/mois automatiquement après
-           paiement (trial 30 jours) avec la carte sauvegardée.
+         SÉRÉNITÉ → CRÉATION GRATUITE (0€ aujourd'hui)
+         ─ Le client souscrit à l'abonnement 50€/mois → la création est offerte
+         ─ Si pas de domaine demandé : mode "setup" (enregistre la carte, 0€)
+         ─ Si domaine demandé : mode "payment" avec uniquement le coût domaine
+         ─ Dans les 2 cas, la carte est sauvegardée pour facturer le mois 1
+           (le webhook crée l'abonnement 50€/mois après le checkout, trial 30j).
          ─ Seule la carte est acceptée (nécessaire pour la récurrence).
       ══════════════════════════════════════════════════════════════════════ */
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sereniteLineItems: any[] = [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Création + 1 mois Sérénité offert — ${prospect.name}`,
-              description: "Site web sur-mesure · livraison 5 jours · puis 50 €/mois sans engagement",
-            },
-            unit_amount: 32000, // 320 €
-          },
-          quantity: 1,
-        },
-      ];
       if (domainFull && domainPriceCents > 0) {
-        sereniteLineItems.push({
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Domaine ${domainFull}`,
-              description: "Enregistrement pour 1 an (renouvellement inclus dans Sérénité)",
+        // Avec domaine : on charge SEULEMENT le prix du domaine
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sereniteLineItems: any[] = [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: `Domaine ${domainFull} (création de site OFFERTE)`,
+                description: "Site web sur-mesure · livraison 5 jours · puis 50 €/mois sans engagement",
+              },
+              unit_amount: domainPriceCents,
             },
-            unit_amount: domainPriceCents,
+            quantity: 1,
           },
-          quantity: 1,
+        ];
+
+        session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          payment_method_types: ["card"],
+          line_items: sereniteLineItems,
+          customer_email: buyer.email,
+          customer_creation: "always",
+          payment_intent_data: { setup_future_usage: "off_session" },
+          ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
+          success_url: successUrl,
+          cancel_url:  cancelUrl,
+          locale: "fr",
+          metadata: sharedMeta,
+        });
+      } else {
+        // Sans domaine : 0€ aujourd'hui → mode "setup" enregistre juste la carte
+        session = await stripe.checkout.sessions.create({
+          mode: "setup",
+          payment_method_types: ["card"],
+          customer_email: buyer.email,
+          customer_creation: "always",
+          success_url: successUrl,
+          cancel_url:  cancelUrl,
+          locale: "fr",
+          metadata: { ...sharedMeta, free_creation: "true" },
         });
       }
-
-      session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items: sereniteLineItems,
-        customer_email: buyer.email,
-        customer_creation: "always",
-        payment_intent_data: { setup_future_usage: "off_session" },
-        ...(promoCode ? { discounts: [{ coupon: promoCode }] } : {}),
-        success_url: successUrl,
-        cancel_url:  cancelUrl,
-        locale: "fr",
-        metadata: sharedMeta,
-      });
     } else {
       /* ══════════════════════════════════════════════════════════════════════
          SIMPLE → mode: "payment" one-shot 320 €

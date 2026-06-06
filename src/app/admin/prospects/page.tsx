@@ -162,12 +162,19 @@ export default function ProspectsPage() {
   const toast = useToast();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [query, setQuery]         = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [typeF, setTypeF]         = useState('all');
   const [statusF, setStatusF]     = useState<ProspectStatus | 'all'>('all');
   const [sel, setSel]             = useState<Prospect | null>(null);
   const [batch, setBatch]         = useState(50);
   const [searching, setSearching] = useState(false);
   const [sending, setSending]     = useState(false);
+
+  const reload = async () => {
+    const r = await fetch('/api/admin/prospects');
+    const d = await r.json();
+    setProspects(d.prospects ?? []);
+  };
 
   // Charger les prospects depuis Supabase via fetch (ou server action)
   useEffect(() => {
@@ -202,10 +209,27 @@ export default function ProspectsPage() {
   }), [prospects, query, typeF, statusF]);
 
   const runSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast('Saisis une requête (ex: "plombier Lyon")', 'err');
+      return;
+    }
     setSearching(true);
     try {
-      await fetch('/api/admin/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: '' }) });
-      toast('Recherche lancée — résultats dans quelques secondes', 'info');
+      const res = await fetch('/api/admin/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error || 'Erreur scraping', 'err');
+      } else {
+        const found = data.results?.inserted ?? data.inserted ?? 0;
+        toast(`Recherche terminée — ${found} nouveau${found > 1 ? 'x' : ''} prospect${found > 1 ? 's' : ''}`);
+        await reload();
+      }
+    } catch {
+      toast('Erreur réseau', 'err');
     } finally {
       setSearching(false);
     }
@@ -229,7 +253,15 @@ export default function ProspectsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
         <StepCard step="1" title="Chercher des prospects" hint="Scrapling enrichit automatiquement (note, email, téléphone)">
           <div style={{ display: 'flex', gap: 9 }}>
-            <input className="input" placeholder="ex : restaurant Lyon, institut beauté Albi…" style={{ flex: 1 }} />
+            <input
+              className="input"
+              placeholder="ex : restaurant Lyon, institut beauté Albi…"
+              style={{ flex: 1 }}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !searching) runSearch(); }}
+              disabled={searching}
+            />
             <button className="btn btn-gold" onClick={runSearch} disabled={searching} style={{ minWidth: 130 }}>
               {searching
                 ? <><IcRefresh style={{ animation: 'spin 1s linear infinite' }} />Recherche…</>
