@@ -98,6 +98,28 @@ export async function stopExecution(executionId: string): Promise<{ ok: boolean;
   return { ok: res.ok, error: res.error };
 }
 
+/** Crée un nouveau workflow à partir d'un JSON N8N exporté. Retourne l'ID. */
+export async function createWorkflow(
+  workflowJson: Record<string, unknown>
+): Promise<{ ok: boolean; id?: string; error?: string }> {
+  // L'API N8N attend juste { name, nodes, connections, settings } — pas les champs export comme "active"
+  const payload = {
+    name: workflowJson.name,
+    nodes: workflowJson.nodes,
+    connections: workflowJson.connections,
+    settings: workflowJson.settings || { executionOrder: "v1" },
+  };
+  const res = await n8nRequest<{ id: string }>("POST", "/workflows", payload);
+  if (!res.ok) return { ok: false, error: res.error };
+  return { ok: true, id: res.data?.id };
+}
+
+/** Cherche un workflow par nom exact (utile pour idempotence). */
+export async function findWorkflowByName(name: string): Promise<N8nWorkflow | null> {
+  const all = await listWorkflows();
+  return all.find((w) => w.name === name) || null;
+}
+
 /** Cycle désactiver → réactiver un workflow (force un "reset" pour débloquer) */
 export async function cycleWorkflow(workflowId: string): Promise<{ ok: boolean; error?: string }> {
   const deact = await deactivateWorkflow(workflowId);

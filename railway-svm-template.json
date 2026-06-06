@@ -1,0 +1,37 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "name": "short-video-maker (WebConceptor)",
+  "description": "Service de génération vidéos courtes TikTok pour WebConceptor — appelé par /api/admin/generate-tiktok-video",
+  "services": [
+    {
+      "name": "svm",
+      "source": {
+        "image": "ghcr.io/gyoridavid/short-video-maker:latest-tiny"
+      },
+      "variables": {
+        "PEXELS_API_KEY": {
+          "description": "Clé API gratuite Pexels (pexels.com/api). Pour les vidéos de fond.",
+          "default": ""
+        },
+        "WHISPER_MODEL": {
+          "description": "Modèle Whisper pour les sous-titres. tiny.en = anglais, rapide.",
+          "default": "tiny.en"
+        },
+        "KOKORO_MODEL_PRECISION": {
+          "description": "q4 = quantifié léger (4 Go RAM suffisent)",
+          "default": "q4"
+        },
+        "CONCURRENCY": {
+          "description": "Nombre de vidéos en parallèle. 1 = safe sans GPU.",
+          "default": "1"
+        },
+        "LOG_LEVEL": {
+          "default": "info"
+        },
+        "PORT": {
+          "default": "3123"
+        }
+      }
+    }
+  ]
+}
