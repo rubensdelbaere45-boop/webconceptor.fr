@@ -1,0 +1,41 @@
+{
+  "name": "16 — QA Recheck rétroactif quotidien (4h30 Paris)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "30 4 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "qrc-sched",
+      "name": "4h30 Paris (avant QA Gatekeeper 5h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/qa-recheck-all",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ dry_run: false, include_sent: true, limit: 1000 }) }}",
+        "options": { "timeout": 295000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "qrc-http",
+      "name": "POST /api/admin/qa-recheck-all (apply)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "4h30 Paris (avant QA Gatekeeper 5h)": { "main": [[{ "node": "POST /api/admin/qa-recheck-all (apply)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
