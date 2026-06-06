@@ -1,0 +1,152 @@
+{
+  "name": "07 — Génération vidéos TikTok (3x/jour aux heures d'affluence)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 8 * * *" }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "tk-sched-morning",
+      "name": "Schedule 8h (vidéo midi)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 14 * * *" }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "tk-sched-afternoon",
+      "name": "Schedule 14h (vidéo 19h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 18 * * *" }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "tk-sched-evening",
+      "name": "Schedule 18h (vidéo 21h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 440]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "niche", "value": "={{ Math.random() > 0.5 ? 'creation' : 'transformation' }}" },
+            { "name": "seed", "value": "={{ $now.format('yyyy-MM-dd-HH') }}" }
+          ]
+        }
+      },
+      "id": "tk-pick-niche",
+      "name": "Pick niche (alterne création/transformation)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [480, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/generate-tiktok-video",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ niche: $json.niche, seed: $json.seed }) }}",
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "tk-http-generate",
+      "name": "POST /api/admin/generate-tiktok-video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "tk-status-ok",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ready",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "tk-if-ready",
+      "name": "Vidéo prête ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [960, 320]
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=🎬 *Vidéo TikTok prête*\n\n*Entreprise :* {{ $json.business.name }}\n*Type :* {{ $json.business.typeFr }}\n*Ville :* {{ $json.business.city }}\n*Niche :* {{ $json.niche || 'creation' }}\n\n[⬇️ Télécharger MP4]({{ $json.download_url }})\n\n📱 Upload TikTok depuis iPhone :\n• 12h-13h (déjeuner)\n• 19h-22h (prime time)",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "tk-tg-ok",
+      "name": "Telegram OK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 200],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=⚠️ *Vidéo TikTok échouée*\n\nStatus: {{ $json.status }}\nError: {{ $json.error || 'inconnue' }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "tk-tg-err",
+      "name": "Telegram ERREUR",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 440],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule 8h (vidéo midi)":      { "main": [[{ "node": "Pick niche (alterne création/transformation)", "type": "main", "index": 0 }]] },
+    "Schedule 14h (vidéo 19h)":      { "main": [[{ "node": "Pick niche (alterne création/transformation)", "type": "main", "index": 0 }]] },
+    "Schedule 18h (vidéo 21h)":      { "main": [[{ "node": "Pick niche (alterne création/transformation)", "type": "main", "index": 0 }]] },
+    "Pick niche (alterne création/transformation)": { "main": [[{ "node": "POST /api/admin/generate-tiktok-video", "type": "main", "index": 0 }]] },
+    "POST /api/admin/generate-tiktok-video": { "main": [[{ "node": "Vidéo prête ?", "type": "main", "index": 0 }]] },
+    "Vidéo prête ?": { "main": [
+      [{ "node": "Telegram OK", "type": "main", "index": 0 }],
+      [{ "node": "Telegram ERREUR", "type": "main", "index": 0 }]
+    ]}
+  },
+  "settings": { "executionOrder": "v1" }
+}
