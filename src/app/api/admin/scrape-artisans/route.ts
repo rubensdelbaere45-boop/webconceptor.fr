@@ -23,7 +23,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { safeCompare, isBusinessTypeCoherent } from "@/lib/security";
+import { requireAdminGuard, isBusinessTypeCoherent } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 min max sur Vercel
@@ -117,11 +117,9 @@ async function callScraplingPj(activity: string, location: string, pages: number
 }
 
 export async function POST(req: NextRequest) {
-  // ── Auth ──────────────────────────────────────────
-  const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // ── Auth + rate-limit : max 5 scrapes / minute / IP ─────
+  const guard = requireAdminGuard(req, { limit: 5, windowSec: 60, routeKey: "scrape-artisans" });
+  if (guard) return guard;
 
   // ── Body ──────────────────────────────────────────
   let raw: Record<string, unknown> = {};
@@ -178,14 +176,19 @@ export async function POST(req: NextRequest) {
 
           const slug = slugify(`${r.name}-${r.city || ville}`);
 
-          // Dedup par slug ou par nom+ville
-          const { data: existing } = await supabase
-            .from("prospects")
-            .select("id")
-            .or(`slug.eq.${slug},and(name.eq.${r.name.replace(/[,()]/g, "")},city.eq.${(r.city || ville).replace(/[,()]/g, "")})`)
-            .limit(1);
+          // Dedup en 2 requêtes séparées plutôt que .or() avec interpolation.
+          // Le nom Pages Jaunes peut contenir n'importe quel caractère (virgules,
+          // parenthèses, points) qui casseraient la syntaxe PostgREST .or() et
+          // potentiellement permettraient une injection de filtre.
+          const safeName = r.name.slice(0, 200);
+          const safeCity = (r.city || ville).slice(0, 100);
+          const [bySlugRes, byNameCityRes] = await Promise.all([
+            supabase.from("prospects").select("id").eq("slug", slug).limit(1),
+            supabase.from("prospects").select("id").eq("name", safeName).eq("city", safeCity).limit(1),
+          ]);
+          const existing = [...(bySlugRes.data || []), ...(byNameCityRes.data || [])];
 
-          if (existing && existing.length > 0) {
+          if (existing.length > 0) {
             skippedDupes++;
             continue;
           }

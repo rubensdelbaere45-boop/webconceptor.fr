@@ -324,6 +324,46 @@ export function isBusinessTypeCoherent(name: string, businessType: string): bool
   return accepted.includes(detected);
 }
 
+/**
+ * Guard combiné pour routes admin : auth x-admin-key (constant-time) + rate limit
+ * par IP. Bloque le bruteforce de ADMIN_SECRET_KEY et le spam d'endpoints coûteux
+ * (scrape, send-batch).
+ *
+ * Usage :
+ *   const guard = requireAdminGuard(req, { limit: 10, windowSec: 60 });
+ *   if (guard) return guard; // NextResponse 401 ou 429
+ *   // ... suite normale
+ */
+export function requireAdminGuard(
+  req: { headers: Headers },
+  opts: { limit?: number; windowSec?: number; routeKey?: string } = {}
+): Response | null {
+  const { limit = 30, windowSec = 60, routeKey = "admin" } = opts;
+  const ip = getClientIp(req.headers);
+
+  // 1) Rate limit AVANT auth — sinon un attaquant peut bruteforce sans coût.
+  const rl = rateLimit(`${routeKey}:${ip}`, limit, windowSec);
+  if (!rl.ok) {
+    return new Response(JSON.stringify({ error: "Too many requests", retryAfter: rl.retryAfter }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": String(rl.retryAfter ?? 60) },
+    });
+  }
+
+  // 2) Auth constant-time
+  const adminKey = req.headers.get("x-admin-key") || "";
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
+    // On consomme un slot supplémentaire sur les échecs pour ralentir le bruteforce
+    rateLimit(`${routeKey}:fail:${ip}`, 5, 60);
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return null;
+}
+
 if (typeof globalThis.setInterval === "function") {
   setInterval(() => {
     const now = Date.now();

@@ -28,7 +28,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { safeCompare, isBusinessTypeCoherent } from "@/lib/security";
+import { requireAdminGuard, isBusinessTypeCoherent } from "@/lib/security";
 import { searchSirene, APE_CODES } from "@/lib/sources/sirene";
 
 export const dynamic = "force-dynamic";
@@ -65,11 +65,9 @@ function slugify(s: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  // Auth
-  const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Auth + rate-limit : max 5 scrapes / minute / IP (coûteux : 5 min Vercel)
+  const guard = requireAdminGuard(req, { limit: 5, windowSec: 60, routeKey: "scrape-sirene" });
+  if (guard) return guard;
 
   let raw: Record<string, unknown> = {};
   try { raw = await req.json(); } catch { /* body vide ok */ }
@@ -136,14 +134,15 @@ export async function POST(req: NextRequest) {
 
               const slug = slugify(`${r.name}-${r.city || dep}-${r.siren.slice(0, 6)}`);
 
-              // Dedup par slug ou siren
-              const { data: existing } = await supabase
-                .from("prospects")
-                .select("id")
-                .or(`slug.eq.${slug},siren.eq.${r.siren}`)
-                .limit(1);
+              // Dedup par slug OU siren — 2 requêtes séparées plutôt que .or()
+              // (les valeurs viennent d'INSEE mais on évite l'injection PostgREST par principe).
+              const [bySlugRes, bySirenRes] = await Promise.all([
+                supabase.from("prospects").select("id").eq("slug", slug).limit(1),
+                supabase.from("prospects").select("id").eq("siren", r.siren).limit(1),
+              ]);
+              const existing = [...(bySlugRes.data || []), ...(bySirenRes.data || [])];
 
-              if (existing && existing.length > 0) {
+              if (existing.length > 0) {
                 skippedDupes++;
                 continue;
               }

@@ -90,8 +90,10 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
     params.set("est_entrepreneur_individuel", String(opts.estEntrepreneurIndividuel));
   }
   if (opts.trancheEffectifSalarie) params.set("tranche_effectif_salarie", opts.trancheEffectifSalarie);
-  if (opts.minDateCreation) params.set("min_date_creation", opts.minDateCreation);
-  if (opts.maxDateCreation) params.set("max_date_creation", opts.maxDateCreation);
+  // ⚠️ recherche-entreprises.api.gouv.fr utilise `date_creation_min` / `date_creation_max`
+  // (pas `min_date_creation`). Source : https://recherche-entreprises.api.gouv.fr/docs/
+  if (opts.minDateCreation) params.set("date_creation_min", opts.minDateCreation);
+  if (opts.maxDateCreation) params.set("date_creation_max", opts.maxDateCreation);
   params.set("per_page", String(Math.min(25, Math.max(1, opts.perPage ?? 25))));
   if (opts.page) params.set("page", String(opts.page));
   params.set("etat_administratif", "A"); // actives uniquement
@@ -107,7 +109,7 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
     const data = await res.json();
     const results = Array.isArray(data.results) ? data.results : [];
 
-    return results.map((r: Record<string, unknown>) => {
+    const mapped = results.map((r: Record<string, unknown>) => {
       const siege = (r.siege as Record<string, unknown>) || {};
       const matching = Array.isArray(r.matching_etablissements) ? r.matching_etablissements[0] as Record<string, unknown> : null;
       const etab = matching || siege;
@@ -125,6 +127,17 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
         website: null, // À enrichir via Scrapling
       };
     });
+
+    // 🛡️ Filtre client de sécurité — au cas où l'API ignorerait silencieusement
+    // les paramètres de date. Garantit "entreprise récente" même si l'amont change.
+    const filtered = mapped.filter((c: SireneCompany) => {
+      if (!c.date_creation) return false; // entreprise sans date = inutile pour notre pitch
+      if (opts.minDateCreation && c.date_creation < opts.minDateCreation) return false;
+      if (opts.maxDateCreation && c.date_creation > opts.maxDateCreation) return false;
+      return true;
+    });
+
+    return filtered;
   } catch {
     return [];
   }

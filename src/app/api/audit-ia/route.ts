@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { safeFetch, isPrivateOrUnsafeUrl } from "@/lib/security";
 
 /* ══════════════════════════════════════════
    POST /api/audit-ia
@@ -91,6 +92,11 @@ async function analyzeWebsite(url: string): Promise<{
 }> {
   if (!url) return { exists: false, hasSSL: false, loadFast: false, hasMobile: false, score: 0, issues: ["Aucun site web trouvé sur Google My Business"] };
 
+  // 🛡️ SSRF guard : refuser URLs vers réseaux privés / metadata cloud avant tout fetch.
+  if (isPrivateOrUnsafeUrl(url)) {
+    return { exists: false, hasSSL: false, loadFast: false, hasMobile: false, score: 0, issues: ["URL invalide ou pointant vers un réseau privé"] };
+  }
+
   const issues: string[] = [];
   let score = 40; // Score de base si le site existe
 
@@ -99,10 +105,11 @@ async function analyzeWebsite(url: string): Promise<{
     if (!hasSSL) { issues.push("Pas de HTTPS — Google pénalise les sites non sécurisés"); } else { score += 15; }
 
     const start = Date.now();
-    const res = await fetch(url, {
+    // safeFetch vérifie chaque hop de redirection contre les réseaux privés
+    const res = await safeFetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorAudit/1.0)" },
-      signal: AbortSignal.timeout(8000),
-      redirect: "follow",
+      timeoutMs: 8000,
+      maxRedirects: 3,
     });
     const elapsed = Date.now() - start;
     const html = await res.text().catch(() => "");
