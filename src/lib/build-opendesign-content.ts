@@ -42,15 +42,33 @@ interface Prospect {
 
 /**
  * Nettoie un texte scrapé (HTML, entités, menus de nav, espaces).
+ * + supprime tout fragment de Lorem Ipsum ou placeholder résiduel
+ *   (garantie zéro faux texte dans les maquettes).
  */
 function cleanScraped(raw: string): string {
   return raw
     .replace(/&[a-z]+;/gi, " ")
     .replace(/&#x?[0-9a-f]+;/gi, " ")
     .replace(/<[^>]+>/g, " ")
+    // Anti Lorem Ipsum strict
+    .replace(/\b(lorem|ipsum|dolor|sit amet|consectetur|adipiscing|sed do|eiusmod|tempor|incididunt|exercitation|ullamco|laboris|nisi|aliquip|consequat|duis aute|reprehenderit|voluptate|esse cillum|dolore eu|fugiat|nulla pariatur)\b[\s,.;:!?-]*/gi, " ")
+    // Placeholders type {{x}} ${x} [NOM]
+    .replace(/\{\{\s*[a-z_][a-z_0-9]*\s*\}\}/gi, " ")
+    .replace(/\$\{[a-z_][a-z_0-9]*\}/gi, " ")
+    .replace(/\[NOM\]|\[NAME\]|\[CITY\]|\[VILLE\]/gi, " ")
+    // Junk navigation
     .replace(/(Fermer|Recherche|Passer au contenu|Menu|Accueil|Contact|À propos|CGV|Mentions légales|Newsletter|Se connecter|Connexion|Panier|Mon compte|Cookies?|RGPD)[^\n.]{0,80}/gi, "")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+/**
+ * Vrai si la chaîne contient encore du Lorem Ipsum ou un placeholder résiduel.
+ * Utilisé en post-validation pour rejeter les contenus pourris.
+ */
+function containsForbiddenText(s: string): boolean {
+  if (!s) return false;
+  return /lorem ipsum|dolor sit amet|consectetur adipiscing|\{\{[^}]+\}\}|\$\{[a-z_0-9]+\}|\[NOM\]|\[NAME\]|\[VILLE\]/i.test(s);
 }
 
 /**
@@ -74,7 +92,8 @@ export function buildContentFromProspect(p: Prospect): MockupContent {
     const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(s => s.length > 30 && s.length < 250);
     aboutText = sentences.slice(0, 3).join(" ");
   }
-  if (!aboutText || aboutText.length < 60) {
+  // ⚠️ Si aboutText contient encore du Lorem Ipsum résiduel, on rejette et fallback
+  if (!aboutText || aboutText.length < 60 || containsForbiddenText(aboutText)) {
     aboutText = `${p.name} vous accueille à ${city} avec un savoir-faire éprouvé en ${label.specialty}. Notre équipe met son expertise au service de chaque client pour un résultat à la hauteur de vos attentes.`;
   }
 
@@ -82,7 +101,7 @@ export function buildContentFromProspect(p: Prospect): MockupContent {
   let services: Array<{ name: string; description?: string; price?: string }> = [];
   if (p.menu_items && p.menu_items.length > 0) {
     services = p.menu_items
-      .filter(m => m.name && m.name.length > 1 && m.name.length < 60)
+      .filter(m => m.name && m.name.length > 1 && m.name.length < 60 && !containsForbiddenText(m.name) && !containsForbiddenText(m.description || ""))
       .slice(0, 6)
       .map(m => ({
         name: m.name!,

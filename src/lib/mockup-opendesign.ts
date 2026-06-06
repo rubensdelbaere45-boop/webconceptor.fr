@@ -11,6 +11,8 @@
  * Le design est unique par métier + variations par hash du nom (mêmes inputs = même maquette).
  */
 
+import { resolveHeroPhoto, resolveSecondaryPhotos } from "./photo-resolver";
+
 // Mapping métier → design system Open Design
 // Artisans (plombier, electricien, garage) = budget élevé → design "artisan-premium" sur-mesure.
 const BUSINESS_TO_DESIGN: Record<string, { name: string; emoji: string }> = {
@@ -204,12 +206,14 @@ export interface OpenDesignProspect {
   city?: string;
   phone?: string;
   email?: string;
+  address?: string;                                            // ← NEW : vraie adresse postale
   business_type?: string;
   google_rating?: number;
   google_reviews_count?: number;
   about_scraped?: string;
   hours?: string;
   reviews?: Array<{ author: string; rating: number; text: string }>;
+  photos?: string[];                                           // ← NEW : vraies photos scrapées Google Places
 }
 
 export interface MockupContent {
@@ -270,8 +274,14 @@ export function generateOpenDesignMockup(
   const designKey = BUSINESS_TO_DESIGN[bt]?.name || "warm-editorial";
   const tokens = DESIGN_TOKENS[designKey] || DESIGN_TOKENS["warm-editorial"];
 
-  const heroPhoto = HERO_PHOTOS[bt] || HERO_PHOTOS.default;
-  const photos = SECONDARY_PHOTOS[bt] || SECONDARY_PHOTOS.default;
+  // ── INJECTION PHOTOS — priorité photos scrapées Google Places ──
+  // 1. Vraies photos du prospect (filtrées : pas de junk badges/logos)
+  // 2. Unsplash dynamique avec mots-clés métier précis (variation à chaque génération)
+  // 3. Fallback statique hardcodé (jamais d'image vide)
+  // Implémenté dans src/lib/photo-resolver.ts (import statique en haut du fichier).
+  const heroPhoto = resolveHeroPhoto(prospect.photos, bt);
+  const photosResolved = resolveSecondaryPhotos(prospect.photos, bt, 6, prospect.name);
+  const photos = photosResolved.length >= 4 ? photosResolved : (SECONDARY_PHOTOS[bt] || SECONDARY_PHOTOS.default);
 
   const phone = prospect.phone || "";
   const city = prospect.city || "";

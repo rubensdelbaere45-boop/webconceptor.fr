@@ -32,12 +32,15 @@ export interface StitchProspect {
   address?: string;
   phone?: string;
   website?: string;
+  email?: string;
   business_type?: string;
   google_rating?: number | null;
   google_reviews_count?: number | null;
   about_scraped?: string | null;
   menu_items?: Array<{ category: string; name: string; description: string; price: string }> | null;
   reviews?: Array<{ author: string; rating: number; text: string; timeAgo: string }> | null;
+  photos?: string[]; // ← NEW : vraies photos scrapées Google Places
+  hours?: string;    // ← NEW : pour compat OpenDesign fallback
   site_style_dna?: {
     dominantColors?: string[];
     fontFamilies?: string[];
@@ -159,6 +162,24 @@ function buildStitchPrompt(p: StitchProspect): string {
     "- Elegant, zen, wellness aesthetic — soft greens, warm beiges, white space.",
     "- Service cards: icon + name + short description + price badge.",
     "- No WebConceptor branding.",
+    "",
+    "=== ⚠️ ABSOLUTE BAN — STRICTLY FORBIDDEN ⚠️ ===",
+    "🚫 NEVER use 'Lorem ipsum', 'dolor sit amet', 'consectetur adipiscing' or any Latin placeholder text.",
+    "🚫 NEVER use template placeholders like {{name}}, ${variable}, [NOM], [VILLE], [CITY].",
+    "🚫 NEVER use generic 'Description du commerce', 'Insérez ici', 'Votre texte ici'.",
+    "🚫 NEVER use TODO, FIXME, XXX, ___ in any visible text.",
+    "✅ MUST use the REAL business name " + JSON.stringify(p.name) + " everywhere it's needed.",
+    p.phone ? `✅ MUST use the REAL phone "${p.phone}" in the contact section and footer.` : "",
+    p.address ? `✅ MUST use the REAL address "${p.address}" in the contact section and footer.` : "",
+    p.google_rating ? `✅ MUST display the REAL Google rating ${p.google_rating}/5 in a reviews/testimonials section.` : "",
+    bestReview ? `✅ MUST include the real Google review text quoted above, attributed to ${bestReview.author}.` : "",
+    "",
+    "=== TECHNICAL QUALITY (zero tolerance) ===",
+    "- All HTML tags MUST be properly opened and closed (no <div>...).",
+    "- All <img> tags MUST have a valid https:// src (never src='' or src='data:').",
+    "- All href links MUST point somewhere (no href='undefined', no href='javascript:void(0)').",
+    "- All text in French, no English filler, no half-translated strings.",
+    "- Single self-contained HTML file (no external CSS/JS files).",
   );
 
   return lines.join("\n");
@@ -227,6 +248,23 @@ function buildStitchPromptLuxury(p: StitchProspect): string {
     "- Footer with address, hours, social links.",
     "- All text in French.",
     "- No generic stock-photo feel — make it feel bespoke and prestigious.",
+    "",
+    "=== ⚠️ ABSOLUTE BAN — STRICTLY FORBIDDEN ⚠️ ===",
+    "🚫 NEVER use 'Lorem ipsum', 'dolor sit amet' or any Latin placeholder text.",
+    "🚫 NEVER use template placeholders {{name}}, ${variable}, [NOM], [VILLE].",
+    "🚫 NEVER use 'Description du commerce' or 'Insérez ici'.",
+    "🚫 NEVER use TODO, FIXME, XXX, ___ in any visible text.",
+    `✅ MUST use REAL business name "${p.name}" everywhere.`,
+    p.phone ? `✅ MUST use REAL phone "${p.phone}" in contact section + footer.` : "",
+    p.address ? `✅ MUST use REAL address "${p.address}" in contact section + footer.` : "",
+    p.google_rating ? `✅ MUST display REAL Google rating ${p.google_rating}/5.` : "",
+    "",
+    "=== TECHNICAL QUALITY (zero tolerance) ===",
+    "- All HTML tags MUST be properly opened and closed.",
+    "- All <img> tags MUST have valid https:// src.",
+    "- All href links MUST point somewhere (no href='undefined' or 'javascript:void(0)').",
+    "- All text in French.",
+    "- Single self-contained HTML file.",
   ].filter(Boolean).join("\n");
 }
 
