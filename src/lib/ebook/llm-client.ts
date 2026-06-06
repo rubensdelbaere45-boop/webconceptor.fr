@@ -30,11 +30,16 @@ export interface LlmCallOpts {
 type Provider = "gemini" | "openrouter" | "mistral" | "anthropic";
 
 function availableProviders(): Provider[] {
+  // ORDRE PRIORITAIRE :
+  //  1. OpenRouter Kimi K2 (Moonshot) — contexte 1M, excellent FR, payant léger
+  //  2. Anthropic Claude (premium)
+  //  3. Gemini Flash (gratuit)
+  //  4. Mistral (free tier)
   const list: Provider[] = [];
-  if (process.env.GEMINI_API_KEY) list.push("gemini");
   if (process.env.OPENROUTER_API_KEY) list.push("openrouter");
-  if (process.env.MISTRAL_API_KEY) list.push("mistral");
   if (process.env.ANTHROPIC_API_KEY) list.push("anthropic");
+  if (process.env.GEMINI_API_KEY) list.push("gemini");
+  if (process.env.MISTRAL_API_KEY) list.push("mistral");
   return list;
 }
 
@@ -105,8 +110,10 @@ async function callGemini(opts: LlmCallOpts): Promise<string> {
 
 async function callOpenRouter(opts: LlmCallOpts): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY!;
-  // Modèle gratuit Llama 3.3 70B Instruct — très bon pour le français
-  const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+  // Kimi K2 (Moonshot AI) par défaut : 1M tokens contexte, excellent FR,
+  // ~0.15$ / 1M tokens input — meilleur ratio prix/qualité pour livres longs.
+  // Override possible via OPENROUTER_MODEL.
+  const model = process.env.OPENROUTER_MODEL || "moonshotai/kimi-k2";
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
