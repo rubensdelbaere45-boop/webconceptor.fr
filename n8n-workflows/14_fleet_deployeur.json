@@ -1,0 +1,39 @@
+{
+  "name": "14 — Fleet Agent 4 : Déployeur (IONOS + welcome post-paiement)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/15 * * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "dp-sched",
+      "name": "Toutes les 15 min (rattrape webhook ratés)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/deployeur",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 120000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "dp-http",
+      "name": "POST /api/admin/deployeur",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Toutes les 15 min (rattrape webhook ratés)": { "main": [[{ "node": "POST /api/admin/deployeur", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

@@ -293,11 +293,30 @@ Réponds UNIQUEMENT avec ce JSON (aucun texte autour) :
 
 export async function POST(req: NextRequest) {
   const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
+  const cronSecret = req.headers.get("x-cron-secret") || "";
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY) && !safeCompare(cronSecret, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
   const url = new URL(req.url);
+
+  // ⚠️ COUVRE-FEU NUIT — la génération lourde via Stitch IA tourne EXCLUSIVEMENT
+  // entre 20h00 et 05h00 Paris (sauf override explicite ?force=true).
+  // Cf. src/lib/night-window.ts pour la justification.
+  const forceParam = url.searchParams.get("force") === "true";
+  if (!forceParam) {
+    const { isWithinNightGenerationWindow, nightWindowStatus } = await import("@/lib/night-window");
+    if (!isWithinNightGenerationWindow()) {
+      const st = nightWindowStatus();
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+        skipped_curfew: true,
+        message: `Couvre-feu — génération nocturne uniquement (${st.window}). Heure actuelle ${st.current_hour}h.`,
+      });
+    }
+  }
+
   const priority = url.searchParams.get("priority") || "small";
   const limit    = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "30", 10)));
   const slug     = url.searchParams.get("slug");

@@ -1,0 +1,39 @@
+{
+  "name": "13 — Fleet Agent 3 : Closer-Alert (Telegram leads chauds + relance J+1)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 * * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "cl-sched",
+      "name": "Toutes les heures",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/closer-alert",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 60000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "cl-http",
+      "name": "POST /api/admin/closer-alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Toutes les heures": { "main": [[{ "node": "POST /api/admin/closer-alert", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

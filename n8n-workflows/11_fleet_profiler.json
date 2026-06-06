@@ -1,0 +1,39 @@
+{
+  "name": "11 — Fleet Agent 1 : Profiler (qualifie + custom_hook)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 7,11,15,18 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "pf-sched",
+      "name": "4x/jour (7h, 11h, 15h, 18h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/profiler",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 120000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "pf-http",
+      "name": "POST /api/admin/profiler",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "4x/jour (7h, 11h, 15h, 18h)": { "main": [[{ "node": "POST /api/admin/profiler", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

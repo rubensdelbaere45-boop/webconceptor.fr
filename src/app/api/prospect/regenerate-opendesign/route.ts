@@ -39,13 +39,29 @@ function db() {
 export async function POST(req: NextRequest) {
   // ── Auth ────────────────────────────────────────────────
   const adminKey = req.headers.get("x-admin-key") || "";
-  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY)) {
+  const cronSecret = req.headers.get("x-cron-secret") || "";
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY) && !safeCompare(cronSecret, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // ── Body ───────────────────────────────────────────────
   let raw: Record<string, unknown> = {};
   try { raw = await req.json(); } catch { /* body vide accepté */ }
+
+  // ⚠️ COUVRE-FEU NUIT — la génération OpenDesign tourne UNIQUEMENT entre
+  // 20h et 5h Paris (sauf override raw.force = true).
+  if (!raw.force) {
+    const { isWithinNightGenerationWindow, nightWindowStatus } = await import("@/lib/night-window");
+    if (!isWithinNightGenerationWindow()) {
+      const st = nightWindowStatus();
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+        skipped_curfew: true,
+        message: `Couvre-feu nuit (${st.window}). Heure actuelle ${st.current_hour}h.`,
+      });
+    }
+  }
 
   const days = Math.min(90, Math.max(1, Math.floor(Number(raw.days) || 30)));
   const limit = Math.min(200, Math.max(1, Math.floor(Number(raw.limit) || 50)));

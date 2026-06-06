@@ -1,0 +1,39 @@
+{
+  "name": "15 — QA Gatekeeper (filtre perfection après génération nocturne)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 5,6,7 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "qa-sched",
+      "name": "3x au petit matin (5h, 6h, 7h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/qa-gatekeeper",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 120000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "qa-http",
+      "name": "POST /api/admin/qa-gatekeeper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "3x au petit matin (5h, 6h, 7h)": { "main": [[{ "node": "POST /api/admin/qa-gatekeeper", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

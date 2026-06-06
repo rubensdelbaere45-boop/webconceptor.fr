@@ -1,0 +1,39 @@
+{
+  "name": "12 — Fleet Agent 2 : Sniper (envoi email custom_hook)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8,12,16 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "sn-sched",
+      "name": "3x/jour Lun-Ven (8h, 12h, 16h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/sniper",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 180000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "sn-http",
+      "name": "POST /api/admin/sniper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "3x/jour Lun-Ven (8h, 12h, 16h)": { "main": [[{ "node": "POST /api/admin/sniper", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
