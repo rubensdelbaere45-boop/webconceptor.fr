@@ -1,0 +1,110 @@
+{
+  "name": "06 — SIRENE nouvelles entreprises (1x/jour 5h)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 5 * * *" }
+          ]
+        },
+        "timezone": "Europe/Paris"
+      },
+      "id": "a1b2c3d4-5e6f-7890-abcd-ef0123456789",
+      "name": "Schedule — 5h Paris",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/scrape-sirene",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ monthsBack: 6, pagesPerQuery: 2 }) }}",
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "b2c3d4e5-6f78-9012-bcde-f01234567890",
+      "name": "POST /api/admin/scrape-sirene",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "ok-condition",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "c3d4e5f6-7890-1234-cdef-012345678901",
+      "name": "Succès ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=🆕 *SIRENE — Nouvelles entreprises*\n\n📊 Queries: {{ $json.queries_run }}\n🎯 Trouvées: {{ $json.total_found }}\n✅ Insérées: {{ $json.inserted }}\n🔁 Doublons: {{ $json.skipped_dupes }}\n⚠️ Mismatch: {{ $json.skipped_mismatch }}\n📅 Min date: {{ $json.min_date_creation }}\n\n*Top 5 nouvelles boîtes:*\n{{ ($json.sample || []).slice(0,5).map(s => '• ' + s).join('\\n') }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "d4e5f6a7-8901-2345-defa-123456789012",
+      "name": "Telegram OK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 200],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=⚠️ *SIRENE scrape échoué*\n\nErreur: {{ $json.error || 'inconnue' }}\n\n```{{ JSON.stringify($json).slice(0, 500) }}```",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "e5f6a7b8-9012-3456-efab-234567890123",
+      "name": "Telegram ERREUR",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 400],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule — 5h Paris": {
+      "main": [[{ "node": "POST /api/admin/scrape-sirene", "type": "main", "index": 0 }]]
+    },
+    "POST /api/admin/scrape-sirene": {
+      "main": [[{ "node": "Succès ?", "type": "main", "index": 0 }]]
+    },
+    "Succès ?": {
+      "main": [
+        [{ "node": "Telegram OK", "type": "main", "index": 0 }],
+        [{ "node": "Telegram ERREUR", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

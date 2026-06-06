@@ -159,9 +159,9 @@ export async function POST(req: NextRequest) {
                   business_type: metier,
                   ape_code: r.ape_code,
                   date_creation: r.date_creation,
-                  source: "sirene_insee",
                   status: "found",
                   is_new_business: true, // marqueur pour le pitch "site offert"
+                  notes: `Source: SIRENE INSEE — APE ${r.ape_code} — créée ${r.date_creation}`,
                 });
                 if (insErr) {
                   errors++;

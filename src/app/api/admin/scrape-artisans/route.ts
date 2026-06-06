@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
               phone: r.phone?.slice(0, 20) || null,
               website: r.website?.slice(0, 500) || null,
               business_type: businessType,
-              source: "pages_jaunes_scrapling",
+              notes: "Source: Pages Jaunes via Scrapling",
               status: "found",
             });
             if (insErr) {
