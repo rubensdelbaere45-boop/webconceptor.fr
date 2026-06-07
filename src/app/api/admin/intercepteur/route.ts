@@ -28,7 +28,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare, requireAdminGuard, isBusinessTypeCoherent } from "@/lib/security";
-import { searchSirene, searchSireneMultiPages, APE_CODES, ESTABLISHED_NATURES } from "@/lib/sources/sirene";
+import { searchSireneMultiPages, APE_CODES, ESTABLISHED_NATURES } from "@/lib/sources/sirene";
+import { isInseeConfigured } from "@/lib/sources/sirene-insee";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -109,12 +110,18 @@ export async function POST(req: NextRequest) {
   const departements = (body.departements && body.departements.length > 0 ? body.departements : DEFAULT_DEPS).slice(0, 40);
   const checkGoogle = body.checkGoogle !== false; // défaut true
 
-  // Dates de référence — élargies car l'API gratuite n'a pas de filtre date
-  // côté API. Avec multi-pages côté nous, 60j permet d'attraper qq créations
-  // récentes en parcourant 3-5 pages.
+  // Dates de référence — adaptatives selon configuration :
+  //   - INSEE configuré (filtre date NATIF) → 7 jours (cible précise)
+  //   - Sinon API gratuite → 60 jours (multi-pages + filtre client)
   const today = new Date();
-  const sixtyDaysAgo = new Date(today);
-  sixtyDaysAgo.setDate(today.getDate() - 60);
+  const inseeOn = isInseeConfigured();
+  const newDays = inseeOn ? 7 : 60;
+  const newCutoff = new Date(today);
+  newCutoff.setDate(today.getDate() - newDays);
+
+  // Scénario B fenêtre : INSEE → 1 an, sinon "toutes"
+  const upgradeCutoffMin = inseeOn ? new Date(today) : null;
+  if (upgradeCutoffMin) upgradeCutoffMin.setFullYear(today.getFullYear() - 1);
 
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -140,18 +147,17 @@ export async function POST(req: NextRequest) {
       for (const dep of departements) {
         if (Date.now() > DEADLINE) break outer;
 
-        // ── SCÉNARIO A : créées dans les 60 derniers jours ──
-        // Fenêtre élargie à 60j (vs 7j) car l'API gratuite ne filtre pas par
-        // date → on parcourt + de pages et on garde celles créées < 60j.
-        // Le hook IA mentionnera l'âge exact (3 semaines, 1 mois, etc.).
+        // ── SCÉNARIO A : créées dans les N derniers jours ──
+        // INSEE configuré : N=7 (cible précise via filtre natif)
+        // Sinon : N=60 (multi-pages compense l'absence de filtre date)
         try {
           const newOnes = await searchSireneMultiPages({
             codeNaf: ape,
             departement: dep,
-            minDateCreation: fmt(sixtyDaysAgo),
+            minDateCreation: fmt(newCutoff),
             maxDateCreation: fmt(today),
             perPage: 25,
-          }, 5);
+          }, inseeOn ? 1 : 5);
           for (const r of newOnes) {
             const ok = await tryInsert(supabase, r, metier, "new_business", true, checkGoogle, stats, sample);
             if (ok) stats.scenario_A_new++;
@@ -160,22 +166,22 @@ export async function POST(req: NextRequest) {
 
         if (Date.now() > DEADLINE) break outer;
 
-        // ── SCÉNARIO B : SAS/SARL/EURL/SASU (toutes structurées) ──
-        // natureJuridique = filtre API qui MARCHE. Pas de fenêtre date côté
-        // client → on prend toutes les sociétés (= signal "structuration",
-        // probablement post-passage micro→société récent).
-        // Le hook IA différenciera selon date_creation (1 an = jeune SAS,
-        // 10 ans = SAS établie).
+        // ── SCÉNARIO B : SAS/SARL/EURL/SASU récemment passées en société ──
+        // INSEE : fenêtre 1 an (passage en société effectif récent)
+        // Sinon : toutes les sociétés (signal de structuration)
         try {
-          const upgraded = await searchSireneMultiPages({
+          const upgradeOpts = {
             codeNaf: ape,
             departement: dep,
             natureJuridique: ESTABLISHED_NATURES,
             perPage: 25,
-          }, 3);
+            ...(upgradeCutoffMin ? { minDateCreation: fmt(upgradeCutoffMin) } : {}),
+            ...(inseeOn ? { maxDateCreation: fmt(newCutoff) } : {}),
+          };
+          const upgraded = await searchSireneMultiPages(upgradeOpts, inseeOn ? 1 : 3);
           for (const r of upgraded) {
-            // Skip si c'est déjà dans le scénario A (créée < 60j)
-            if (r.date_creation && r.date_creation >= fmt(sixtyDaysAgo)) continue;
+            // Skip si déjà dans le scénario A
+            if (r.date_creation && r.date_creation >= fmt(newCutoff)) continue;
             const ok = await tryInsert(supabase, r, metier, "status_upgrade", false, checkGoogle, stats, sample);
             if (ok) stats.scenario_B_status_upgrade++;
           }
@@ -210,7 +216,7 @@ export async function POST(req: NextRequest) {
 
 async function tryInsert(
   supabase: ReturnType<typeof db>,
-  r: Awaited<ReturnType<typeof searchSirene>>[number],
+  r: Awaited<ReturnType<typeof searchSireneMultiPages>>[number],
   metier: string,
   sales_angle: "new_business" | "status_upgrade",
   isNewFlag: boolean,

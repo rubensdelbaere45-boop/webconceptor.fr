@@ -138,7 +138,17 @@ export async function POST(req: NextRequest) {
     detail: process.env.STRIPE_SECRET_KEY ? "Configuré" : "STRIPE_SECRET_KEY manquante",
   });
 
-  // ─── 6. Telegram (test) ────────────────────────────────────────
+  // ─── 6. SIRENE INSEE (filtre date_creation précis) ────────────────
+  const inseeOk = !!(process.env.INSEE_API_KEY && process.env.INSEE_API_SECRET);
+  checks.push({
+    name: "SIRENE INSEE (filtre date précis)",
+    ok: inseeOk,
+    detail: inseeOk
+      ? "✅ Cible <7 jours actif sur l'Intercepteur"
+      : "⚠️ Fallback API gratuite (fenêtre 60j). Set INSEE_API_KEY + INSEE_API_SECRET sur Vercel pour activer la cible <7j précise.",
+  });
+
+  // ─── 7. Telegram (test) ────────────────────────────────────────
   checks.push({
     name: "Telegram",
     ok: !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),

@@ -177,6 +177,26 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
  *  →   "Ibou Artisan Plombier"
  */
 /**
+ * Cascade automatique :
+ *   1. Si INSEE_API_KEY + INSEE_API_SECRET configurés sur Vercel
+ *      → utilise l'API officielle INSEE (filtre date_creation NATIF)
+ *   2. Sinon → fallback API gratuite recherche-entreprises (multi-pages
+ *      + filtre client, moins précis)
+ *
+ * Dès que Tom set les 2 vars Vercel, TOUS les endpoints SIRENE (Intercepteur,
+ * scrape-sirene, etc.) basculent automatiquement à la précision INSEE.
+ */
+export async function searchSireneAuto(opts: SireneSearchOptions): Promise<SireneCompany[]> {
+  const { isInseeConfigured, searchInsee } = await import("./sirene-insee");
+  if (isInseeConfigured()) {
+    const inseeResults = await searchInsee(opts);
+    if (inseeResults.length > 0) return inseeResults;
+    // Si INSEE renvoie 0 (token cassé, quota), fallback gracieux
+  }
+  return await searchSirene(opts);
+}
+
+/**
  * Variante MULTI-PAGES de searchSirene : fetch jusqu'à N pages et filtre
  * côté client par date_creation. Indispensable car l'API gratuite
  * recherche-entreprises.api.gouv.fr N'A PAS de filtre date_creation.
@@ -190,12 +210,19 @@ export async function searchSireneMultiPages(
   opts: SireneSearchOptions,
   maxPages = 5
 ): Promise<SireneCompany[]> {
+  // Si INSEE configuré → un seul appel suffit (filtre date NATIF côté API)
+  const { isInseeConfigured, searchInsee } = await import("./sirene-insee");
+  if (isInseeConfigured()) {
+    const inseeResults = await searchInsee({ ...opts, perPage: 100 });
+    if (inseeResults.length > 0) return inseeResults;
+  }
+
+  // Fallback API gratuite : multi-pages + filtre client
   const out: SireneCompany[] = [];
   for (let page = 1; page <= maxPages; page++) {
     const batch = await searchSirene({ ...opts, page });
     if (batch.length === 0) break;
     out.push(...batch);
-    // Si pas de filtre date côté API + on a déjà assez de résultats filtrés → stop
     if (opts.minDateCreation) {
       const filtered = out.filter((c) => c.date_creation && c.date_creation >= opts.minDateCreation!);
       if (filtered.length >= (opts.perPage ?? 25)) break;
