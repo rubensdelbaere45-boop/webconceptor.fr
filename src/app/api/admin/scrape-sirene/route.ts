@@ -64,6 +64,15 @@ function slugify(s: string): string {
     .slice(0, 100);
 }
 
+/** Vrai si l'entreprise a été créée il y a < 6 mois (= "jeune pousse"). */
+function isReallyNewBusiness(dateCreation: string | null | undefined): boolean {
+  if (!dateCreation) return false;
+  try {
+    const ageMonths = (Date.now() - new Date(dateCreation).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+    return ageMonths >= 0 && ageMonths < 6;
+  } catch { return false; }
+}
+
 export async function POST(req: NextRequest) {
   // Auth + rate-limit : max 5 scrapes / minute / IP (coûteux : 5 min Vercel)
   const guard = requireAdminGuard(req, { limit: 5, windowSec: 60, routeKey: "scrape-sirene" });
@@ -75,17 +84,25 @@ export async function POST(req: NextRequest) {
   const metiers = Array.isArray(raw.metiers) && raw.metiers.length > 0
     ? (raw.metiers as string[]).slice(0, 20)
     : DEFAULT_METIERS;
-  const monthsBack = Math.min(24, Math.max(1, Math.floor(Number(raw.monthsBack) || 6)));
+  // monthsBack = 0 ou non fourni → on scrape TOUTES les entreprises (tous âges).
+  // Le Profiler segmentera ensuite par âge (new/young/mature/established/historic)
+  // pour adapter le speech.
+  // Si fourni > 0 → on garde le filtre date (rétrocompat).
+  const monthsBack = Math.max(0, Math.min(600, Math.floor(Number(raw.monthsBack) || 0)));
   const departements = Array.isArray(raw.departements) && raw.departements.length > 0
     ? (raw.departements as string[]).slice(0, 50)
     : DEFAULT_DEPS;
   const pagesPerQuery = Math.min(5, Math.max(1, Math.floor(Number(raw.pagesPerQuery) || 2)));
   const dryRun = Boolean(raw.dryRun);
 
-  // Date de création minimum (entreprises créées il y a moins de N mois)
-  const minDate = new Date();
-  minDate.setMonth(minDate.getMonth() - monthsBack);
-  const minDateStr = minDate.toISOString().slice(0, 10);
+  // Si monthsBack=0 → pas de filtre, on récupère toutes les boîtes actives.
+  // Sinon date de création minimum (entreprises créées il y a moins de N mois)
+  let minDateStr: string | undefined;
+  if (monthsBack > 0) {
+    const minDate = new Date();
+    minDate.setMonth(minDate.getMonth() - monthsBack);
+    minDateStr = minDate.toISOString().slice(0, 10);
+  }
 
   // Budget temps
   const DEADLINE = Date.now() + 270_000;
@@ -159,7 +176,9 @@ export async function POST(req: NextRequest) {
                   ape_code: r.ape_code,
                   date_creation: r.date_creation,
                   status: "found",
-                  is_new_business: true, // marqueur pour le pitch "site offert"
+                  // is_new_business=true UNIQUEMENT si vraiment < 6 mois
+                  // (le Profiler segmentera ensuite par âge via date_creation)
+                  is_new_business: isReallyNewBusiness(r.date_creation),
                   notes: `Source: SIRENE INSEE — APE ${r.ape_code} — créée ${r.date_creation}`,
                 });
                 if (insErr) {

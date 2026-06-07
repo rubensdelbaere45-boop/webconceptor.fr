@@ -44,13 +44,48 @@ interface Prospect {
   date_creation: string | null;
 }
 
-type Angle = "no_website" | "low_rating" | "restaurant_qr" | "artisan_devis" | "new_business" | "generic";
+type Angle =
+  | "no_website"
+  | "low_rating"
+  | "restaurant_qr"
+  | "artisan_devis"
+  | "new_business"        // < 6 mois
+  | "young_business"      // 6 mois - 2 ans
+  | "mature_business"     // 2-5 ans
+  | "established_business" // 5-15 ans
+  | "historic_business"   // 15+ ans
+  | "generic";
+
+/**
+ * Calcule l'âge de l'entreprise en années (basé sur date_creation SIRENE).
+ * Retourne null si pas de date dispo.
+ */
+function calcBusinessAgeYears(dateCreation: string | null): number | null {
+  if (!dateCreation) return null;
+  try {
+    const created = new Date(dateCreation);
+    const now = new Date();
+    const years = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (Number.isFinite(years) && years >= 0 && years < 200) return years;
+  } catch { /* ignore */ }
+  return null;
+}
 
 function detectAngle(p: Prospect): Angle {
-  // Priorité décroissante
-  if (p.is_new_business) return "new_business";
+  // Priorité : signaux de douleur d'abord (pas-site, mauvaise note)
   if (!p.website || p.website.trim() === "") return "no_website";
   if (p.google_rating && p.google_rating > 0 && p.google_rating < 3.8) return "low_rating";
+
+  // Ensuite : segmentation par âge depuis SIRENE (NOUVEAU)
+  // Tom : "n'oublie pas les entreprises plus anciennes, juste avec un speech différent"
+  const ageYears = calcBusinessAgeYears(p.date_creation);
+  if (p.is_new_business || (ageYears !== null && ageYears < 0.5)) return "new_business";       // < 6 mois
+  if (ageYears !== null && ageYears < 2)  return "young_business";       // 6m - 2 ans
+  if (ageYears !== null && ageYears < 5)  return "mature_business";      // 2-5 ans
+  if (ageYears !== null && ageYears < 15) return "established_business"; // 5-15 ans
+  if (ageYears !== null && ageYears >= 15) return "historic_business";   // 15+ ans
+
+  // Pas d'âge connu : fallback sur le métier
   const t = (p.business_type || "").toLowerCase();
   if (/restaur|brasser|bistr|pizz|crêper|creperie|café|cafe|glacier|fast.?food/.test(t)) return "restaurant_qr";
   if (/plomb|electrici|menuis|serrur|carrele|peintr|couvr|maçon|garage|chauffag/.test(t)) return "artisan_devis";
@@ -62,32 +97,61 @@ const HOOK_SYSTEM = `Tu rédiges UNE phrase d'accroche commerciale ultra-courte 
 Règles :
 - 1 seule phrase, max 130 caractères
 - Tutoie pas, vouvoie
-- Mentionne UN détail SPÉCIFIQUE du prospect (sa note Google, son métier, sa ville)
+- Mentionne UN détail SPÉCIFIQUE du prospect (sa note Google, son métier, sa ville, son âge d'entreprise)
 - Évite le "Bonjour", c'est déjà dans l'email
 - Évite "Je vois que…", "J'ai vu…" — trop générique
 - Tonalité : empathique, jamais agressive
 - Pas de marketing, pas de superlatifs ("révolutionnaire", "incroyable")
 - L'accroche doit ressembler à quelque chose qu'un humain écrirait
 
-EXEMPLES BONS :
-- "Avec un 3,4/5 sur Google, votre garagerie à Lyon laisse passer des clients qui filtrent les notes."
-- "Sans site web visible, votre boulangerie à Aubenton est invisible pour 70% des recherches du quartier."
-- "Pour une menuiserie qui vient d'ouvrir, un site qui apparaît sur Google fait la différence dès le 1er mois."
+ADAPTER LE TON SELON L'ANGLE :
+
+▸ new_business (< 6 mois) — ton FÉLICITATIONS + opportunité de bien démarrer
+  Ex : "Bravo pour le lancement de votre menuiserie à Toulon — votre 1er site est l'opportunité de capter vos premiers clients en ligne."
+
+▸ young_business (6m - 2 ans) — ton PHASE DE CROISSANCE, urgence de visibilité
+  Ex : "À 1 an d'activité, votre plomberie à Lyon perd 70 % des clients qui Googlisent avant d'appeler."
+
+▸ mature_business (2-5 ans) — ton PROFESSIONNALISATION, fidélisation
+  Ex : "Après 3 ans à construire votre clientèle à Bordeaux, c'est le moment de transformer le bouche-à-oreille en visites Google."
+
+▸ established_business (5-15 ans) — ton EXPÉRIENCE = CONFIANCE
+  Ex : "8 ans à Rennes et vos clients vous connaissent — votre site web doit refléter cette expérience pour rassurer les prospects."
+
+▸ historic_business (15+ ans) — ton HÉRITAGE + MODERNITÉ
+  Ex : "Une entreprise comme la vôtre, créée en 1998 à Strasbourg, mérite une vitrine digitale qui valorise ce parcours."
+
+▸ no_website — angle URGENCE VISIBILITÉ
+  Ex : "Sans site, votre fleuriste à Nantes est invisible pour 70 % des recherches Google du quartier."
+
+▸ low_rating — angle RÉPUTATION RÉCUPÉRABLE
+  Ex : "Avec 3,4/5, votre garage à Lyon est filtré par les clients qui n'affichent que les 4+ étoiles."
+
+▸ restaurant_qr — angle MENU DIGITAL
+  Ex : "Un menu QR code en salle, plus de PDF à mettre à jour — c'est ce que je propose à votre brasserie à Lille."
+
+▸ artisan_devis — angle DEVIS 24/7
+  Ex : "Un module devis en ligne 24/7 pour votre menuiserie : vos clients génèrent leur devis sans vous déranger."
 
 Réponds UNIQUEMENT avec la phrase, pas de guillemets, pas de préambule.`;
 
 async function generateCustomHook(p: Prospect, angle: Angle): Promise<string> {
+  const ageYears = calcBusinessAgeYears(p.date_creation);
+  const ageStr = ageYears !== null
+    ? (ageYears < 1 ? `${Math.round(ageYears * 12)} mois` : `${Math.floor(ageYears)} ans`)
+    : "(âge inconnu)";
+
   const userPrompt = `Prospect :
 - Nom : ${p.name}
 - Ville : ${p.city || "(non renseignée)"}
 - Métier : ${p.business_type || "(non renseigné)"}
 - Site web : ${p.website ? "oui (" + p.website + ")" : "AUCUN"}
 - Note Google : ${p.google_rating ? p.google_rating.toFixed(1) + "/5" : "(non renseignée)"}
-- Entreprise récente : ${p.is_new_business ? `oui (créée ${p.date_creation || "<6mois"})` : "non"}
+- Âge de l'entreprise : ${ageStr}${p.date_creation ? ` (créée ${p.date_creation})` : ""}
 
 Angle commercial choisi : ${angle}
 
-Écris UNE phrase d'accroche personnalisée.`;
+Écris UNE phrase d'accroche personnalisée qui MENTIONNE l'âge précis quand pertinent (ex: "À 3 ans", "Après 8 ans", "1998 à Strasbourg").`;
 
   try {
     const text = await llmCall({
@@ -104,13 +168,21 @@ Angle commercial choisi : ${angle}
 
 function fallbackHook(p: Prospect, angle: Angle): string {
   const cityTxt = p.city ? ` à ${p.city}` : "";
+  const ageYears = calcBusinessAgeYears(p.date_creation);
+  const ageInt = ageYears !== null ? Math.floor(ageYears) : null;
+  const createdYear = p.date_creation ? new Date(p.date_creation).getFullYear() : null;
+
   switch (angle) {
-    case "no_website":     return `Sans site web visible, ${p.name}${cityTxt} laisse passer beaucoup de clients qui cherchent sur Google.`;
-    case "low_rating":     return `Avec ${p.google_rating?.toFixed(1)}/5 sur Google, ${p.name} est filtrée par les clients qui ne regardent que les 4+ étoiles.`;
-    case "restaurant_qr":  return `Un menu QR code en salle, plus de PDF à mettre à jour — c'est ce que je propose à ${p.name}.`;
-    case "artisan_devis":  return `Un module de devis en ligne 24/7 pour ${p.name} — vos clients génèrent leur devis sans vous déranger.`;
-    case "new_business":   return `Pour ${p.name} qui vient de se lancer, un site visible sur Google dès la 1ère semaine fait la différence.`;
-    default:               return `Un site web pro pour ${p.name}, livré en 5 jours, à 50€/mois tout compris.`;
+    case "no_website":          return `Sans site web visible, ${p.name}${cityTxt} laisse passer beaucoup de clients qui cherchent sur Google.`;
+    case "low_rating":          return `Avec ${p.google_rating?.toFixed(1)}/5 sur Google, ${p.name} est filtrée par les clients qui ne regardent que les 4+ étoiles.`;
+    case "restaurant_qr":       return `Un menu QR code en salle, plus de PDF à mettre à jour — c'est ce que je propose à ${p.name}.`;
+    case "artisan_devis":       return `Un module de devis en ligne 24/7 pour ${p.name} — vos clients génèrent leur devis sans vous déranger.`;
+    case "new_business":        return `Bravo pour le lancement de ${p.name}${cityTxt} — un site qui apparaît sur Google dès la 1ère semaine fait la différence.`;
+    case "young_business":      return `À ${ageInt || 1} an${ageInt && ageInt > 1 ? "s" : ""} d'activité, ${p.name}${cityTxt} perd 70 % des clients qui Googlisent avant d'appeler.`;
+    case "mature_business":     return `Après ${ageInt || 3} ans à construire votre clientèle${cityTxt}, c'est le moment de transformer le bouche-à-oreille en visites Google.`;
+    case "established_business":return `${ageInt || 8} ans${cityTxt} et vos clients vous connaissent — votre site doit refléter cette expérience pour rassurer les prospects.`;
+    case "historic_business":   return `Une entreprise comme la vôtre, créée ${createdYear ? "en " + createdYear : "il y a plus de 15 ans"}${cityTxt}, mérite une vitrine digitale qui valorise ce parcours.`;
+    default:                    return `Un site web pro pour ${p.name}, livré en 5 jours, à 50€/mois tout compris.`;
   }
 }
 

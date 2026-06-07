@@ -28,7 +28,7 @@
           ]
         },
         "sendBody": true,
-        "jsonBody": "={{ JSON.stringify({ monthsBack: 6, pagesPerQuery: 2 }) }}",
+        "jsonBody": "={{ JSON.stringify({ monthsBack: 0, pagesPerQuery: 2 }) }}",
         "options": {
           "timeout": 295000,
           "response": { "response": { "neverError": true, "fullResponse": false } }

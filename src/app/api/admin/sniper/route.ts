@@ -50,12 +50,16 @@ function buildSniperEmail(p: Prospect): { subject: string; html: string; text: s
 
   // Subject : on cherche un truc qui se démarque dans l'inbox
   const subjectByAngle: Record<string, string> = {
-    no_website: `${firstName}, vos clients vous cherchent sur Google`,
-    low_rating: `${firstName}, votre note Google vous coûte des appels`,
-    restaurant_qr: `${firstName}, un menu QR + un site = +30% de réservations`,
-    artisan_devis: `${firstName}, un devis 24/7 sans vous déranger`,
-    new_business: `${firstName}, vous venez d'ouvrir — voici votre site offert`,
-    generic: `${firstName}, votre site pro en 5 jours`,
+    no_website:           `${firstName}, vos clients vous cherchent sur Google`,
+    low_rating:           `${firstName}, votre note Google vous coûte des appels`,
+    restaurant_qr:        `${firstName}, un menu QR + un site = +30% de réservations`,
+    artisan_devis:        `${firstName}, un devis 24/7 sans vous déranger`,
+    new_business:         `${firstName}, vous venez d'ouvrir — voici votre site offert`,
+    young_business:       `${firstName}, vos premiers clients arrivent par Google maintenant`,
+    mature_business:      `${firstName}, transformer le bouche-à-oreille en clics Google`,
+    established_business: `${firstName}, votre expérience mérite une vitrine en ligne`,
+    historic_business:    `${firstName}, votre histoire mérite d'être valorisée en ligne`,
+    generic:              `${firstName}, votre site pro en 5 jours`,
   };
   const subject = subjectByAngle[p.sales_angle || "generic"] || subjectByAngle.generic;
 
