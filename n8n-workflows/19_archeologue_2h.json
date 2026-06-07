@@ -1,0 +1,41 @@
+{
+  "name": "19 — L'Archéologue (analyse obsolescence) 2h Paris quotidien",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 2 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "arc-sched",
+      "name": "Schedule 2h Paris",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/analyze-outdated",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ limit: 30 }) }}",
+        "options": { "timeout": 295000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "arc-http",
+      "name": "POST /api/admin/analyze-outdated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Schedule 2h Paris": { "main": [[{ "node": "POST /api/admin/analyze-outdated", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

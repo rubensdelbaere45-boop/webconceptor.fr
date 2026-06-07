@@ -1,0 +1,51 @@
+{
+  "name": "20 — Outdated Blast (Rénovateur + Archéologue) 11h/16h Lun-Ven",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 11 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "ob-sched-1",
+      "name": "11h Paris Lun-Ven",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 240]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 16 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "ob-sched-2",
+      "name": "16h Paris Lun-Ven",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 360]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/prospect/outdated-blast",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 295000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "ob-http",
+      "name": "POST /api/prospect/outdated-blast",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "11h Paris Lun-Ven": { "main": [[{ "node": "POST /api/prospect/outdated-blast", "type": "main", "index": 0 }]] },
+    "16h Paris Lun-Ven": { "main": [[{ "node": "POST /api/prospect/outdated-blast", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
