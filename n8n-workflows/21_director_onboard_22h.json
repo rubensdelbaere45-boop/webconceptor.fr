@@ -1,0 +1,41 @@
+{
+  "name": "21 — WebDirector Onboarding (Cheval de Troie) 22h Paris",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 22 * * 1-5" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "do-sched",
+      "name": "22h Paris Lun-Ven",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/director-onboard",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ limit: 30 }) }}",
+        "options": { "timeout": 295000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "do-http",
+      "name": "POST /api/admin/director-onboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "22h Paris Lun-Ven": { "main": [[{ "node": "POST /api/admin/director-onboard", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
