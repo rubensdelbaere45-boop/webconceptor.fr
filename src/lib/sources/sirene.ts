@@ -156,7 +156,7 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
       };
     });
 
-    // 🛡️ Filtre client de sécurité — au cas où l'API ignorerait silencieusement
+    // 🛡️ Filtre client OBLIGATOIRE — l'API recherche-entreprises.api.gouv.fr
     // les paramètres de date. Garantit "entreprise récente" même si l'amont change.
     const filtered = mapped.filter((c: SireneCompany) => {
       if (!c.date_creation) return false; // entreprise sans date = inutile pour notre pitch
@@ -176,6 +176,34 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
  * Ex : "ISMAEL BOURENNANE-FINAND (BOURENNANE) (IBOU ARTISAN PLOMBIER)"
  *  →   "Ibou Artisan Plombier"
  */
+/**
+ * Variante MULTI-PAGES de searchSirene : fetch jusqu'à N pages et filtre
+ * côté client par date_creation. Indispensable car l'API gratuite
+ * recherche-entreprises.api.gouv.fr N'A PAS de filtre date_creation.
+ *
+ * Coût : N appels HTTP × ~250 ms. Avec N=5 → ~1.5 sec par combo métier/dép.
+ *
+ * Si {minDateCreation} fourni : on filtre côté client après concat des pages.
+ * Si {natureJuridique} fourni : transmis à l'API qui le supporte.
+ */
+export async function searchSireneMultiPages(
+  opts: SireneSearchOptions,
+  maxPages = 5
+): Promise<SireneCompany[]> {
+  const out: SireneCompany[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const batch = await searchSirene({ ...opts, page });
+    if (batch.length === 0) break;
+    out.push(...batch);
+    // Si pas de filtre date côté API + on a déjà assez de résultats filtrés → stop
+    if (opts.minDateCreation) {
+      const filtered = out.filter((c) => c.date_creation && c.date_creation >= opts.minDateCreation!);
+      if (filtered.length >= (opts.perPage ?? 25)) break;
+    }
+  }
+  return out;
+}
+
 function cleanName(raw: string): string {
   if (!raw) return "";
   // Si parenthèses présentes, prend le nom commercial (dernière parenthèse)

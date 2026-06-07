@@ -28,7 +28,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare, requireAdminGuard, isBusinessTypeCoherent } from "@/lib/security";
-import { searchSirene, APE_CODES, ESTABLISHED_NATURES } from "@/lib/sources/sirene";
+import { searchSirene, searchSireneMultiPages, APE_CODES, ESTABLISHED_NATURES } from "@/lib/sources/sirene";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -143,15 +143,16 @@ export async function POST(req: NextRequest) {
         if (Date.now() > DEADLINE) break outer;
 
         // ── SCÉNARIO A : créées dans les 7 derniers jours ──
+        // ⚠️ API recherche-entreprises.api.gouv.fr ne supporte PAS date_creation_min/max.
+        // → On utilise multi-pages côté nous + filtre client. Garde max 3 pages.
         try {
-          const newOnes = await searchSirene({
+          const newOnes = await searchSireneMultiPages({
             codeNaf: ape,
             departement: dep,
             minDateCreation: fmt(sevenDaysAgo),
             maxDateCreation: fmt(today),
             perPage: 25,
-            page: 1,
-          });
+          }, 3);
           for (const r of newOnes) {
             const ok = await tryInsert(supabase, r, metier, "new_business", true, checkGoogle, stats, sample);
             if (ok) stats.scenario_A_new++;
@@ -161,16 +162,17 @@ export async function POST(req: NextRequest) {
         if (Date.now() > DEADLINE) break outer;
 
         // ── SCÉNARIO B : SAS/SARL/EURL/SASU créées 6m-5ans ──
+        // natureJuridique fonctionne côté API → filtre rapide.
+        // date_creation filtré côté client par searchSireneMultiPages.
         try {
-          const upgraded = await searchSirene({
+          const upgraded = await searchSireneMultiPages({
             codeNaf: ape,
             departement: dep,
             minDateCreation: fmt(fiveYearsAgo),
             maxDateCreation: fmt(sixMonthsAgo),
             natureJuridique: ESTABLISHED_NATURES,
             perPage: 15,
-            page: 1,
-          });
+          }, 3);
           for (const r of upgraded) {
             const ok = await tryInsert(supabase, r, metier, "status_upgrade", false, checkGoogle, stats, sample);
             if (ok) stats.scenario_B_status_upgrade++;
