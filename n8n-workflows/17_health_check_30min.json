@@ -1,0 +1,39 @@
+{
+  "name": "17 — Health Check global toutes les 30 min (alerte Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/30 * * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "hc-sched",
+      "name": "Toutes les 30 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/health-check",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 60000, "response": { "response": { "neverError": true, "fullResponse": false } } }
+      },
+      "id": "hc-http",
+      "name": "POST /api/admin/health-check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Toutes les 30 min": { "main": [[{ "node": "POST /api/admin/health-check", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
