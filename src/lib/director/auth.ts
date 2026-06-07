@@ -31,7 +31,7 @@ export async function setSessionCookie(accessToken: string) {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: "/director",
+    path: "/",     // cookie valide sur /director ET /api/director
     maxAge: DIRECTOR_COOKIE_MAXAGE,
   });
 }
