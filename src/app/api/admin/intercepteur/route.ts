@@ -109,14 +109,12 @@ export async function POST(req: NextRequest) {
   const departements = (body.departements && body.departements.length > 0 ? body.departements : DEFAULT_DEPS).slice(0, 40);
   const checkGoogle = body.checkGoogle !== false; // défaut true
 
-  // Dates de référence
+  // Dates de référence — élargies car l'API gratuite n'a pas de filtre date
+  // côté API. Avec multi-pages côté nous, 60j permet d'attraper qq créations
+  // récentes en parcourant 3-5 pages.
   const today = new Date();
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const sixMonthsAgo = new Date(today);
-  sixMonthsAgo.setMonth(today.getMonth() - 6);
-  const fiveYearsAgo = new Date(today);
-  fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+  const sixtyDaysAgo = new Date(today);
+  sixtyDaysAgo.setDate(today.getDate() - 60);
 
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -142,17 +140,18 @@ export async function POST(req: NextRequest) {
       for (const dep of departements) {
         if (Date.now() > DEADLINE) break outer;
 
-        // ── SCÉNARIO A : créées dans les 7 derniers jours ──
-        // ⚠️ API recherche-entreprises.api.gouv.fr ne supporte PAS date_creation_min/max.
-        // → On utilise multi-pages côté nous + filtre client. Garde max 3 pages.
+        // ── SCÉNARIO A : créées dans les 60 derniers jours ──
+        // Fenêtre élargie à 60j (vs 7j) car l'API gratuite ne filtre pas par
+        // date → on parcourt + de pages et on garde celles créées < 60j.
+        // Le hook IA mentionnera l'âge exact (3 semaines, 1 mois, etc.).
         try {
           const newOnes = await searchSireneMultiPages({
             codeNaf: ape,
             departement: dep,
-            minDateCreation: fmt(sevenDaysAgo),
+            minDateCreation: fmt(sixtyDaysAgo),
             maxDateCreation: fmt(today),
             perPage: 25,
-          }, 3);
+          }, 5);
           for (const r of newOnes) {
             const ok = await tryInsert(supabase, r, metier, "new_business", true, checkGoogle, stats, sample);
             if (ok) stats.scenario_A_new++;
@@ -161,19 +160,22 @@ export async function POST(req: NextRequest) {
 
         if (Date.now() > DEADLINE) break outer;
 
-        // ── SCÉNARIO B : SAS/SARL/EURL/SASU créées 6m-5ans ──
-        // natureJuridique fonctionne côté API → filtre rapide.
-        // date_creation filtré côté client par searchSireneMultiPages.
+        // ── SCÉNARIO B : SAS/SARL/EURL/SASU (toutes structurées) ──
+        // natureJuridique = filtre API qui MARCHE. Pas de fenêtre date côté
+        // client → on prend toutes les sociétés (= signal "structuration",
+        // probablement post-passage micro→société récent).
+        // Le hook IA différenciera selon date_creation (1 an = jeune SAS,
+        // 10 ans = SAS établie).
         try {
           const upgraded = await searchSireneMultiPages({
             codeNaf: ape,
             departement: dep,
-            minDateCreation: fmt(fiveYearsAgo),
-            maxDateCreation: fmt(sixMonthsAgo),
             natureJuridique: ESTABLISHED_NATURES,
-            perPage: 15,
+            perPage: 25,
           }, 3);
           for (const r of upgraded) {
+            // Skip si c'est déjà dans le scénario A (créée < 60j)
+            if (r.date_creation && r.date_creation >= fmt(sixtyDaysAgo)) continue;
             const ok = await tryInsert(supabase, r, metier, "status_upgrade", false, checkGoogle, stats, sample);
             if (ok) stats.scenario_B_status_upgrade++;
           }
