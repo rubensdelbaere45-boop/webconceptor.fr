@@ -1,9 +1,9 @@
 /**
  * Layout WebDirector — 100% indépendant de l'UI existante (/prospects/[slug]).
- * Dark mode premium gamifié, design tokens autonomes.
+ * Design system intégré via _app/director.css (Stripe/Linear/Mercury style).
  */
 import type { Metadata } from "next";
-import { DIRECTOR_BASE_CSS } from "@/lib/director/design-tokens";
+import "./_app/director.css";
 
 export const metadata: Metadata = {
   title: "WebDirector — Le pilote IA de votre business",
@@ -12,13 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function DirectorLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
-      <style dangerouslySetInnerHTML={{ __html: DIRECTOR_BASE_CSS }} />
-      <div className="director-app">
-        {children}
-      </div>
-    </>
-  );
+  return <div className="director-root">{children}</div>;
 }
