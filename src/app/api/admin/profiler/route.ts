@@ -49,11 +49,12 @@ type Angle =
   | "low_rating"
   | "restaurant_qr"
   | "artisan_devis"
-  | "new_business"        // < 6 mois
-  | "young_business"      // 6 mois - 2 ans
-  | "mature_business"     // 2-5 ans
-  | "established_business" // 5-15 ans
-  | "historic_business"   // 15+ ans
+  | "new_business"          // < 6 mois (créée TRÈS récemment)
+  | "young_business"        // 6 mois - 2 ans
+  | "mature_business"       // 2-5 ans
+  | "established_business"  // 5-15 ans
+  | "historic_business"     // 15+ ans
+  | "status_upgrade"        // passage en SAS/SARL/EURL (Intercepteur scénario B)
   | "generic";
 
 /**
@@ -106,19 +107,27 @@ Règles :
 
 ADAPTER LE TON SELON L'ANGLE :
 
-▸ new_business (< 6 mois) — ton FÉLICITATIONS + opportunité de bien démarrer
-  Ex : "Bravo pour le lancement de votre menuiserie à Toulon — votre 1er site est l'opportunité de capter vos premiers clients en ligne."
+▸ new_business (< 6 mois) — ton PROFESSIONNEL + EMPATHIQUE
+  Esprit : "Vous venez de créer votre entreprise, vous ne pouvez pas tout gérer
+  tout seul. Faites-vous connaître sur Internet et améliorez votre chiffre d'affaires."
+  Ex : "Vous venez de lancer votre menuiserie à Toulon — un site web vous fera connaître plus vite que le bouche-à-oreille seul."
+  Ex : "À ce stade, gérer la prospection et la production en parallèle est impossible — un site web travaille pour vous 24h/24."
 
-▸ young_business (6m - 2 ans) — ton PHASE DE CROISSANCE, urgence de visibilité
-  Ex : "À 1 an d'activité, votre plomberie à Lyon perd 70 % des clients qui Googlisent avant d'appeler."
+▸ status_upgrade (passage en SAS/SARL/EURL) — ton CROISSANCE PROFESSIONNALISÉE
+  Esprit : "Votre entreprise grandit, votre image en ligne doit suivre."
+  Ex : "Votre passage récent en SAS à Lyon marque une étape — votre image en ligne mérite de refléter cette nouvelle structure."
+  Ex : "Une SARL inspire plus confiance qu'une micro-entreprise — un site web pro consolide cette crédibilité auprès de vos clients."
 
-▸ mature_business (2-5 ans) — ton PROFESSIONNALISATION, fidélisation
+▸ young_business (6m - 2 ans) — ton PHASE DE CROISSANCE + visibilité
+  Ex : "À 1 an d'activité, votre plomberie à Lyon perd des clients qui Googlisent avant d'appeler."
+
+▸ mature_business (2-5 ans) — ton PROFESSIONNALISATION + fidélisation
   Ex : "Après 3 ans à construire votre clientèle à Bordeaux, c'est le moment de transformer le bouche-à-oreille en visites Google."
 
 ▸ established_business (5-15 ans) — ton EXPÉRIENCE = CONFIANCE
-  Ex : "8 ans à Rennes et vos clients vous connaissent — votre site web doit refléter cette expérience pour rassurer les prospects."
+  Ex : "8 ans à Rennes et vos clients vous connaissent — votre site web doit refléter cette expérience pour rassurer les nouveaux prospects."
 
-▸ historic_business (15+ ans) — ton HÉRITAGE + MODERNITÉ
+▸ historic_business (15+ ans) — ton HÉRITAGE + MODERNITÉ RESPECTUEUSE
   Ex : "Une entreprise comme la vôtre, créée en 1998 à Strasbourg, mérite une vitrine digitale qui valorise ce parcours."
 
 ▸ no_website — angle URGENCE VISIBILITÉ
@@ -177,7 +186,8 @@ function fallbackHook(p: Prospect, angle: Angle): string {
     case "low_rating":          return `Avec ${p.google_rating?.toFixed(1)}/5 sur Google, ${p.name} est filtrée par les clients qui ne regardent que les 4+ étoiles.`;
     case "restaurant_qr":       return `Un menu QR code en salle, plus de PDF à mettre à jour — c'est ce que je propose à ${p.name}.`;
     case "artisan_devis":       return `Un module de devis en ligne 24/7 pour ${p.name} — vos clients génèrent leur devis sans vous déranger.`;
-    case "new_business":        return `Bravo pour le lancement de ${p.name}${cityTxt} — un site qui apparaît sur Google dès la 1ère semaine fait la différence.`;
+    case "new_business":        return `Vous venez de lancer ${p.name}${cityTxt} — vous ne pouvez pas tout gérer seul, un site web travaille pour vous 24h/24 et améliore votre chiffre d'affaires.`;
+    case "status_upgrade":      return `Le passage de ${p.name} en société à ${p.city || "votre ville"} marque une étape — votre image en ligne mérite de refléter cette nouvelle structure.`;
     case "young_business":      return `À ${ageInt || 1} an${ageInt && ageInt > 1 ? "s" : ""} d'activité, ${p.name}${cityTxt} perd 70 % des clients qui Googlisent avant d'appeler.`;
     case "mature_business":     return `Après ${ageInt || 3} ans à construire votre clientèle${cityTxt}, c'est le moment de transformer le bouche-à-oreille en visites Google.`;
     case "established_business":return `${ageInt || 8} ans${cityTxt} et vos clients vous connaissent — votre site doit refléter cette expérience pour rassurer les prospects.`;

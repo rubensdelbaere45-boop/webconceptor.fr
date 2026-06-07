@@ -1,0 +1,100 @@
+{
+  "name": "18 — L'Intercepteur (Timing d'achat) 6h Paris",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }] },
+        "timezone": "Europe/Paris"
+      },
+      "id": "int-sched",
+      "name": "Schedule — 6h Paris",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webconceptor.fr/api/admin/intercepteur",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-admin-key", "value": "Rubens2026-WebConceptor" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ JSON.stringify({ checkGoogle: true }) }}",
+        "options": {
+          "timeout": 295000,
+          "response": { "response": { "neverError": true, "fullResponse": false } }
+        }
+      },
+      "id": "int-http",
+      "name": "POST /api/admin/intercepteur",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "ok-condition",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "int-if",
+      "name": "Succès ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=🦅 *L'Intercepteur — 6h Paris*\n\n🆕 Nouveaux (créés <7j) : *{{ $json.scenario_A_new }}*\n📈 Status upgrade (SAS/SARL) : *{{ $json.scenario_B_status_upgrade }}*\n✅ Insérés total : *{{ $json.inserted }}*\n🔁 Doublons : {{ $json.skipped_dupes }}\n🌐 Déjà sur Google : {{ $json.skipped_already_on_google }}\n\n*Top 5 leads chauds :*\n{{ ($json.sample || []).slice(0,5).map(s => '• ' + s).join('\\n') }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "int-tg-ok",
+      "name": "Telegram OK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1020, 200],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8673908436",
+        "text": "=⚠️ *L'Intercepteur — échec*\n\nErreur: {{ $json.error || 'inconnue' }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "int-tg-err",
+      "name": "Telegram ERREUR",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1020, 400],
+      "credentials": {
+        "telegramApi": { "id": "R7ocSIvNCsEI3AKl", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule — 6h Paris": { "main": [[{ "node": "POST /api/admin/intercepteur", "type": "main", "index": 0 }]] },
+    "POST /api/admin/intercepteur": { "main": [[{ "node": "Succès ?", "type": "main", "index": 0 }]] },
+    "Succès ?": { "main": [
+      [{ "node": "Telegram OK", "type": "main", "index": 0 }],
+      [{ "node": "Telegram ERREUR", "type": "main", "index": 0 }]
+    ]}
+  },
+  "settings": { "executionOrder": "v1" }
+}

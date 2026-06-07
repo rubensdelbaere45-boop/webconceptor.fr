@@ -22,6 +22,8 @@ export interface SireneCompany {
   ape_code: string | null;      // ex: "43.22A" = plomberie
   ape_label: string | null;     // libellé du code APE
   date_creation: string | null; // YYYY-MM-DD
+  nature_juridique: string | null; // ex: "5710" (SAS), "1000" (EI/Micro)
+  nature_juridique_label: string | null; // ex: "Société par actions simplifiée"
   is_active: boolean;
   email: string | null;         // souvent absent — à enrichir
   website: string | null;       // souvent absent
@@ -38,9 +40,29 @@ export interface SireneSearchOptions {
   trancheEffectifSalarie?: string; // ex: "00" (0 salarié), "01" (1-2)
   minDateCreation?: string; // YYYY-MM-DD — cible entreprises récentes
   maxDateCreation?: string;
+  natureJuridique?: string[]; // ex: ["5710", "5499"] (SAS / SARL) pour l'Intercepteur scénario B
   perPage?: number;        // max 25
   page?: number;
 }
+
+/**
+ * Codes catégories juridiques INSEE (extrait — codes qu'on utilise pour l'Intercepteur).
+ *
+ * "Status upgrade" = passer d'une entité simple (EI, micro) à une société (SAS, SARL).
+ */
+export const NATURE_JURIDIQUE = {
+  EI: "1000",          // Entrepreneur individuel (micro-entreprise inclus)
+  AUTO_ENTREPRENEUR: "1000",
+  EURL: "5498",
+  SARL: "5499",
+  SAS: "5710",
+  SASU: "5720",
+  SA: "5550",
+  SCI: "6540",
+} as const;
+
+/** Natures juridiques considérées comme "sociétés établies" (= post-upgrade). */
+export const ESTABLISHED_NATURES = ["5498", "5499", "5710", "5720", "5550"];
 
 // Map des codes NAF/APE pour les métiers WebConceptor
 // Source : nomenclature NAF rév. 2 INSEE
@@ -94,6 +116,10 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
   // (pas `min_date_creation`). Source : https://recherche-entreprises.api.gouv.fr/docs/
   if (opts.minDateCreation) params.set("date_creation_min", opts.minDateCreation);
   if (opts.maxDateCreation) params.set("date_creation_max", opts.maxDateCreation);
+  // nature_juridique accepte plusieurs codes séparés par virgule
+  if (opts.natureJuridique && opts.natureJuridique.length > 0) {
+    params.set("nature_juridique", opts.natureJuridique.join(","));
+  }
   params.set("per_page", String(Math.min(25, Math.max(1, opts.perPage ?? 25))));
   if (opts.page) params.set("page", String(opts.page));
   params.set("etat_administratif", "A"); // actives uniquement
@@ -122,6 +148,8 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
         ape_code: (etab.activite_principale as string) || null,
         ape_label: ((r.activite_principale as Record<string, unknown>)?.libelle as string) || null,
         date_creation: (etab.date_creation as string) || (r.date_creation as string) || null,
+        nature_juridique: (r.nature_juridique as string) || null,
+        nature_juridique_label: ((r.libelle_nature_juridique as string) || null),
         is_active: (etab.etat_administratif as string) === "A",
         email: null,   // L'API publique ne renvoie pas les emails
         website: null, // À enrichir via Scrapling
