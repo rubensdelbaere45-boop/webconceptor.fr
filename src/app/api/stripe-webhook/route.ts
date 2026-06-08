@@ -433,6 +433,53 @@ export async function POST(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
+    // FLOW 0bis : Abonnement WebDirector (29,90/mois ou 320/an)
+    // source === "director_subscription" + account_id + plan
+    // → première création depuis checkout.session.completed
+    //   (le suivi récurrent passe par customer.subscription.*)
+    // ═══════════════════════════════════════════════════════
+    if (source === "director_subscription") {
+      const accountId = metadata.account_id;
+      const plan = metadata.plan || "monthly";
+      const subscriptionId = session.subscription as string | null;
+      if (accountId && subscriptionId) {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
+        const amount = sub.items.data[0]?.price.unit_amount || (plan === "yearly" ? 32000 : 2990);
+        const periodEnd = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end;
+        const periodStart = sub.current_period_start ?? sub.items?.data?.[0]?.current_period_start;
+        const renewsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+
+        await supabase.from("director_subscriptions").upsert({
+          account_id: accountId,
+          stripe_subscription_id: subscriptionId,
+          stripe_customer_id: (session.customer as string) || (sub.customer as string),
+          stripe_price_id: sub.items.data[0]?.price.id || null,
+          plan,
+          amount_cents: amount,
+          currency: "eur",
+          status: sub.status,
+          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+          current_period_end: renewsAt,
+          cancel_at_period_end: sub.cancel_at_period_end,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "stripe_subscription_id" });
+
+        await supabase.from("director_accounts").update({
+          is_subscribed: true,
+          subscription_plan: plan,
+          subscription_renews_at: renewsAt,
+          stripe_customer_id: (session.customer as string) || undefined,
+          updated_at: new Date().toISOString(),
+        }).eq("id", accountId);
+
+        const { data: acc } = await supabase
+          .from("director_accounts").select("email, business_name").eq("id", accountId).maybeSingle();
+        await notifyTelegram(`🟢 <b>WebDirector — Nouvel abonnement</b>\n\n<b>${escapeTelegram(acc?.business_name || acc?.email || "?")}</b>\nPlan: <b>${plan === "yearly" ? "Annuel (320€)" : "Mensuel (29,90€)"}</b>\nRenouvellement: ${renewsAt?.slice(0, 10) || "?"}`);
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
     // FLOW 1 : Self-serve depuis la maquette (pas de code PIN)
     // source === "self_serve_mockup" + prospect_id
     // ═══════════════════════════════════════════════════════
@@ -1205,6 +1252,57 @@ ${hasSerenite ? "4. Creer la souscription Stripe Formule Serenite (50€/mois)" 
       }
     }
 
+    return NextResponse.json({ received: true });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Events récurrents pour les abonnements WebDirector
+  // ═══════════════════════════════════════════════════════════════════
+  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    const sub = event.data.object as any;
+    const { data: existing } = await supabase
+      .from("director_subscriptions")
+      .select("account_id, plan")
+      .eq("stripe_subscription_id", sub.id)
+      .maybeSingle();
+    if (existing) {
+      const periodEnd = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end;
+      const renewsAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+      await supabase.from("director_subscriptions").update({
+        status: sub.status,
+        current_period_end: renewsAt,
+        cancel_at_period_end: sub.cancel_at_period_end,
+        canceled_at: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      }).eq("stripe_subscription_id", sub.id);
+
+      const isActive = ["active", "trialing"].includes(sub.status);
+      await supabase.from("director_accounts").update({
+        is_subscribed: isActive,
+        subscription_renews_at: renewsAt,
+        updated_at: new Date().toISOString(),
+      }).eq("id", existing.account_id);
+
+      if (event.type === "customer.subscription.deleted") {
+        await notifyTelegram(`🔴 <b>WebDirector — Annulation abonnement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}`);
+      }
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  if (event.type === "invoice.paid") {
+    const invoice = event.data.object as any;
+    const subId = invoice.subscription || invoice.parent?.subscription_details?.subscription || invoice.lines?.data?.[0]?.subscription;
+    if (subId) {
+      const { data: existing } = await supabase
+        .from("director_subscriptions")
+        .select("account_id, plan")
+        .eq("stripe_subscription_id", subId as string)
+        .maybeSingle();
+      if (existing && invoice.billing_reason === "subscription_cycle") {
+        await notifyTelegram(`🔁 <b>WebDirector — Renouvellement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}\nMontant: ${((invoice.amount_paid || 0) / 100).toFixed(2)} €`);
+      }
+    }
     return NextResponse.json({ received: true });
   }
 
