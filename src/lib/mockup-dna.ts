@@ -2131,12 +2131,15 @@ export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<s
   // Sélection du template :
   // 1. dna.template_variant si défini explicitement en base
   // 2. Sinon, fallback intelligent par famille de DNA
-  const variant = dna.template_variant
-    || (STITCH_EXACT_DNAS.has(dnaKey) ? "stitch_exact_restaurant"
-       : ARTISAN_DNAS.has(dnaKey)     ? "industrial_artisan"
-       : MEDICAL_DNAS.has(dnaKey)     ? "clean_medical"
-       : EDITORIAL_DNAS.has(dnaKey)   ? "editorial_minimal"
-       :                                "elegant_restaurant");
+  // Override prioritaire : si le métier est dans le pool Stitch EXACT
+  // → on force le template Stitch pixel-pixel, peu importe template_variant en DB
+  const variant = STITCH_EXACT_DNAS.has(dnaKey)
+    ? "stitch_exact_restaurant"
+    : (dna.template_variant
+       || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
+          : MEDICAL_DNAS.has(dnaKey)   ? "clean_medical"
+          : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
+          :                              "elegant_restaurant"));
 
   let html: string;
   if (variant === "stitch_exact_restaurant") {
