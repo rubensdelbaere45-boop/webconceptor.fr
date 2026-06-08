@@ -24,6 +24,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { renderStitchRestaurant } from "@/lib/mockup-stitch-restaurant";
+import { renderStitchCoiffure } from "@/lib/mockup-stitch-coiffure";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -2116,6 +2117,10 @@ const STITCH_EXACT_DNAS = new Set([
   "restaurant_gastronomique", "restaurant_bistrot",
   "boulangerie_patisserie", "chocolaterie_salon_the",
 ]);
+// 🎯 Maquettes utilisant le HTML Stitch L'Élite Coiffure pixel-pixel
+const STITCH_COIFFURE_DNAS = new Set([
+  "coiffure",
+]);
 
 export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<string | null> {
   const dna = await fetchDna(prospect.business_type);
@@ -2133,16 +2138,27 @@ export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<s
   // 2. Sinon, fallback intelligent par famille de DNA
   // Override prioritaire : si le métier est dans le pool Stitch EXACT
   // → on force le template Stitch pixel-pixel, peu importe template_variant en DB
-  const variant = STITCH_EXACT_DNAS.has(dnaKey)
-    ? "stitch_exact_restaurant"
-    : (dna.template_variant
-       || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
-          : MEDICAL_DNAS.has(dnaKey)   ? "clean_medical"
-          : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
-          :                              "elegant_restaurant"));
+  const variant = STITCH_EXACT_DNAS.has(dnaKey)    ? "stitch_exact_restaurant"
+               : STITCH_COIFFURE_DNAS.has(dnaKey)  ? "stitch_exact_coiffure"
+               : (dna.template_variant
+                  || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
+                     : MEDICAL_DNAS.has(dnaKey)   ? "clean_medical"
+                     : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
+                     :                              "elegant_restaurant"));
 
   let html: string;
-  if (variant === "stitch_exact_restaurant") {
+  if (variant === "stitch_exact_coiffure") {
+    // 🎯 Pixel-pixel du HTML Stitch L'Élite Coiffure
+    html = renderStitchCoiffure({
+      id: prospect.id, slug: prospect.slug, name: prospect.name,
+      city: prospect.city, address: prospect.address,
+      phone: prospect.phone, email: prospect.email,
+      google_rating: prospect.google_rating,
+      google_reviews_count: prospect.google_reviews_count,
+      hours: prospect.hours, reviews: prospect.reviews,
+    }, copy as any);
+  }
+  else if (variant === "stitch_exact_restaurant") {
     // 🎯 Pixel-pixel du HTML Stitch L'Armoire à Cuillères + Tailwind CDN
     html = renderStitchRestaurant({
       id: prospect.id, slug: prospect.slug, name: prospect.name,
