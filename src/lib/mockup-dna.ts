@@ -227,11 +227,56 @@ Rédige le contenu d'un site premium en JSON avec EXACTEMENT cette structure :
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content || "";
     const json = JSON.parse(content);
-    // Garde-fou : merge avec fallback pour tout champ manquant
-    return { ...fallback, ...json };
+    // Garde-fou : merge avec fallback pour tout champ manquant + sanitize variables non-substituées
+    const merged = { ...fallback, ...json };
+    return sanitizeCopy(merged, prospect);
   } catch {
-    return fallback;
+    return sanitizeCopy(fallback, prospect);
   }
+}
+
+/**
+ * Nettoie le copy de tout ${variable} qui aurait fuité du fallback ou de l'IA,
+ * et substitue manuellement les jokers {{name}}, {{city}}.
+ */
+function sanitizeCopy(copy: AICopy, prospect: DnaProspect): AICopy {
+  const city = prospect.city || "votre ville";
+  const name = prospect.name || "Notre maison";
+  const substitute = (s: string): string => {
+    if (typeof s !== "string") return s;
+    return s
+      .replace(/\$\{city\}/g, city)
+      .replace(/\$\{name\}/g, name)
+      .replace(/\{\{city\}\}/g, city)
+      .replace(/\{\{name\}\}/g, name);
+  };
+  return {
+    ...copy,
+    hero_caps: substitute(copy.hero_caps),
+    hero_title: substitute(copy.hero_title),
+    hero_subtitle: substitute(copy.hero_subtitle),
+    cta_primary: substitute(copy.cta_primary),
+    cta_secondary: substitute(copy.cta_secondary),
+    univers_title: substitute(copy.univers_title),
+    univers_paragraph1: substitute(copy.univers_paragraph1),
+    univers_paragraph2: substitute(copy.univers_paragraph2),
+    univers_badge: substitute(copy.univers_badge),
+    savoir_faire_title: substitute(copy.savoir_faire_title),
+    savoir_faire_subtitle: substitute(copy.savoir_faire_subtitle),
+    savoir_faire_cards: (copy.savoir_faire_cards || []).map(c => ({
+      icon_index: c.icon_index,
+      title: substitute(c.title),
+      body: substitute(c.body),
+    })),
+    testimonials: (copy.testimonials || []).map(t => ({
+      author: substitute(t.author),
+      quote: substitute(t.quote),
+    })),
+    cta_final_title: substitute(copy.cta_final_title),
+    cta_final_paragraph: substitute(copy.cta_final_paragraph),
+    cta_final_button: substitute(copy.cta_final_button),
+    footer_tagline: substitute(copy.footer_tagline),
+  };
 }
 
 function buildFallbackCopy(p: DnaProspect, dna: DesignDNA): AICopy {
@@ -251,7 +296,7 @@ function buildFallbackCopy(p: DnaProspect, dna: DesignDNA): AICopy {
     savoir_faire_cards: [
       { icon_index: 0, title: "Expertise & passion", body: `Notre équipe met son savoir-faire au service d'une expérience unique pour chaque client.` },
       { icon_index: 1, title: "Une exigence quotidienne", body: `Rien n'est laissé au hasard, du premier contact jusqu'à votre entière satisfaction.` },
-      { icon_index: 2, title: "Au cœur de ${city}", body: `Implantés à ${city}, nous connaissons les attentes locales et y répondons sur-mesure.` },
+      { icon_index: 2, title: `Au cœur de ${city}`, body: `Implantés à ${city}, nous connaissons les attentes locales et y répondons sur-mesure.` },
     ],
     testimonials: [
       { author: "Sophie M.", quote: "Une expérience qui restera gravée. Bravo pour cette qualité." },
@@ -492,6 +537,54 @@ async function cleanProspectPhotos(prospect: DnaProspect): Promise<void> {
     prospect.photos.slice(0, 8).map(async u => ((await validatePhotoLive(u)) ? u : null))
   );
   prospect.photos = checked.filter((u): u is string => u !== null);
+}
+
+/**
+ * Parse une string d'horaires brutes (formats variés Google Places) en
+ * tableau {day, hours} lisible.
+ *
+ * Accepte :
+ *   "lundi: Fermé | mardi: 10:00 – 19:30 | mercredi: 10:00 – 19:30"
+ *   "lundi: 9h-18h\nmardi: 9h-18h"
+ *   "Lun-Ven 9h-18h"  (one-liner non-parsable → renvoyé tel quel)
+ */
+function parseHours(raw: string | null | undefined): Array<{ day: string; hours: string }> | null {
+  if (!raw) return null;
+  // Découpe sur | ou retour à la ligne
+  const lines = raw.split(/\s*[\|\n]\s*/).map(s => s.trim()).filter(Boolean);
+  if (lines.length < 2) return null;
+  const days: Array<{ day: string; hours: string }> = [];
+  for (const line of lines) {
+    const m = line.match(/^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|lun|mar|mer|jeu|ven|sam|dim)\s*[:\-]?\s*(.+)$/i);
+    if (m) {
+      const dayMap: Record<string, string> = {
+        lun: "Lundi", lundi: "Lundi",
+        mar: "Mardi", mardi: "Mardi",
+        mer: "Mercredi", mercredi: "Mercredi",
+        jeu: "Jeudi", jeudi: "Jeudi",
+        ven: "Vendredi", vendredi: "Vendredi",
+        sam: "Samedi", samedi: "Samedi",
+        dim: "Dimanche", dimanche: "Dimanche",
+      };
+      const dayKey = m[1].toLowerCase();
+      days.push({ day: dayMap[dayKey] || m[1], hours: m[2].trim() });
+    }
+  }
+  return days.length >= 2 ? days : null;
+}
+
+/** Rend les horaires en HTML structuré : table compacte avec une ligne par jour. */
+function renderHoursHtml(raw: string | null | undefined, color: string = "currentColor"): string {
+  const parsed = parseHours(raw);
+  if (!parsed) return raw ? escape(raw) : "Sur rendez-vous";
+  return `<table style="border-collapse:collapse;width:100%;font-size:14px;line-height:1.7">
+    ${parsed.map(d => `
+      <tr>
+        <td style="padding:4px 12px 4px 0;font-weight:600;color:${color};white-space:nowrap">${escape(d.day)}</td>
+        <td style="padding:4px 0;color:${color};opacity:0.85;text-align:right">${escape(d.hours)}</td>
+      </tr>
+    `).join("")}
+  </table>`;
 }
 
 function stars(rating: number | null | undefined): string {
@@ -849,7 +942,7 @@ ${heroSection}
       <div class="footer-col">
         <h4>Informations</h4>
         ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
-        ${prospect.hours ? `<a>${escape(prospect.hours)}</a>` : ""}
+        ${prospect.hours ? `<div style="margin-bottom:8px">${renderHoursHtml(prospect.hours, "currentColor")}</div>` : ""}
         ${prospect.phone ? `<a href="tel:${escape(prospect.phone)}">${escape(prospect.phone)}</a>` : ""}
         ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
       </div>
@@ -1242,7 +1335,7 @@ function renderArtisanHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, 
         ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
         ${prospect.phone ? `<a href="tel:${phoneClean}">${escape(phoneDisplay)}</a>` : ""}
         ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
-        ${prospect.hours ? `<a>${escape(prospect.hours)}</a>` : ""}
+        ${prospect.hours ? `<div style="margin-bottom:8px">${renderHoursHtml(prospect.hours, "currentColor")}</div>` : ""}
       </div>
       <div class="footer-col">
         <h4>Zone d'intervention</h4>
@@ -1575,7 +1668,7 @@ function renderEditorialHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy
       <div class="footer-col">
         <h4>Informations</h4>
         ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
-        ${prospect.hours ? `<a>${escape(prospect.hours)}</a>` : ""}
+        ${prospect.hours ? `<div style="margin-bottom:8px">${renderHoursHtml(prospect.hours, "currentColor")}</div>` : ""}
         ${prospect.phone ? `<a href="tel:${phoneClean}">${escape(phoneDisplay)}</a>` : ""}
         ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
       </div>
@@ -1910,7 +2003,7 @@ function renderMedicalHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, 
       <div class="info-card">
         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">schedule</span>
         <h4>Horaires</h4>
-        <p>${prospect.hours ? escape(prospect.hours) : "Lun-Ven : 9h-19h<br>Sam : 9h-13h"}</p>
+        <div style="font-size:14.5px;color:var(--text);font-weight:500;line-height:1.55">${renderHoursHtml(prospect.hours, "var(--text)")}</div>
       </div>
       <div class="info-card">
         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">phone</span>
@@ -2066,6 +2159,8 @@ function validateMockupQuality(html: string, prospect: DnaProspect): boolean {
   if (/src=["'][^"']*\?["']/.test(html)) return false;
   if (/src=["'][^"']*placeholder[^"']*["']/i.test(html)) return false;
   if (/lorem ipsum|dolor sit amet/i.test(html)) return false;
+  // Variables JS non-substituées (${foo}, {{bar}}) qui auraient fuité
+  if (/\$\{[a-z_]+\}|\{\{[a-z_]+\}\}/i.test(html)) return false;
   // Doit contenir le nom du prospect (escape variant possible)
   const nameStripped = (prospect.name || "").replace(/[^\w]/g, "");
   if (nameStripped.length > 3 && !html.replace(/[^\w]/g, "").includes(nameStripped.slice(0, Math.min(nameStripped.length, 20)))) {
