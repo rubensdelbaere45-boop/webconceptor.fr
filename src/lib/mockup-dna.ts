@@ -60,6 +60,8 @@ interface DesignDNA {
   icons_library: string;
   icons: string[];
   hero_pattern: string;
+  template_variant?: string | null;     // 'elegant_restaurant' | 'industrial_artisan' | 'minimal_professional' | null
+  signature_css?: string | null;        // bloc CSS spécifique au métier (chamfer, hard-shadow, pulse, etc.)
   sections_required: string[];
   vibe_keywords: string[];
   copywriting_tone: string;
@@ -746,13 +748,419 @@ ${heroSection}
 </html>`;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RENDERER 2 — Pattern "Voltage & Trust" pour artisans BTP
+// (électricien, plombier, menuisier, garage)
+// Inspiré du design system Stitch industrial-artisan :
+//   - Hero split avec badge mono "DISPONIBLE 24H/24"
+//   - CTA téléphone jaune ardent + pulse animation
+//   - Trust bar inverse (étoiles Google + certifs)
+//   - Services 6-grid avec border-l hover primary + chamfer corners
+//   - 1 card CTA urgence intégrée au grid
+//   - Section "Pourquoi nous" 3 features
+//   - Hard shadow industrial (offset, pas de blur)
+// ═══════════════════════════════════════════════════════════════
+
+function renderArtisanHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, dnaKey: string): string {
+  const heroPhoto = photoFor(dnaKey, prospect, 0);
+  const trustPhoto = photoFor(dnaKey, prospect, 1);
+
+  const fontParam = (name: string) => name.replace(/ /g, "+");
+  const fontsLink = `https://fonts.googleapis.com/css2?family=${fontParam(dna.font_heading)}:wght@500;700;800;900&family=${fontParam(dna.font_body)}:wght@400;500;700&${dna.font_accent ? `family=${fontParam(dna.font_accent)}:wght@700&` : ""}display=swap`;
+  const iconsLink = `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap`;
+
+  const phoneClean = (prospect.phone || "").replace(/\s/g, "");
+  const phoneDisplay = prospect.phone || "";
+
+  const icons = dna.icons.length >= 5 ? dna.icons : [...dna.icons, "build", "schedule", "place", "verified", "star"];
+
+  const ratingDisplay = prospect.google_rating ? `${prospect.google_rating.toFixed(1)}/5` : "5,0/5";
+  const reviewsCountDisplay = prospect.google_reviews_count
+    ? `${prospect.google_rating?.toFixed(1) || "5"}/5 sur Google (${prospect.google_reviews_count} avis)`
+    : `Avis Google certifiés`;
+
+  // Reviews
+  const reviewsList = (prospect.reviews && prospect.reviews.length >= 3
+    ? prospect.reviews.slice(0, 4)
+    : copy.testimonials.map(t => ({ author: t.author, rating: 5, text: t.quote }))
+  );
+
+  // 5 services + 1 carte CTA urgence
+  const serviceCards = copy.savoir_faire_cards.slice(0, 5);
+  while (serviceCards.length < 5) {
+    serviceCards.push({
+      icon_index: serviceCards.length,
+      title: ["Maintenance", "Dépannage", "Installation", "Diagnostic", "Conseil"][serviceCards.length],
+      body: "Une intervention rapide, propre et conforme aux normes en vigueur dans votre région.",
+    });
+  }
+
+  const cssVars = `
+    --bg: ${dna.color_bg};
+    --surface: ${dna.color_surface};
+    --primary: ${dna.color_primary};
+    --accent: ${dna.color_accent};
+    --text: ${dna.color_text};
+    --muted: ${dna.color_muted};
+    --dark: ${dna.color_dark_section};
+  `;
+
+  const signatureCss = dna.signature_css || `
+    /* Signature Voltage & Trust (défaut artisan) */
+    .chamfer { clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+    .hard-shadow { box-shadow: 4px 4px 0 0 ${dna.color_dark_section}; }
+    .hard-shadow:hover { box-shadow: 6px 6px 0 0 ${dna.color_dark_section}; }
+    .emergency-pulse { animation: emergencyPulse 1.8s ease-out infinite; }
+    @keyframes emergencyPulse {
+      0%, 100% { box-shadow: 0 0 0 0 ${dna.color_accent}66; }
+      50% { box-shadow: 0 0 0 14px ${dna.color_accent}00; }
+    }
+    .wire-node { position: relative; }
+    .wire-node::after { content:''; position:absolute; bottom:-22px; left:50%; transform:translateX(-50%); width:1px; height:18px; background: var(--primary); }
+    .wire-node::before { content:''; position:absolute; bottom:-26px; left:calc(50% - 3px); width:7px; height:7px; border-radius:50%; background: var(--primary); }
+    .service-card { transition: border-left-color .25s, transform .25s; border-left: 4px solid transparent; }
+    .service-card:hover { border-left-color: var(--primary); transform: translateY(-2px); }
+  `;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(prospect.name)} — ${escape(dna.label_fr)} ${prospect.city ? `à ${escape(prospect.city)}` : ""}</title>
+<meta name="description" content="${escape(copy.footer_tagline)}">
+<link href="${fontsLink}" rel="stylesheet">
+<link href="${iconsLink}" rel="stylesheet">
+<style>
+  :root{${cssVars}}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'${dna.font_body}',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:'${dna.font_heading}',sans-serif;font-weight:800;color:var(--primary);line-height:1.15;letter-spacing:-0.01em}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+  .mono{font-family:${dna.font_accent ? `'${dna.font_accent}',` : ""}'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase}
+
+  /* Container */
+  .container{max-width:1200px;margin:0 auto;padding:0 24px}
+  @media(max-width:640px){.container{padding:0 18px}}
+
+  ${signatureCss}
+
+  /* Header */
+  .site-header{position:sticky;top:0;background:#fff;z-index:100;border-bottom:1px solid color-mix(in srgb,var(--muted) 25%,transparent)}
+  .site-header .container{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .brand-logo{display:flex;align-items:center;gap:12px}
+  .brand-name{font-family:'${dna.font_heading}',sans-serif;font-weight:800;font-size:22px;color:var(--primary);letter-spacing:-0.01em}
+  .nav-links{display:flex;gap:28px;align-items:center}
+  .nav-links a{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;transition:color .2s}
+  .nav-links a:hover{color:var(--primary)}
+  .nav-tel{display:flex;align-items:center;gap:8px;background:var(--primary);color:#fff;padding:12px 18px;border-radius:6px;font-weight:700;font-size:14px}
+  .nav-tel:hover{opacity:0.9}
+  @media(max-width:900px){.nav-links{display:none}}
+
+  /* Hero */
+  .hero{position:relative;min-height:560px;display:flex;align-items:center;overflow:hidden;background:var(--surface)}
+  .hero-bg{position:absolute;inset:0}
+  .hero-bg::before{content:'';position:absolute;inset:0;background:linear-gradient(to right,${dna.color_bg} 0%,${dna.color_bg}cc 40%,transparent 75%);z-index:2}
+  .hero-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .hero-content{position:relative;z-index:3;max-width:640px}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:${dna.color_dark_section};padding:8px 14px;border-radius:4px;font-size:12px;font-weight:700;margin-bottom:24px}
+  .hero-badge .material-symbols-outlined{font-size:18px}
+  .hero h1{font-size:clamp(36px,5.5vw,52px);font-weight:900;color:var(--primary);margin-bottom:16px;line-height:1.05}
+  .hero h1 .accent{color:var(--text);font-weight:700}
+  .hero-sub{font-size:18px;color:var(--muted);margin-bottom:32px;line-height:1.55;max-width:520px}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+  .btn-emergency{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:${dna.color_dark_section};padding:18px 28px;border-radius:6px;font-weight:800;font-size:15px;transition:transform .2s}
+  .btn-emergency:hover{transform:translateY(-2px) scale(1.02)}
+  .btn-outline{display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--primary);color:var(--primary);padding:16px 28px;border-radius:6px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em}
+  .btn-outline:hover{background:color-mix(in srgb,var(--primary) 8%,transparent)}
+
+  /* Trust bar (charcoal) */
+  .trust-bar{background:var(--dark);color:#fff;padding:18px 0;border-top:1px solid ${dna.color_accent}40;border-bottom:1px solid ${dna.color_accent}40}
+  .trust-bar .container{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:center}
+  .trust-item{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+  .trust-item .stars{color:var(--accent);display:flex;gap:2px}
+  .trust-item .material-symbols-outlined{color:var(--accent);font-size:22px}
+  @media(max-width:768px){.trust-bar .container{grid-template-columns:1fr;text-align:center}}
+
+  /* Section générique */
+  section.main-section{padding:80px 0}
+  @media(max-width:640px){section.main-section{padding:56px 0}}
+  .section-head{text-align:center;margin-bottom:56px}
+  .section-head h2{font-size:clamp(28px,4vw,36px);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:14px}
+  .section-bar{width:80px;height:4px;background:var(--primary);margin:0 auto 18px}
+  .section-head p{color:var(--muted);font-size:16px;max-width:600px;margin:0 auto}
+
+  /* Services grid */
+  .services{background:var(--surface)}
+  .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media(max-width:900px){.services-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.services-grid{grid-template-columns:1fr}}
+  .service-card{background:var(--bg);padding:32px;border:1px solid color-mix(in srgb,var(--muted) 22%,transparent);position:relative}
+  .service-card .material-symbols-outlined{font-size:40px;color:var(--primary);margin-bottom:18px}
+  .service-card h3{font-size:20px;margin-bottom:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.01em}
+  .service-card p{color:var(--muted);font-size:14.5px;line-height:1.6;margin-bottom:18px}
+  .service-card .more{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.05em}
+  .service-cta-card{background:var(--primary);color:#fff;padding:32px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden;border:none}
+  .service-cta-card::before{content:'';position:absolute;top:8px;right:8px;width:120px;height:120px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff' opacity='0.08'><path d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/></svg>") no-repeat;background-size:contain;opacity:0.15}
+  .service-cta-card h3{color:#fff;font-size:22px;margin-bottom:10px}
+  .service-cta-card p{color:#ffffffcc;margin-bottom:20px;font-size:14px}
+  .service-cta-card .btn-pulse{background:var(--accent);color:${dna.color_dark_section};padding:14px 24px;border-radius:6px;font-weight:800;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+
+  /* Pourquoi nous */
+  .pourquoi{background:var(--bg)}
+  .pourquoi-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+  @media(max-width:900px){.pourquoi-grid{grid-template-columns:1fr;gap:40px}}
+  .pourquoi-text h2{font-size:clamp(28px,4vw,38px);margin-bottom:32px;text-transform:uppercase;letter-spacing:0.01em}
+  .pourquoi-text h2 .accent{color:var(--primary)}
+  .pourquoi-feat{display:flex;gap:16px;margin-bottom:24px;align-items:flex-start}
+  .pourquoi-feat-icon{flex-shrink:0;width:48px;height:48px;border-radius:50%;background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--primary);display:flex;align-items:center;justify-content:center}
+  .pourquoi-feat h4{font-size:17px;font-weight:700;margin-bottom:6px;color:var(--text)}
+  .pourquoi-feat p{color:var(--muted);font-size:14px;line-height:1.6}
+  .pourquoi-img{position:relative;border:2px solid var(--primary);padding:24px;background:var(--surface)}
+  .pourquoi-img img{width:100%;aspect-ratio:4/3;object-fit:cover}
+  .pourquoi-stats{position:absolute;bottom:-24px;left:-24px;background:var(--accent);color:${dna.color_dark_section};padding:16px 24px;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.08em}
+
+  /* Testimonials */
+  .testimonials{background:var(--surface)}
+  .testimonials-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+  @media(max-width:768px){.testimonials-grid{grid-template-columns:1fr}}
+  .testimonial-card{background:var(--bg);border:1px solid color-mix(in srgb,var(--muted) 22%,transparent);padding:28px}
+  .testimonial-stars{color:var(--accent);display:flex;gap:2px;margin-bottom:12px}
+  .testimonial-quote{font-size:15px;color:var(--text);line-height:1.65;margin-bottom:16px}
+  .testimonial-author{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+
+  /* CTA final */
+  .cta-final{background:var(--dark);color:#fff;text-align:center;padding:80px 24px}
+  .cta-final h2{color:#fff;font-size:clamp(28px,4vw,40px);margin-bottom:16px;text-transform:uppercase}
+  .cta-final p{color:#ffffffcc;max-width:600px;margin:0 auto 32px;font-size:17px}
+  .cta-final .btn-emergency{font-size:18px;padding:22px 36px}
+
+  /* Footer */
+  .site-footer{background:var(--dark);color:#ffffffaa;padding:48px 0 28px;border-top:1px solid ${dna.color_accent}30}
+  .footer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:32px;text-align:center}}
+  .footer-col h4{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:14px}
+  .footer-col a, .footer-col p{display:block;font-size:14px;color:#ffffffaa;margin-bottom:8px;transition:color .2s}
+  .footer-col a:hover{color:var(--accent)}
+  .footer-brand{font-family:'${dna.font_heading}';color:var(--accent);font-size:20px;font-weight:800;margin-bottom:10px}
+  .footer-bottom{border-top:1px solid #ffffff18;margin-top:32px;padding-top:20px;text-align:center;font-size:12px;color:#ffffff66}
+
+  /* Reveal */
+  .reveal{opacity:0;transform:translateY(20px);transition:all .8s cubic-bezier(0.16,1,0.3,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <div class="brand-logo">
+      <span class="material-symbols-outlined" style="font-size:30px;color:var(--primary)">${escape(icons[0])}</span>
+      <span class="brand-name">${escape(prospect.name)}</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#services">Services</a>
+      <a href="#pourquoi">Pourquoi nous</a>
+      <a href="#avis">Avis</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    ${phoneClean ? `<a href="tel:${phoneClean}" class="nav-tel">
+      <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">phone_in_talk</span>
+      <span class="phone-num">${escape(phoneDisplay)}</span>
+    </a>` : ""}
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="hero-bg">
+    <img src="${escape(heroPhoto)}" alt="${escape(prospect.name)}">
+  </div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge mono">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">bolt</span>
+        ${escape(copy.hero_caps || "DISPONIBLE 7J/7")}
+      </div>
+      <h1>${escape(copy.hero_title)} ${prospect.city ? `<br><span class="accent">à ${escape(prospect.city)}</span>` : ""}</h1>
+      <p class="hero-sub">${escape(copy.hero_subtitle)}</p>
+      <div class="hero-ctas">
+        ${phoneClean ? `<a href="tel:${phoneClean}" class="btn-emergency emergency-pulse chamfer">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">call</span>
+          ${escape(copy.cta_primary)} : ${escape(phoneDisplay)}
+        </a>` : ""}
+        <a href="#services" class="btn-outline">${escape(copy.cta_secondary)}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="trust-bar">
+  <div class="container">
+    <div class="trust-item">
+      <div class="stars">${stars(prospect.google_rating)}</div>
+      <span class="mono">${escape(ratingDisplay)} ${prospect.google_reviews_count ? `(${prospect.google_reviews_count} avis)` : ""}</span>
+    </div>
+    <div class="trust-item">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">verified</span>
+      <span class="mono">Entreprise Validée</span>
+    </div>
+    <div class="trust-item">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">workspace_premium</span>
+      <span class="mono">Assurance & Garantie</span>
+    </div>
+  </div>
+</section>
+
+<section id="services" class="main-section services reveal">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="wire-node">${escape(copy.savoir_faire_title || "Nos Services")}</h2>
+      <div class="section-bar"></div>
+      <p>${escape(copy.savoir_faire_subtitle)}</p>
+    </div>
+    <div class="services-grid">
+      ${serviceCards.slice(0, 5).map((card, i) => `
+        <div class="service-card hard-shadow">
+          <span class="material-symbols-outlined">${escape(icons[i % icons.length])}</span>
+          <h3>${escape(card.title)}</h3>
+          <p>${escape(card.body)}</p>
+          <a href="#contact" class="more">En savoir plus <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></a>
+        </div>`).join("")}
+      <div class="service-cta-card chamfer">
+        <h3>${escape(copy.cta_final_title || "Urgence ? Appelez")}</h3>
+        <p>${escape(copy.cta_final_paragraph || "Intervention en moins de 30 minutes.")}</p>
+        ${phoneClean ? `<a href="tel:${phoneClean}" class="btn-pulse">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">call</span>
+          ${escape(phoneDisplay)}
+        </a>` : ""}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pourquoi" class="main-section pourquoi reveal">
+  <div class="container">
+    <div class="pourquoi-grid">
+      <div class="pourquoi-text">
+        <h2>${escape(copy.univers_title || "Pourquoi nous choisir")} ?</h2>
+        ${[
+          { icon: "price_check", title: "Tarifs transparents", text: copy.univers_paragraph1 },
+          { icon: "schedule", title: "Intervention rapide", text: copy.univers_paragraph2 },
+          { icon: "verified_user", title: "Garantie & expertise", text: `Plus de ${10 + Math.floor(Math.random() * 10)} ans d'expérience au service des habitants de ${prospect.city || "votre région"}. Travail garanti et conforme aux normes.` },
+        ].map(f => `
+          <div class="pourquoi-feat">
+            <div class="pourquoi-feat-icon">
+              <span class="material-symbols-outlined">${escape(f.icon)}</span>
+            </div>
+            <div>
+              <h4>${escape(f.title)}</h4>
+              <p>${escape(f.text)}</p>
+            </div>
+          </div>`).join("")}
+      </div>
+      <div class="pourquoi-img chamfer">
+        <img src="${escape(trustPhoto)}" alt="${escape(prospect.name)} au travail">
+        <div class="pourquoi-stats">${escape(copy.univers_badge || "15+ ans d'expérience")}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="avis" class="main-section testimonials reveal">
+  <div class="container">
+    <div class="section-head">
+      <h2>Ce qu'ils en disent</h2>
+      <div class="section-bar"></div>
+      <p>${escape(reviewsCountDisplay)}</p>
+    </div>
+    <div class="testimonials-grid">
+      ${reviewsList.map(r => `
+        <div class="testimonial-card hard-shadow">
+          <div class="testimonial-stars">${stars(("rating" in r ? (r as any).rating : 5) as number)}</div>
+          <p class="testimonial-quote">«&nbsp;${escape((r as any).text || (r as any).quote)}&nbsp;»</p>
+          <div class="testimonial-author">— ${escape((r as any).author)}</div>
+        </div>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="cta-final">
+  <h2>${escape(copy.cta_final_title || "Besoin d'une intervention ?")}</h2>
+  <p>${escape(copy.cta_final_paragraph)}</p>
+  ${phoneClean ? `<a href="tel:${phoneClean}" class="btn-emergency emergency-pulse chamfer">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">call</span>
+    ${escape(copy.cta_final_button)} : ${escape(phoneDisplay)}
+  </a>` : ""}
+  ${prospect.address ? `<p style="margin-top:32px;font-size:14px;color:#ffffffcc">${escape(prospect.address)}</p>` : ""}
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand">${escape(prospect.name)}</div>
+        <p>${escape(copy.footer_tagline)}</p>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
+        ${prospect.phone ? `<a href="tel:${phoneClean}">${escape(phoneDisplay)}</a>` : ""}
+        ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
+        ${prospect.hours ? `<a>${escape(prospect.hours)}</a>` : ""}
+      </div>
+      <div class="footer-col">
+        <h4>Zone d'intervention</h4>
+        <p>${prospect.city ? `${escape(prospect.city)} et alentours.` : "Sur tout le département."}</p>
+        <p style="margin-top:14px">
+          <a href="#contact" style="color:var(--accent);font-weight:700">${escape(copy.cta_primary)} →</a>
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © ${new Date().getFullYear()} ${escape(prospect.name)}. ${prospect.city ? `${escape(prospect.city)}.` : ""} Tous droits réservés.
+    </div>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>`;
+}
+
 // ─── API publique ─────────────────────────────────────────────
+
+const ARTISAN_DNAS = new Set([
+  "electricite", "plomberie", "menuiserie_charpente", "garage_auto",
+]);
 
 export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<string | null> {
   const dna = await fetchDna(prospect.business_type);
   if (!dna) return null;
   const dnaKey = mapBusinessTypeToDna(prospect.business_type);
   const copy = await generateAiCopy(prospect, dna);
+
+  // Sélection du template :
+  // 1. dna.template_variant si défini explicitement en base
+  // 2. Sinon, fallback : artisans → industrial_artisan / autres → elegant_restaurant
+  const variant = dna.template_variant
+    || (ARTISAN_DNAS.has(dnaKey) ? "industrial_artisan" : "elegant_restaurant");
+
+  if (variant === "industrial_artisan") {
+    return renderArtisanHtml(prospect, dna, copy, dnaKey);
+  }
   return renderHtml(prospect, dna, copy, dnaKey);
 }
 
