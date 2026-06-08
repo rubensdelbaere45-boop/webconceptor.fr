@@ -278,94 +278,166 @@ function pickPhoto(prospect: DnaProspect, index: number, fallback: string): stri
   return fallback;
 }
 
-// Photos Unsplash thématiques par métier (fallback si pas de vraies photos)
+// Photos Unsplash thématiques par métier — HD rétina (2400px + q=85 + auto-format)
+// 6+ photos par métier pour éviter les répétitions sur lookbook 3-grid + bento
+const UQ = "?w=2400&q=85&auto=format&fit=crop&crop=entropy"; // suffixe HD rétina
+
 const UNSPLASH_BY_DNA: Record<string, string[]> = {
   restaurant_gastronomique: [
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600",
-    "https://images.unsplash.com/photo-1592861956120-e524fc739696?w=1200",
-    "https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=1200",
+    `https://images.unsplash.com/photo-1414235077428-338989a2e8c0${UQ}`, // plat dressé
+    `https://images.unsplash.com/photo-1559339352-11d035aa65de${UQ}`,    // restaurant chic intérieur
+    `https://images.unsplash.com/photo-1592861956120-e524fc739696${UQ}`, // assiette gastro
+    `https://images.unsplash.com/photo-1559329007-40df8a9345d8${UQ}`,    // accord vins
+    `https://images.unsplash.com/photo-1466978913421-dad2ebd01d17${UQ}`, // dressage
+    `https://images.unsplash.com/photo-1551218808-94e220e084d2${UQ}`,    // table dressée
   ],
   restaurant_bistrot: [
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600",
-    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200",
-    "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1200",
+    `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4${UQ}`, // bistrot terrasse
+    `https://images.unsplash.com/photo-1555396273-367ea4eb4db5${UQ}`,    // burger plat
+    `https://images.unsplash.com/photo-1551218808-94e220e084d2${UQ}`,    // table bistrot
+    `https://images.unsplash.com/photo-1481833761820-0509d3217039${UQ}`, // ardoise menu
+    `https://images.unsplash.com/photo-1559339352-11d035aa65de${UQ}`,    // salle conviviale
+    `https://images.unsplash.com/photo-1414235077428-338989a2e8c0${UQ}`, // plat
   ],
   boulangerie_patisserie: [
-    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1600",
-    "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=1200",
-    "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=1200",
+    `https://images.unsplash.com/photo-1509440159596-0249088772ff${UQ}`, // pain croustillant
+    `https://images.unsplash.com/photo-1568254183919-78a4f43a2877${UQ}`, // viennoiseries
+    `https://images.unsplash.com/photo-1486427944299-d1955d23e34d${UQ}`, // baguette farine
+    `https://images.unsplash.com/photo-1555507036-ab1f4038808a${UQ}`,    // gâteau patisserie
+    `https://images.unsplash.com/photo-1517686469429-8bdb88b9f907${UQ}`, // pain artisanal
+    `https://images.unsplash.com/photo-1607478900766-efe13248b125${UQ}`, // boutique
   ],
   chocolaterie_salon_the: [
-    "https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=1600",
-    "https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=1200",
-    "https://images.unsplash.com/photo-1542010589005-d1eacc3918f2?w=1200",
+    `https://images.unsplash.com/photo-1481391319762-47dff72954d9${UQ}`, // chocolat fondu
+    `https://images.unsplash.com/photo-1542010589005-d1eacc3918f2${UQ}`, // tasse de thé
+    `https://images.unsplash.com/photo-1606312619070-d48b4c652a52${UQ}`, // truffes
+    `https://images.unsplash.com/photo-1551782450-a2132b4ba21d${UQ}`,    // salon cocoon
+    `https://images.unsplash.com/photo-1547314985-ca3a47057a04${UQ}`,    // tablette artisanale
+    `https://images.unsplash.com/photo-1551024601-bec78aea704b${UQ}`,    // pâtisserie raffinée
   ],
   coiffure: [
-    "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1600",
-    "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=1200",
-    "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200",
+    `https://images.unsplash.com/photo-1560066984-138dadb4c035${UQ}`,    // salon moderne
+    `https://images.unsplash.com/photo-1522337360788-8b13dee7a37e${UQ}`, // coupe stylée
+    `https://images.unsplash.com/photo-1562322140-8baeececf3df${UQ}`,    // coloration
+    `https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f${UQ}`, // ciseaux pro
+    `https://images.unsplash.com/photo-1503951914875-452162b0f3f1${UQ}`, // miroir salon
+    `https://images.unsplash.com/photo-1492106087820-71f1a00d2b11${UQ}`, // shampoing
   ],
   esthetique_spa: [
-    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1600",
-    "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200",
-    "https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=1200",
+    `https://images.unsplash.com/photo-1540555700478-4be289fbecef${UQ}`, // spa zen pierres
+    `https://images.unsplash.com/photo-1544161515-4ab6ce6db874${UQ}`,    // soin visage
+    `https://images.unsplash.com/photo-1596178065887-1198b6148b2b${UQ}`, // massage
+    `https://images.unsplash.com/photo-1519823551278-64ac92734fb1${UQ}`, // bougies
+    `https://images.unsplash.com/photo-1571907483086-3c0c0e3d9c9d${UQ}`, // institut
+    `https://images.unsplash.com/photo-1487412947147-5cebf100ffc2${UQ}`, // peignoir
   ],
   plomberie: [
-    "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=1600",
-    "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=1200",
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200",
+    `https://images.unsplash.com/photo-1607400201515-c2c41c07d307${UQ}`, // plombier au travail
+    `https://images.unsplash.com/photo-1581244277943-fe4a9c777189${UQ}`, // canalisation
+    `https://images.unsplash.com/photo-1558618666-fcd25c85cd64${UQ}`,    // outils
+    `https://images.unsplash.com/photo-1565538810643-b5bdb714032a${UQ}`, // cuisine moderne
+    `https://images.unsplash.com/photo-1564540583246-934409427776${UQ}`, // salle de bain
+    `https://images.unsplash.com/photo-1521207418485-99c705420785${UQ}`, // robinet
   ],
   electricite: [
-    "https://images.unsplash.com/photo-1565608438257-fac3c27beb36?w=1600",
-    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
-    "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200",
+    `https://images.unsplash.com/photo-1621905252507-b35492cc74b4${UQ}`, // électricien tableau
+    `https://images.unsplash.com/photo-1565608438257-fac3c27beb36${UQ}`, // câbles
+    `https://images.unsplash.com/photo-1518709268805-4e9042af2176${UQ}`, // ampoule
+    `https://images.unsplash.com/photo-1473341304170-971dccb5ac1e${UQ}`, // installation
+    `https://images.unsplash.com/photo-1558618666-fcd25c85cd64${UQ}`,    // outils
+    `https://images.unsplash.com/photo-1581094794329-c8112a89af12${UQ}`, // intérieur moderne
   ],
   menuiserie_charpente: [
-    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1600",
-    "https://images.unsplash.com/photo-1567361808960-dec9cb578182?w=1200",
-    "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200",
+    `https://images.unsplash.com/photo-1504148455328-c376907d081c${UQ}`, // atelier bois
+    `https://images.unsplash.com/photo-1567361808960-dec9cb578182${UQ}`, // établi
+    `https://images.unsplash.com/photo-1556910103-1c02745aae4d${UQ}`,    // copeaux
+    `https://images.unsplash.com/photo-1594036109300-ae8f4cf67c50${UQ}`, // outils main
+    `https://images.unsplash.com/photo-1530124566582-a618bc2615dc${UQ}`, // charpente
+    `https://images.unsplash.com/photo-1610725663727-08695a1ac3d9${UQ}`, // meuble bois
   ],
   cabinet_avocat: [
-    "https://images.unsplash.com/photo-1589994965851-a8f479c573a9?w=1600",
-    "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200",
-    "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200",
+    `https://images.unsplash.com/photo-1589994965851-a8f479c573a9${UQ}`, // robe & balance
+    `https://images.unsplash.com/photo-1450101499163-c8848c66ca85${UQ}`, // bibliothèque droit
+    `https://images.unsplash.com/photo-1505664194779-8beaceb93744${UQ}`, // bureau classique
+    `https://images.unsplash.com/photo-1521791136064-7986c2920216${UQ}`, // poignée main
+    `https://images.unsplash.com/photo-1556761175-b413da4baf72${UQ}`,    // poignée affaires
+    `https://images.unsplash.com/photo-1573164574572-cb89e39749b4${UQ}`, // dossiers
   ],
   cabinet_medical: [
-    "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600",
-    "https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?w=1200",
-    "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1200",
+    `https://images.unsplash.com/photo-1629909613654-28e377c37b09${UQ}`, // praticien souriant
+    `https://images.unsplash.com/photo-1631815589968-fdb09a223b1e${UQ}`, // cabinet propre
+    `https://images.unsplash.com/photo-1576091160550-2173dba999ef${UQ}`, // stéthoscope
+    `https://images.unsplash.com/photo-1581595220892-b0739db3ba8c${UQ}`, // dentiste matériel
+    `https://images.unsplash.com/photo-1582750433449-648ed127bb54${UQ}`, // soin dentaire
+    `https://images.unsplash.com/photo-1551601651-2a8555f1a136${UQ}`,    // équipe blouse
   ],
   fleuriste: [
-    "https://images.unsplash.com/photo-1487070183336-b863922373d4?w=1600",
-    "https://images.unsplash.com/photo-1469259943454-aa100abba749?w=1200",
-    "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=1200",
+    `https://images.unsplash.com/photo-1487070183336-b863922373d4${UQ}`, // bouquet coloré
+    `https://images.unsplash.com/photo-1469259943454-aa100abba749${UQ}`, // boutique fleurs
+    `https://images.unsplash.com/photo-1561181286-d3fee7d55364${UQ}`,    // composition
+    `https://images.unsplash.com/photo-1508610048659-a06b669e3321${UQ}`, // pivoines
+    `https://images.unsplash.com/photo-1455659817273-f96807779a8a${UQ}`, // bouquet champêtre
+    `https://images.unsplash.com/photo-1518895949257-7621c3c786d7${UQ}`, // mariage fleurs
   ],
   garage_auto: [
-    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1600",
-    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200",
-    "https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=1200",
+    `https://images.unsplash.com/photo-1503376780353-7e6692767b70${UQ}`, // voiture sport
+    `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7${UQ}`, // mécanicien
+    `https://images.unsplash.com/photo-1486006920555-c77dcf18193c${UQ}`, // moteur
+    `https://images.unsplash.com/photo-1632823469853-22b7a4a5dde2${UQ}`, // pneus
+    `https://images.unsplash.com/photo-1487754180451-c456f719a1fc${UQ}`, // clé à molette
+    `https://images.unsplash.com/photo-1597007030739-6d2e7172ee6d${UQ}`, // pont élévateur
   ],
   immobilier: [
-    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1600",
-    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200",
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200",
+    `https://images.unsplash.com/photo-1564013799919-ab600027ffc6${UQ}`, // villa moderne
+    `https://images.unsplash.com/photo-1568605114967-8130f3a36994${UQ}`, // maison contemporaine
+    `https://images.unsplash.com/photo-1502672260266-1c1ef2d93688${UQ}`, // salon design
+    `https://images.unsplash.com/photo-1600585154340-be6161a56a0c${UQ}`, // villa luxe
+    `https://images.unsplash.com/photo-1600596542815-ffad4c1539a9${UQ}`, // façade chic
+    `https://images.unsplash.com/photo-1613490493576-7fde63acd811${UQ}`, // intérieur premium
   ],
   generic_premium: [
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600",
-    "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200",
-    "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200",
+    `https://images.unsplash.com/photo-1497366216548-37526070297c${UQ}`, // bureau moderne
+    `https://images.unsplash.com/photo-1497366754035-f200968a6e72${UQ}`, // open space
+    `https://images.unsplash.com/photo-1556761175-5973dc0f32e7${UQ}`,    // entrepreneur
+    `https://images.unsplash.com/photo-1521737711867-e3b97375f902${UQ}`, // équipe
+    `https://images.unsplash.com/photo-1542744173-8e7e53415bb0${UQ}`,    // réunion
+    `https://images.unsplash.com/photo-1497032628192-86f99bcd76bc${UQ}`, // sourire client
   ],
 };
 
 function photoFor(dnaKey: string, prospect: DnaProspect, index: number): string {
   const pool = UNSPLASH_BY_DNA[dnaKey] || UNSPLASH_BY_DNA.generic_premium;
-  // Si on a des photos prospect ET qu'elles ont passé le validateur,
-  // on les utilise. Sinon → fallback Unsplash thématique.
+  // Si on a des photos prospect valides → on les utilise en HD.
+  // Sinon → fallback Unsplash thématique HD.
   if (prospect.photos && prospect.photos.length > 0) {
     const candidate = prospect.photos[index % prospect.photos.length];
-    if (isLikelyValidPhotoUrl(candidate)) return candidate;
+    if (isLikelyValidPhotoUrl(candidate)) return upgradeToHd(candidate);
   }
   return pool[index % pool.length];
+}
+
+/**
+ * Upgrade une URL d'image en HD :
+ *   - Unsplash → ajoute ?w=2400&q=85&auto=format&fit=crop
+ *   - Google Places photoreference → forcer maxwidth=2000
+ *   - Si déjà des params → on respecte
+ */
+function upgradeToHd(url: string): string {
+  if (!url) return url;
+  // Unsplash : remplace ou ajoute params HD
+  if (/images\.unsplash\.com/i.test(url)) {
+    const base = url.split("?")[0];
+    return `${base}?w=2400&q=85&auto=format&fit=crop&crop=entropy`;
+  }
+  // Google Places : remplace maxwidth=NNN par 2000 si présent
+  if (/maps\.googleapis\.com\/maps\/api\/place\/photo/i.test(url)) {
+    return url.replace(/maxwidth=\d+/i, "maxwidth=2000").replace(/maxheight=\d+/i, "maxheight=2000");
+  }
+  // Pexels : ajoute auto=compress
+  if (/images\.pexels\.com/i.test(url) && !/auto=/i.test(url)) {
+    return url + (url.includes("?") ? "&" : "?") + "auto=compress&cs=tinysrgb&w=2400";
+  }
+  return url;
 }
 
 /**
