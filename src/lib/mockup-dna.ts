@@ -1140,10 +1140,346 @@ function renderArtisanHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, 
 </html>`;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RENDERER 3 — Pattern "Haute Coiffure Narrative" (editorial_minimal)
+// Pour: coiffure, esthétique/spa, fleuriste (luxe + minimaliste)
+// Style: monochrome noir/blanc + accent or, sharp 0px, brutalist
+// hard-shadow, magazine éditorial, big serif Playfair
+// ═══════════════════════════════════════════════════════════════
+
+function renderEditorialHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, dnaKey: string): string {
+  const heroPhoto = photoFor(dnaKey, prospect, 0);
+  const universPhoto = photoFor(dnaKey, prospect, 1);
+
+  const fontParam = (name: string) => name.replace(/ /g, "+");
+  const fontsLink = `https://fonts.googleapis.com/css2?family=${fontParam(dna.font_heading)}:wght@400;600;700&family=${fontParam(dna.font_body)}:wght@300;400;500;700&display=swap`;
+  const iconsLink = `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap`;
+
+  const phoneClean = (prospect.phone || "").replace(/\s/g, "");
+  const phoneDisplay = prospect.phone || "";
+  const icons = dna.icons.length >= 4 ? dna.icons : [...dna.icons, "star", "schedule", "place", "auto_awesome"];
+
+  const ratingDisplay = prospect.google_rating ? `${prospect.google_rating.toFixed(1)}` : "5,0";
+
+  const reviewsList = (prospect.reviews && prospect.reviews.length >= 3
+    ? prospect.reviews.slice(0, 4)
+    : copy.testimonials.map(t => ({ author: t.author, rating: 5, text: t.quote }))
+  );
+
+  const cssVars = `
+    --bg: ${dna.color_bg};
+    --surface: ${dna.color_surface};
+    --primary: ${dna.color_primary};
+    --accent: ${dna.color_accent};
+    --text: ${dna.color_text};
+    --muted: ${dna.color_muted};
+    --dark: ${dna.color_dark_section};
+  `;
+
+  const signatureCss = dna.signature_css || `
+    /* Editorial minimal — sharp 0px + brutalist shadow */
+    .sharp { border-radius: 0 !important; }
+    .brutal-shadow { box-shadow: 4px 4px 0 0 var(--primary); transition: all .25s; }
+    .brutal-shadow:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 0 var(--primary); }
+    .gold-divider { width: 60px; height: 1px; background: var(--accent); display: block; }
+    .menu-row { display: flex; align-items: baseline; gap: 16px; padding: 18px 0; border-bottom: 1px solid color-mix(in srgb, var(--muted) 28%, transparent); }
+    .menu-row .dots { flex: 1; border-bottom: 1px dotted color-mix(in srgb, var(--muted) 55%, transparent); transform: translateY(-4px); }
+    .menu-row .menu-name { font-family: '${dna.font_heading}', serif; font-size: 19px; font-weight: 600; color: var(--primary); }
+    .menu-row .menu-price { font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; }
+  `;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(prospect.name)} — ${escape(dna.label_fr)} ${prospect.city ? `à ${escape(prospect.city)}` : ""}</title>
+<meta name="description" content="${escape(copy.footer_tagline)}">
+<link href="${fontsLink}" rel="stylesheet">
+<link href="${iconsLink}" rel="stylesheet">
+<style>
+  :root{${cssVars}}
+  *{margin:0;padding:0;box-sizing:border-box;border-radius:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'${dna.font_body}',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:'${dna.font_heading}',Georgia,serif;font-weight:700;color:var(--primary);line-height:1.15;letter-spacing:-0.02em}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+  .label-caps{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase}
+
+  .container{max-width:1280px;margin:0 auto;padding:0 24px}
+  @media(max-width:640px){.container{padding:0 18px}}
+
+  ${signatureCss}
+
+  /* Header — minimal magazine */
+  .site-header{position:sticky;top:0;background:var(--bg);z-index:100;border-bottom:1px solid var(--primary)}
+  .site-header .container{display:flex;align-items:center;justify-content:space-between;height:88px}
+  .brand{font-family:'${dna.font_heading}',serif;font-weight:700;font-size:22px;color:var(--primary);letter-spacing:0.04em;text-transform:uppercase}
+  .nav-links{display:flex;gap:32px;align-items:center}
+  .nav-links a{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.18em;transition:color .2s}
+  .nav-links a:hover{color:var(--accent)}
+  .nav-cta{background:var(--primary);color:#fff;padding:14px 24px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;transition:background .2s}
+  .nav-cta:hover{background:var(--accent);color:var(--primary)}
+  @media(max-width:900px){.nav-links{display:none}}
+
+  /* Hero — editorial split big serif */
+  .hero{padding:88px 0 100px;background:var(--bg)}
+  .hero .container{display:grid;grid-template-columns:1.05fr 1fr;gap:80px;align-items:center}
+  @media(max-width:900px){.hero .container{grid-template-columns:1fr;gap:48px}.hero{padding:60px 0}}
+  .hero-text .label-caps{color:var(--accent);margin-bottom:24px;display:inline-block}
+  .hero-title{font-size:clamp(48px,7vw,84px);font-weight:700;color:var(--primary);line-height:0.98;letter-spacing:-0.03em;margin-bottom:32px}
+  .hero-sub{font-size:18px;color:var(--muted);max-width:480px;margin-bottom:40px;line-height:1.55}
+  .hero-ctas{display:flex;gap:18px;flex-wrap:wrap}
+  .btn-primary{background:var(--primary);color:#fff;padding:18px 32px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;transition:all .25s}
+  .btn-primary:hover{background:var(--accent);color:var(--primary)}
+  .btn-outline{background:transparent;color:var(--primary);border:1px solid var(--primary);padding:17px 32px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;transition:all .25s}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+  .hero-img{position:relative}
+  .hero-img img{width:100%;aspect-ratio:3/4;object-fit:cover}
+  .hero-img::after{content:'${escape(prospect.city || "")}'; position:absolute; top:-12px; right:-12px; background:var(--accent); color:var(--primary); padding:10px 18px; font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase}
+
+  /* Universe — editorial */
+  section{padding:120px 0}
+  @media(max-width:640px){section{padding:64px 0}}
+  .univers{background:var(--surface)}
+  .univers-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+  @media(max-width:900px){.univers-grid{grid-template-columns:1fr;gap:48px}}
+  .univers-text .label-caps{color:var(--accent);margin-bottom:18px;display:inline-block}
+  .univers-text h2{font-size:clamp(34px,5vw,52px);margin-bottom:24px;line-height:1.1}
+  .univers-text .gold-divider{margin:24px 0}
+  .univers-text p{color:var(--muted);font-size:17px;margin-bottom:18px;line-height:1.7;max-width:480px}
+  .univers-text .stats{display:flex;gap:48px;margin-top:48px;padding-top:32px;border-top:1px solid var(--primary)}
+  .univers-text .stat-value{font-family:'${dna.font_heading}',serif;font-size:40px;font-weight:700;color:var(--primary);line-height:1}
+  .univers-text .stat-label{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .univers-img img{width:100%;aspect-ratio:3/4;object-fit:cover}
+
+  /* Services — menu-style list */
+  .services{background:var(--bg)}
+  .services-head{text-align:center;margin-bottom:72px}
+  .services-head .label-caps{color:var(--accent);display:inline-block;margin-bottom:12px}
+  .services-head h2{font-size:clamp(34px,5vw,56px);margin-bottom:20px}
+  .services-head .gold-divider{margin:24px auto}
+  .services-head p{color:var(--muted);max-width:540px;margin:0 auto;font-size:17px}
+  .services-list{max-width:780px;margin:0 auto}
+
+  /* Lookbook / Gallery editorial */
+  .lookbook{background:var(--surface)}
+  .lookbook-head{text-align:center;margin-bottom:64px}
+  .lookbook-head .label-caps{color:var(--accent)}
+  .lookbook-head h2{font-size:clamp(34px,5vw,56px);margin-top:8px}
+  .lookbook-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media(max-width:900px){.lookbook-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.lookbook-grid{grid-template-columns:1fr}}
+  .lookbook-card{position:relative;overflow:hidden;cursor:pointer}
+  .lookbook-card img{width:100%;aspect-ratio:3/4;object-fit:cover;transition:transform .8s}
+  .lookbook-card:hover img{transform:scale(1.07)}
+  .lookbook-card-label{position:absolute;bottom:0;left:0;right:0;background:var(--primary);color:#fff;padding:18px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase}
+
+  /* Testimonials */
+  .testimonials{background:var(--bg)}
+  .testimonials-head{text-align:center;margin-bottom:64px}
+  .testimonials-head h2{font-size:clamp(34px,5vw,52px)}
+  .testimonials-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;max-width:980px;margin:0 auto}
+  @media(max-width:768px){.testimonials-grid{grid-template-columns:1fr}}
+  .testimonial-card{padding:40px;border:1px solid var(--primary);background:var(--bg)}
+  .testimonial-stars{color:var(--accent);display:flex;gap:2px;margin-bottom:18px}
+  .testimonial-quote{font-family:'${dna.font_heading}',serif;font-size:18px;font-style:italic;color:var(--primary);line-height:1.55;margin-bottom:20px}
+  .testimonial-author{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted)}
+
+  /* CTA final — black block */
+  .cta-final{background:var(--primary);color:#fff;text-align:center;padding:140px 24px}
+  @media(max-width:640px){.cta-final{padding:80px 24px}}
+  .cta-final .label-caps{color:var(--accent);margin-bottom:24px;display:inline-block}
+  .cta-final h2{color:#fff;font-size:clamp(36px,6vw,64px);margin-bottom:24px;line-height:1.05}
+  .cta-final p{color:#ffffffb3;max-width:580px;margin:0 auto 40px;font-size:18px}
+  .cta-final .btn-gold{background:var(--accent);color:var(--primary);padding:22px 44px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;display:inline-block;transition:transform .25s}
+  .cta-final .btn-gold:hover{transform:scale(1.05)}
+
+  /* Footer */
+  .site-footer{background:var(--primary);color:#ffffff99;padding:60px 0 32px;border-top:1px solid var(--accent)}
+  .footer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin-bottom:48px}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:32px;text-align:center}}
+  .footer-col h4{color:var(--accent);font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:16px}
+  .footer-col p, .footer-col a{font-size:14px;color:#ffffff99;display:block;margin-bottom:8px}
+  .footer-col a:hover{color:var(--accent)}
+  .footer-brand{font-family:'${dna.font_heading}';color:#fff;font-size:24px;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:12px}
+  .footer-bottom{border-top:1px solid #ffffff22;padding-top:24px;text-align:center;font-size:11px;color:#ffffff66;letter-spacing:0.1em;text-transform:uppercase}
+
+  .reveal{opacity:0;transform:translateY(28px);transition:all .9s cubic-bezier(0.16,1,0.3,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <div class="brand">${escape(prospect.name)}</div>
+    <nav class="nav-links">
+      <a href="#univers">Maison</a>
+      <a href="#services">Services</a>
+      <a href="#lookbook">Lookbook</a>
+      <a href="#avis">Avis</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="nav-cta">${escape(copy.cta_primary)}</a>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-text">
+      <span class="label-caps">${escape(copy.hero_caps)}</span>
+      <h1 class="hero-title">${escape(copy.hero_title)}</h1>
+      <p class="hero-sub">${escape(copy.hero_subtitle)}</p>
+      <div class="hero-ctas">
+        <a href="#contact" class="btn-primary">${escape(copy.cta_primary)}</a>
+        <a href="#services" class="btn-outline">${escape(copy.cta_secondary)}</a>
+      </div>
+    </div>
+    <div class="hero-img brutal-shadow">
+      <img src="${escape(heroPhoto)}" alt="${escape(prospect.name)}">
+    </div>
+  </div>
+</section>
+
+<section id="univers" class="univers reveal">
+  <div class="container">
+    <div class="univers-grid">
+      <div class="univers-img"><img src="${escape(universPhoto)}" alt="${escape(copy.univers_title)}"></div>
+      <div class="univers-text">
+        <span class="label-caps">La Maison</span>
+        <h2>${escape(copy.univers_title)}</h2>
+        <span class="gold-divider"></span>
+        <p>${escape(copy.univers_paragraph1)}</p>
+        <p>${escape(copy.univers_paragraph2)}</p>
+        <div class="stats">
+          <div>
+            <div class="stat-value">${ratingDisplay}</div>
+            <div class="stat-label">Note Google</div>
+          </div>
+          <div>
+            <div class="stat-value">${prospect.google_reviews_count || "—"}</div>
+            <div class="stat-label">Avis clients</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="services" class="services reveal">
+  <div class="container">
+    <div class="services-head">
+      <span class="label-caps">Prestations</span>
+      <h2>${escape(copy.savoir_faire_title)}</h2>
+      <span class="gold-divider"></span>
+      <p>${escape(copy.savoir_faire_subtitle)}</p>
+    </div>
+    <div class="services-list">
+      ${copy.savoir_faire_cards.slice(0, 6).map((c, i) => `
+        <div class="menu-row">
+          <span class="menu-name">${escape(c.title)}</span>
+          <span class="dots"></span>
+          <span class="menu-price">${["Sur RDV", "Sur demande", "Détails en salon", "À partir de 45€", "Sur RDV", "Sur demande"][i] || "Sur RDV"}</span>
+        </div>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section id="lookbook" class="lookbook reveal">
+  <div class="container">
+    <div class="lookbook-head">
+      <span class="label-caps">Inspirations</span>
+      <h2>Lookbook</h2>
+      <span class="gold-divider" style="margin:24px auto"></span>
+    </div>
+    <div class="lookbook-grid">
+      ${[0,1,2,3,4,5].map(i => `
+        <div class="lookbook-card brutal-shadow">
+          <img src="${escape(photoFor(dnaKey, prospect, (i+2) % 6))}" alt="Inspiration ${i+1}">
+          <div class="lookbook-card-label">${escape(["Signature","Saison","Couleur","Soin","Sur-mesure","Avant/Après"][i])}</div>
+        </div>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section id="avis" class="testimonials reveal">
+  <div class="container">
+    <div class="testimonials-head">
+      <span class="label-caps">Témoignages</span>
+      <h2>Ce qu'ils en disent</h2>
+      <span class="gold-divider" style="margin:24px auto"></span>
+    </div>
+    <div class="testimonials-grid">
+      ${reviewsList.map(r => `
+        <div class="testimonial-card brutal-shadow">
+          <div class="testimonial-stars">${stars(("rating" in r ? (r as any).rating : 5) as number)}</div>
+          <p class="testimonial-quote">«&nbsp;${escape((r as any).text || (r as any).quote)}&nbsp;»</p>
+          <div class="testimonial-author">${escape((r as any).author)}</div>
+        </div>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="cta-final">
+  <span class="label-caps">${escape(prospect.city ? prospect.city.toUpperCase() : "RENDEZ-VOUS")}</span>
+  <h2>${escape(copy.cta_final_title)}</h2>
+  <p>${escape(copy.cta_final_paragraph)}</p>
+  <a href="${phoneClean ? `tel:${phoneClean}` : "#"}" class="btn-gold">${escape(copy.cta_final_button)}</a>
+  ${prospect.address ? `<p style="margin-top:48px;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#ffffff88">${escape(prospect.address)}</p>` : ""}
+  ${prospect.phone ? `<p style="margin-top:8px;font-size:15px;color:var(--accent);font-weight:700;letter-spacing:0.1em">${escape(phoneDisplay)}</p>` : ""}
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand">${escape(prospect.name)}</div>
+        <p>${escape(copy.footer_tagline)}</p>
+      </div>
+      <div class="footer-col">
+        <h4>Informations</h4>
+        ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
+        ${prospect.hours ? `<a>${escape(prospect.hours)}</a>` : ""}
+        ${prospect.phone ? `<a href="tel:${phoneClean}">${escape(phoneDisplay)}</a>` : ""}
+        ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
+      </div>
+      <div class="footer-col">
+        <h4>${escape(prospect.city || "Salon")}</h4>
+        <p>${prospect.city ? `Implantés à ${escape(prospect.city)}.` : "À votre service."}</p>
+        <a href="#contact" style="color:var(--accent);font-weight:700;margin-top:12px">${escape(copy.cta_primary)} →</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © ${new Date().getFullYear()} ${escape(prospect.name)} — ${prospect.city ? escape(prospect.city) : "Tous droits réservés."}
+    </div>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>`;
+}
+
 // ─── API publique ─────────────────────────────────────────────
 
 const ARTISAN_DNAS = new Set([
   "electricite", "plomberie", "menuiserie_charpente", "garage_auto",
+]);
+const EDITORIAL_DNAS = new Set([
+  "coiffure", "esthetique_spa", "fleuriste",
 ]);
 
 export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<string | null> {
@@ -1154,13 +1490,14 @@ export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<s
 
   // Sélection du template :
   // 1. dna.template_variant si défini explicitement en base
-  // 2. Sinon, fallback : artisans → industrial_artisan / autres → elegant_restaurant
+  // 2. Sinon, fallback intelligent par famille de DNA
   const variant = dna.template_variant
-    || (ARTISAN_DNAS.has(dnaKey) ? "industrial_artisan" : "elegant_restaurant");
+    || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
+       : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
+       :                              "elegant_restaurant");
 
-  if (variant === "industrial_artisan") {
-    return renderArtisanHtml(prospect, dna, copy, dnaKey);
-  }
+  if (variant === "industrial_artisan") return renderArtisanHtml(prospect, dna, copy, dnaKey);
+  if (variant === "editorial_minimal")  return renderEditorialHtml(prospect, dna, copy, dnaKey);
   return renderHtml(prospect, dna, copy, dnaKey);
 }
 
