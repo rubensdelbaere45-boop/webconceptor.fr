@@ -15,10 +15,10 @@ export const SETUP_FEE_CENTS: Record<PlanTier, number> = {
   luxury: 86000,   // 860 €
 };
 
-/** Hébergement de base — prix mensuel (centimes). */
+/** Hébergement de base — prix mensuel (centimes). Tarifs mis à jour 2026-06-07. */
 export const HOSTING_MONTHLY_CENTS: Record<PlanTier, number> = {
-  simple: 5000,    // 50 €/mois
-  luxury: 7500,    // 75 €/mois
+  simple: 1790,    // Formule Sérénité — 17,90 €/mois
+  luxury: 3590,    // Formule Sérénité Premium — 35,90 €/mois
 };
 
 /** Upsells récurrents (mensuel, centimes). */

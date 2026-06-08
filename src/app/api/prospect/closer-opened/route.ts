@@ -61,7 +61,7 @@ J'ai une offre limitée à ${fridayStr} :
 
 → Les frais de setup (320 € pour le site Simple, 860 € en Luxury) sont OFFERTS si vous démarrez avec l'abonnement mensuel cette semaine.
 
-Vous payez juste 50 €/mois (45 €/mois si annuel) pour l'hébergement + maintenance + modifications illimitées.
+Vous payez juste 17,90 €/mois (193 €/an si annuel) pour l'hébergement + maintenance + modifications illimitées.
 
 → Voir votre maquette : ${mockupUrl}
 
@@ -83,7 +83,7 @@ Tom — WebConceptor`;
 <p style="margin:0;font-size:15px">→ Les <strong>frais de setup (320 € en Simple, 860 € en Luxury) sont OFFERTS</strong> si vous démarrez avec l'abonnement mensuel cette semaine.</p>
 </div>
 
-<p>Vous payez juste <strong>50 €/mois</strong> (45 €/mois si annuel) pour :</p>
+<p>Vous payez juste <strong>17,90 €/mois</strong> (45 €/mois si annuel) pour :</p>
 <ul style="font-size:14px;line-height:1.7">
   <li>Hébergement + sauvegardes + SSL</li>
   <li>Modifications illimitées sur le site</li>

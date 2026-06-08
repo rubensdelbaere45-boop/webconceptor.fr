@@ -77,7 +77,7 @@ J'ai pris la liberté de recoder entièrement votre site avec les standards de 2
 
 → ${mockupUrl}
 
-Si elle vous plaît : 320 € one-shot ou 0 € + 50 €/mois (hébergement + maintenance + modifications illimitées).
+Si elle vous plaît : 320 € one-shot ou 0 € + 17,90 €/mois (hébergement + maintenance + modifications illimitées).
 
 Un mot et je l'active dans la semaine.
 
@@ -105,7 +105,7 @@ ${issueList.map(i => `  <li>${escapeHtml(i)}</li>`).join("\n")}
 <a href="${mockupUrl}" style="display:inline-block;padding:14px 28px;background:#0a0a0a;color:#FFD700;text-decoration:none;font-weight:800;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;font-size:13px">Voir votre nouveau site →</a>
 </p>
 
-<p style="font-size:14px">Si elle vous plaît : <strong>320 € one-shot</strong> ou <strong>0 € + 50 €/mois</strong> (hébergement + maintenance + modifications illimitées).</p>
+<p style="font-size:14px">Si elle vous plaît : <strong>320 € one-shot</strong> ou <strong>0 € + 17,90 €/mois</strong> (hébergement + maintenance + modifications illimitées).</p>
 
 <p style="font-size:14px">Un mot et je l'active dans la semaine.</p>
 
@@ -149,7 +149,7 @@ J'ai donc pris l'initiative de recoder entièrement votre site avec les technolo
 
 L'ancien site, on l'archive proprement. Le nouveau prend le relais en 5 jours.
 
-Tarif : 320 € one-shot ou 0 € + 50 €/mois (tout inclus, modifiable à volonté).
+Tarif : 320 € one-shot ou 0 € + 17,90 €/mois (tout inclus, modifiable à volonté).
 
 Un mot et je m'occupe de tout.
 
@@ -185,7 +185,7 @@ Tom — WebConceptor — 06 35 59 24 71`;
 
 <p style="font-size:14px;color:#666">L'ancien site, on l'archive proprement. Le nouveau prend le relais en 5 jours.</p>
 
-<p style="font-size:14px">Tarif : <strong>320 €</strong> one-shot ou <strong>0 € + 50 €/mois</strong> (tout inclus, modifiable à volonté).</p>
+<p style="font-size:14px">Tarif : <strong>320 €</strong> one-shot ou <strong>0 € + 17,90 €/mois</strong> (tout inclus, modifiable à volonté).</p>
 
 <p style="font-size:14px">Un mot et je m'occupe de tout.</p>
 

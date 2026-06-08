@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
         source: "director_recharge",
         account_id: acc.id,
         pack_id: pack.id,
+        pack_name: pack.name,
         credits: String(pack.credits),
         bonus_credits: String(pack.bonus_credits || 0),
         total_credits: String(totalCredits),

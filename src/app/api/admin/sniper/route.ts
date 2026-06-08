@@ -69,7 +69,7 @@ function buildSniperEmail(p: Prospect): { subject: string; html: string; text: s
 J'ai préparé une maquette de votre futur site, gratuite et sans engagement :
 ${mockupUrl}
 
-Si elle vous plaît : 320 € one-shot ou 0 € + 50 €/mois (45 €/mois si annuel).
+Si elle vous plaît : 320 € one-shot ou 0 € + 17,90 €/mois (193 €/an = 16,11 €/mois si annuel).
 
 Un mot et je vous appelle.
 Tom — 06 35 59 24 71`;
@@ -85,7 +85,7 @@ Tom — 06 35 59 24 71`;
 <a href="${mockupUrl}" style="display:inline-block;padding:13px 26px;background:#0a0a0a;color:#FFD700;text-decoration:none;font-weight:800;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;font-size:13px">Voir ma maquette →</a>
 </p>
 
-<p style="font-size:14px">Si elle vous plaît : <strong>320 € one-shot</strong> ou <strong>0 € + 50 €/mois</strong> (45 €/mois si annuel).</p>
+<p style="font-size:14px">Si elle vous plaît : <strong>320 € one-shot</strong> ou <strong>0 € + 17,90 €/mois</strong> (193 €/an = 16,11 €/mois si annuel).</p>
 
 <p style="font-size:14px">Un mot et je vous appelle.</p>
 

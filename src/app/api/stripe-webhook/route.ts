@@ -377,6 +377,62 @@ export async function POST(req: NextRequest) {
     const prospectId = metadata.prospect_id || "";
 
     // ═══════════════════════════════════════════════════════
+    // FLOW 0 : Recharge crédits WebDirector
+    // source === "director_recharge" + account_id + total_credits
+    // ═══════════════════════════════════════════════════════
+    if (source === "director_recharge") {
+      const accountId = metadata.account_id;
+      const totalCredits = parseInt(metadata.total_credits || "0", 10);
+      const packName = metadata.pack_name || "Pack inconnu";
+
+      if (accountId && totalCredits > 0) {
+        // Idempotence : skip si déjà créditée via stripe_session_id
+        const { data: alreadyDone } = await supabase
+          .from("director_actions")
+          .select("id")
+          .eq("account_id", accountId)
+          .eq("action_type", "purchase_credits")
+          .filter("details->>stripe_session_id", "eq", session.id)
+          .limit(1);
+        if (alreadyDone && alreadyDone.length > 0) {
+          console.log(`[webhook] director_recharge déjà créditée session ${session.id}`);
+        } else {
+          // Récupère solde actuel
+          const { data: acc } = await supabase
+            .from("director_accounts")
+            .select("tokens_balance, total_tokens_purchased, email, business_name")
+            .eq("id", accountId)
+            .maybeSingle();
+          if (acc) {
+            const newBalance = (acc.tokens_balance || 0) + totalCredits;
+            const newTotalPurchased = (acc.total_tokens_purchased || 0) + totalCredits;
+            await supabase.from("director_accounts").update({
+              tokens_balance: newBalance,
+              total_tokens_purchased: newTotalPurchased,
+              stripe_customer_id: session.customer as string || undefined,
+              updated_at: new Date().toISOString(),
+            }).eq("id", accountId);
+
+            await supabase.from("director_actions").insert({
+              account_id: accountId,
+              action_type: "purchase_credits",
+              tokens_delta: totalCredits,
+              tokens_balance_after: newBalance,
+              details: {
+                stripe_session_id: session.id,
+                pack_name: packName,
+                amount_eur: (session.amount_total || 0) / 100,
+              },
+            });
+
+            await notifyTelegram(`💳 <b>WebDirector — Recharge</b>\n\n<b>${escapeTelegram(acc.business_name || acc.email)}</b>\nPack: ${escapeTelegram(packName)}\n+${totalCredits} crédits\nNouveau solde: <b>${newBalance}</b>\nMontant: <b>${((session.amount_total || 0) / 100).toFixed(2)} €</b>`);
+          }
+        }
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    // ═══════════════════════════════════════════════════════
     // FLOW 1 : Self-serve depuis la maquette (pas de code PIN)
     // source === "self_serve_mockup" + prospect_id
     // ═══════════════════════════════════════════════════════

@@ -64,7 +64,7 @@ Je m'appelle Tom, je crée des sites pour des artisans et indépendants. J'ai pr
 
 Si elle vous plaît, on peut la mettre en ligne en 5 jours. Vous payez :
 - 320 € de création (one-shot)
-- + 50 €/mois pour l'hébergement et les modifications illimitées
+- + 17,90 €/mois pour l'hébergement et les modifications illimitées
 
 Ou : 0 € de création si vous prenez l'abonnement annuel (-10%, soit 540 €/an au lieu de 600).
 
@@ -94,7 +94,7 @@ Tom — WebConceptor`;
 <p style="font-size:14px">Si elle vous plaît, on peut la mettre en ligne <strong>en 5 jours</strong> :</p>
 <ul style="font-size:14px;line-height:1.7">
   <li>320 € de création (paiement unique)</li>
-  <li>+ 50 €/mois hébergement + modifications illimitées</li>
+  <li>+ 17,90 €/mois hébergement + modifications illimitées</li>
 </ul>
 <p style="font-size:14px"><strong style="color:#16a34a">Ou :</strong> 0 € de création si abonnement annuel (540 €/an au lieu de 600).</p>
 
@@ -127,7 +127,7 @@ Bonne nouvelle : je crée un site web avec un système intégré qui aide à boo
 - Réponse automatique aux avis négatifs en privé pour désamorcer
 - Page "Témoignages clients" qui pousse les contents à laisser un avis Google
 
-Tout est inclus dans l'abonnement (50 €/mois). Voici une maquette de votre site avec ce système :
+Tout est inclus dans l'abonnement (17,90 €/mois). Voici une maquette de votre site avec ce système :
 
 → ${mockupUrl}
 
@@ -156,7 +156,7 @@ Tom — WebConceptor`;
   <li><strong>Page "Témoignages clients"</strong> qui pousse les satisfaits à laisser un avis Google</li>
 </ul>
 
-<p style="font-size:14px">Tout est inclus dans l'abonnement (<strong>50 €/mois</strong>). Voici une maquette de votre site avec ce système :</p>
+<p style="font-size:14px">Tout est inclus dans l'abonnement (<strong>17,90 €/mois</strong>). Voici une maquette de votre site avec ce système :</p>
 
 <p style="text-align:center;margin:22px 0">
 <a href="${mockupUrl}" style="display:inline-block;padding:14px 28px;background:#0a0a0a;color:#FFD700;text-decoration:none;font-weight:800;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;font-size:13px">Voir ma maquette →</a>

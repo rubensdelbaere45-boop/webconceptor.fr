@@ -91,7 +91,7 @@ OFFRE (connais-la par cœur) :
 - Paiement : une fois, OU en 3× sans frais via Klarna (3 × 66,33 €), OU carte bancaire
 - Livraison : 5 à 7 jours ouvrés après commande
 - Formule Simple : site + URL provisoire + 2 rounds de modifs
-- Formule Sérénité (recommandée) : 199 € + 50 €/mois — inclut nom de domaine, hébergement, modifications illimitées, sauvegardes, support prioritaire
+- Formule Sérénité (recommandée) : 199 € + 17,90 €/mois — inclut nom de domaine, hébergement, modifications illimitées, sauvegardes, support prioritaire
 - Garantie : satisfait ou remboursé 14 jours, aucun justificatif demandé
 - Module de réservation intégré : 0 commission (vs TheFork 2,50 €/couvert)
 - 100 % propriétaire du site après achat (code source à vous)

@@ -126,20 +126,7 @@ body{padding-top:54px !important}
 .wc-sx-call-help strong{color:#5d4a1f;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:0.01em}
 .wc-sx-call-icon{font-size:15px;flex-shrink:0}
 
-/* ─── Bouton flottant "Appelez-nous" en bas à droite ─── */
-.wc-sx-float-call{position:fixed;bottom:20px;right:20px;z-index:9995;display:flex;align-items:center;gap:11px;padding:12px 18px;background:#fff;border-radius:100px;box-shadow:0 6px 24px rgba(0,0,0,0.2),0 2px 8px rgba(0,0,0,0.08);color:#0a0a0a;text-decoration:none;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;cursor:pointer;transition:all 0.25s;animation:wcSxPulse 2.5s ease-out 3s infinite}
-.wc-sx-float-call:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,0.28),0 3px 10px rgba(0,0,0,0.12)}
-.wc-sx-float-call-icon{font-size:20px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:#FFD700;border-radius:50%;flex-shrink:0;box-shadow:0 2px 8px rgba(255,215,0,0.5)}
-.wc-sx-float-call-text{display:flex;flex-direction:column;line-height:1.2}
-.wc-sx-float-call-label{font-size:10.5px;font-weight:500;color:#6b6b6b;letter-spacing:0.02em}
-.wc-sx-float-call-num{font-size:14px;font-weight:700;color:#0a0a0a;font-variant-numeric:tabular-nums;letter-spacing:0.01em}
-@keyframes wcSxPulse{0%,100%{box-shadow:0 6px 24px rgba(0,0,0,0.2),0 0 0 0 rgba(255,215,0,0.45)}50%{box-shadow:0 6px 24px rgba(0,0,0,0.2),0 0 0 14px rgba(255,215,0,0)}}
-@media(max-width:500px){
-  .wc-sx-float-call{bottom:16px;right:16px;padding:10px 14px;gap:9px}
-  .wc-sx-float-call-icon{width:32px;height:32px;font-size:17px}
-  .wc-sx-float-call-num{font-size:13px}
-  .wc-sx-float-call-label{font-size:10px}
-}
+/* Bouton flottant "Appelez-nous" — RETIRÉ : Tom veut uniquement la bande noire en haut */
 .wc-sx-err{color:#c62828;font-size:12px;margin-top:8px;text-align:center;display:none;padding:8px;background:#ffebee;border-radius:6px}
 .wc-sx-err.show{display:block}
 
@@ -194,13 +181,9 @@ body{padding-top:54px !important}
   <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande → ${basePriceNbsp}</button>
 </div>
 
-<a href="tel:+33635592471" class="wc-sx-float-call" id="wc-sx-float-call" aria-label="Appelez Tom au 06 35 59 24 71" onclick="try{fetch('/api/prospect/modal-opened',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prospect_slug:${JSON.stringify(safeSlug)},event:'float_call_click'})}).catch(function(){})}catch(e){}">
-  <span class="wc-sx-float-call-icon">📞</span>
-  <span class="wc-sx-float-call-text">
-    <span class="wc-sx-float-call-label">Une question ?</span>
-    <span class="wc-sx-float-call-num">06 35 59 24 71</span>
-  </span>
-</a>
+<!-- Float-call retiré : Tom veut UNIQUEMENT la bande noire en haut avec "Je commande" -->
+<!-- Le numéro reste accessible via le modal après clic sur "Je commande" -->
+
 
 <div class="wc-sx-overlay" id="wc-sx-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)wcSxClose()">
   <div class="wc-sx-modal">
