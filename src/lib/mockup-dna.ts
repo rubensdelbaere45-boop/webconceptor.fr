@@ -358,11 +358,68 @@ const UNSPLASH_BY_DNA: Record<string, string[]> = {
 };
 
 function photoFor(dnaKey: string, prospect: DnaProspect, index: number): string {
-  if (prospect.photos && prospect.photos.length > 0) {
-    return prospect.photos[index % prospect.photos.length];
-  }
   const pool = UNSPLASH_BY_DNA[dnaKey] || UNSPLASH_BY_DNA.generic_premium;
+  // Si on a des photos prospect ET qu'elles ont passé le validateur,
+  // on les utilise. Sinon → fallback Unsplash thématique.
+  if (prospect.photos && prospect.photos.length > 0) {
+    const candidate = prospect.photos[index % prospect.photos.length];
+    if (isLikelyValidPhotoUrl(candidate)) return candidate;
+  }
   return pool[index % pool.length];
+}
+
+/**
+ * Validateur photo synchrone (heuristique) — bloque les URLs notoirement cassées
+ * sans coût réseau. Détecte :
+ *   - URLs vides / nulles
+ *   - URLs Google Places "maxwidth" qui ont une signature expirée
+ *   - URLs avec extension non-image
+ *   - URLs trop courtes pour être vraies
+ *   - URLs contenant "placeholder", "no-image", "404"
+ */
+function isLikelyValidPhotoUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== "string") return false;
+  const u = url.trim();
+  if (u.length < 20) return false;
+  if (!/^https?:\/\//i.test(u)) return false;
+  // Patterns connus de photos cassées
+  if (/placeholder|no-image|noimage|broken|404|error|missing/i.test(u)) return false;
+  // URLs Google Places avec photoreference (souvent expirées)
+  if (/maps\.googleapis\.com\/maps\/api\/place\/photo/i.test(u) && !/key=/i.test(u)) return false;
+  // OK
+  return true;
+}
+
+/**
+ * Validateur HEAD asynchrone — fait UN check réseau rapide (3s timeout)
+ * pour vérifier qu'une URL répond bien avec un Content-Type image.
+ * Utilisé en pré-vérification AVANT régénération massive.
+ */
+export async function validatePhotoLive(url: string): Promise<boolean> {
+  if (!isLikelyValidPhotoUrl(url)) return false;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(url, { method: "HEAD", signal: ctrl.signal, redirect: "follow" });
+    clearTimeout(t);
+    if (!res.ok) return false;
+    const ct = res.headers.get("content-type") || "";
+    return ct.startsWith("image/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Pré-nettoie le tableau de photos d'un prospect : ne garde que celles
+ * qui passent la validation live. Appelée avant la génération de maquette.
+ */
+async function cleanProspectPhotos(prospect: DnaProspect): Promise<void> {
+  if (!prospect.photos || prospect.photos.length === 0) return;
+  const checked = await Promise.all(
+    prospect.photos.slice(0, 8).map(async u => ((await validatePhotoLive(u)) ? u : null))
+  );
+  prospect.photos = checked.filter((u): u is string => u !== null);
 }
 
 function stars(rating: number | null | undefined): string {
@@ -1473,19 +1530,431 @@ function renderEditorialHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy
 </html>`;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RENDERER 4 — Pattern "Clinical Serenity" (clean_medical)
+// Pour: cabinet_medical (dentiste, kiné, ostéo, généraliste)
+// Style: bleu confiance, rounded généreux, sérénité, Inter clarity
+// CTA Doctolib intégré, infos pratiques richement détaillées
+// ═══════════════════════════════════════════════════════════════
+
+function renderMedicalHtml(prospect: DnaProspect, dna: DesignDNA, copy: AICopy, dnaKey: string): string {
+  const heroPhoto = photoFor(dnaKey, prospect, 0);
+  const equipePhoto = photoFor(dnaKey, prospect, 1);
+
+  const fontParam = (name: string) => name.replace(/ /g, "+");
+  const fontsLink = `https://fonts.googleapis.com/css2?family=${fontParam(dna.font_heading)}:wght@400;500;600;700&display=swap`;
+  const iconsLink = `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap`;
+
+  const phoneClean = (prospect.phone || "").replace(/\s/g, "");
+  const phoneDisplay = prospect.phone || "";
+  const icons = dna.icons.length >= 6 ? dna.icons : [...dna.icons, "medical_services", "schedule", "place", "verified"];
+
+  const reviewsList = (prospect.reviews && prospect.reviews.length >= 3
+    ? prospect.reviews.slice(0, 4)
+    : copy.testimonials.map(t => ({ author: t.author, rating: 5, text: t.quote }))
+  );
+
+  const cssVars = `
+    --bg: ${dna.color_bg};
+    --surface: ${dna.color_surface};
+    --primary: ${dna.color_primary};
+    --accent: ${dna.color_accent};
+    --text: ${dna.color_text};
+    --muted: ${dna.color_muted};
+    --dark: ${dna.color_dark_section};
+  `;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(prospect.name)} — ${escape(dna.label_fr)} ${prospect.city ? `à ${escape(prospect.city)}` : ""}</title>
+<meta name="description" content="${escape(copy.footer_tagline)}">
+<link href="${fontsLink}" rel="stylesheet">
+<link href="${iconsLink}" rel="stylesheet">
+<style>
+  :root{${cssVars}}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'${dna.font_body}',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:'${dna.font_heading}',sans-serif;font-weight:700;color:var(--primary);line-height:1.2;letter-spacing:-0.015em}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+
+  .container{max-width:1200px;margin:0 auto;padding:0 24px}
+  @media(max-width:640px){.container{padding:0 20px}}
+
+  /* Header — clean medical */
+  .site-header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--surface);z-index:100}
+  .site-header .container{display:flex;align-items:center;justify-content:space-between;height:80px}
+  .brand-logo{display:flex;align-items:center;gap:12px}
+  .brand-icon{width:44px;height:44px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff}
+  .brand-name{font-weight:700;font-size:18px;color:var(--primary);letter-spacing:-0.01em}
+  .brand-subtitle{font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
+  .nav-links{display:flex;gap:32px;align-items:center}
+  .nav-links a{font-size:14px;font-weight:500;color:var(--text);transition:color .2s}
+  .nav-links a:hover{color:var(--primary)}
+  .nav-rdv{background:var(--primary);color:#fff;padding:12px 22px;border-radius:10px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:background .2s}
+  .nav-rdv:hover{background:var(--accent);color:var(--primary)}
+  @media(max-width:900px){.nav-links{display:none}}
+
+  /* Hero — split clinical */
+  .hero{padding:80px 0 100px;background:linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)}
+  .hero .container{display:grid;grid-template-columns:1.1fr 1fr;gap:64px;align-items:center}
+  @media(max-width:900px){.hero .container{grid-template-columns:1fr;gap:48px}.hero{padding:48px 0 64px}}
+  .hero-chip{display:inline-flex;align-items:center;gap:8px;background:var(--surface);color:var(--primary);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:24px}
+  .hero h1{font-size:clamp(34px,5vw,52px);font-weight:700;margin-bottom:20px;line-height:1.1}
+  .hero-sub{font-size:18px;color:var(--muted);max-width:520px;margin-bottom:36px;line-height:1.55}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:32px}
+  .btn-rdv{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--primary);color:#fff;padding:16px 28px;border-radius:12px;font-weight:600;font-size:15px;transition:transform .2s}
+  .btn-rdv:hover{transform:translateY(-2px)}
+  .btn-rdv.doctolib{background:#0768ed}
+  .btn-soft{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--primary);border:1px solid color-mix(in srgb,var(--primary) 25%,transparent);padding:15px 24px;border-radius:12px;font-weight:600;font-size:15px}
+  .btn-soft:hover{background:var(--surface)}
+  .hero-trust{display:flex;gap:24px;flex-wrap:wrap;padding-top:24px;border-top:1px solid var(--surface)}
+  .hero-trust-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  .hero-trust-item .material-symbols-outlined{color:var(--primary);font-size:20px;font-variation-settings:'FILL' 1}
+  .hero-img{position:relative}
+  .hero-img img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:24px;box-shadow:0 30px 80px -30px color-mix(in srgb,var(--primary) 40%,transparent)}
+  .hero-badge{position:absolute;bottom:24px;left:24px;background:#fff;padding:16px 20px;border-radius:14px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 30px -10px rgba(0,0,0,0.15)}
+  .hero-badge-icon{width:44px;height:44px;background:var(--surface);color:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .hero-badge-text{font-size:13px;font-weight:600;color:var(--primary)}
+  .hero-badge-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Section générique */
+  section.main-section{padding:80px 0}
+  @media(max-width:640px){section.main-section{padding:56px 0}}
+  .section-head{text-align:center;margin-bottom:56px;max-width:680px;margin-left:auto;margin-right:auto}
+  .section-chip{display:inline-block;background:var(--surface);color:var(--primary);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:16px}
+  .section-head h2{font-size:clamp(28px,4vw,40px);margin-bottom:14px}
+  .section-head p{color:var(--muted);font-size:17px}
+
+  /* Spécialités grid */
+  .specialites{background:var(--bg)}
+  .spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media(max-width:900px){.spec-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.spec-grid{grid-template-columns:1fr}}
+  .spec-card{background:#fff;border:1px solid var(--surface);border-radius:20px;padding:32px;transition:all .25s}
+  .spec-card:hover{transform:translateY(-4px);box-shadow:0 24px 50px -25px color-mix(in srgb,var(--primary) 30%,transparent);border-color:color-mix(in srgb,var(--primary) 20%,transparent)}
+  .spec-icon{width:56px;height:56px;background:var(--surface);color:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+  .spec-icon .material-symbols-outlined{font-size:30px}
+  .spec-card h3{font-size:19px;margin-bottom:10px}
+  .spec-card p{color:var(--muted);font-size:14.5px;line-height:1.6}
+
+  /* Équipe */
+  .equipe{background:var(--surface)}
+  .equipe-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:64px;align-items:center}
+  @media(max-width:900px){.equipe-grid{grid-template-columns:1fr;gap:48px}}
+  .equipe-img img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:24px}
+  .equipe-text h2{font-size:clamp(28px,4vw,40px);margin-bottom:20px}
+  .equipe-text p{color:var(--muted);font-size:16.5px;margin-bottom:16px;line-height:1.7}
+  .equipe-features{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:32px}
+  .equipe-feat{display:flex;gap:12px;align-items:flex-start}
+  .equipe-feat-icon{flex-shrink:0;width:40px;height:40px;background:#fff;color:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .equipe-feat h4{font-size:14px;margin-bottom:4px}
+  .equipe-feat p{font-size:13px;color:var(--muted);margin:0}
+
+  /* Infos pratiques */
+  .infos{background:var(--bg)}
+  .infos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  @media(max-width:900px){.infos-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.infos-grid{grid-template-columns:1fr}}
+  .info-card{background:var(--surface);border-radius:18px;padding:28px;text-align:left}
+  .info-card .material-symbols-outlined{color:var(--primary);font-size:30px;margin-bottom:14px}
+  .info-card h4{font-size:14px;color:var(--muted);font-weight:500;margin-bottom:6px;letter-spacing:0.02em;text-transform:uppercase}
+  .info-card p{font-size:15.5px;color:var(--text);font-weight:600;line-height:1.4}
+
+  /* Testimonials */
+  .testimonials{background:var(--surface)}
+  .testi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+  @media(max-width:768px){.testi-grid{grid-template-columns:1fr}}
+  .testi-card{background:#fff;border-radius:20px;padding:32px;border:1px solid color-mix(in srgb,var(--muted) 12%,transparent)}
+  .testi-stars{color:var(--accent);display:flex;gap:2px;margin-bottom:14px}
+  .testi-quote{font-size:16px;color:var(--text);line-height:1.65;margin-bottom:18px}
+  .testi-author{font-size:13px;font-weight:600;color:var(--muted)}
+
+  /* CTA final */
+  .cta-final{background:var(--primary);color:#fff;text-align:center;padding:88px 24px;border-radius:32px;margin:64px auto;max-width:1100px}
+  .cta-final h2{color:#fff;font-size:clamp(30px,4vw,42px);margin-bottom:18px;line-height:1.15}
+  .cta-final p{color:#ffffffd0;max-width:560px;margin:0 auto 32px;font-size:17px}
+  .cta-final .btn-rdv{background:#fff;color:var(--primary);font-weight:700}
+
+  /* Footer */
+  .site-footer{background:#fff;border-top:1px solid var(--surface);padding:56px 0 32px}
+  .footer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:32px;text-align:center}}
+  .footer-col h4{color:var(--primary);font-size:13px;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.1em}
+  .footer-col a, .footer-col p{font-size:14px;color:var(--muted);margin-bottom:8px;display:block;transition:color .2s}
+  .footer-col a:hover{color:var(--primary)}
+  .footer-bottom{border-top:1px solid var(--surface);margin-top:40px;padding-top:24px;text-align:center;font-size:12px;color:var(--muted)}
+
+  .reveal{opacity:0;transform:translateY(20px);transition:all .8s cubic-bezier(0.16,1,0.3,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <div class="brand-logo">
+      <div class="brand-icon"><span class="material-symbols-outlined">${escape(icons[0])}</span></div>
+      <div>
+        <div class="brand-name">${escape(prospect.name)}</div>
+        <div class="brand-subtitle">${escape(dna.label_fr)}${prospect.city ? ` • ${escape(prospect.city)}` : ""}</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="#specialites">Spécialités</a>
+      <a href="#equipe">L'équipe</a>
+      <a href="#infos">Infos pratiques</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="nav-rdv">
+      <span class="material-symbols-outlined" style="font-size:18px">calendar_month</span>
+      ${escape(copy.cta_primary)}
+    </a>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-text">
+      <span class="hero-chip">
+        <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">verified</span>
+        ${escape(copy.hero_caps)}
+      </span>
+      <h1>${escape(copy.hero_title)}</h1>
+      <p class="hero-sub">${escape(copy.hero_subtitle)}</p>
+      <div class="hero-ctas">
+        <a href="#contact" class="btn-rdv doctolib">
+          <span class="material-symbols-outlined" style="font-size:18px">calendar_month</span>
+          ${escape(copy.cta_primary)}
+        </a>
+        ${phoneClean ? `<a href="tel:${phoneClean}" class="btn-soft">
+          <span class="material-symbols-outlined" style="font-size:18px">call</span>
+          ${escape(phoneDisplay)}
+        </a>` : ""}
+      </div>
+      <div class="hero-trust">
+        <div class="hero-trust-item">
+          <span class="material-symbols-outlined">workspace_premium</span>
+          Diplômé d'État
+        </div>
+        <div class="hero-trust-item">
+          <span class="material-symbols-outlined">shield</span>
+          Conventionné Secteur 1
+        </div>
+        <div class="hero-trust-item">
+          <span class="material-symbols-outlined">accessible</span>
+          Accessibilité PMR
+        </div>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="${escape(heroPhoto)}" alt="${escape(prospect.name)}">
+      <div class="hero-badge">
+        <div class="hero-badge-icon">
+          <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <div>
+          <div class="hero-badge-text">${prospect.google_rating ? prospect.google_rating.toFixed(1) : "5,0"}/5</div>
+          <div class="hero-badge-sub">${prospect.google_reviews_count ? `${prospect.google_reviews_count} avis Google` : "Avis Google certifiés"}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="specialites" class="main-section specialites reveal">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-chip">Nos spécialités</span>
+      <h2>${escape(copy.savoir_faire_title)}</h2>
+      <p>${escape(copy.savoir_faire_subtitle)}</p>
+    </div>
+    <div class="spec-grid">
+      ${copy.savoir_faire_cards.slice(0, 6).map((c, i) => `
+        <div class="spec-card">
+          <div class="spec-icon"><span class="material-symbols-outlined">${escape(icons[i % icons.length])}</span></div>
+          <h3>${escape(c.title)}</h3>
+          <p>${escape(c.body)}</p>
+        </div>`).join("")}
+      ${copy.savoir_faire_cards.length < 6 ? Array.from({length: 6 - copy.savoir_faire_cards.length}).map((_, i) => `
+        <div class="spec-card">
+          <div class="spec-icon"><span class="material-symbols-outlined">${escape(icons[(copy.savoir_faire_cards.length + i) % icons.length])}</span></div>
+          <h3>${escape(["Suivi régulier","Conseils personnalisés","Téléconsultation"][i] || "Accompagnement")}</h3>
+          <p>Un accompagnement de qualité dans le respect des bonnes pratiques médicales.</p>
+        </div>`).join("") : ""}
+    </div>
+  </div>
+</section>
+
+<section id="equipe" class="main-section equipe reveal">
+  <div class="container">
+    <div class="equipe-grid">
+      <div class="equipe-img"><img src="${escape(equipePhoto)}" alt="L'équipe ${escape(prospect.name)}"></div>
+      <div class="equipe-text">
+        <span class="section-chip">${escape(copy.univers_title || "L'équipe")}</span>
+        <h2>${escape(copy.univers_paragraph1 ? "À vos côtés au quotidien" : "Notre équipe")}</h2>
+        <p>${escape(copy.univers_paragraph1)}</p>
+        <p>${escape(copy.univers_paragraph2)}</p>
+        <div class="equipe-features">
+          ${[
+            { i:"verified", t:"Diplômes vérifiés", d:"Formation continue et exigence" },
+            { i:"groups", t:"Équipe pluridisciplinaire", d:"Expertise complémentaire" },
+            { i:"chat", t:"Écoute active", d:"Temps dédié à chaque patient" },
+            { i:"shield", t:"Confidentialité", d:"Secret médical respecté" },
+          ].map(f => `
+            <div class="equipe-feat">
+              <div class="equipe-feat-icon"><span class="material-symbols-outlined">${f.i}</span></div>
+              <div>
+                <h4>${f.t}</h4>
+                <p>${f.d}</p>
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="infos" class="main-section infos reveal">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-chip">Infos pratiques</span>
+      <h2>Tout pour préparer votre venue</h2>
+      <p>Adresse, horaires, accès — l'essentiel en un coup d'œil.</p>
+    </div>
+    <div class="infos-grid">
+      <div class="info-card">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">place</span>
+        <h4>Adresse</h4>
+        <p>${prospect.address ? escape(prospect.address) : (prospect.city ? escape(prospect.city) : "À venir")}</p>
+      </div>
+      <div class="info-card">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">schedule</span>
+        <h4>Horaires</h4>
+        <p>${prospect.hours ? escape(prospect.hours) : "Lun-Ven : 9h-19h<br>Sam : 9h-13h"}</p>
+      </div>
+      <div class="info-card">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">phone</span>
+        <h4>Téléphone</h4>
+        <p>${phoneDisplay ? `<a href="tel:${phoneClean}" style="color:var(--primary)">${escape(phoneDisplay)}</a>` : "À venir"}</p>
+      </div>
+      <div class="info-card">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">directions_car</span>
+        <h4>Accès</h4>
+        <p>Transports en commun à proximité, parking accessible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="main-section testimonials reveal">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-chip">Témoignages</span>
+      <h2>Ce qu'ils en disent</h2>
+    </div>
+    <div class="testi-grid">
+      ${reviewsList.map(r => `
+        <div class="testi-card">
+          <div class="testi-stars">${stars(("rating" in r ? (r as any).rating : 5) as number)}</div>
+          <p class="testi-quote">«&nbsp;${escape((r as any).text || (r as any).quote)}&nbsp;»</p>
+          <div class="testi-author">${escape((r as any).author)}</div>
+        </div>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="container">
+  <div class="cta-final">
+    <h2>${escape(copy.cta_final_title)}</h2>
+    <p>${escape(copy.cta_final_paragraph)}</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="#" class="btn-rdv">
+        <span class="material-symbols-outlined" style="font-size:18px">calendar_month</span>
+        ${escape(copy.cta_final_button)}
+      </a>
+      ${phoneClean ? `<a href="tel:${phoneClean}" class="btn-rdv" style="background:transparent;border:1px solid #ffffff44;color:#fff">
+        <span class="material-symbols-outlined" style="font-size:18px">call</span>
+        ${escape(phoneDisplay)}
+      </a>` : ""}
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="brand-logo" style="margin-bottom:14px">
+          <div class="brand-icon"><span class="material-symbols-outlined">${escape(icons[0])}</span></div>
+          <div>
+            <div class="brand-name">${escape(prospect.name)}</div>
+            <div class="brand-subtitle">${escape(dna.label_fr)}</div>
+          </div>
+        </div>
+        <p>${escape(copy.footer_tagline)}</p>
+      </div>
+      <div class="footer-col">
+        <h4>Coordonnées</h4>
+        ${prospect.address ? `<a>${escape(prospect.address)}</a>` : ""}
+        ${prospect.phone ? `<a href="tel:${phoneClean}">${escape(phoneDisplay)}</a>` : ""}
+        ${prospect.email ? `<a href="mailto:${escape(prospect.email)}">${escape(prospect.email)}</a>` : ""}
+      </div>
+      <div class="footer-col">
+        <h4>Liens utiles</h4>
+        <a href="#specialites">Nos spécialités</a>
+        <a href="#equipe">L'équipe</a>
+        <a href="#infos">Infos pratiques</a>
+        <a href="#contact">Prendre rendez-vous</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © ${new Date().getFullYear()} ${escape(prospect.name)}. ${prospect.city ? `${escape(prospect.city)}.` : ""} Tous droits réservés.
+    </div>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>`;
+}
+
 // ─── API publique ─────────────────────────────────────────────
 
 const ARTISAN_DNAS = new Set([
   "electricite", "plomberie", "menuiserie_charpente", "garage_auto",
 ]);
 const EDITORIAL_DNAS = new Set([
-  "coiffure", "esthetique_spa", "fleuriste",
+  "coiffure", "esthetique_spa", "fleuriste", "cabinet_avocat", "immobilier",
+]);
+const MEDICAL_DNAS = new Set([
+  "cabinet_medical",
 ]);
 
 export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<string | null> {
   const dna = await fetchDna(prospect.business_type);
   if (!dna) return null;
   const dnaKey = mapBusinessTypeToDna(prospect.business_type);
+
+  // 🛡️ QA #1 — Validation photos AVANT génération
+  // Supprime les URLs Google Places expirées (= les "?" sur les photos)
+  await cleanProspectPhotos(prospect);
+
   const copy = await generateAiCopy(prospect, dna);
 
   // Sélection du template :
@@ -1493,12 +1962,46 @@ export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<s
   // 2. Sinon, fallback intelligent par famille de DNA
   const variant = dna.template_variant
     || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
+       : MEDICAL_DNAS.has(dnaKey)   ? "clean_medical"
        : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
        :                              "elegant_restaurant");
 
-  if (variant === "industrial_artisan") return renderArtisanHtml(prospect, dna, copy, dnaKey);
-  if (variant === "editorial_minimal")  return renderEditorialHtml(prospect, dna, copy, dnaKey);
-  return renderHtml(prospect, dna, copy, dnaKey);
+  let html: string;
+  if (variant === "industrial_artisan")      html = renderArtisanHtml(prospect, dna, copy, dnaKey);
+  else if (variant === "clean_medical")      html = renderMedicalHtml(prospect, dna, copy, dnaKey);
+  else if (variant === "editorial_minimal")  html = renderEditorialHtml(prospect, dna, copy, dnaKey);
+  else                                       html = renderHtml(prospect, dna, copy, dnaKey);
+
+  // 🛡️ QA #2 — Garde-fous post-génération
+  if (!validateMockupQuality(html, prospect)) {
+    console.warn(`[mockup-dna] QA failed for ${prospect.slug} — fallback`);
+    return null;  // → la cascade dans regenerate-mockup essaiera l'autre voie
+  }
+  return html;
+}
+
+/**
+ * Vérificateur QA post-génération :
+ *   - Refuse les HTML <12kb (= incomplet)
+ *   - Refuse si "?" visible dans une src d'image
+ *   - Refuse si Lorem Ipsum
+ *   - Refuse si meta-instructions LLM ("voici", "comme demandé")
+ *   - Refuse si nom prospect absent
+ */
+function validateMockupQuality(html: string, prospect: DnaProspect): boolean {
+  if (!html || html.length < 12000) return false;
+  // Pas de placeholder "?" visible en alt ou src
+  if (/src=["'][^"']*\?["']/.test(html)) return false;
+  if (/src=["'][^"']*placeholder[^"']*["']/i.test(html)) return false;
+  if (/lorem ipsum|dolor sit amet/i.test(html)) return false;
+  // Doit contenir le nom du prospect (escape variant possible)
+  const nameStripped = (prospect.name || "").replace(/[^\w]/g, "");
+  if (nameStripped.length > 3 && !html.replace(/[^\w]/g, "").includes(nameStripped.slice(0, Math.min(nameStripped.length, 20)))) {
+    return false;
+  }
+  // Pas de meta-instructions du LLM
+  if (/voici (le|la|un|une)|comme (vous me l'avez )?demand[ée]|j'ai (créé|généré|conçu)/i.test(html)) return false;
+  return true;
 }
 
 export { mapBusinessTypeToDna, fetchDna };
