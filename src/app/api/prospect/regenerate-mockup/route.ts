@@ -4,6 +4,7 @@ import { safeCompare } from "@/lib/security";
 import { generateRestaurantMockupHtml, type RestaurantProspect, BUSINESS_TYPE_VIBE } from "@/lib/mockup-restaurant";
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
+import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
 
 /* ══════════════════════════════════════════
@@ -371,6 +372,39 @@ export async function POST(req: NextRequest) {
     }
     try {
       let html: string;
+
+      // ══════════════════════════════════════════
+      // PRIORITÉ 1 — DNA PREMIUM (pattern Stitch)
+      // Lit design_dna Supabase pour générer une maquette au niveau Stitch
+      // avec typo + palette + sections thématiques par métier.
+      // Activé par défaut. Bypass via ?dna=false.
+      // ══════════════════════════════════════════
+      const useDna = req.nextUrl.searchParams.get("dna") !== "false";
+      if (useDna) {
+        try {
+          const dnaProspect: DnaProspect = {
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city, address: p.address, phone: p.phone,
+            email: p.email, website: p.website,
+            business_type: p.business_type,
+            google_rating: p.google_rating,
+            google_reviews_count: p.google_reviews_count,
+            photos: p.website_photos || p.photos || null,
+            hours: p.hours,
+            reviews: p.reviews,
+            about_scraped: (p.about_scraped as string) || null,
+          };
+          const dnaHtml = await generatePremiumDnaMockup(dnaProspect);
+          if (dnaHtml && dnaHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: dnaHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "dna_ok", chars: dnaHtml.length });
+            continue;
+          }
+        } catch (dnaErr) {
+          console.warn(`[regenerate] DNA failed for ${p.slug}:`, dnaErr);
+          // Continue vers les autres voies
+        }
+      }
 
       // Stitch forcé via ?stitch=true (admin) ou prospect luxury avec clé dispo
       if (forceStitch && process.env.STITCH_API_KEY) {
