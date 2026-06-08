@@ -23,6 +23,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { renderStitchRestaurant } from "@/lib/mockup-stitch-restaurant";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -2110,6 +2111,11 @@ const EDITORIAL_DNAS = new Set([
 const MEDICAL_DNAS = new Set([
   "cabinet_medical",
 ]);
+// 🎯 Maquettes utilisant le HTML Stitch L'Armoire à Cuillères pixel-pixel
+const STITCH_EXACT_DNAS = new Set([
+  "restaurant_gastronomique", "restaurant_bistrot",
+  "boulangerie_patisserie", "chocolaterie_salon_the",
+]);
 
 export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<string | null> {
   const dna = await fetchDna(prospect.business_type);
@@ -2126,16 +2132,46 @@ export async function generatePremiumDnaMockup(prospect: DnaProspect): Promise<s
   // 1. dna.template_variant si défini explicitement en base
   // 2. Sinon, fallback intelligent par famille de DNA
   const variant = dna.template_variant
-    || (ARTISAN_DNAS.has(dnaKey)   ? "industrial_artisan"
-       : MEDICAL_DNAS.has(dnaKey)   ? "clean_medical"
-       : EDITORIAL_DNAS.has(dnaKey) ? "editorial_minimal"
-       :                              "elegant_restaurant");
+    || (STITCH_EXACT_DNAS.has(dnaKey) ? "stitch_exact_restaurant"
+       : ARTISAN_DNAS.has(dnaKey)     ? "industrial_artisan"
+       : MEDICAL_DNAS.has(dnaKey)     ? "clean_medical"
+       : EDITORIAL_DNAS.has(dnaKey)   ? "editorial_minimal"
+       :                                "elegant_restaurant");
 
   let html: string;
-  if (variant === "industrial_artisan")      html = renderArtisanHtml(prospect, dna, copy, dnaKey);
-  else if (variant === "clean_medical")      html = renderMedicalHtml(prospect, dna, copy, dnaKey);
-  else if (variant === "editorial_minimal")  html = renderEditorialHtml(prospect, dna, copy, dnaKey);
-  else                                       html = renderHtml(prospect, dna, copy, dnaKey);
+  if (variant === "stitch_exact_restaurant") {
+    // 🎯 Pixel-pixel du HTML Stitch L'Armoire à Cuillères + Tailwind CDN
+    html = renderStitchRestaurant({
+      id: prospect.id, slug: prospect.slug, name: prospect.name,
+      city: prospect.city, address: prospect.address,
+      phone: prospect.phone, email: prospect.email,
+      google_rating: prospect.google_rating,
+      google_reviews_count: prospect.google_reviews_count,
+      hours: prospect.hours, reviews: prospect.reviews,
+    }, {
+      hero_caps: copy.hero_caps,
+      hero_title: copy.hero_title,
+      hero_subtitle: copy.hero_subtitle,
+      cta_primary: copy.cta_primary,
+      cta_secondary: copy.cta_secondary,
+      univers_title: copy.univers_title,
+      univers_paragraph1: copy.univers_paragraph1,
+      univers_paragraph2: copy.univers_paragraph2,
+      univers_badge: copy.univers_badge,
+      savoir_faire_title: copy.savoir_faire_title,
+      savoir_faire_subtitle: copy.savoir_faire_subtitle,
+      savoir_faire_cards: copy.savoir_faire_cards,
+      testimonials: copy.testimonials,
+      cta_final_title: copy.cta_final_title,
+      cta_final_paragraph: copy.cta_final_paragraph,
+      cta_final_button: copy.cta_final_button,
+      footer_tagline: copy.footer_tagline,
+    });
+  }
+  else if (variant === "industrial_artisan")      html = renderArtisanHtml(prospect, dna, copy, dnaKey);
+  else if (variant === "clean_medical")           html = renderMedicalHtml(prospect, dna, copy, dnaKey);
+  else if (variant === "editorial_minimal")       html = renderEditorialHtml(prospect, dna, copy, dnaKey);
+  else                                            html = renderHtml(prospect, dna, copy, dnaKey);
 
   // 🛡️ QA #2 — Garde-fous post-génération
   if (!validateMockupQuality(html, prospect)) {
