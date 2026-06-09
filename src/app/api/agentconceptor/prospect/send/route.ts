@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { safeCompare } from "@/lib/security";
-
 /* ══════════════════════════════════════════
    POST /api/agentconceptor/prospect/send
 
-   Prospection froide AGENTConceptor.
-   Cible les entreprises déjà dans la base
-   (prospects table) et leur pitch les agents IA
-   les plus pertinents pour leur métier.
+   Prospection froide WebDirector (ex-AGENTConceptor).
 
-   Stratégie de ciblage :
-   - Artisans / Garages      → Agent Devis IA
-   - Restaurants / Beauté    → Agent Contenu + Réputation
-   - Tous secteurs           → Agent Chatbot + Pack
+   v2 — 09/06/2026:
+   - Rebrand AGENTConceptor → WebDirector (sender, branding, URLs)
+   - CTA → https://webconceptor.fr/director (au lieu de /agentconceptor)
+   - Copy 100% personnalisé via IA Kimi K2 (gratuit OpenRouter)
+   - Analyse des failles concrètes du prospect (note Google, nb avis, métier)
+   - Ton accompagnant, pas commercial
+   - Email court : 4-5 paragraphes max, pas d'images, pas de gros blocs
 
    Body : { batch_size?: number, dry_run?: boolean }
    Auth : x-admin-key ou x-cron-secret
    ══════════════════════════════════════════ */
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { safeCompare } from "@/lib/security";
 
 function getSupabase() {
   return createClient(
@@ -26,242 +25,269 @@ function getSupabase() {
   );
 }
 
-// ── Quel(s) agent(s) pitcher selon le métier ──────────────────────────────────
-interface AgentPitch {
-  headline: string;
-  subheadline: string;
-  agents: Array<{
-    id: string;
-    name: string;
-    price: string;
-    emoji: string;
-    benefit: string;
-  }>;
-  cta_label: string;
+interface Prospect {
+  id: string;
+  name: string;
+  email: string | null;
+  city: string | null;
+  business_type: string | null;
+  google_rating: number | null;
+  google_reviews_count: number | null;
+  site_quality: string | null;
+  slug: string | null;
 }
 
-function getAgentPitch(businessType?: string): AgentPitch {
-  const bt = (businessType || "restaurant").toLowerCase();
+interface DetectedWeakness {
+  code: string;
+  label: string;        // courte description pour le LLM
+  recommended_agent: string;
+}
 
-  // Artisans & services techniques → Agent Devis en priorité
-  if (["plombier", "electricien", "menuisier", "peintre", "garage", "maçon", "couvreur", "serrurier"].includes(bt)) {
-    return {
-      headline: "Générez des devis professionnels en 30 secondes",
-      subheadline: "Vos clients remplissent un formulaire, l'IA génère le devis instantanément. Vous recevez le PDF par email.",
-      agents: [
-        { id: "devis", name: "Agent Devis IA", price: "149€/mois", emoji: "📋", benefit: "Devis auto envoyé au client en moins d'une minute" },
-        { id: "chatbot", name: "Agent Chatbot IA", price: "79€/mois", emoji: "💬", benefit: "Répond aux questions 24h/24 à votre place" },
-        { id: "reputation", name: "Agent Réputation", price: "99€/mois", emoji: "⭐", benefit: "Répond à vos avis Google automatiquement" },
-      ],
-      cta_label: "Voir l'Agent Devis IA",
-    };
+// ──────────────────────────────────────────────────────────────
+// 1) DÉTECTION DES FAILLES — règles déterministes locales
+// (ces failles sont injectées dans le prompt IA pour personnaliser)
+// ──────────────────────────────────────────────────────────────
+function detectWeaknesses(p: Prospect): DetectedWeakness[] {
+  const issues: DetectedWeakness[] = [];
+  const rating = p.google_rating || 0;
+  const reviews = p.google_reviews_count || 0;
+  const bt = (p.business_type || "").toLowerCase();
+
+  if (rating > 0 && rating < 4) {
+    issues.push({
+      code: "low_rating",
+      label: `note Google ${rating}/5 sur ${reviews} avis — clairement améliorable`,
+      recommended_agent: "Agent Réputation Google",
+    });
+  } else if (reviews >= 50 && rating >= 4) {
+    issues.push({
+      code: "good_rating_no_replies",
+      label: `${reviews} avis et ${rating}/5 — excellent, mais probablement peu de réponses du gérant aux avis (vu côté prospect : tiède)`,
+      recommended_agent: "Agent Réputation Google",
+    });
+  } else if (reviews < 10 && rating > 0) {
+    issues.push({
+      code: "few_reviews",
+      label: `seulement ${reviews} avis Google — clairement sous-exploité pour un ${bt || "commerce"} local`,
+      recommended_agent: "Agent Réputation Google",
+    });
   }
 
-  // Restaurants, brasseries, cafés, boulangeries → Contenu + Réputation
-  if (["restaurant", "brasserie", "bistrot", "gastronomique", "pizzeria", "creperie", "boulangerie", "patisserie", "chocolatier", "cafe", "salon_de_the", "glacier", "bar", "food_truck", "traiteur"].includes(bt)) {
-    return {
-      headline: "Vos réseaux sociaux et avis Google, pilotés par l'IA",
-      subheadline: "Chaque lundi : 5 posts Instagram/Facebook prêts à publier. Chaque avis Google reçoit une réponse professionnelle automatique.",
-      agents: [
-        { id: "contenu", name: "Agent Contenu Réseaux", price: "99€/mois", emoji: "📱", benefit: "5 posts personnalisés envoyés chaque lundi" },
-        { id: "reputation", name: "Agent Réputation Google", price: "99€/mois", emoji: "⭐", benefit: "Réponses automatiques à tous vos avis Google" },
-        { id: "chatbot", name: "Agent Chatbot IA", price: "79€/mois", emoji: "💬", benefit: "Répond aux questions de vos clients 24h/24" },
-      ],
-      cta_label: "Voir l'Agent Contenu",
-    };
+  // Failles métier-spécifiques
+  if (["restaurant", "brasserie", "bistrot", "pizzeria", "boulangerie", "patisserie", "cafe", "salon_de_the", "glacier", "bar"].includes(bt)) {
+    issues.push({
+      code: "social_inactif",
+      label: "réseaux sociaux probablement inactifs ou rares pour un restaurant — le bouche-à-oreille Instagram représente une part énorme de la fréquentation",
+      recommended_agent: "Agent Contenu Réseaux",
+    });
+  }
+  if (["plombier", "electricien", "menuisier", "peintre", "couvreur", "serrurier", "garage", "maçon"].includes(bt)) {
+    issues.push({
+      code: "manual_quote",
+      label: "les devis sont probablement faits à la main — c'est entre 30 min et 2h par devis perdus dans la paperasse",
+      recommended_agent: "Agent Devis IA",
+    });
+  }
+  if (["coiffeur", "coiffeuse", "spa", "institut", "dentiste", "osteo", "kine"].includes(bt)) {
+    issues.push({
+      code: "missed_calls",
+      label: "des appels entrants probablement manqués en soirée ou hors horaires — perte directe de rendez-vous",
+      recommended_agent: "Agent Chatbot IA",
+    });
   }
 
-  // Beauté / Bien-être / Sport → Chatbot + Réputation
-  if (["coiffeur", "spa", "institut", "fitness", "salle_sport"].includes(bt)) {
-    return {
-      headline: "Un assistant IA qui gère vos rendez-vous et vos avis",
-      subheadline: "Répondez aux questions de vos clients à n'importe quelle heure, et soignez votre réputation Google automatiquement.",
-      agents: [
-        { id: "chatbot", name: "Agent Chatbot IA", price: "79€/mois", emoji: "💬", benefit: "Disponible 24h/24 pour répondre à vos clients" },
-        { id: "reputation", name: "Agent Réputation Google", price: "99€/mois", emoji: "⭐", benefit: "Réponses professionnelles à tous vos avis" },
-        { id: "contenu", name: "Agent Contenu Réseaux", price: "99€/mois", emoji: "📱", benefit: "Posts Instagram personnalisés chaque semaine" },
-      ],
-      cta_label: "Voir l'Agent Chatbot",
-    };
-  }
+  // Cap à 2 failles max (sinon le mail devient trop lourd)
+  return issues.slice(0, 2);
+}
 
-  // Santé / Para-médical → Chatbot
-  if (["dentiste", "osteo", "kine", "medecin"].includes(bt)) {
-    return {
-      headline: "Un assistant IA qui répond à vos patients 24h/24",
-      subheadline: "Horaires, disponibilités, informations pratiques — l'IA répond instantanément à la place de votre secrétariat.",
-      agents: [
-        { id: "chatbot", name: "Agent Chatbot IA", price: "79€/mois", emoji: "💬", benefit: "Réduit les appels entrants de 40%" },
-        { id: "reputation", name: "Agent Réputation Google", price: "99€/mois", emoji: "⭐", benefit: "Valorise les avis de vos patients" },
-      ],
-      cta_label: "Voir l'Agent Chatbot",
-    };
-  }
+// ──────────────────────────────────────────────────────────────
+// 2) GÉNÉRATION COPY VIA KIMI K2 FREE — 100% personnalisé
+// ──────────────────────────────────────────────────────────────
 
-  // Auto-école, fleuriste, épicerie, autres → Chatbot + Pack
+interface MailCopy {
+  subject: string;
+  intro_paragraph: string;   // 2-3 phrases d'accroche, mentionne explicitement nom + ville
+  diagnostic: string;        // 1-2 phrases, ce que tu observes (failles)
+  proposition: string;       // 1-2 phrases, l'agent qui aide, prix
+  closing: string;           // 1 phrase, call-to-action soft
+}
+
+async function generateAiCopy(p: Prospect, weaknesses: DetectedWeakness[]): Promise<MailCopy | null> {
+  const apiKey = process.env.OPENROUTER_API_KEY_KIMI || process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return null;
+
+  const bt = p.business_type || "commerce";
+  const failles = weaknesses.length > 0
+    ? weaknesses.map(w => `- ${w.label} → propose ${w.recommended_agent}`).join("\n")
+    : `- aucune faille flagrante détectée — propose simplement WebDirector pour gagner du temps`;
+
+  const systemPrompt = `Tu rédiges des emails de prospection B2B en français pour Tom de WebConceptor.
+
+OBJECTIF : présenter WebDirector — une plateforme d'agents IA pour PME françaises.
+
+CONTRAINTES STRICTES :
+- Email TRÈS court : 4 paragraphes max, chaque paragraphe = 2-3 phrases
+- Ton : amical, sincère, accompagnant. JAMAIS commercial agressif.
+- Pas de phrases creuses : "n'hésitez pas", "à votre service", "satisfaire", "économisez X€"
+- Pas de listes à puces, pas de gros blocs, pas d'emojis dans le texte (uniquement dans intro éventuelle)
+- Le prospect ne connaît pas Tom — l'intro doit montrer que TU AS REGARDÉ son entreprise
+- Pas de pression, pas d'urgence factice ("offre limitée")
+- Doit donner envie de cliquer par curiosité, pas par peur
+
+TU PRODUIS UN JSON STRICT avec :
+{
+  "subject": "objet court 5-8 mots, sans emoji, accroche perso si possible",
+  "intro_paragraph": "2-3 phrases. Mentionne explicitement le nom de l'établissement, la ville, et UNE chose précise que tu as remarquée.",
+  "diagnostic": "1-2 phrases. Dis ce que tu OBSERVES (pas ce que tu suppose). Reste factuel et bienveillant.",
+  "proposition": "1-2 phrases. Présente UN seul agent IA qui aide concrètement. Mentionne le prix.",
+  "closing": "1 phrase courte. Invite à découvrir, sans presser. Pas de 'Cliquez ici'."
+}`;
+
+  const userPrompt = `Prospect :
+- Nom : ${p.name}
+- Ville : ${p.city || "?"}
+- Métier : ${bt}
+- Note Google : ${p.google_rating || "?"}/5
+- Avis Google : ${p.google_reviews_count || 0}
+- Qualité site existant : ${p.site_quality || "?"}
+
+Failles à mentionner (choisis 1 seule, la plus impactante) :
+${failles}
+
+Agents WebDirector disponibles + tarifs (choisis UN seul agent qui résout la faille principale) :
+- Agent Réputation Google (99€/mois) — répond aux avis Google automatiquement
+- Agent Contenu Réseaux (99€/mois) — 5 posts Instagram/Facebook par semaine
+- Agent Chatbot IA (79€/mois) — répond aux clients 24h/24
+- Agent Devis IA (149€/mois) — devis PDF générés en 30 sec
+
+Rédige le mail. JSON uniquement, rien d'autre.`;
+
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://webconceptor.fr",
+        "X-Title": "WebDirector — Prospection Cold",
+      },
+      body: JSON.stringify({
+        model: "moonshotai/kimi-k2.6:free",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.85,
+        max_tokens: 600,
+        response_format: { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content || "";
+    const json = JSON.parse(content);
+    return {
+      subject: String(json.subject || "").slice(0, 100),
+      intro_paragraph: String(json.intro_paragraph || ""),
+      diagnostic: String(json.diagnostic || ""),
+      proposition: String(json.proposition || ""),
+      closing: String(json.closing || ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// 3) FALLBACK DÉTERMINISTE (si Kimi indisponible ou rate-limit)
+// ──────────────────────────────────────────────────────────────
+function buildFallbackCopy(p: Prospect, weaknesses: DetectedWeakness[]): MailCopy {
+  const name = p.name || "votre établissement";
+  const city = p.city || "votre ville";
+  const w = weaknesses[0];
+
+  const subject = w
+    ? `${name} — une observation rapide`
+    : `${name} — quelques minutes pour vous`;
+
   return {
-    headline: "Gagnez 10h par semaine avec vos agents IA",
-    subheadline: "Réponses automatiques, devis en 30 secondes, posts réseaux sociaux, avis Google gérés — tout en automatique.",
-    agents: [
-      { id: "chatbot", name: "Agent Chatbot IA", price: "79€/mois", emoji: "💬", benefit: "Répond à vos clients 24h/24" },
-      { id: "reputation", name: "Agent Réputation Google", price: "99€/mois", emoji: "⭐", benefit: "Gère vos avis Google automatiquement" },
-      { id: "contenu", name: "Agent Contenu Réseaux", price: "99€/mois", emoji: "📱", benefit: "5 posts prêts-à-publier chaque semaine" },
-    ],
-    cta_label: "Découvrir AGENTConceptor",
+    subject,
+    intro_paragraph: `Je suis Tom, je suis tombé sur ${name} en regardant les ${(p.business_type || "commerces")} de ${city}. Je voulais vous écrire vite fait parce que j'ai remarqué quelque chose qui vous coûte probablement plus que vous ne le pensez.`,
+    diagnostic: w
+      ? `En clair : ${w.label}.`
+      : `Beaucoup de PME locales perdent 5-10h/semaine sur des tâches que des agents IA peuvent gérer automatiquement — réponses aux avis, posts réseaux, prises de RDV, devis.`,
+    proposition: w
+      ? `Chez WebDirector, on a un ${w.recommended_agent} qui s'occupe de ça pour ~99€/mois. Il tourne tout seul, sans que vous ayez à toucher quoi que ce soit.`
+      : `WebDirector, c'est une plateforme qui héberge 30+ agents IA spécialisés pour PME françaises. Vous embauchez ceux dont vous avez besoin, ils travaillent en autonomie.`,
+    closing: `Je vous laisse jeter un œil si ça vous parle — pas de relance, je sais qu'on est tous occupés.`,
   };
 }
 
-// ── HTML email AGENTConceptor ─────────────────────────────────────────────────
-function buildAgentEmail(params: {
-  businessName: string;
-  businessType: string;
-  city: string;
-  googleRating?: number;
-  reviewsCount?: number;
-  pitch: AgentPitch;
-  unsubscribeUrl: string;
-}): string {
-  const { businessName, city, googleRating, reviewsCount, pitch, unsubscribeUrl } = params;
-
-  const ratingBadge = googleRating && googleRating >= 3.5
-    ? `<span style="display:inline-block;background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;margin-left:8px">⭐ ${googleRating}/5 (${reviewsCount ?? "?"} avis)</span>`
-    : "";
-
-  const agentCards = pitch.agents.map(agent => `
-    <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:#f8f7ff;border-radius:10px;margin-bottom:10px;border-left:3px solid #7c3aed">
-      <div style="font-size:28px;line-height:1;flex-shrink:0">${agent.emoji}</div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:700;color:#111;margin-bottom:2px">${agent.name} <span style="font-weight:400;color:#7c3aed">— ${agent.price}</span></div>
-        <div style="font-size:13px;color:#525252;line-height:1.5">${agent.benefit}</div>
-      </div>
-    </div>`).join("");
+// ──────────────────────────────────────────────────────────────
+// 4) RENDU HTML — clean, court, sans gros blocs marketing
+// ──────────────────────────────────────────────────────────────
+function buildHtmlEmail(copy: MailCopy, unsubUrl: string): string {
+  const esc = (s: string) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   return `<!DOCTYPE html>
-<html lang="fr">
-<head>
+<html lang="fr"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AGENTConceptor — ${businessName}</title>
+<title>${esc(copy.subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,'Segoe UI',sans-serif">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px">
+<body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,'Segoe UI',Arial,sans-serif;color:#1a1a1a">
+<div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff">
 
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1a0533 0%,#2d1b69 50%,#1e1b4b 100%);border-radius:16px;padding:32px 28px;text-align:center;margin-bottom:20px">
-    <div style="display:inline-block;background:rgba(124,58,237,0.3);border:1px solid rgba(124,58,237,0.5);border-radius:20px;padding:5px 16px;font-size:11px;font-weight:700;color:#c4b5fd;letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">
-      🤖 AGENTConceptor — Agents IA pour PME
-    </div>
-    <h1 style="color:#fff;font-size:22px;font-weight:900;margin:0 0 8px;line-height:1.3">
-      ${pitch.headline}
-    </h1>
-    <p style="color:#c4b5fd;font-size:14px;margin:0;line-height:1.6">
-      ${pitch.subheadline}
-    </p>
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 18px;color:#1a1a1a">Bonjour,</p>
 
-  <!-- Intro personnalisée -->
-  <div style="background:#fff;border-radius:12px;padding:22px 24px;margin-bottom:16px;border:1px solid #e5e7eb">
-    <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0">
-      Bonjour,
-    </p>
-    <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:12px 0 0">
-      Je suis Tom de <strong>WebConceptor</strong>. J'ai vu votre établissement <strong>${businessName}</strong>${city ? ` à ${city}` : ""}${ratingBadge} et je voulais vous présenter quelque chose qui peut vraiment faire la différence.
-    </p>
-    <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:12px 0 0">
-      Nous avons lancé <strong>AGENTConceptor</strong> — une suite d'agents IA autonomes qui travaillent pour votre commerce 24h/24, sans que vous ayez rien à faire.
-    </p>
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 18px;color:#1a1a1a">${esc(copy.intro_paragraph)}</p>
 
-  <!-- Agents recommandés -->
-  <div style="background:#fff;border-radius:12px;padding:22px 24px;margin-bottom:16px;border:1px solid #e5e7eb">
-    <h2 style="font-size:15px;font-weight:800;color:#111;margin:0 0 14px;text-transform:uppercase;letter-spacing:.04em">
-      🎯 Agents recommandés pour vous
-    </h2>
-    ${agentCards}
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 18px;color:#1a1a1a">${esc(copy.diagnostic)}</p>
 
-  <!-- Pack Complet -->
-  <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);border-radius:12px;padding:20px 24px;margin-bottom:16px;text-align:center">
-    <div style="font-size:12px;font-weight:700;color:#e0e7ff;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🔥 Offre spéciale</div>
-    <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">Pack Complet — 5 agents IA</div>
-    <div style="font-size:14px;color:#c4b5fd;margin-bottom:12px">Chatbot + Réputation + Devis + Contenu + Fidélisation</div>
-    <div style="display:inline-block">
-      <span style="font-size:22px;font-weight:900;color:#fff">349€/mois</span>
-      <span style="font-size:13px;color:#a5b4fc;margin-left:8px;text-decoration:line-through">505€ à l'unité</span>
-    </div>
-    <div style="font-size:12px;color:#c4b5fd;margin-top:4px">Économisez 156€/mois · Résiliation à tout moment</div>
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 22px;color:#1a1a1a">${esc(copy.proposition)}</p>
 
-  <!-- CTA -->
-  <div style="text-align:center;margin-bottom:20px">
-    <a href="https://webconceptor.fr/agentconceptor" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;font-size:16px;font-weight:800;padding:16px 40px;border-radius:12px;letter-spacing:.02em">
-      ${pitch.cta_label} →
+  <div style="margin:24px 0 18px">
+    <a href="https://webconceptor.fr/director" style="display:inline-block;background:#0a2540;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:8px;letter-spacing:0.02em">
+      Découvrir WebDirector →
     </a>
-    <p style="font-size:12px;color:#9ca3af;margin-top:10px">Sans engagement · Livraison immédiate après paiement</p>
   </div>
 
-  <!-- Preuve sociale -->
-  <div style="background:#fff;border-radius:12px;padding:18px 24px;margin-bottom:16px;border:1px solid #e5e7eb">
-    <div style="display:flex;gap:16px;align-items:center">
-      <div style="text-align:center;flex:1;border-right:1px solid #f3f4f6;padding-right:16px">
-        <div style="font-size:22px;font-weight:900;color:#7c3aed">100%</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:2px">Automatique</div>
-      </div>
-      <div style="text-align:center;flex:1;border-right:1px solid #f3f4f6;padding-right:16px">
-        <div style="font-size:22px;font-weight:900;color:#7c3aed">24/7</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:2px">Disponible</div>
-      </div>
-      <div style="text-align:center;flex:1">
-        <div style="font-size:22px;font-weight:900;color:#7c3aed">0h</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:2px">De votre temps</div>
-      </div>
-    </div>
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 22px;color:#1a1a1a">${esc(copy.closing)}</p>
 
-  <!-- Footer -->
-  <div style="text-align:center;font-size:11px;color:#9ca3af;padding-top:8px">
-    <p style="margin:0">AGENTConceptor by <strong>WebConceptor</strong> · contact@webconceptor.fr</p>
-    <p style="margin:6px 0 0">
-      <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline">Se désinscrire</a>
-    </p>
-  </div>
+  <p style="font-size:15.5px;line-height:1.65;margin:0 0 4px;color:#1a1a1a">Tom</p>
+  <p style="font-size:13.5px;color:#6b7280;margin:0">WebConceptor — <a href="https://webconceptor.fr" style="color:#6b7280;text-decoration:underline">webconceptor.fr</a></p>
+
+  <hr style="margin:32px 0 16px;border:none;border-top:1px solid #e5e7eb">
+  <p style="font-size:11.5px;color:#9ca3af;margin:0;line-height:1.5">
+    Si ce message ne vous concerne pas, <a href="${esc(unsubUrl)}" style="color:#9ca3af;text-decoration:underline">cliquez ici pour ne plus en recevoir</a>.
+  </p>
 
 </div>
-</body>
-</html>`;
+</body></html>`;
 }
 
-// ── Handler principal ─────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// 5) HANDLER PRINCIPAL
+// ──────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const adminKey   = req.headers.get("x-admin-key")   || "";
+  const adminKey = req.headers.get("x-admin-key") || "";
   const cronSecret = req.headers.get("x-cron-secret") || "";
-  const adminOK    = safeCompare(adminKey,   process.env.ADMIN_SECRET_KEY);
-  const cronOK     = safeCompare(cronSecret, process.env.CRON_SECRET);
-
-  if (!adminOK && !cronOK) {
+  if (!safeCompare(adminKey, process.env.ADMIN_SECRET_KEY) && !safeCompare(cronSecret, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));
   const batchSize = Math.min(20, Math.max(1, Number(body.batch_size) || 8));
-  const dryRun    = Boolean(body.dry_run);
+  const dryRun = Boolean(body.dry_run);
 
   const supabase = getSupabase();
   const brevoKey = process.env.BREVO_API_KEY || "";
-  const baseUrl  = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
 
-  // ── Sélection des prospects à cibler ──
-  // Priorité : ceux avec un site (site_quality good/average) car ils n'ont pas besoin de WebConceptor
-  // et ceux avec des avis Google (bons candidats pour Agent Réputation)
-  // Exclure : déjà reçu un email AGENTConceptor (colonne agentconceptor_sent_at)
-  // Si la migration n'a pas encore été jouée → fallback sur les prospects récents
-
-  let selectedProspects: Array<{
-    id: string; name: string; email: string | null; city: string | null;
-    business_type: string | null; google_rating: number | null;
-    google_reviews_count: number | null; site_quality: string | null; slug: string | null;
-  }> = [];
   let columnExists = true;
+  let selectedProspects: Prospect[] = [];
 
   try {
     const { data, error } = await supabase
@@ -274,20 +300,18 @@ export async function POST(req: NextRequest) {
       .limit(batchSize * 3);
 
     if (error) {
-      // Si la colonne n'existe pas (migration pas encore jouée)
       if (String(error.message).includes("agentconceptor_sent_at") || String(error.code).includes("42703")) {
         columnExists = false;
       } else {
         throw error;
       }
     } else {
-      selectedProspects = data || [];
+      selectedProspects = (data || []) as Prospect[];
     }
   } catch {
     columnExists = false;
   }
 
-  // Fallback si colonne absente ou liste vide → take les plus actifs récemment ajoutés
   if (!columnExists || selectedProspects.length === 0) {
     const { data: fallback } = await supabase
       .from("prospects")
@@ -295,77 +319,65 @@ export async function POST(req: NextRequest) {
       .not("email", "is", null)
       .order("google_reviews_count", { ascending: false })
       .limit(batchSize * 2);
-
     if (!fallback || fallback.length === 0) {
-      return NextResponse.json({ success: true, sent: 0, processed: 0, message: "Aucun prospect disponible — lancez d'abord la migration 20260519_agentconceptor_prospect.sql" });
+      return NextResponse.json({ success: true, sent: 0, processed: 0, message: "Aucun prospect disponible" });
     }
-    selectedProspects = fallback;
+    selectedProspects = fallback as Prospect[];
   }
 
-  // Déduplique et prend batchSize
-  const prospects = selectedProspects
-    .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
-
-  const uniqueProspects = prospects.slice(0, batchSize);
+  const uniqueProspects = selectedProspects
+    .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
+    .slice(0, batchSize);
 
   let sent = 0;
   let errors = 0;
-  const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
+  const results: Array<{ id: string; name: string; status: string; ai?: boolean; subject?: string; error?: string }> = [];
 
   for (const prospect of uniqueProspects) {
     if (!prospect.email) continue;
 
-    const pitch = getAgentPitch(prospect.business_type ?? undefined);
+    const weaknesses = detectWeaknesses(prospect);
+
+    // Génère le copy : IA Kimi K2 si possible, sinon fallback déterministe
+    let copy = await generateAiCopy(prospect, weaknesses);
+    const usedAi = !!copy;
+    if (!copy) copy = buildFallbackCopy(prospect, weaknesses);
+
     const unsubUrl = `${baseUrl}/api/prospect/unsubscribe?email=${encodeURIComponent(prospect.email)}`;
-
-    const htmlContent = buildAgentEmail({
-      businessName:  prospect.name || "votre établissement",
-      businessType:  prospect.business_type || "commerce",
-      city:          prospect.city || "",
-      googleRating:  prospect.google_rating ?? undefined,
-      reviewsCount:  prospect.google_reviews_count ?? undefined,
-      pitch,
-      unsubscribeUrl: unsubUrl,
-    });
-
-    const subject = getSubjectLine(prospect.business_type ?? undefined, prospect.name ?? undefined);
+    const htmlContent = buildHtmlEmail(copy, unsubUrl);
 
     if (dryRun) {
-      results.push({ id: prospect.id, name: prospect.name, status: "dry_run" });
+      results.push({ id: prospect.id, name: prospect.name, status: "dry_run", ai: usedAi, subject: copy.subject });
       continue;
     }
 
     try {
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
-        headers: {
-          "api-key": brevoKey,
-          "Content-Type": "application/json",
-        },
+        headers: { "api-key": brevoKey, "Content-Type": "application/json" },
         body: JSON.stringify({
-          sender: { name: "Tom — AGENTConceptor", email: "contact@webconceptor.fr" },
+          sender: { name: "Tom — WebDirector", email: "contact@webconceptor.fr" },
+          replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
           to: [{ email: prospect.email, name: prospect.name || "" }],
-          subject,
+          subject: copy.subject,
           htmlContent,
           headers: {
             "List-Unsubscribe": `<${unsubUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-            "X-Campaign": "agentconceptor-cold",
+            "X-Campaign": "webdirector-cold",
           },
         }),
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(15_000),
       });
 
       if (res.ok) {
         sent++;
-        // Marquer comme envoyé (si la colonne existe)
         if (columnExists) {
-          await supabase
-            .from("prospects")
+          await supabase.from("prospects")
             .update({ agentconceptor_sent_at: new Date().toISOString() })
             .eq("id", prospect.id);
         }
-        results.push({ id: prospect.id, name: prospect.name, status: "sent" });
+        results.push({ id: prospect.id, name: prospect.name, status: "sent", ai: usedAi, subject: copy.subject });
       } else {
         const errBody = await res.text().catch(() => "");
         errors++;
@@ -376,23 +388,24 @@ export async function POST(req: NextRequest) {
       results.push({ id: prospect.id, name: prospect.name, status: "error", error: String(err).slice(0, 200) });
     }
 
-    // Pause pour ne pas saturer Brevo
-    await new Promise(r => setTimeout(r, 300));
+    // Petite pause anti-saturation Brevo + OpenRouter
+    await new Promise(r => setTimeout(r, 400));
   }
 
-  // Notif Telegram
+  // Telegram
   if (sent > 0 && !dryRun) {
-    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId  = process.env.TELEGRAM_CHAT_ID;
-    if (tgToken && chatId) {
-      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+    const tg = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_CHAT_ID;
+    if (tg && chat) {
+      const aiCount = results.filter(r => r.ai).length;
+      fetch(`https://api.telegram.org/bot${tg}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chat_id: chatId,
-          text: `🤖 <b>AGENTConceptor — Prospection</b>\n\n<b>Envoyés :</b> ${sent}\n<b>Erreurs :</b> ${errors}`,
+          chat_id: chat,
           parse_mode: "HTML",
           disable_notification: true,
+          text: `🎯 <b>WebDirector — Prospection cold</b>\n\n<b>Envoyés :</b> ${sent}\n<b>Personnalisés IA :</b> ${aiCount}/${sent}\n<b>Erreurs :</b> ${errors}`,
         }),
       }).catch(() => {});
     }
@@ -401,34 +414,4 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, processed: uniqueProspects.length, sent, errors, dry_run: dryRun, results });
 }
 
-export async function GET(req: NextRequest) {
-  return POST(req);
-}
-
-// ── Lignes d'objet personnalisées ─────────────────────────────────────────────
-function getSubjectLine(businessType?: string, businessName?: string): string {
-  const bt = (businessType || "").toLowerCase();
-  const name = businessName || "votre établissement";
-
-  const subjects: Record<string, string[]> = {
-    plombier:    ["Un agent IA qui génère vos devis automatiquement", "Fini les devis manuels — essayez l'Agent Devis IA", "Gagnez 5h/semaine avec l'Agent Devis pour artisans"],
-    electricien: ["Un agent IA qui génère vos devis automatiquement", "Fini les devis manuels — essayez l'Agent Devis IA", "Automatisez vos devis en 30 secondes chrono"],
-    garage:      ["Un agent IA qui répond à vos clients 24h/24", "Automatisez vos devis avec l'Agent IA Garage", "Plus aucun client sans réponse — Agent IA"],
-    restaurant:  [`${name} — 5 posts Instagram prêts chaque lundi`, "Vos avis Google répondus automatiquement", "L'IA qui gère vos réseaux et votre réputation Google"],
-    boulangerie: ["5 posts Instagram prêts chaque lundi pour votre boulangerie", "L'IA qui publie sur vos réseaux à votre place", "Automatisez votre présence sur les réseaux sociaux"],
-    coiffeur:    ["Un chatbot IA pour répondre à vos clients 24h/24", "Vos avis Google soignés automatiquement", "Plus d'appels manqués avec l'Agent Chatbot"],
-    coiffeuse:   ["Un chatbot IA pour répondre à vos clientes 24h/24", "Automatisez vos réponses Google et Instagram"],
-    spa:         ["Un assistant IA pour votre spa — disponible 24h/24", "L'IA qui gère votre réputation et vos questions"],
-    dentiste:    ["Un assistant IA pour répondre à vos patients 24h/24", "Réduisez vos appels entrants avec l'Agent Chatbot"],
-  };
-
-  const pool = subjects[bt] || [
-    `${name} — découvrez AGENTConceptor`,
-    "Gagnez 10h/semaine avec vos agents IA",
-    "L'IA autonome qui travaille pour votre commerce",
-  ];
-
-  // Rotation déterministe basée sur le nom du business
-  const hash = (businessName || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return pool[hash % pool.length];
-}
+export async function GET(req: NextRequest) { return POST(req); }
