@@ -99,19 +99,16 @@ export async function POST(req: NextRequest) {
   const dryRun = req.nextUrl.searchParams.get("dry_run") === "true";
   const tStart = Date.now();
 
-  const results: RouteResult[] = [];
+  // PARALLÈLE pour rester sous le timeout Vercel 300s
+  // Brevo SMTP supporte largement les bursts (5k req/h sur plan standard)
+  const results = await Promise.all(OUTBOUND_ROUTES.map(r => callRoute(r, dryRun)));
   let totalSent = 0;
   let totalErrors = 0;
   let totalProcessed = 0;
-
-  for (const route of OUTBOUND_ROUTES) {
-    const r = await callRoute(route, dryRun);
-    results.push(r);
+  for (const r of results) {
     totalSent += r.emails_sent || 0;
     totalErrors += r.emails_errors || 0;
     totalProcessed += r.processed || 0;
-    // Pause 1s entre routes pour ne pas saturer Brevo
-    await new Promise(res => setTimeout(res, 1000));
   }
 
   const totalDuration = Date.now() - tStart;
