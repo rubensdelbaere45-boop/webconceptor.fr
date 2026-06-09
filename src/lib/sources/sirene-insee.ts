@@ -186,3 +186,50 @@ function mapInseeEtablissement(e: InseeEtablissement): SireneCompany | null {
 function titleCase(s: string): string {
   return s.toLowerCase().replace(/(^|\s|-)([a-zàâäéèêëîïôöùûüç])/g, (_, sep, c) => sep + c.toUpperCase());
 }
+
+/**
+ * Récupère UNE entreprise par son SIRET (14 chiffres).
+ * Utile pour enrichir un compte WebDirector avec les données officielles INSEE
+ * lors du diagnostic ("Lancer mon diagnostic").
+ */
+export async function fetchInseeBySiret(siret: string): Promise<SireneCompany | null> {
+  if (!siret || siret.length !== 14) return null;
+  const token = await getInseeToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${INSEE_BASE}/siret/${siret}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const etab = data?.etablissement;
+    if (!etab) return null;
+    return mapInseeEtablissement(etab as InseeEtablissement);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Récupère une entreprise par son SIREN (9 chiffres, sans le NIC).
+ * Renvoie l'établissement siège.
+ */
+export async function fetchInseeBySiren(siren: string): Promise<SireneCompany | null> {
+  if (!siren || siren.length !== 9) return null;
+  const token = await getInseeToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${INSEE_BASE}/siret?q=siren:${siren} AND etablissementSiege:true&nombre=1`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const etab = data?.etablissements?.[0];
+    if (!etab) return null;
+    return mapInseeEtablissement(etab as InseeEtablissement);
+  } catch {
+    return null;
+  }
+}

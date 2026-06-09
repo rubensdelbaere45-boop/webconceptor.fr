@@ -15,6 +15,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient, getSessionUser } from "@/lib/director/auth";
 import { listAgents } from "@/lib/director/marketplace-loader";
+import { scraplingEnrich, scrapingPagesJaunes, isScraplingConfigured } from "@/lib/scrapling-client";
+import { fetchInseeBySiret, fetchInseeBySiren, isInseeConfigured } from "@/lib/sources/sirene-insee";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -31,7 +33,99 @@ interface Faille {
   gain_potentiel: string;
 }
 
-async function generateDiagnosticWithKimi(account: any): Promise<Faille[]> {
+// ──────────────────────────────────────────────────────────────
+// ENRICHISSEMENT VIA SCRAPLING + INSEE
+// ──────────────────────────────────────────────────────────────
+
+interface EnrichedContext {
+  scrapling: {
+    website_scraped: boolean;
+    emails_found: string[];
+    about_text: string | null;
+    photos_count: number;
+    pj_results_count: number;
+    has_pj_listing: boolean;
+  };
+  insee: {
+    found: boolean;
+    legal_form: string | null;     // catégorie juridique
+    naf_code: string | null;
+    creation_date: string | null;
+    is_active: boolean | null;
+    official_name: string | null;
+    official_address: string | null;
+  };
+}
+
+async function enrichAccount(account: any): Promise<EnrichedContext> {
+  const ctx: EnrichedContext = {
+    scrapling: {
+      website_scraped: false,
+      emails_found: [],
+      about_text: null,
+      photos_count: 0,
+      pj_results_count: 0,
+      has_pj_listing: false,
+    },
+    insee: {
+      found: false,
+      legal_form: null,
+      naf_code: null,
+      creation_date: null,
+      is_active: null,
+      official_name: null,
+      official_address: null,
+    },
+  };
+
+  // 1) Scrapling /enrich sur le site (si dispo)
+  if (account.website_url && isScraplingConfigured()) {
+    const enr = await scraplingEnrich(account.website_url, ["emails", "about", "photos"]);
+    if (enr) {
+      ctx.scrapling.website_scraped = true;
+      ctx.scrapling.emails_found = enr.emails || [];
+      ctx.scrapling.about_text = enr.about;
+      ctx.scrapling.photos_count = (enr.photos || []).length;
+    }
+  }
+
+  // 2) Scrapling /scrape-pj — vérifie la présence sur Pages Jaunes
+  if (account.business_type && account.city && isScraplingConfigured()) {
+    const pj = await scrapingPagesJaunes(account.business_type, account.city, 1);
+    if (pj) {
+      ctx.scrapling.pj_results_count = pj.results?.length || 0;
+      // Match approximatif sur le nom
+      const nameLower = (account.business_name || "").toLowerCase();
+      ctx.scrapling.has_pj_listing = !!pj.results?.some(r =>
+        nameLower && r.name?.toLowerCase().includes(nameLower.slice(0, Math.min(12, nameLower.length)))
+      );
+    }
+  }
+
+  // 3) INSEE par SIRET (si dispo)
+  if (isInseeConfigured()) {
+    let insee = null;
+    if (account.siret && /^\d{14}$/.test(account.siret)) {
+      insee = await fetchInseeBySiret(account.siret);
+    } else if (account.siret && /^\d{9}$/.test(account.siret)) {
+      // Probablement un SIREN
+      insee = await fetchInseeBySiren(account.siret);
+    }
+    if (insee) {
+      ctx.insee.found = true;
+      ctx.insee.legal_form = insee.nature_juridique;
+      ctx.insee.naf_code = insee.ape_code;
+      ctx.insee.creation_date = insee.date_creation;
+      ctx.insee.is_active = insee.is_active;
+      ctx.insee.official_name = insee.name;
+      ctx.insee.official_address = insee.address;
+    }
+  }
+
+  return ctx;
+}
+
+async function generateDiagnosticWithKimi(account: any, enriched: EnrichedContext): Promise<Faille[]> {
   const apiKey = process.env.OPENROUTER_API_KEY_KIMI || process.env.OPENROUTER_API_KEY;
   if (!apiKey) return [];
 
@@ -69,19 +163,44 @@ Format JSON STRICT (ne renvoie QUE ce JSON, rien d'autre) :
   ]
 }`;
 
-  const userPrompt = `Entreprise :
+  // Contexte enrichi via Scrapling + INSEE
+  const scrapBlock = enriched.scrapling.website_scraped
+    ? `\nDONNÉES SCRAPPÉES DU SITE (${account.website_url}) :
+- Emails de contact trouvés : ${enriched.scrapling.emails_found.length > 0 ? enriched.scrapling.emails_found.join(", ") : "AUCUN — gros problème de joignabilité"}
+- Texte 'À propos' : ${enriched.scrapling.about_text ? enriched.scrapling.about_text.slice(0, 300) : "AUCUN texte de présentation trouvé sur le site"}
+- Photos sur le site : ${enriched.scrapling.photos_count} ${enriched.scrapling.photos_count < 5 ? "(insuffisant pour convertir)" : ""}`
+    : (account.website_url
+        ? `\nSCRAPLING ÉCHEC sur ${account.website_url} (site probablement cassé ou bloqué)`
+        : `\nAUCUN SITE WEB renseigné — invisible sur Google direct`);
+
+  const pjBlock = enriched.scrapling.pj_results_count > 0
+    ? `\nPAGES JAUNES (${account.business_type} ${account.city}) : ${enriched.scrapling.pj_results_count} résultats — ${enriched.scrapling.has_pj_listing ? "présence confirmée" : "PAS dans le top — invisible en recherche locale"}`
+    : `\nPAGES JAUNES : aucune présence détectée pour ${account.business_type} à ${account.city}`;
+
+  const inseeBlock = enriched.insee.found
+    ? `\nDONNÉES OFFICIELLES INSEE :
+- Nom officiel : ${enriched.insee.official_name}
+- Adresse officielle : ${enriched.insee.official_address || "?"}
+- Forme juridique : ${enriched.insee.legal_form || "?"}
+- Code NAF : ${enriched.insee.naf_code || "?"}
+- Date de création : ${enriched.insee.creation_date || "?"}
+- Statut : ${enriched.insee.is_active ? "Actif" : "INACTIF / FERMÉ"}`
+    : (account.siret ? `\nINSEE : SIRET ${account.siret} non trouvé (probable erreur de saisie)` : "\nINSEE : pas de SIRET renseigné");
+
+  const userPrompt = `Entreprise (données validées par sources officielles) :
 - Nom : ${account.business_name || "?"}
 - Type : ${account.business_type || "?"}
 - Ville : ${account.city || "?"}
 - Note Google : ${account.google_rating || "?"}/5
 - Nb d'avis Google : ${account.google_reviews_count || 0}
-- Site web : ${account.website_url || "non renseigné"}
 - Instagram : ${account.instagram_url || "non renseigné"}
 - Facebook : ${account.facebook_url || "non renseigné"}
-${account.code_naf ? `- Code NAF (INSEE) : ${account.code_naf}` : ""}
-${account.siret ? `- SIRET : ${account.siret}` : ""}
+${scrapBlock}
+${pjBlock}
+${inseeBlock}
 
-Audite cette entreprise. Renvoie 5-8 failles concrètes prioritaires en JSON.`;
+Audite cette entreprise. Renvoie 5-8 failles concrètes prioritaires en JSON.
+PRIVILÉGIE les failles évidemment confirmées par les données scrappées/INSEE ci-dessus.`;
 
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -209,8 +328,19 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!acc) return NextResponse.json({ error: "Compte introuvable" }, { status: 404 });
 
-  // Tente IA Kimi K2, fallback déterministe
-  let failles = await generateDiagnosticWithKimi(acc);
+  // 🆕 ENRICHISSEMENT : Scrapling + INSEE (peut prendre 20-40s)
+  const enriched = await enrichAccount(acc);
+
+  // Met à jour director_accounts avec les vraies données INSEE (si trouvées)
+  if (enriched.insee.found) {
+    await supabase.from("director_accounts").update({
+      code_naf: enriched.insee.naf_code,
+      business_address: enriched.insee.official_address,
+    }).eq("id", acc.id);
+  }
+
+  // Tente IA Kimi K2 avec contexte enrichi, fallback déterministe
+  let failles = await generateDiagnosticWithKimi(acc, enriched);
   const usedAi = failles.length > 0;
   if (failles.length === 0) failles = buildFallbackDiagnostic(acc);
 
@@ -261,6 +391,15 @@ export async function POST(req: NextRequest) {
     agents_recommended_count: agents.length,
     is_subscribed: !!acc.is_subscribed,
     source: usedAi ? "ai" : "fallback",
+    enrichment: {
+      scrapling_used: enriched.scrapling.website_scraped || enriched.scrapling.pj_results_count > 0,
+      insee_used: enriched.insee.found,
+      emails_scrapped: enriched.scrapling.emails_found.length,
+      photos_count: enriched.scrapling.photos_count,
+      pj_listings: enriched.scrapling.pj_results_count,
+      official_name: enriched.insee.official_name,
+      naf_code: enriched.insee.naf_code,
+    },
     upsell: acc.is_subscribed ? null : {
       title: "Pour embaucher tous ces agents, abonnez-vous à WebDirector",
       monthly_price_eur: 29.9,
