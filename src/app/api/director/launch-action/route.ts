@@ -16,6 +16,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient, getSessionUser } from "@/lib/director/auth";
 import { executeAgent, type AgentId, type AgentContext } from "@/lib/director/hermes-bridge";
+import { executeMarketplaceAgent } from "@/lib/director/marketplace-executor";
+import { getAgentBySlug } from "@/lib/director/marketplace-loader";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180; // 3 min — l'IA peut prendre 30-60s
@@ -97,16 +99,30 @@ export async function POST(req: NextRequest) {
   let body: { target?: string; tokens_cost?: number } = {};
   try { body = await req.json(); } catch { /* opt */ }
 
-  const rawTarget = (body.target || "").slice(0, 50);
-  const agentId = normalizeTarget(rawTarget);
-  if (!agentId) {
-    return NextResponse.json({
-      error: "Agent invalide",
-      valid_agents: VALID_AGENTS,
-    }, { status: 400 });
+  const rawTarget = (body.target || "").slice(0, 80);
+
+  // 🆕 Détecte si c'est un agent marketplace (slug avec division-name-name)
+  // Les agents marketplace ont des slugs du genre "marketing-content-creator"
+  const marketplaceAgent = getAgentBySlug(rawTarget);
+  let agentId: AgentId | null = null;
+  let isMarketplace = false;
+
+  if (marketplaceAgent) {
+    isMarketplace = true;
+  } else {
+    agentId = normalizeTarget(rawTarget);
+    if (!agentId) {
+      return NextResponse.json({
+        error: "Agent invalide (ni dans Hermes Bridge ni dans marketplace)",
+        valid_agents: VALID_AGENTS,
+        hint: "Pour un agent marketplace, utilise GET /api/director/marketplace pour les slugs",
+      }, { status: 400 });
+    }
   }
 
-  const cost = Math.max(1, Math.min(1000, Math.floor(body.tokens_cost || 0)));
+  // Coût : si marketplace → on prend le tarif de l'agent (et on vérifie que le client envoie le bon)
+  const expectedCost = marketplaceAgent ? marketplaceAgent.tokens_cost : Math.floor(body.tokens_cost || 0);
+  const cost = Math.max(1, Math.min(1000, expectedCost));
   if (!cost) return NextResponse.json({ error: "tokens_cost manquant" }, { status: 400 });
 
   const supabase = getServiceClient();
@@ -135,22 +151,29 @@ export async function POST(req: NextRequest) {
     updated_at: new Date().toISOString(),
   }).eq("id", acc.id);
 
+  const agentKey = isMarketplace ? marketplaceAgent!.slug : agentId!;
+
   // 2) Log action
   const { data: actRow } = await supabase.from("director_actions").insert({
     account_id: acc.id,
-    action_type: `launch_${agentId}`,
+    action_type: `launch_${agentKey}`,
     tokens_delta: -cost,
     tokens_balance_after: newBalance,
-    details: { agent_id: agentId, business_name: acc.business_name, city: acc.city },
+    details: {
+      agent_id: agentKey,
+      source: isMarketplace ? "marketplace" : "hermes_bridge",
+      business_name: acc.business_name,
+      city: acc.city,
+    },
   }).select("id").maybeSingle();
 
   // 3) Crée campagne en "running"
   const { data: campaign } = await supabase.from("director_campaigns").insert({
     account_id: acc.id,
-    campaign_type: agentId,
+    campaign_type: agentKey,
     status: "running",
     tokens_cost: cost,
-    config: { business_name: acc.business_name, city: acc.city, email: acc.email },
+    config: { business_name: acc.business_name, city: acc.city, email: acc.email, source: isMarketplace ? "marketplace" : "hermes_bridge" },
   }).select("id").single();
 
   // 4) 🔥 EXÉCUTION HERMES BRIDGE (sync — max 60s)
@@ -166,7 +189,9 @@ export async function POST(req: NextRequest) {
 
   let result;
   try {
-    result = await executeAgent(agentId, ctx);
+    result = isMarketplace
+      ? await executeMarketplaceAgent(marketplaceAgent!.slug, ctx)
+      : await executeAgent(agentId!, ctx);
   } catch (e) {
     // Échec dur → refund crédits + status failed
     await supabase.from("director_accounts").update({
@@ -204,12 +229,13 @@ export async function POST(req: NextRequest) {
   if (actRow?.id) {
     await supabase.from("director_actions").update({
       details: {
-        agent_id: agentId,
+        agent_id: agentKey,
         agent_name: result.agent_name,
         business_name: acc.business_name,
         city: acc.city,
         deliverables_count: result.deliverables.length,
         source: result.source,
+        marketplace: isMarketplace,
       },
     }).eq("id", actRow.id);
   }
@@ -231,7 +257,7 @@ export async function POST(req: NextRequest) {
         chat_id: chat,
         text: `🤖 <b>WebDirector — ${result.agent_name} a fini</b>\n\n` +
               `<b>Client :</b> ${acc.business_name || acc.email}\n` +
-              `<b>Mission :</b> ${agentId}\n` +
+              `<b>Mission :</b> ${agentKey}${isMarketplace ? " (marketplace)" : ""}\n` +
               `<b>Crédits :</b> -${cost} (solde: ${newBalance})\n` +
               `<b>Livrables :</b> ${result.deliverables.length}\n` +
               `<b>Source :</b> ${result.source}`,
