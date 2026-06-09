@@ -123,7 +123,7 @@ async function handler(req: NextRequest) {
 
   const supabase = getSupabaseAdmin();
 
-  const MAX_PER_RUN = 50;
+  const MAX_PER_RUN = 250;
   // Relance après 2 jours d'ouverture sans conversion
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 

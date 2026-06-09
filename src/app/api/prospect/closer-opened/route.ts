@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = db();
-  const MAX_PER_RUN = 50; // cadence : 50 par run
+  const MAX_PER_RUN = 250; // cadence : 50 par run
 
   // Cible : status='opened' + closer_sent_at IS NULL + email valide
   const { data: prospects, error } = await supabase

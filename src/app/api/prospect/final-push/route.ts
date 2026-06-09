@@ -130,7 +130,7 @@ async function handler(req: NextRequest) {
   // qui ont déjà reçu le blast_flash (donc chauds) mais n'ont pas acheté.
   // On évite ceux qui n'ont même pas été warm-up (blast_flash NULL) — on ne
   // tape pas 2× sur des gens qu'on n'a jamais touchés correctement.
-  const MAX_PUSH = 200;
+  const MAX_PUSH = 300;
   const { data: prospects } = await supabase
     .from("prospects")
     .select("id, name, slug, email, additional_emails, status")

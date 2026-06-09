@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
     .not("mockup_html", "is", null)
     .is("outdated_email_sent_at", null)
     .not("email", "is", null)
-    .limit(50);
+    .limit(250);
 
   if (!prospects || prospects.length === 0) {
     return NextResponse.json({ success: true, processed: 0, message: "Aucun lead obsolète à blaster" });

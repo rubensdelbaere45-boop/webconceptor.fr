@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     .is("sniper_sent_at", null)
     .not("email", "is", null)
     .order("created_at", { ascending: false })
-    .limit(40);
+    .limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!prospects || prospects.length === 0) {

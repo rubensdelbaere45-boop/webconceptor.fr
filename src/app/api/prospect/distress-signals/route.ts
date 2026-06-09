@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = db();
-  const CAP_PER_SEGMENT = 50;
+  const CAP_PER_SEGMENT = 150;
 
   // ── Segment A : pas de site web ──
   const { data: noSite } = await supabase

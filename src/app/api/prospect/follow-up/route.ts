@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     .eq("status", "opened")
     .not("email", "is", null)
     .lt("opened_at", day3Cutoff)
-    .limit(30);
+    .limit(150);
 
   // J+7 : prospects "sent" ou "opened" depuis 7+ jours, pas encore relancés J+7
   const { data: day7Candidates } = await supabase
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     .in("status", ["sent", "opened"])
     .not("email", "is", null)
     .lt("sent_at", day7Cutoff)
-    .limit(30);
+    .limit(150);
 
   const origin = "https://webconceptor.fr";
   const results: Array<{ id: string; name: string; stage: string; status: "sent" | "skipped" | "failed" }> = [];
