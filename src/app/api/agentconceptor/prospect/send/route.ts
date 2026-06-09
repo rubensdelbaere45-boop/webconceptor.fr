@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
+import { randomBytes } from "crypto";
 
 function getSupabase() {
   return createClient(
@@ -110,6 +111,87 @@ interface MailCopy {
   diagnostic: string;        // 1-2 phrases, ce que tu observes (failles)
   proposition: string;       // 1-2 phrases, l'agent qui aide, prix
   closing: string;           // 1 phrase, call-to-action soft
+}
+
+// ──────────────────────────────────────────────────────────────
+// AUTO-PROVISIONING DU COMPTE WEBDIRECTOR
+// → crée auth.users + director_accounts pré-rempli + mdp temporaire
+// ──────────────────────────────────────────────────────────────
+function generateTempPassword(): string {
+  // 12 char base64-safe lisible : 'A7Kp9-mQ2vXz'
+  return randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12);
+}
+
+async function provisionDirectorAccount(
+  supabase: ReturnType<typeof getSupabase>,
+  prospect: Prospect
+): Promise<{ email: string; password: string; account_id: string } | null> {
+  if (!prospect.email) return null;
+
+  // Vérifie qu'on n'a pas déjà un compte pour cet email
+  const { data: existing } = await supabase
+    .from("director_accounts")
+    .select("id, email")
+    .eq("email", prospect.email)
+    .maybeSingle();
+  if (existing) {
+    // Compte existe déjà → on ne re-provisionne pas
+    return null;
+  }
+
+  const password = generateTempPassword();
+
+  // 1) Créer l'auth.users via supabase auth admin
+  let userId: string | null = null;
+  try {
+    const { data: u, error } = await supabase.auth.admin.createUser({
+      email: prospect.email,
+      password,
+      email_confirm: true,  // skip email confirmation (on lui envoie nos credentials direct)
+      user_metadata: {
+        business_name: prospect.name,
+        city: prospect.city,
+        source: "auto_provision_cold_email",
+      },
+    });
+    if (error || !u?.user?.id) {
+      // Si l'user existe déjà côté auth (rare mais possible), on récupère
+      const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1 });
+      const found = list?.users?.find((x: any) => x.email === prospect.email);
+      userId = found?.id || null;
+      if (!userId) return null;
+    } else {
+      userId = u.user.id;
+    }
+  } catch {
+    return null;
+  }
+  if (!userId) return null;
+
+  // 2) Créer director_accounts pré-rempli avec TOUT ce qu'on sait du prospect
+  const { data: acc, error: accErr } = await supabase
+    .from("director_accounts")
+    .insert({
+      auth_user_id: userId,
+      email: prospect.email,
+      business_name: prospect.name,
+      business_type: prospect.business_type,
+      city: prospect.city,
+      google_rating: prospect.google_rating,
+      google_reviews_count: prospect.google_reviews_count,
+      tokens_balance: 0,
+      total_tokens_purchased: 0,
+      total_tokens_spent: 0,
+      // flags de provisioning
+      auto_provisioned: true,
+      must_change_password: true,
+      provisioned_from_prospect_id: prospect.id,
+    } as any)
+    .select("id")
+    .single();
+  if (accErr || !acc) return null;
+
+  return { email: prospect.email, password, account_id: acc.id };
 }
 
 async function generateAiCopy(p: Prospect, weaknesses: DetectedWeakness[]): Promise<MailCopy | null> {
@@ -228,8 +310,35 @@ function buildFallbackCopy(p: Prospect, weaknesses: DetectedWeakness[]): MailCop
 // ──────────────────────────────────────────────────────────────
 // 4) RENDU HTML — clean, court, sans gros blocs marketing
 // ──────────────────────────────────────────────────────────────
-function buildHtmlEmail(copy: MailCopy, unsubUrl: string): string {
+function buildHtmlEmail(
+  copy: MailCopy,
+  unsubUrl: string,
+  credentials: { email: string; password: string } | null
+): string {
   const esc = (s: string) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Bloc credentials (uniquement si compte créé)
+  const credBlock = credentials ? `
+  <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:18px 22px;margin:8px 0 22px">
+    <div style="font-size:11.5px;font-weight:700;color:#0a2540;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">🔑 Vos accès WebDirector</div>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 6px;color:#1a1a1a">
+      <strong>Email :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;font-family:monospace">${esc(credentials.email)}</code>
+    </p>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 6px;color:#1a1a1a">
+      <strong>Mot de passe temporaire :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;font-family:monospace">${esc(credentials.password)}</code>
+    </p>
+    <p style="font-size:12px;color:#6b7280;margin:8px 0 0;line-height:1.5">
+      À la première connexion, vous serez invité à choisir votre propre mot de passe.
+    </p>
+  </div>
+  <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:12px 16px;margin:0 0 22px;border-radius:6px">
+    <p style="font-size:13.5px;color:#92400e;margin:0;line-height:1.55">
+      💡 <strong>Une fois connecté</strong>, cliquez sur <strong>« Lancer mon diagnostic »</strong> en haut du tableau de bord. Nos agents IA analyseront votre entreprise et vous remonteront les failles concrètes à corriger en priorité.
+    </p>
+  </div>
+  ` : "";
+
+  const ctaText = credentials ? "Me connecter à WebDirector →" : "Découvrir WebDirector →";
 
   return `<!DOCTYPE html>
 <html lang="fr"><head>
@@ -238,7 +347,7 @@ function buildHtmlEmail(copy: MailCopy, unsubUrl: string): string {
 <title>${esc(copy.subject)}</title>
 </head>
 <body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,'Segoe UI',Arial,sans-serif;color:#1a1a1a">
-<div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff">
+<div style="max-width:580px;margin:0 auto;padding:32px 24px;background:#ffffff">
 
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 18px;color:#1a1a1a">Bonjour,</p>
 
@@ -248,9 +357,11 @@ function buildHtmlEmail(copy: MailCopy, unsubUrl: string): string {
 
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 22px;color:#1a1a1a">${esc(copy.proposition)}</p>
 
+  ${credBlock}
+
   <div style="margin:24px 0 18px">
-    <a href="https://webconceptor.fr/director" style="display:inline-block;background:#0a2540;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:8px;letter-spacing:0.02em">
-      Découvrir WebDirector →
+    <a href="https://webconceptor.fr/director/login${credentials ? `?email=${encodeURIComponent(credentials.email)}` : ""}" style="display:inline-block;background:#0a2540;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:8px;letter-spacing:0.02em">
+      ${ctaText}
     </a>
   </div>
 
@@ -343,8 +454,20 @@ export async function POST(req: NextRequest) {
     const usedAi = !!copy;
     if (!copy) copy = buildFallbackCopy(prospect, weaknesses);
 
+    // 🆕 AUTO-PROVISIONNE LE COMPTE WEBDIRECTOR (si pas déjà existant)
+    let credentials: { email: string; password: string } | null = null;
+    if (!dryRun) {
+      const prov = await provisionDirectorAccount(supabase, prospect);
+      if (prov) {
+        credentials = { email: prov.email, password: prov.password };
+      }
+    } else {
+      // En dry_run, on simule des credentials pour voir le rendu
+      credentials = { email: prospect.email, password: "Demo123-test" };
+    }
+
     const unsubUrl = `${baseUrl}/api/prospect/unsubscribe?email=${encodeURIComponent(prospect.email)}`;
-    const htmlContent = buildHtmlEmail(copy, unsubUrl);
+    const htmlContent = buildHtmlEmail(copy, unsubUrl, credentials);
 
     if (dryRun) {
       results.push({ id: prospect.id, name: prospect.name, status: "dry_run", ai: usedAi, subject: copy.subject });

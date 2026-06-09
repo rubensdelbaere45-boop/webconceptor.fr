@@ -40,7 +40,19 @@ export interface MarketplaceAgent {
   description: string;
   color: string;
   tokens_cost: number;   // coût en crédits WebDirector
+  status?: "live" | "coming_soon" | "beta";   // "live" par défaut
+  coming_soon_reason?: string;
 }
+
+// Agents marqués "Prochainement" (à exposer dans l'UI sans bouton "Embaucher")
+const COMING_SOON_SLUGS: Record<string, string> = {
+  "paid-media-ppc-strategist": "Connexion Google Ads API en cours",
+  "paid-media-paid-social-strategist": "Connexion Meta Ads API en cours",
+  "paid-media-creative-strategist": "Connexion Meta/Google Ads API en cours",
+  "paid-media-search-query-analyst": "Connexion Google Ads API en cours",
+  "paid-media-tracking-specialist": "Connexion Google Tag Manager API en cours",
+  "paid-media-auditor": "Connexion Google Ads + Meta API en cours",
+};
 
 export interface MarketplaceAgentFull extends MarketplaceAgent {
   system_prompt: string; // markdown complet pour le LLM
@@ -124,18 +136,24 @@ function loadAll(): MarketplaceAgentFull[] {
 
 /**
  * Liste tous les agents marketplace (sans system_prompt pour rester léger).
+ * Inclut le flag status: "live" | "coming_soon" pour griser Meta/Google Ads.
  */
 export function listAgents(): MarketplaceAgent[] {
-  return loadAll().map(a => ({
-    slug: a.slug,
-    division: a.division,
-    name: a.name,
-    emoji: a.emoji,
-    vibe: a.vibe,
-    description: a.description,
-    color: a.color,
-    tokens_cost: a.tokens_cost,
-  }));
+  return loadAll().map(a => {
+    const csReason = COMING_SOON_SLUGS[a.slug];
+    return {
+      slug: a.slug,
+      division: a.division,
+      name: a.name,
+      emoji: a.emoji,
+      vibe: a.vibe,
+      description: a.description,
+      color: a.color,
+      tokens_cost: a.tokens_cost,
+      status: csReason ? "coming_soon" : "live",
+      ...(csReason ? { coming_soon_reason: csReason } : {}),
+    };
+  });
 }
 
 /**
