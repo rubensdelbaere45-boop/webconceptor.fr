@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { safeCompare } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 600;
+export const maxDuration = 300; // Plan Hobby Vercel max
 
 const ORIGIN = "https://webconceptor.fr";
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || "";
