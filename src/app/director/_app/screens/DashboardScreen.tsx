@@ -8,6 +8,7 @@ import { FeaturedAgentHero } from "../components/FeaturedAgentHero";
 import { BusinessPanel } from "../components/BusinessPanel";
 import { AgentCard } from "../components/AgentCard";
 import { ActiveAgentChip } from "../components/ActiveAgentChip";
+import { DiagnosticPanel } from "../components/DiagnosticPanel";
 import {
     Activity,
     Agent,
@@ -142,6 +143,9 @@ export function DashboardScreen({
                     gap: 40,
                 }}
             >
+                {/* ── 🔍 Diagnostic IA + Scrapling + INSEE ── */}
+                <DiagnosticPanel onUpsellClick={onOpenRecharge} />
+
                 {/* ── Hero greeting ─────────────────────── */}
                 <section
                     id="section-hero"
