@@ -113,6 +113,6 @@
     { "path": "/api/cron/vider-brevo", "schedule": "0 12 * * *" },
     { "path": "/api/cron/vider-brevo", "schedule": "0 17 * * *" },
     { "path": "/api/cron/vider-brevo", "schedule": "0 22 * * *" },
-    { "path": "/api/cron/check-unsubscribe-replies", "schedule": "*/30 * * * *" }
+    { "path": "/api/cron/check-unsubscribe-replies", "schedule": "0 18 * * *" }
   ]
 }
