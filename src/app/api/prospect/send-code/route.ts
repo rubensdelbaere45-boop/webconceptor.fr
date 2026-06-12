@@ -56,7 +56,7 @@ function buildCodeEmailHtml(opts: {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Votre code d'accès — WebConceptor</title>
+<title>Votre code d'accès — Klyora Sites</title>
 </head>
 <body style="margin:0;padding:0;background:#f5f3ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
 
@@ -133,7 +133,7 @@ function buildCodeEmailHtml(opts: {
       <div style="padding:12px 0;border-bottom:1px solid rgba(193,154,86,0.2)">
         <p style="font-size:15px;color:#fff;font-weight:600;margin:0 0 4px">Site seul</p>
         <p style="font-size:14px;color:rgba(249,245,239,0.8);margin:0;line-height:1.5">
-          <strong style="color:#c19a56">5 jours ouvrés maximum</strong> après paiement. Livré sur l'URL provisoire WebConceptor.
+          <strong style="color:#c19a56">5 jours ouvrés maximum</strong> après paiement. Livré sur l'URL provisoire Klyora Sites.
         </p>
       </div>
       <div style="padding:16px 0 0">
@@ -167,7 +167,7 @@ function buildCodeEmailHtml(opts: {
     <!-- Signature -->
     <div style="border-top:1px solid #e8dfd0;padding-top:24px;margin-top:40px">
       <p style="margin:0 0 4px;font-size:14px"><strong style="color:#1a1310">Tom Bauer</strong></p>
-      <p style="margin:0 0 4px;font-size:13px;color:#8b7e6e">Fondateur, WebConceptor</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#8b7e6e">Fondateur, Klyora Sites</p>
       <p style="margin:0;font-size:12px;color:#8b7e6e">contact@webconceptor.fr &middot; 06 35 59 24 71 &middot; <a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
     </div>
 
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: prospect.email, name: prospect.name }],
-        subject: `Votre code d'accès pour ${prospect.name} — WebConceptor`,
+        subject: `Votre code d'accès pour ${prospect.name} — Klyora Sites`,
         htmlContent: emailHtml,
       }),
     });

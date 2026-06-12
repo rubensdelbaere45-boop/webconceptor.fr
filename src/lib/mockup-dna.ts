@@ -163,7 +163,7 @@ ADN éditorial obligatoire :
 - Ton : ${dna.copywriting_tone}
 - Mots-clés à utiliser naturellement : ${dna.vibe_keywords.join(", ")}
 - Aucun mot anglais sauf si c'est le standard métier
-- Aucune mention de "WebConceptor", "maquette", "exemple", "Lorem"
+- Aucune mention de "Klyora Sites", "maquette", "exemple", "Lorem"
 - Jamais de "n'hésitez pas", "à votre service", "satisfaire le client" (clichés)
 - Style : phrases courtes, sensoriel, évocateur, jamais corporate
 

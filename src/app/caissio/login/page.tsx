@@ -145,7 +145,7 @@ function CaissioLogin() {
             <a href="/caissio/register" style={{ color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>Créer un compte gratuit</a>
           </p>
 
-          {/* Bouton Google — via Supabase OAuth (même mécanisme que WebConceptor) */}
+          {/* Bouton Google — via Supabase OAuth (même mécanisme que Klyora Sites) */}
           <button
             type="button"
             disabled={googleLoading}

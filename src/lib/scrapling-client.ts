@@ -11,7 +11,7 @@
  *   POST /scrape-pj  {activity, location, pages?:1}
  *   GET  /health
  *
- * Utilisé par le diagnostic WebDirector pour récolter des VRAIES données :
+ * Utilisé par le diagnostic Klyora Director pour récolter des VRAIES données :
  *   - Site existant : emails de contact, "à propos", photos publiées
  *   - Pages Jaunes : confirmation présence + horaires
  * ─────────────────────────────────────────────────────────────

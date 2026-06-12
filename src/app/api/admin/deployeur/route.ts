@@ -121,12 +121,12 @@ async function sendWelcomeEmail(to: string, firstName: string, orderId: string, 
           : `<p>⚠️ Petit délai sur le domaine <strong>${domain}</strong> — Tom vous écrit dans la journée.</p>`)
     : "";
 
-  const subject = `🎉 Bienvenue chez WebConceptor, ${firstName} — commande #${orderId.slice(0, 8)}`;
+  const subject = `🎉 Bienvenue chez Klyora Sites, ${firstName} — commande #${orderId.slice(0, 8)}`;
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:20px;color:#1a1a1a">
 
 <h1 style="font-size:22px;margin:0 0 8px">Merci ${firstName} 🙏</h1>
-<p>Votre commande WebConceptor (formule <strong>${tier}</strong>) est confirmée pour <strong>${totalEuros.toFixed(2).replace(".", ",")} €</strong>.</p>
+<p>Votre commande Klyora Sites (formule <strong>${tier}</strong>) est confirmée pour <strong>${totalEuros.toFixed(2).replace(".", ",")} €</strong>.</p>
 
 ${domainBlock}
 
@@ -149,7 +149,7 @@ ${domainBlock}
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — WebConceptor", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
         replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
         to: [{ email: to, name: firstName }],
         subject,

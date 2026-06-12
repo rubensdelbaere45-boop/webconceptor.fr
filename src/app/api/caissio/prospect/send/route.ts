@@ -8,7 +8,7 @@ import { safeCompare, isWithinSendingHours } from "@/lib/security";
    Cible : épiceries, boulangeries, boucheries, supérettes, cafés.
    Règles anti-spam :
    - 1 email Caissio max par prospect (caissio_sent_at IS NULL)
-   - 48h minimum depuis le dernier email WebConceptor (sent_at)
+   - 48h minimum depuis le dernier email Klyora Sites (sent_at)
    - Batch max 30/run (≤ 30 emails/jour)
    ══════════════════════════════════════════════════════════════════ */
 
@@ -122,7 +122,7 @@ function buildCaissioEmailHtml({
     <p style="font-size:13px;color:#6B7280">La configuration prend moins de 5 minutes. Vous importez vos produits depuis un fichier Excel, ou vous les saisissez directement. Aucune formation nécessaire.</p>
   </div>
   <div class="footer">
-    <p>Caissio par <a href="https://webconceptor.fr">WebConceptor</a> · ${city}</p>
+    <p>Caissio par <a href="https://webconceptor.fr">Klyora Sites</a> · ${city}</p>
     <p style="margin-top:6px">Pour ne plus recevoir ces emails : <a href="mailto:contact@webconceptor.fr?subject=Désabonnement ${encodeURIComponent(name)}">se désabonner</a></p>
   </div>
 </div>

@@ -8,7 +8,7 @@ import { rateLimit, getClientIp } from "@/lib/security";
    le formulaire de réservation démo.
 
    ➡ Envoie un SMS au téléphone du prospect (le patron du commerce)
-     depuis "WebConceptor" pour démontrer la feature en temps réel.
+     depuis "Klyora Sites" pour démontrer la feature en temps réel.
    ➡ Notifie Rubens sur Telegram.
 
    Body :
@@ -69,7 +69,7 @@ function formatDate(dateStr: string): string {
 function buildSmsText(guestName: string, guests: number, date: string, time: string, businessName: string): string {
   const dateLabel = formatDate(date);
   const guestsLabel = guests === 1 ? "1 personne" : `${guests} personnes`;
-  return `🍽 Nouvelle réservation !\n${guestName} — ${guestsLabel}\n${dateLabel} à ${time}\n\nVia votre site web — WebConceptor`;
+  return `🍽 Nouvelle réservation !\n${guestName} — ${guestsLabel}\n${dateLabel} à ${time}\n\nVia votre site web — Klyora Sites`;
 }
 
 export async function POST(req: NextRequest) {
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "api-key": brevoKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            sender: "WebConceptor",
+            sender: "Klyora Sites",
             recipient: formattedPhone,
             content: smsText,
             type: "transactional",

@@ -1,6 +1,6 @@
 /**
  * GET /api/voice/calls
- * → liste les appels IA de l'utilisateur connecté (WebDirector)
+ * → liste les appels IA de l'utilisateur connecté (Klyora Director)
  *   ou tous les appels en mode admin (x-admin-key)
  *
  * Query params :
@@ -27,7 +27,7 @@ function db() {
 }
 
 export async function GET(req: NextRequest) {
-  // Auth : admin (x-admin-key) OU user WebDirector connecté
+  // Auth : admin (x-admin-key) OU user Klyora Director connecté
   const adminKey = req.headers.get("x-admin-key") || "";
   const isAdmin = safeCompare(adminKey, process.env.ADMIN_SECRET_KEY);
 

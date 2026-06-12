@@ -130,7 +130,7 @@ async function callOpenRouter(opts: LlmCallOpts): Promise<string> {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "https://webconceptor.fr",
-      "X-Title": "WebConceptor Ebooks",
+      "X-Title": "Klyora Sites Ebooks",
     },
     body: JSON.stringify({
       model,

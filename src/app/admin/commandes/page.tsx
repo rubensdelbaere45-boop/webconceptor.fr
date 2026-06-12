@@ -207,7 +207,7 @@ function CommandeCard({ order, onLogs }: { order: Order; onLogs: (id: string, la
           </button>
         )}
 
-        <button className="btn btn-sm btn-ghost" onClick={() => onLogs(order.id, `${order.client} · ${order.domaine ?? 'sous-domaine WebConceptor'}`)}>
+        <button className="btn btn-sm btn-ghost" onClick={() => onLogs(order.id, `${order.client} · ${order.domaine ?? 'sous-domaine Klyora Sites'}`)}>
           <IcTerminal />Logs
         </button>
 

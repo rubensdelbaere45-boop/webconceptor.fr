@@ -1,5 +1,5 @@
 /**
- * WEBDIRECTOR — Mock data (marketplace edition)
+ * KLYORA DIRECTOR — Mock data (marketplace edition)
  * --------------------------------------------------------------
  * Each agent has a first name, a job title, a personal pitch
  * written to the business owner, a concrete fake metric and a

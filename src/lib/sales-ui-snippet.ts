@@ -44,7 +44,7 @@ export function buildSalesUiSnippet(slug: string, prospectName: string, isLuxury
 .wc-sx-cta-dot{color:rgba(255,255,255,0.2);font-size:12px}
 .wc-sx-cta-btn{padding:11px 26px;background:#FFD700;color:#0a0a0a;font-weight:800;font-size:14px;border:none;border-radius:100px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:transform 0.15s,box-shadow 0.15s;white-space:nowrap;flex-shrink:0}
 .wc-sx-cta-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,215,0,0.45)}
-/* ─── Override : les pills WebConceptor descendent sous la CTA bar */
+/* ─── Override : les pills Klyora Sites descendent sous la CTA bar */
 .wc-home-btn{top:64px !important}
 .wc-demo-badge{top:64px !important}
 body{padding-top:54px !important}
@@ -167,7 +167,7 @@ body{padding-top:54px !important}
 }
 </style>
 
-<div class="wc-sx-cta" id="wc-sx-cta" role="region" aria-label="Commandez votre site WebConceptor">
+<div class="wc-sx-cta" id="wc-sx-cta" role="region" aria-label="Commandez votre site Klyora Sites">
   <div class="wc-sx-cta-left">
     <span class="wc-sx-cta-title">Votre site web professionnel</span>
     <div class="wc-sx-cta-trust">
@@ -289,7 +289,7 @@ body{padding-top:54px !important}
       </div>
 
       <button class="wc-sx-submit" id="wcsx-submit" type="button" onclick="wcSxSubmit()">Payer en ligne (Stripe) →</button>
-      <p class="wc-sx-legal">Paiement sécurisé · 1× ou 3× sans frais (Klarna) · Facture après paiement · Les badges WebConceptor disparaissent à l'achat.</p>
+      <p class="wc-sx-legal">Paiement sécurisé · 1× ou 3× sans frais (Klarna) · Facture après paiement · Les badges Klyora Sites disparaissent à l'achat.</p>
       <p class="wc-sx-err" id="wcsx-err"></p>
     </div>
   </div>

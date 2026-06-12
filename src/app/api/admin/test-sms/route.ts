@@ -10,7 +10,7 @@ import { requireAdminGuard } from "@/lib/security";
 
    Body / query params :
      to       — numéro destinataire (E.164 ou 06/07)
-     content  — message à envoyer (défaut : ping WebConceptor)
+     content  — message à envoyer (défaut : ping Klyora Sites)
 
    Ne s'enregistre nulle part, n'écrit pas en DB. Strictement test.
    ══════════════════════════════════════════ */
@@ -47,7 +47,7 @@ async function handler(req: NextRequest) {
 
   const url = new URL(req.url);
   let to = url.searchParams.get("to") || "";
-  let content = url.searchParams.get("content") || "Test WebConceptor — SMS de verification infra. Si vous recevez ceci, tout marche.";
+  let content = url.searchParams.get("content") || "Test Klyora Sites — SMS de verification infra. Si vous recevez ceci, tout marche.";
 
   // Aussi accepter le body JSON si présent
   try {

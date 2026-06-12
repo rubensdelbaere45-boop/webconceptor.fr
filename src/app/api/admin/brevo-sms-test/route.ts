@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 2. Test d'envoi SMS ──
-  const testContent = `[TEST WebConceptor] Si tu vois ce SMS arriver sous "${sender}" c'est valide. Sinon c'est BatiPilote ou bloque.`;
+  const testContent = `[TEST Klyora Sites] Si tu vois ce SMS arriver sous "${sender}" c'est valide. Sinon c'est BatiPilote ou bloque.`;
   let sendResult: Record<string, unknown> = {};
 
   try {

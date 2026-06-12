@@ -107,7 +107,7 @@ async function sendWelcomeEmail({
   </div>
   <div class="footer">
     <p>Une question ? Écrivez-nous à <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
-    <p style="margin-top:8px">Caissio par <a href="https://webconceptor.fr">WebConceptor</a></p>
+    <p style="margin-top:8px">Caissio par <a href="https://webconceptor.fr">Klyora Sites</a></p>
   </div>
 </div>
 </body>

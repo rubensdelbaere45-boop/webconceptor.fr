@@ -60,22 +60,22 @@ function stripOldSnippet(html: string): string {
   clean = stripDivById(clean, 'wc-sx-overlay');
   // Cas 3 : ancienne barre Stitch injectée directement dans le mockup_html en DB
   clean = clean.replace(/<!--\s*STITCH_GENERATED\s*-->[\s\S]*?<div style="height:44px"><\/div>/g, '');
-  // Cas 4 : badges WebConceptor des anciens templates mockup-adaptive / mockup-custom
-  // → bouton "W WebConceptor" en haut à gauche, badge "MAQUETTE RETIRÉE À L'ACHAT" en haut à droite,
-  //   barre flottante "Badges WebConceptor retirés automatiquement",
-  //   footer "APERÇU WEBCONCEPTOR — les mentions ci-présentes...",
-  //   watermark CSS qui répète "WebConceptor" en fond
+  // Cas 4 : badges Klyora Sites des anciens templates mockup-adaptive / mockup-custom
+  // → bouton "W Klyora Sites" en haut à gauche, badge "MAQUETTE RETIRÉE À L'ACHAT" en haut à droite,
+  //   barre flottante "Badges Klyora Sites retirés automatiquement",
+  //   footer "APERÇU KLYORA SITES — les mentions ci-présentes...",
+  //   watermark CSS qui répète "Klyora Sites" en fond
   clean = stripDivByClass(clean, 'wc-home-btn');
   clean = stripDivByClass(clean, 'wc-demo-badge');
   clean = stripDivByClass(clean, 'wc-watermark');
   clean = stripDivByClass(clean, 'wc-info-banner');
   clean = stripDivByClass(clean, 'wc-footer-info');
   clean = stripDivByClass(clean, 'wc-aperçu-footer');
-  // Footer "Design, code et intégration : WebConceptor" / "Maquette générée par WebConceptor"
-  clean = clean.replace(/<footer[^>]*>[^<]*WebConceptor[^<]*<\/footer>/gi, '');
+  // Footer "Design, code et intégration : Klyora Sites" / "Maquette générée par Klyora Sites"
+  clean = clean.replace(/<footer[^>]*>[^<]*Klyora Sites[^<]*<\/footer>/gi, '');
   clean = clean.replace(/<div[^>]*class="[^"]*wc-aperçu[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
-  // Meta tags author/copyright WebConceptor
-  clean = clean.replace(/<meta[^>]+(?:author|copyright)[^>]*WebConceptor[^>]*>/gi, '');
+  // Meta tags author/copyright Klyora Sites
+  clean = clean.replace(/<meta[^>]+(?:author|copyright)[^>]*Klyora Sites[^>]*>/gi, '');
   return clean;
 }
 
@@ -165,7 +165,7 @@ export async function GET(
 
   if (error || !data) {
     return new NextResponse(
-      `<!DOCTYPE html><html><head><title>Maquette introuvable</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Maquette introuvable</h1><p>Cette maquette n'existe pas ou a été retirée.</p><p><a href="https://webconceptor.fr">Retour à WebConceptor</a></p></body></html>`,
+      `<!DOCTYPE html><html><head><title>Maquette introuvable</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Maquette introuvable</h1><p>Cette maquette n'existe pas ou a été retirée.</p><p><a href="https://webconceptor.fr">Retour à Klyora Sites</a></p></body></html>`,
       { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
   }

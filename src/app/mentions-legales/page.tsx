@@ -8,7 +8,7 @@ export default function MentionsLegales() {
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">W</span>
           </span>
-          <span className="text-[14px] font-semibold tracking-tight">WebConceptor</span>
+          <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
         </Link>
       </nav>
       <div className="max-w-2xl mx-auto px-6 py-16">
@@ -16,7 +16,7 @@ export default function MentionsLegales() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Editeur du site</h2>
-            <p>Le site webconceptor.fr est edite par WebConceptor, entreprise individuelle de creation de sites web professionnels.</p>
+            <p>Le site webconceptor.fr est edite par Klyora Sites, entreprise individuelle de creation de sites web professionnels.</p>
             <p>Responsable de la publication : Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
           </section>
           <section>
@@ -29,7 +29,7 @@ export default function MentionsLegales() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Donnees personnelles</h2>
-            <p>Les informations recueillies via le formulaire de demande sont destinees exclusivement a WebConceptor pour le traitement de votre demande. Conformement au RGPD, vous disposez d&apos;un droit d&apos;acces, de rectification et de suppression de vos donnees. Pour exercer ces droits, contactez-nous a rubensdelbaere7@icloud.com.</p>
+            <p>Les informations recueillies via le formulaire de demande sont destinees exclusivement a Klyora Sites pour le traitement de votre demande. Conformement au RGPD, vous disposez d&apos;un droit d&apos;acces, de rectification et de suppression de vos donnees. Pour exercer ces droits, contactez-nous a rubensdelbaere7@icloud.com.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Cookies</h2>

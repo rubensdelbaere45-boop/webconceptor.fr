@@ -20,7 +20,7 @@ async function fetchHtml(url: string, timeout = 8000): Promise<string | null> {
     const res = await safeFetch(url, {
       timeoutMs: timeout,
       maxRedirects: 5,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorBot/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Klyora SitesBot/1.0)" },
     });
     if (!res.ok) return null;
     const text = await res.text();

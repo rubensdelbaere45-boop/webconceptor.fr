@@ -188,7 +188,7 @@ export async function analyzeSiteForObsolescence(
   if (!prefetched) {
     try {
       const res = await safeFetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorBot/1.0)" },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Klyora SitesBot/1.0)" },
         timeoutMs: 12_000,
         maxRedirects: 3,
       });

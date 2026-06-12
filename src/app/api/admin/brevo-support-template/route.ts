@@ -36,7 +36,7 @@ Je souhaite faire valider mon expéditeur SMS alphanumérique sur mon compte Bre
 - Volume estimé : 50-100 SMS/mois
 
 🔍 Justificatifs disponibles (je peux joindre des screenshots) :
-- Mentions légales de mon site mentionnant "WebConceptor" comme nom commercial
+- Mentions légales de mon site mentionnant "Klyora Sites" comme nom commercial
 - Page de checkout avec opt-in client pour les communications SMS
 - Exemple de message type que j'envoie
 
@@ -45,7 +45,7 @@ Pouvez-vous m'expliquer la procédure de validation et combien de temps cela pre
 
 Merci d'avance pour votre aide.
 
-Tom — WebConceptor
+Tom — Klyora Sites
 SIRET / SIREN disponible sur demande.`;
 
   return NextResponse.json({
@@ -53,7 +53,7 @@ SIRET / SIREN disponible sur demande.`;
     where_to_paste: "Chat support Brevo (bouton bleu en bas à droite de https://app.brevo.com)",
     files_to_attach: [
       "Screenshot https://webconceptor.fr (page d'accueil)",
-      "Screenshot des mentions légales mentionnant 'WebConceptor'",
+      "Screenshot des mentions légales mentionnant 'Klyora Sites'",
       "Screenshot du checkout avec opt-in SMS",
     ],
     expected_delay: "24-72h de validation après envoi des justificatifs",

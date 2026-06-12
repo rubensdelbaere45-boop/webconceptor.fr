@@ -52,7 +52,7 @@ function buildCartAbandonEmail(prospectName: string, mockupUrl: string): { subje
 
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
-    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
+    <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
     <p style="margin-bottom:2px">contact@webconceptor.fr · 06 35 59 24 71</p>
   </div>
 </div>`;

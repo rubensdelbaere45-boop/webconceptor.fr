@@ -156,7 +156,7 @@ export default function ChatWindow({
       <p className="text-center text-[10px] text-gray-300 py-1.5">
         Propulsé par{" "}
         <a href="https://webconceptor.fr" target="_blank" rel="noopener noreferrer"
-          className="hover:underline">WebConceptor</a>
+          className="hover:underline">Klyora Sites</a>
       </p>
     </div>
   );

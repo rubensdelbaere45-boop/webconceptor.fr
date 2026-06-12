@@ -97,7 +97,7 @@ export default function DashboardPage() {
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">W</span>
           </span>
-          <span className="text-[14px] font-semibold tracking-tight">WebConceptor</span>
+          <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
           {isAdmin && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded">ADMIN</span>}
         </Link>
         <div className="flex items-center gap-4">
@@ -224,7 +224,7 @@ export default function DashboardPage() {
           /* Regular user view */
           <>
             <h1 className="text-2xl font-bold tracking-tight mb-1">Bonjour{name ? `, ${typeof name === 'string' ? name.split(" ")[0] : ''}` : ""}</h1>
-            <p className="text-[#737373] text-[14px] mb-10">Retrouvez vos projets WebConceptor.</p>
+            <p className="text-[#737373] text-[14px] mb-10">Retrouvez vos projets Klyora Sites.</p>
 
             <div className="bg-white border border-[#f5f5f5] rounded-xl p-12 text-center">
               <div className="w-14 h-14 bg-[#fafafa] border border-[#f5f5f5] rounded-full flex items-center justify-center mx-auto mb-5">

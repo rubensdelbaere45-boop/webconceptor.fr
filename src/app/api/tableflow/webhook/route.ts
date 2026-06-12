@@ -121,7 +121,7 @@ async function sendActivationEmail({
   </div>
   <div class="footer">
     <p>Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
-    <p style="margin-top:8px">TableFlow par <a href="https://webconceptor.fr">WebConceptor</a> · <a href="#">Se désabonner</a></p>
+    <p style="margin-top:8px">TableFlow par <a href="https://webconceptor.fr">Klyora Sites</a> · <a href="#">Se désabonner</a></p>
   </div>
 </div>
 </body>

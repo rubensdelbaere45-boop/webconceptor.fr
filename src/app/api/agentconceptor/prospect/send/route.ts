@@ -1,10 +1,10 @@
 /* ══════════════════════════════════════════
    POST /api/agentconceptor/prospect/send
 
-   Prospection froide WebDirector (ex-AGENTConceptor).
+   Prospection froide Klyora Director (ex-AGENTConceptor).
 
    v2 — 09/06/2026:
-   - Rebrand AGENTConceptor → WebDirector (sender, branding, URLs)
+   - Rebrand AGENTConceptor → Klyora Director (sender, branding, URLs)
    - CTA → https://webconceptor.fr/director (au lieu de /agentconceptor)
    - Copy 100% personnalisé via IA Kimi K2 (gratuit OpenRouter)
    - Analyse des failles concrètes du prospect (note Google, nb avis, métier)
@@ -114,7 +114,7 @@ interface MailCopy {
 }
 
 // ──────────────────────────────────────────────────────────────
-// AUTO-PROVISIONING DU COMPTE WEBDIRECTOR
+// AUTO-PROVISIONING DU COMPTE KLYORA DIRECTOR
 // → crée auth.users + director_accounts pré-rempli + mdp temporaire
 // ──────────────────────────────────────────────────────────────
 function generateTempPassword(): string {
@@ -201,11 +201,11 @@ async function generateAiCopy(p: Prospect, weaknesses: DetectedWeakness[]): Prom
   const bt = p.business_type || "commerce";
   const failles = weaknesses.length > 0
     ? weaknesses.map(w => `- ${w.label} → propose ${w.recommended_agent}`).join("\n")
-    : `- aucune faille flagrante détectée — propose simplement WebDirector pour gagner du temps`;
+    : `- aucune faille flagrante détectée — propose simplement Klyora Director pour gagner du temps`;
 
-  const systemPrompt = `Tu rédiges des emails de prospection B2B en français pour Tom de WebConceptor.
+  const systemPrompt = `Tu rédiges des emails de prospection B2B en français pour Tom de Klyora Sites.
 
-OBJECTIF : présenter WebDirector — une plateforme d'agents IA pour PME françaises.
+OBJECTIF : présenter Klyora Director — une plateforme d'agents IA pour PME françaises.
 
 CONTRAINTES STRICTES :
 - Email TRÈS court : 4 paragraphes max, chaque paragraphe = 2-3 phrases
@@ -236,7 +236,7 @@ TU PRODUIS UN JSON STRICT avec :
 Failles à mentionner (choisis 1 seule, la plus impactante) :
 ${failles}
 
-Agents WebDirector disponibles + tarifs (choisis UN seul agent qui résout la faille principale) :
+Agents Klyora Director disponibles + tarifs (choisis UN seul agent qui résout la faille principale) :
 - Agent Réputation Google (99€/mois) — répond aux avis Google automatiquement
 - Agent Contenu Réseaux (99€/mois) — 5 posts Instagram/Facebook par semaine
 - Agent Chatbot IA (79€/mois) — répond aux clients 24h/24
@@ -251,7 +251,7 @@ Rédige le mail. JSON uniquement, rien d'autre.`;
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://webconceptor.fr",
-        "X-Title": "WebDirector — Prospection Cold",
+        "X-Title": "Klyora Director — Prospection Cold",
       },
       body: JSON.stringify({
         model: "moonshotai/kimi-k2.6:free",
@@ -301,8 +301,8 @@ function buildFallbackCopy(p: Prospect, weaknesses: DetectedWeakness[]): MailCop
       ? `En clair : ${w.label}.`
       : `Beaucoup de PME locales perdent 5-10h/semaine sur des tâches que des agents IA peuvent gérer automatiquement — réponses aux avis, posts réseaux, prises de RDV, devis.`,
     proposition: w
-      ? `Chez WebDirector, on a un ${w.recommended_agent} qui s'occupe de ça pour ~99€/mois. Il tourne tout seul, sans que vous ayez à toucher quoi que ce soit.`
-      : `WebDirector, c'est une plateforme qui héberge 30+ agents IA spécialisés pour PME françaises. Vous embauchez ceux dont vous avez besoin, ils travaillent en autonomie.`,
+      ? `Chez Klyora Director, on a un ${w.recommended_agent} qui s'occupe de ça pour ~99€/mois. Il tourne tout seul, sans que vous ayez à toucher quoi que ce soit.`
+      : `Klyora Director, c'est une plateforme qui héberge 30+ agents IA spécialisés pour PME françaises. Vous embauchez ceux dont vous avez besoin, ils travaillent en autonomie.`,
     closing: `Je vous laisse jeter un œil si ça vous parle — pas de relance, je sais qu'on est tous occupés.`,
   };
 }
@@ -320,7 +320,7 @@ function buildHtmlEmail(
   // Bloc credentials (uniquement si compte créé)
   const credBlock = credentials ? `
   <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:18px 22px;margin:8px 0 22px">
-    <div style="font-size:11.5px;font-weight:700;color:#0a2540;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">🔑 Vos accès WebDirector</div>
+    <div style="font-size:11.5px;font-weight:700;color:#0a2540;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">🔑 Vos accès Klyora Director</div>
     <p style="font-size:14px;line-height:1.55;margin:0 0 6px;color:#1a1a1a">
       <strong>Email :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;font-family:monospace">${esc(credentials.email)}</code>
     </p>
@@ -338,7 +338,7 @@ function buildHtmlEmail(
   </div>
   ` : "";
 
-  const ctaText = credentials ? "Me connecter à WebDirector →" : "Découvrir WebDirector →";
+  const ctaText = credentials ? "Me connecter à Klyora Director →" : "Découvrir Klyora Director →";
 
   return `<!DOCTYPE html>
 <html lang="fr"><head>
@@ -368,7 +368,7 @@ function buildHtmlEmail(
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 22px;color:#1a1a1a">${esc(copy.closing)}</p>
 
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 4px;color:#1a1a1a">Tom</p>
-  <p style="font-size:13.5px;color:#6b7280;margin:0">WebConceptor — <a href="https://webconceptor.fr" style="color:#6b7280;text-decoration:underline">webconceptor.fr</a></p>
+  <p style="font-size:13.5px;color:#6b7280;margin:0">Klyora Sites — <a href="https://webconceptor.fr" style="color:#6b7280;text-decoration:underline">webconceptor.fr</a></p>
 
   <hr style="margin:32px 0 16px;border:none;border-top:1px solid #e5e7eb">
   <p style="font-size:11.5px;color:#9ca3af;margin:0;line-height:1.5">
@@ -454,7 +454,7 @@ export async function POST(req: NextRequest) {
     const usedAi = !!copy;
     if (!copy) copy = buildFallbackCopy(prospect, weaknesses);
 
-    // 🆕 AUTO-PROVISIONNE LE COMPTE WEBDIRECTOR (si pas déjà existant)
+    // 🆕 AUTO-PROVISIONNE LE COMPTE KLYORA DIRECTOR (si pas déjà existant)
     let credentials: { email: string; password: string } | null = null;
     if (!dryRun) {
       const prov = await provisionDirectorAccount(supabase, prospect);
@@ -479,7 +479,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { "api-key": brevoKey, "Content-Type": "application/json" },
         body: JSON.stringify({
-          sender: { name: "Tom — WebDirector", email: "contact@webconceptor.fr" },
+          sender: { name: "Tom — Klyora Director", email: "contact@webconceptor.fr" },
           replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
           to: [{ email: prospect.email, name: prospect.name || "" }],
           subject: copy.subject,
@@ -528,7 +528,7 @@ export async function POST(req: NextRequest) {
           chat_id: chat,
           parse_mode: "HTML",
           disable_notification: true,
-          text: `🎯 <b>WebDirector — Prospection cold</b>\n\n<b>Envoyés :</b> ${sent}\n<b>Personnalisés IA :</b> ${aiCount}/${sent}\n<b>Erreurs :</b> ${errors}`,
+          text: `🎯 <b>Klyora Director — Prospection cold</b>\n\n<b>Envoyés :</b> ${sent}\n<b>Personnalisés IA :</b> ${aiCount}/${sent}\n<b>Erreurs :</b> ${errors}`,
         }),
       }).catch(() => {});
     }

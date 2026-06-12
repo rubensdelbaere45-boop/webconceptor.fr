@@ -1,5 +1,5 @@
 // ============================================================
-// WebConceptor Admin — layout.tsx
+// Klyora Sites Admin — layout.tsx
 // src/app/admin/layout.tsx
 //
 // Layout racine de l'admin : sidebar fixe + topbar sticky.
@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             boxShadow: '0 2px 10px rgba(255,215,0,.25)',
           }}>W</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em' }}>WebConceptor</div>
+            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em' }}>Klyora Sites</div>
             <div style={{ fontSize: 11, color: 'var(--txt-3)', fontWeight: 500, marginTop: 1 }}>Admin · Prospection</div>
           </div>
         </div>

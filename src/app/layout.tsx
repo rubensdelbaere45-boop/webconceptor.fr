@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WebConceptor — La référence web des professionnels",
-  description: "WebConceptor crée des sites web professionnels sur-mesure pour les TPE françaises. Design premium, livraison rapide.",
+  title: "Klyora Sites — La référence web des professionnels",
+  description: "Klyora Sites crée des sites web professionnels sur-mesure pour les TPE françaises. Design premium, livraison rapide.",
 };
 
 export default function RootLayout({

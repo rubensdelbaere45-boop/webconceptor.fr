@@ -119,7 +119,7 @@ export function LoginScreen({ onSuccess, onError }: Props) {
                             color: "var(--wd-text)",
                         }}
                     >
-                        WebDirector
+                        Klyora Director
                     </span>
                 </div>
 

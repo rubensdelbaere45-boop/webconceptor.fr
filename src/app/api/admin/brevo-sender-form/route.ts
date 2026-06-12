@@ -25,16 +25,16 @@ export async function GET(req: NextRequest) {
       "ID d'expéditeur": {
         value: "WebConcept",
         length: "10/11",
-        note: "Maximum 11 caractères. 'WebConceptor' fait 12 → impossible. 'WebConcept' = max compact.",
+        note: "Maximum 11 caractères. 'Klyora Sites' fait 12 → impossible. 'WebConcept' = max compact.",
       },
       "Localisation de l'entreprise": {
         value: "Oui",
         note: "Notre entreprise est située en France (même pays que la demande).",
       },
       "Nom de l'entreprise": {
-        value: "WebConceptor",
+        value: "Klyora Sites",
         length: "12/1000",
-        note: "Si tu as une raison sociale officielle (SARL, EI, etc.), utilise-la à la place. Sinon 'WebConceptor' suffit.",
+        note: "Si tu as une raison sociale officielle (SARL, EI, etc.), utilise-la à la place. Sinon 'Klyora Sites' suffit.",
       },
       "Site web de l'entreprise": {
         value: "https://webconceptor.fr",
@@ -42,16 +42,16 @@ export async function GET(req: NextRequest) {
       },
       "Preuve de marque": {
         instructions: "Télécharge le PDF généré sur /api/admin/brevo-trademark-proof et upload-le ici.",
-        download_url: "https://webconceptor.fr/api/admin/brevo-trademark-proof?key=Rubens2026-WebConceptor",
+        download_url: "https://webconceptor.fr/api/admin/brevo-trademark-proof?key=Rubens2026-Klyora Sites",
         alternative: "Si Brevo refuse le PDF auto-généré, screenshot la home de webconceptor.fr en PDF.",
       },
     },
     sms_content_step: {
       note: "Brevo va te demander un EXEMPLE de SMS que tu envoies. Voici un template type :",
-      example_sms: "Bonjour, votre maquette WebConceptor (Chez Stephane) est disponible : https://webconceptor.fr/prospects/xxx. Tom 0635592471. STOP arret.",
+      example_sms: "Bonjour, votre maquette Klyora Sites (Chez Stephane) est disponible : https://webconceptor.fr/prospects/xxx. Tom 0635592471. STOP arret.",
       length: "~159/160 chars",
       compliance_notes: [
-        "✅ Contient le nom de l'expéditeur (WebConceptor)",
+        "✅ Contient le nom de l'expéditeur (Klyora Sites)",
         "✅ Contient la mention 'STOP' pour opt-out",
         "✅ Lien vers le service (maquette du prospect)",
         "✅ Téléphone direct pour contact",

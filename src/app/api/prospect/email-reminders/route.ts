@@ -60,7 +60,7 @@ function buildReminderEmail(prospectName: string, mockupUrl: string, prospectId?
 
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
-    <p style="margin-bottom:4px">Fondateur, WebConceptor</p>
+    <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
     <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
     <p><a href="https://webconceptor.fr" style="color:#0066ff;text-decoration:none">webconceptor.fr</a></p>
   </div>

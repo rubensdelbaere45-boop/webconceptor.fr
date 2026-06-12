@@ -530,7 +530,7 @@ function renderComparison(ctx: RenderCtx): string {
       <div class="comp-col comp-col-new">
         <div class="comp-header">
           <span class="comp-emoji">✨</span>
-          <div class="comp-title">Maquette WebConceptor</div>
+          <div class="comp-title">Maquette Klyora Sites</div>
         </div>
         <ul>
           ${toAdd.map((i) => `<li>✓ ${escape(i)}</li>`).join("")}
@@ -655,7 +655,7 @@ img{display:block;max-width:100%;height:auto}
 a{color:inherit;text-decoration:none}
 .container{max-width:1200px;margin:0 auto}
 
-/* ─── Watermark + badges WebConceptor ─── */
+/* ─── Watermark + badges Klyora Sites ─── */
 .wc-demo-badge{position:fixed;top:72px;right:14px;z-index:9998;background:rgba(10,10,10,0.95);color:#fff;padding:9px 16px;border-radius:100px;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;box-shadow:0 6px 22px rgba(0,0,0,0.18);display:inline-flex;align-items:center;gap:8px}
 .wc-demo-badge::before{content:'';width:7px;height:7px;background:#ef4444;border-radius:50%;animation:pulse 2s infinite}
 .wc-home-btn{position:fixed;top:72px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06)}
@@ -863,16 +863,16 @@ export function generateCustomMockupHtml(
   // Assemble le document
   return `<!DOCTYPE html>
 <!--
-  Maquette WebConceptor personnalisée · ${escape(prospect.name)}
+  Maquette Klyora Sites personnalisée · ${escape(prospect.name)}
   Générée à partir de l'audit approfondi du site actuel.
   Couleurs, photos et contenus puisés directement de leur site web.
-  Mentions WebConceptor retirées automatiquement à l'achat.
+  Mentions Klyora Sites retirées automatiquement à l'achat.
 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="WebConceptor">
+<meta name="author" content="Klyora Sites">
 <meta name="robots" content="noindex,noarchive">
 <title>${escape(prospect.name)}${prospect.city ? ` — ${escape(prospect.city)}` : ""}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

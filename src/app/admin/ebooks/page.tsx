@@ -113,7 +113,7 @@ export default function EbooksAdminPage() {
           type="password"
           value={adminKey}
           onChange={(e) => { setAdminKey(e.target.value); localStorage.setItem('admin_key', e.target.value); }}
-          placeholder="Rubens2026-WebConceptor"
+          placeholder="Rubens2026-Klyora Sites"
           style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--txt)', fontSize: 13 }}
         />
       </div>

@@ -81,7 +81,7 @@ Si elle vous plaît : 320 € one-shot ou 0 € + 17,90 €/mois (hébergement +
 
 Un mot et je l'active dans la semaine.
 
-Tom — WebConceptor — 06 35 59 24 71`;
+Tom — Klyora Sites — 06 35 59 24 71`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6">
@@ -109,7 +109,7 @@ ${issueList.map(i => `  <li>${escapeHtml(i)}</li>`).join("\n")}
 
 <p style="font-size:14px">Un mot et je l'active dans la semaine.</p>
 
-<p style="margin-top:24px">Tom — <strong>06 35 59 24 71</strong><br><span style="color:#777;font-size:12px">WebConceptor</span></p>
+<p style="margin-top:24px">Tom — <strong>06 35 59 24 71</strong><br><span style="color:#777;font-size:12px">Klyora Sites</span></p>
 
 </body></html>`;
 
@@ -153,7 +153,7 @@ Tarif : 320 € one-shot ou 0 € + 17,90 €/mois (tout inclus, modifiable à v
 
 Un mot et je m'occupe de tout.
 
-Tom — WebConceptor — 06 35 59 24 71`;
+Tom — Klyora Sites — 06 35 59 24 71`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6">
@@ -189,7 +189,7 @@ Tom — WebConceptor — 06 35 59 24 71`;
 
 <p style="font-size:14px">Un mot et je m'occupe de tout.</p>
 
-<p style="margin-top:24px">Tom — <strong>06 35 59 24 71</strong><br><span style="color:#777;font-size:12px">WebConceptor</span></p>
+<p style="margin-top:24px">Tom — <strong>06 35 59 24 71</strong><br><span style="color:#777;font-size:12px">Klyora Sites</span></p>
 
 </body></html>`;
 
@@ -204,7 +204,7 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — WebConceptor", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
         replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,

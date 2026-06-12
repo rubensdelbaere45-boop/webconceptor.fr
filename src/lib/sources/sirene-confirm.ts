@@ -6,7 +6,7 @@
  * parfait, on confirme via la base SIRENE (Annuaire des Entreprises) :
  *   1. Recherche par nom + ville
  *   2. Récupère le code APE/NAF officiel
- *   3. Mappe le code APE → business_type WebConceptor
+ *   3. Mappe le code APE → business_type Klyora Sites
  *
  * Si pas de match SIRENE : on garde l'inférence locale (notre regex).
  * Si match : business_type renvoyé est OFFICIEL → 0% d'erreur de ciblage.
@@ -17,7 +17,7 @@
 import { safeFetch } from "../security";
 
 /**
- * Mapping code NAF/APE officiel → business_type WebConceptor.
+ * Mapping code NAF/APE officiel → business_type Klyora Sites.
  * Couvre les métiers cibles principaux.
  */
 const APE_TO_TYPE: Record<string, string> = {
@@ -122,7 +122,7 @@ export async function confirmBusinessTypeViaSirene(
   try {
     const res = await safeFetch(url, {
       timeoutMs: 8000,
-      headers: { "User-Agent": "WebConceptor/1.0 (contact@webconceptor.fr)" },
+      headers: { "User-Agent": "Klyora Sites/1.0 (contact@webconceptor.fr)" },
     });
     if (!res.ok) {
       return { matched: false, business_type: null, ape_code: null, ape_label: null, siren: null, source: "none" };

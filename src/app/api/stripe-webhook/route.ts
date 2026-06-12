@@ -58,7 +58,7 @@ async function notifySMS(message: string) {
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: "WebConceptor",
+        sender: "Klyora Sites",
         recipient: "+33635592471",
         content,
         type: "transactional",
@@ -121,7 +121,7 @@ async function sendAdminEmail({
 <div style="font-family:Inter,Arial,sans-serif;max-width:580px;margin:0 auto;color:#1a1a18">
   <!-- Header -->
   <div style="background:${isSerenite ? "#00287a" : "#1a1a18"};padding:24px 28px;border-radius:8px 8px 0 0">
-    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${isSerenite ? "#e8a800" : "rgba(255,255,255,.5)"}">WebConceptor — Nouveau paiement</p>
+    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${isSerenite ? "#e8a800" : "rgba(255,255,255,.5)"}">Klyora Sites — Nouveau paiement</p>
     <h1 style="margin:6px 0 0;font-size:22px;font-weight:800;color:#fff">${isSerenite ? "⭐ Formule Sérénité" : "📄 Formule Simple"}</h1>
     <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.65)">${now}</p>
   </div>
@@ -184,7 +184,7 @@ async function sendAdminEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "WebConceptor Bot", email: "contact@webconceptor.fr" },
+        sender: { name: "Klyora Sites Bot", email: "contact@webconceptor.fr" },
         to: [{ email: adminEmail, name: "Rubens" }],
         subject,
         htmlContent,
@@ -227,7 +227,7 @@ async function scheduleUpsellEmail({
 
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#0d1b5e,#1a2d7a);padding:32px 32px 28px;border-radius:12px 12px 0 0">
-    <p style="margin:0 0 16px;display:inline-block;background:rgba(255,255,255,.12);color:#FFD700;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:100px">WebConceptor</p>
+    <p style="margin:0 0 16px;display:inline-block;background:rgba(255,255,255,.12);color:#FFD700;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:100px">Klyora Sites</p>
     <h1 style="margin:0;font-size:24px;font-weight:800;color:#fff;line-height:1.3">Votre mois Sérénité offert<br>se termine dans <span style="color:#FFD700">5 jours</span> ☀️</h1>
   </div>
 
@@ -268,7 +268,7 @@ async function scheduleUpsellEmail({
 
     <p style="font-size:13px;color:#888;border-top:1px solid #f0f0f0;padding-top:20px;margin:0;line-height:1.6">
       Une question ? Répondez directement à cet email.<br>
-      <a href="mailto:contact@webconceptor.fr" style="color:#0d1b5e;text-decoration:none">contact@webconceptor.fr</a> — L'équipe WebConceptor
+      <a href="mailto:contact@webconceptor.fr" style="color:#0d1b5e;text-decoration:none">contact@webconceptor.fr</a> — L'équipe Klyora Sites
     </p>
   </div>
 </div>`;
@@ -278,7 +278,7 @@ async function scheduleUpsellEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Klyora Sites", email: "contact@webconceptor.fr" },
         to: [{ email: buyerEmail, name: buyerFirstName }],
         subject: `Votre mois Sérénité offert se termine dans 5 jours — ${prospectName}`,
         htmlContent,
@@ -308,11 +308,11 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
       body: JSON.stringify({
         sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
         to: [{ email: to, name }],
-        subject: "Paiement reçu — votre site WebConceptor arrive 🎉",
+        subject: "Paiement reçu — votre site Klyora Sites arrive 🎉",
         htmlContent: `
           <div style="font-family:Inter,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:40px 32px;color:#0a0a0a;background:#ffffff">
             <div style="margin-bottom:28px">
-              <span style="display:inline-flex;align-items:center;gap:6px;background:#0066ff;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:0.05em">W WebConceptor</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#0066ff;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:100px;letter-spacing:0.05em">W Klyora Sites</span>
             </div>
             <h1 style="font-size:26px;font-weight:800;margin:0 0 12px;line-height:1.2">Merci ${name.split(" ")[0]} ! 🙌</h1>
             <p style="font-size:15px;line-height:1.7;color:#525252;margin:0 0 24px">Votre paiement a bien été reçu. Nous lançons la création de votre site <strong>immédiatement</strong>.</p>
@@ -337,7 +337,7 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
             </div>
             <p style="font-size:14px;line-height:1.6;color:#525252;margin:0 0 8px">Votre code projet : <strong style="color:#0a0a0a;font-size:18px;letter-spacing:0.1em">${code}</strong></p>
             <a href="https://webconceptor.fr/code?c=${code}" style="display:inline-block;background:#0a0a0a;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;text-decoration:none;margin:12px 0 28px">Suivre mon projet →</a>
-            <p style="font-size:13px;color:#a3a3a3;border-top:1px solid #f0f0f0;padding-top:20px;margin:0">Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none">contact@webconceptor.fr</a><br>L'équipe WebConceptor</p>
+            <p style="font-size:13px;color:#a3a3a3;border-top:1px solid #f0f0f0;padding-top:20px;margin:0">Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none">contact@webconceptor.fr</a><br>L'équipe Klyora Sites</p>
           </div>
         `,
       }),
@@ -377,7 +377,7 @@ export async function POST(req: NextRequest) {
     const prospectId = metadata.prospect_id || "";
 
     // ═══════════════════════════════════════════════════════
-    // FLOW 0 : Recharge crédits WebDirector
+    // FLOW 0 : Recharge crédits Klyora Director
     // source === "director_recharge" + account_id + total_credits
     // ═══════════════════════════════════════════════════════
     if (source === "director_recharge") {
@@ -425,7 +425,7 @@ export async function POST(req: NextRequest) {
               },
             });
 
-            await notifyTelegram(`💳 <b>WebDirector — Recharge</b>\n\n<b>${escapeTelegram(acc.business_name || acc.email)}</b>\nPack: ${escapeTelegram(packName)}\n+${totalCredits} crédits\nNouveau solde: <b>${newBalance}</b>\nMontant: <b>${((session.amount_total || 0) / 100).toFixed(2)} €</b>`);
+            await notifyTelegram(`💳 <b>Klyora Director — Recharge</b>\n\n<b>${escapeTelegram(acc.business_name || acc.email)}</b>\nPack: ${escapeTelegram(packName)}\n+${totalCredits} crédits\nNouveau solde: <b>${newBalance}</b>\nMontant: <b>${((session.amount_total || 0) / 100).toFixed(2)} €</b>`);
           }
         }
       }
@@ -433,7 +433,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // FLOW 0bis : Abonnement WebDirector (29,90/mois ou 320/an)
+    // FLOW 0bis : Abonnement Klyora Director (29,90/mois ou 320/an)
     // source === "director_subscription" + account_id + plan
     // → première création depuis checkout.session.completed
     //   (le suivi récurrent passe par customer.subscription.*)
@@ -474,7 +474,7 @@ export async function POST(req: NextRequest) {
 
         const { data: acc } = await supabase
           .from("director_accounts").select("email, business_name").eq("id", accountId).maybeSingle();
-        await notifyTelegram(`🟢 <b>WebDirector — Nouvel abonnement</b>\n\n<b>${escapeTelegram(acc?.business_name || acc?.email || "?")}</b>\nPlan: <b>${plan === "yearly" ? "Annuel (320€)" : "Mensuel (29,90€)"}</b>\nRenouvellement: ${renewsAt?.slice(0, 10) || "?"}`);
+        await notifyTelegram(`🟢 <b>Klyora Director — Nouvel abonnement</b>\n\n<b>${escapeTelegram(acc?.business_name || acc?.email || "?")}</b>\nPlan: <b>${plan === "yearly" ? "Annuel (320€)" : "Mensuel (29,90€)"}</b>\nRenouvellement: ${renewsAt?.slice(0, 10) || "?"}`);
       }
       return NextResponse.json({ received: true });
     }
@@ -553,7 +553,7 @@ export async function POST(req: NextRequest) {
 
       // SMS de secours (Brevo) — toujours envoyé même si Telegram tombe
       await notifySMS(
-        `VENTE WebConceptor!\n` +
+        `VENTE Klyora Sites!\n` +
         `${prospect.name}\n` +
         `Client: ${buyerName} - ${buyerTel}\n` +
         `Plan: ${hasSerenite ? "Serenite" : "Simple"} - ${amountPaid}EUR` +
@@ -763,7 +763,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { "api-key": brevoKey, "Content-Type": "application/json" },
             body: JSON.stringify({
-              sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+              sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
               to: [{ email: ownerEmail, name: ownerName }],
               subject: `🤖 Votre Chatbot IA est prêt — ${businessName}`,
               htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -795,7 +795,7 @@ export async function POST(req: NextRequest) {
 
 <p style="font-size:14px;color:#525252">Des questions ? Répondez directement à cet email ou appelez le 06 35 59 24 71.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-  <strong>Tom Bauer</strong> — WebConceptor<br>contact@webconceptor.fr · webconceptor.fr
+  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr · webconceptor.fr
 </div>
 </div>`,
             }),
@@ -868,7 +868,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "api-key": brevoKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+            sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
             to: [{ email: ownerEmail, name: ownerName }],
             subject: `🌟 Activez votre Agent Avis Google — ${businessName}`,
             htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -893,7 +893,7 @@ export async function POST(req: NextRequest) {
 
 <p style="font-size:14px;color:#525252">Ce lien est personnel et valide 30 jours. Des questions ? Répondez à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-  <strong>Tom Bauer</strong> — WebConceptor<br>contact@webconceptor.fr
+  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr
 </div>
 </div>`,
           }),
@@ -1154,7 +1154,7 @@ ${agentBlocks.join("\n")}
 </div>
 
 <div style="border-top:1px solid #e5e5e5;padding-top:20px;margin-top:24px;font-size:13px;color:#737373">
-  <strong style="color:#0a0a0a">Tom Bauer</strong> — AGENTConceptor / WebConceptor<br>
+  <strong style="color:#0a0a0a">Tom Bauer</strong> — AGENTConceptor / Klyora Sites<br>
   contact@webconceptor.fr · webconceptor.fr
 </div>
 </div>`,
@@ -1219,7 +1219,7 @@ ${agentBlocks.join("\n")}
 
       // Telegram (parse_mode=HTML requires user-supplied strings to be escaped)
       const telegramMsg = `
-💰 <b>NOUVEAU PAIEMENT WebConceptor</b>
+💰 <b>NOUVEAU PAIEMENT Klyora Sites</b>
 
 <b>Client :</b> ${escapeTelegram(buyerName)}
 <b>Email :</b> ${escapeTelegram(buyerEmail)}
@@ -1256,7 +1256,7 @@ ${hasSerenite ? "4. Creer la souscription Stripe Formule Serenite (50€/mois)" 
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Events récurrents pour les abonnements WebDirector
+  // Events récurrents pour les abonnements Klyora Director
   // ═══════════════════════════════════════════════════════════════════
   if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     const sub = event.data.object as any;
@@ -1284,7 +1284,7 @@ ${hasSerenite ? "4. Creer la souscription Stripe Formule Serenite (50€/mois)" 
       }).eq("id", existing.account_id);
 
       if (event.type === "customer.subscription.deleted") {
-        await notifyTelegram(`🔴 <b>WebDirector — Annulation abonnement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}`);
+        await notifyTelegram(`🔴 <b>Klyora Director — Annulation abonnement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}`);
       }
     }
     return NextResponse.json({ received: true });
@@ -1300,7 +1300,7 @@ ${hasSerenite ? "4. Creer la souscription Stripe Formule Serenite (50€/mois)" 
         .eq("stripe_subscription_id", subId as string)
         .maybeSingle();
       if (existing && invoice.billing_reason === "subscription_cycle") {
-        await notifyTelegram(`🔁 <b>WebDirector — Renouvellement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}\nMontant: ${((invoice.amount_paid || 0) / 100).toFixed(2)} €`);
+        await notifyTelegram(`🔁 <b>Klyora Director — Renouvellement</b>\nAccount: <code>${existing.account_id.slice(0, 8)}</code>\nPlan: ${existing.plan}\nMontant: ${((invoice.amount_paid || 0) / 100).toFixed(2)} €`);
       }
     }
     return NextResponse.json({ received: true });

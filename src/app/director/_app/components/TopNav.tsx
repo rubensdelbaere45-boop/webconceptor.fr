@@ -70,7 +70,7 @@ export function TopNav({
                     W
                 </span>
                 <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>
-                    WebDirector
+                    Klyora Director
                 </span>
             </div>
 

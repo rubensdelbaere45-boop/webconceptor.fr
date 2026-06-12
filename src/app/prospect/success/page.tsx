@@ -61,7 +61,7 @@ function SuccessContent() {
         </div>
 
         <p className="text-center text-xs text-[#8b7e6e] mt-6">
-          Tom Bauer · Fondateur WebConceptor · <a href="https://webconceptor.fr" className="hover:text-[#c19a56]">webconceptor.fr</a>
+          Tom Bauer · Fondateur Klyora Sites · <a href="https://webconceptor.fr" className="hover:text-[#c19a56]">webconceptor.fr</a>
         </p>
       </div>
     </div>

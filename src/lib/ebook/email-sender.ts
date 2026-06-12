@@ -35,7 +35,7 @@ export async function sendEbookEmail(p: EmailParams): Promise<{ ok: boolean; err
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "WebConceptor — E-Books", email: "noreply@webconceptor.fr" },
+        sender: { name: "Klyora Sites — E-Books", email: "noreply@webconceptor.fr" },
         to: [{ email: p.to, name: "Tom" }],
         subject,
         htmlContent: htmlBody,
@@ -161,7 +161,7 @@ ${p.coverUrl ? `<p><a href="${p.coverUrl}" style="color: #1e40af;">🖼️ Re-t�
 </div>
 
 <p style="margin-top: 24px; font-size: 11px; color: #888; text-align: center;">
-Email automatique du pipeline KDP — WebConceptor
+Email automatique du pipeline KDP — Klyora Sites
 </p>
 
 </body></html>`;

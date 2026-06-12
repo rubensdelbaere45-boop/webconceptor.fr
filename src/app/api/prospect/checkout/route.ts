@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       locale: "fr",
       metadata: sharedMeta,
       subscription_data: {
-        description: `Abonnement WebConceptor ${tier} — ${frequency === "yearly" ? "annuel" : "mensuel"}`,
+        description: `Abonnement Klyora Sites ${tier} — ${frequency === "yearly" ? "annuel" : "mensuel"}`,
         metadata: sharedMeta,
       },
     });

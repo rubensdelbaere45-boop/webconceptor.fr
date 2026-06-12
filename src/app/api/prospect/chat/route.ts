@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     ? "https://openrouter.ai/api/v1/chat/completions"
     : "https://api.anthropic.com/v1/messages";
 
-  const systemPrompt = `Tu es l'assistant IA de WebConceptor, intégré directement dans la maquette de site internet que nous avons préparée pour "${prospect.name}"${prospect.city ? ` à ${prospect.city}` : ""}.
+  const systemPrompt = `Tu es l'assistant IA de Klyora Sites, intégré directement dans la maquette de site internet que nous avons préparée pour "${prospect.name}"${prospect.city ? ` à ${prospect.city}` : ""}.
 
 CONTEXTE MAQUETTE :
 - Établissement : ${prospect.name}
@@ -80,7 +80,7 @@ CONTEXTE MAQUETTE :
 - Site actuel : ${prospect.site_quality === "none" ? "aucun — c'est une opportunité énorme" : prospect.site_quality === "poor" ? "ancien et non-optimisé" : prospect.site_quality === "average" ? "correct mais améliorable" : "moderne"}
 
 TON RÔLE :
-- Répondre aux questions sur la maquette et l'offre WebConceptor
+- Répondre aux questions sur la maquette et l'offre Klyora Sites
 - RASSURER le prospect et le pousser à cliquer sur "J'achète ce site" (bouton présent en bas de la maquette)
 - Être chaleureux, professionnel, concis (3-5 phrases max par réponse)
 - Parler en "vous", ton sobre et confiant

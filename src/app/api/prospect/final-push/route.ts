@@ -53,7 +53,7 @@ function buildFinalPushEmail(prospectName: string, mockupUrl: string, unsubscrib
 
   <p style="font-size:14px;color:#525252;margin:0">
     <strong style="color:#1a1a1a">Tom Bauer</strong><br>
-    WebConceptor<br>
+    Klyora Sites<br>
     contact@webconceptor.fr · 06 35 59 24 71
   </p>
 
@@ -78,7 +78,7 @@ Si vous avez une question qui vous retient (prix, délais, aspect technique), r�
 Bien cordialement,
 
 Tom Bauer
-WebConceptor
+Klyora Sites
 contact@webconceptor.fr · 06 35 59 24 71
 
 —

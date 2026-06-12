@@ -61,7 +61,7 @@ export default function RegisterPage() {
             <span className="w-2 h-2 bg-blue-600 rounded-sm" />Web<span className="text-blue-600">Conceptor</span>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight mt-6">Créer un compte</h1>
-          <p className="text-sm text-gray-500 mt-2">Rejoignez WebConceptor en 30 secondes</p>
+          <p className="text-sm text-gray-500 mt-2">Rejoignez Klyora Sites en 30 secondes</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
           <button

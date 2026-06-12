@@ -256,7 +256,7 @@ function ProxiLogo() {
   return (
     <img
       src="/logos/proxi.png"
-      alt="Proxi Aubenton — Client WebConceptor"
+      alt="Proxi Aubenton — Client Klyora Sites"
       className="h-12 w-auto select-none"
       draggable={false}
     />
@@ -648,7 +648,7 @@ export default function Home() {
                   <p className="text-white text-lg font-semibold">{site.name}</p>
                   <p className="text-white/60 text-[13px]">{site.type} &middot; {site.city}</p>
                 </div>
-                <span className="absolute top-4 right-4 px-2 py-0.5 bg-white/80 backdrop-blur text-[9px] font-bold tracking-widest text-[#0a0a0a] rounded">WEBCONCEPTOR</span>
+                <span className="absolute top-4 right-4 px-2 py-0.5 bg-white/80 backdrop-blur text-[9px] font-bold tracking-widest text-[#0a0a0a] rounded">KLYORA SITES</span>
               </motion.a>
             ))}
           </motion.div>
@@ -815,7 +815,7 @@ export default function Home() {
 
           <div className="pt-8 border-t border-[#f5f5f5] flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-[12px] text-[#a3a3a3]">
-              &copy; 2026 WebConceptor &middot; Fait en France
+              &copy; 2026 Klyora Sites &middot; Fait en France
             </p>
             <div className="flex flex-wrap gap-5 text-[12px] text-[#a3a3a3]">
               <Link href="/mentions-legales" className="hover:text-[#0a0a0a] transition-colors">Mentions légales</Link>

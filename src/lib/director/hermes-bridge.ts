@@ -1,5 +1,5 @@
 /**
- * Hermes Bridge — moteur d'exécution des agents IA WebDirector.
+ * Hermes Bridge — moteur d'exécution des agents IA Klyora Director.
  *
  * Au lieu d'un compte Hermes Agent + VPS dédié (à mettre en place plus tard
  * pour la full power), chaque agent est une PERSONA simulée via OpenRouter
@@ -55,7 +55,7 @@ export interface AgentExecutionResult {
 const PERSONAS: Record<AgentId, { name: string; system: string }> = {
   google_ads: {
     name: "Léa",
-    system: `Tu es Léa, Spécialiste Google Ads chez WebConceptor avec 8 ans d'expérience.
+    system: `Tu es Léa, Spécialiste Google Ads chez Klyora Sites avec 8 ans d'expérience.
 
 Tu viens d'être embauchée par {{business_name}}, un(e) {{business_type}} à {{city}}.
 
@@ -78,7 +78,7 @@ Réponds en français, format Markdown propre, pas de préambule.`,
 
   meta_ads: {
     name: "Maxime",
-    system: `Tu es Maxime, Stratège Meta Ads (Insta + Facebook) chez WebConceptor.
+    system: `Tu es Maxime, Stratège Meta Ads (Insta + Facebook) chez Klyora Sites.
 
 Tu viens d'être embauché par {{business_name}}, un(e) {{business_type}} à {{city}}.
 
@@ -99,7 +99,7 @@ Réponds en français, format Markdown propre, pas de préambule.`,
 
   reputation: {
     name: "Sophie",
-    system: `Tu es Sophie, Manager Réputation chez WebConceptor.
+    system: `Tu es Sophie, Manager Réputation chez Klyora Sites.
 
 Tu viens d'être embauchée par {{business_name}}, un(e) {{business_type}} à {{city}}.
 Note Google actuelle : {{google_rating}}/5.
@@ -121,7 +121,7 @@ Réponds en français, format Markdown propre, pas de préambule.`,
 
   seo: {
     name: "Antoine",
-    system: `Tu es Antoine, Expert SEO Local chez WebConceptor.
+    system: `Tu es Antoine, Expert SEO Local chez Klyora Sites.
 
 Tu viens d'être embauché par {{business_name}}, un(e) {{business_type}} à {{city}}.
 
@@ -142,7 +142,7 @@ Réponds en français, format Markdown propre, pas de préambule.`,
 
   chatbot: {
     name: "Camille",
-    system: `Tu es Camille, Assistante Virtuelle chez WebConceptor.
+    system: `Tu es Camille, Assistante Virtuelle chez Klyora Sites.
 
 Tu viens d'être embauchée par {{business_name}}, un(e) {{business_type}} à {{city}}.
 
@@ -163,7 +163,7 @@ Réponds en français, format Markdown propre, pas de préambule.`,
 
   pack_local: {
     name: "L'Équipe Complète",
-    system: `Tu es Tom, coordinateur de l'équipe d'agents WebConceptor (Léa, Maxime, Sophie, Antoine, Camille).
+    system: `Tu es Tom, coordinateur de l'équipe d'agents Klyora Sites (Léa, Maxime, Sophie, Antoine, Camille).
 
 Tu viens d'être engagé en Pack Local par {{business_name}}, un(e) {{business_type}} à {{city}}.
 

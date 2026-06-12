@@ -32,7 +32,7 @@ export interface SendEmailResult {
 }
 
 const FROM_EMAIL_DEFAULT = "contact@webconceptor.fr";
-const FROM_NAME_DEFAULT = "WebConceptor";
+const FROM_NAME_DEFAULT = "Klyora Sites";
 
 // ── Brevo (jusqu'au 17 juin) ─────────────────────────────────────
 async function sendViaBrevo(params: SendEmailParams): Promise<SendEmailResult> {

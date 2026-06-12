@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!mobile) return NextResponse.json({ error: "Numéro mobile invalide (06/07 requis)" }, { status: 400 });
 
   const text = (message && String(message).slice(0, 160)) ||
-    `Bonjour, Tom de WebConceptor. Votre maquette: webconceptor.fr/prospects/${p.slug}. Une question ? 06 35 59 24 71. Stop: STOP`;
+    `Bonjour, Tom de Klyora Sites. Votre maquette: webconceptor.fr/prospects/${p.slug}. Une question ? 06 35 59 24 71. Stop: STOP`;
 
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "BREVO_API_KEY manquante" }, { status: 503 });

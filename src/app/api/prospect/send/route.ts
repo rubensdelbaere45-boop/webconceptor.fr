@@ -56,7 +56,7 @@ interface Prospect {
 }
 
 // Libellés naturels par business_type — utilisés dans les prompts Claude et fallbacks.
-// Couvre TOUS les métiers pris en charge par WebConceptor.
+// Couvre TOUS les métiers pris en charge par Klyora Sites.
 const BUSINESS_LABELS: Record<string, { name: string; descriptor: string; sector: string }> = {
   // ── Restauration ──────────────────────────────────────────────────────────
   restaurant:    { name: "restaurant",                descriptor: "une table chaleureuse",                sector: "restauration" },
@@ -473,7 +473,7 @@ Réponds avec UNIQUEMENT ce JSON (clés exactes) :
 "heroTitle": "4-7 mots évoquant LE MÉTIER PRÉCIS — pas le nom du lieu",
 "heroSubtitle": "12-16 mots, spécifique au métier + ville",
 "aboutText": "55-75 mots, SPÉCIFIQUE AU MÉTIER. glacier=glaces/sorbets/parfums artisanaux. boulangerie=pain/levain/four. coiffeur=coupe/style/soin. Si texte du site fourni, inspire-toi du ton sans recopier. JAMAIS cuisine/produits de saison pour un glacier ou coiffeur.",${menuKeySpec}
-"emailSubject": "RÈGLE STRICTE : utilise EXACTEMENT ce format : '[NOM_COURT] — j'ai créé votre site' où NOM_COURT = '${shortName}'. ≤45 chars TOTAL. Minuscules sauf nom. Pas de 'maquette', 'WebConceptor', 'offre'. Exemples valides : '${shortName} — j'ai créé votre site' / '${shortName}${cityShort ? `, ${cityShort}` : ""} — votre site est prêt'",
+"emailSubject": "RÈGLE STRICTE : utilise EXACTEMENT ce format : '[NOM_COURT] — j'ai créé votre site' où NOM_COURT = '${shortName}'. ≤45 chars TOTAL. Minuscules sauf nom. Pas de 'maquette', 'Klyora Sites', 'offre'. Exemples valides : '${shortName} — j'ai créé votre site' / '${shortName}${cityShort ? `, ${cityShort}` : ""} — votre site est prêt'",
 "emailPitch": "2 phrases COURTES. Ton humain, direct, vouvoiement. Phrase 1 : ce que vous avez créé pour eux spécifiquement (mentionner ville ou avis si dispo). Phrase 2 : une preuve concrète (note Google, ou ce qui distingue leur établissement). JAMAIS : 'opportunité', 'je me permets', 'je suis développeur'."
 }
 
@@ -801,7 +801,7 @@ function buildLuxuryEmail(
 
   <div style="padding:48px 36px;color:#1a1310;line-height:1.8">
 
-    <p style="font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#9a8b7a;margin:0 0 32px">WebConceptor · Création exclusive</p>
+    <p style="font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#9a8b7a;margin:0 0 32px">Klyora Sites · Création exclusive</p>
 
     <p style="font-size:16px;margin:0 0 20px;color:#1a1310">Bonjour,</p>
 
@@ -827,7 +827,7 @@ function buildLuxuryEmail(
     </div>
 
     <div style="border-top:1px solid #e8dfd0;padding-top:24px;font-size:13px;color:#5a5045">
-      <p style="margin:0 0 4px;font-weight:600;color:#1a1310;font-family:-apple-system,sans-serif">Tom Bauer — WebConceptor</p>
+      <p style="margin:0 0 4px;font-weight:600;color:#1a1310;font-family:-apple-system,sans-serif">Tom Bauer — Klyora Sites</p>
       <p style="margin:0 0 4px;font-family:-apple-system,sans-serif"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a></p>
       <p style="margin:0;font-family:-apple-system,sans-serif"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
     </div>
@@ -890,7 +890,7 @@ function buildShortEmail(
     <p style="font-size:13px;color:#7a6a5a;margin:0 0 28px;line-height:1.65">Si un texte ou une photo ne vous convient pas, répondez directement à cet email — je modifie gratuitement.</p>
 
     <div style="border-top:1px solid #ece4d8;padding-top:20px;font-size:13px;color:#5a5045">
-      <p style="margin:0 0 3px;font-weight:600;color:#1a1310">Tom Bauer — WebConceptor</p>
+      <p style="margin:0 0 3px;font-weight:600;color:#1a1310">Tom Bauer — Klyora Sites</p>
       <p style="margin:0 0 3px"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a> &nbsp;·&nbsp; <a href="mailto:contact@webconceptor.fr" style="color:#5a5045;text-decoration:none">contact@webconceptor.fr</a></p>
       <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
     </div>

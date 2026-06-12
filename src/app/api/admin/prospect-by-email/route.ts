@@ -5,7 +5,7 @@
  *   - Historique emails envoyés (sniper, closer, blast, etc.)
  *   - Stats vues maquette
  *   - Status conversion
- *   - Compte WebDirector lié (si existe)
+ *   - Compte Klyora Director lié (si existe)
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     }, { status: 404 });
   }
 
-  // WebDirector account éventuellement lié
+  // Klyora Director account éventuellement lié
   const { data: directorAccount } = await supabase
     .from("director_accounts")
     .select("id, email, business_name, tokens_balance, is_subscribed, auto_provisioned, must_change_password, created_at")
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
     emails_sent_count: emailsSent.length,
     emails_history: emailsSent,
 
-    // WebDirector
+    // Klyora Director
     webdirector_account: directorAccount ? {
       account_id: directorAccount.id,
       created_at: directorAccount.created_at,

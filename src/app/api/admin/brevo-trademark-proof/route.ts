@@ -1,11 +1,11 @@
 /**
  * GET /api/admin/brevo-trademark-proof
  *
- * Génère à la volée un PDF de "Preuve d'usage du nom commercial WebConceptor"
+ * Génère à la volée un PDF de "Preuve d'usage du nom commercial Klyora Sites"
  * pour upload dans le formulaire Brevo Sender ID.
  *
  * Le PDF contient :
- *   1. En-tête WebConceptor
+ *   1. En-tête Klyora Sites
  *   2. Déclaration d'usage du nom commercial
  *   3. Capture du site (URL + screenshot référencé)
  *   4. Mentions légales (URL)
@@ -46,8 +46,8 @@ function buildTrademarkPdf(): Promise<Buffer> {
         size: "A4",
         margins: { top: 60, bottom: 60, left: 60, right: 60 },
         info: {
-          Title: "Preuve d'usage du nom commercial WebConceptor",
-          Author: "WebConceptor",
+          Title: "Preuve d'usage du nom commercial Klyora Sites",
+          Author: "Klyora Sites",
           Subject: "Justificatif pour enregistrement Sender ID SMS chez Brevo",
         },
       });
@@ -59,7 +59,7 @@ function buildTrademarkPdf(): Promise<Buffer> {
 
       // ── En-tête ──
       doc.fontSize(24).font("Helvetica-Bold").fillColor("#0a0a0a");
-      doc.text("WebConceptor", { align: "left" });
+      doc.text("Klyora Sites", { align: "left" });
       doc.fontSize(11).font("Helvetica").fillColor("#666");
       doc.text("https://webconceptor.fr", { align: "left" });
       doc.text("contact@webconceptor.fr · 06 35 59 24 71", { align: "left" });
@@ -74,9 +74,9 @@ function buildTrademarkPdf(): Promise<Buffer> {
 
       // ── Déclaration ──
       doc.fontSize(11).font("Helvetica").fillColor("#0a0a0a");
-      const declaration = `Je soussigné, gérant de WebConceptor, déclare sur l'honneur :
+      const declaration = `Je soussigné, gérant de Klyora Sites, déclare sur l'honneur :
 
-1. Exploiter activement le nom commercial "WebConceptor" pour mon activité de création de sites web professionnels destinés aux artisans, commerces de proximité et indépendants en France.
+1. Exploiter activement le nom commercial "Klyora Sites" pour mon activité de création de sites web professionnels destinés aux artisans, commerces de proximité et indépendants en France.
 
 2. Être propriétaire du nom de domaine webconceptor.fr (enregistrement actif vérifiable via WHOIS public).
 
@@ -86,7 +86,7 @@ function buildTrademarkPdf(): Promise<Buffer> {
    - Les communications téléphoniques (numéro : 06 35 59 24 71)
    - Les supports marketing en ligne
 
-4. Avoir besoin de l'identifiant alphanumérique "WebConcept" (10 caractères, version compactée de "WebConceptor" pour respecter la limite Brevo de 11 caractères) pour identifier mes envois SMS transactionnels auprès de mes prospects et clients.
+4. Avoir besoin de l'identifiant alphanumérique "WebConcept" (10 caractères, version compactée de "Klyora Sites" pour respecter la limite Brevo de 11 caractères) pour identifier mes envois SMS transactionnels auprès de mes prospects et clients.
 
 5. M'engager à respecter strictement :
    - Les obligations légales françaises (RGPD, ARCEP, code des postes)
@@ -117,13 +117,13 @@ function buildTrademarkPdf(): Promise<Buffer> {
       doc.text(`Fait le ${today}, à des fins exclusives d'enregistrement Sender ID auprès de Brevo (Sendinblue SAS).`, { align: "left" });
       doc.moveDown(2);
       doc.fontSize(13).font("Helvetica-BoldOblique");
-      doc.text("Tom — WebConceptor", { align: "right" });
+      doc.text("Tom — Klyora Sites", { align: "right" });
       doc.fontSize(9).font("Helvetica").fillColor("#888");
       doc.text("Document généré électroniquement", { align: "right" });
 
       // ── Pied de page ──
       doc.fontSize(8).font("Helvetica").fillColor("#999");
-      const footer = "Ce document est un justificatif de propriété d'usage du nom commercial WebConceptor destiné à l'enregistrement de l'identifiant SMS \"WebConcept\" auprès de Brevo, dans le cadre de la procédure ARCEP pour les expéditeurs alphanumériques en France.";
+      const footer = "Ce document est un justificatif de propriété d'usage du nom commercial Klyora Sites destiné à l'enregistrement de l'identifiant SMS \"WebConcept\" auprès de Brevo, dans le cadre de la procédure ARCEP pour les expéditeurs alphanumériques en France.";
       doc.text(footer, 60, 760, { width: 475, align: "center" });
 
       doc.end();

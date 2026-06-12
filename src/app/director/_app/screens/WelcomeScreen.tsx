@@ -158,7 +158,7 @@ export function WelcomeScreen({
                             letterSpacing: "-0.01em",
                         }}
                     >
-                        WebDirector
+                        Klyora Director
                     </span>
                 </div>
                 {phase < 5 && (

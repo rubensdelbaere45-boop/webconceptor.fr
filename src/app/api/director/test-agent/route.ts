@@ -20,7 +20,7 @@
  *
  * Sert à valider que la cascade Hermes Bridge → Hermes Agent (Railway) ou
  * → Kimi K2 (OpenRouter fallback) fonctionne, avant d'engager les vrais
- * clients de WebDirector.
+ * clients de Klyora Director.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { executeAgent, type AgentId, type AgentContext } from "@/lib/director/hermes-bridge";

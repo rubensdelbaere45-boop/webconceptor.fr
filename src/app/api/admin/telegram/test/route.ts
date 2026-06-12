@@ -13,7 +13,7 @@ export async function POST() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId,
-      text: "✅ Test WebConceptor Admin — Connexion OK",
+      text: "✅ Test Klyora Sites Admin — Connexion OK",
       parse_mode: "HTML",
     }),
     signal: AbortSignal.timeout(8_000),

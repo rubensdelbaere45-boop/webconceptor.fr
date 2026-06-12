@@ -1,5 +1,5 @@
 /**
- * /director — Single-Page App WebDirector
+ * /director — Single-Page App Klyora Director
  *
  * Le composant DirectorApp gère lui-même la transition entre les 4 écrans
  * (login → change-password → welcome → dashboard) via son state interne.

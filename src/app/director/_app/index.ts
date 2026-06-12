@@ -1,5 +1,5 @@
 /**
- * WebDirector — Public surface
+ * Klyora Director — Public surface
  * --------------------------------------------------------------
  * Single import point for downstream apps (Next.js 16 + Supabase).
  *

@@ -8,7 +8,7 @@
  *   - Gratuit, illimité, pas de quota
  *   - Données officielles INSEE mises à jour quotidiennement
  *
- * Stratégie WebConceptor :
+ * Stratégie Klyora Sites :
  *   "Vous venez de créer votre entreprise — voici votre site offert"
  *   = argumentaire imparable, marché vierge.
  */
@@ -64,7 +64,7 @@ export const NATURE_JURIDIQUE = {
 /** Natures juridiques considérées comme "sociétés établies" (= post-upgrade). */
 export const ESTABLISHED_NATURES = ["5498", "5499", "5710", "5720", "5550"];
 
-// Map des codes NAF/APE pour les métiers WebConceptor
+// Map des codes NAF/APE pour les métiers Klyora Sites
 // Source : nomenclature NAF rév. 2 INSEE
 export const APE_CODES: Record<string, string[]> = {
   plombier:     ["43.22A", "43.22B"],
@@ -129,7 +129,7 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(15_000),
-      headers: { "User-Agent": "WebConceptor/1.0 (contact@webconceptor.fr)" },
+      headers: { "User-Agent": "Klyora Sites/1.0 (contact@webconceptor.fr)" },
     });
     if (!res.ok) return [];
     const data = await res.json();

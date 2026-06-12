@@ -715,7 +715,7 @@ export function generateAdaptiveMockupHtml(
   return `<!DOCTYPE html>
 <!--
   ─────────────────────────────────────────────────────
-  Design, code et intégration : WebConceptor
+  Design, code et intégration : Klyora Sites
   https://webconceptor.fr
   Maquette personnalisée pour ${escape(prospect.name)}
   Thème couleur extrait du site actuel — ${theme.primary}
@@ -726,8 +726,8 @@ export function generateAdaptiveMockupHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="WebConceptor — https://webconceptor.fr">
-<meta name="copyright" content="© WebConceptor — Reproduction interdite">
+<meta name="author" content="Klyora Sites — https://webconceptor.fr">
+<meta name="copyright" content="© Klyora Sites — Reproduction interdite">
 <meta name="robots" content="noindex,noarchive">
 <title>${escape(prospect.name)} — ${escape(config.metaTitle)}${cityStr ? ` à ${cityStr}` : ""}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -758,7 +758,7 @@ a{color:inherit;text-decoration:none}
 .wc-home-btn{position:fixed;top:14px;left:14px;z-index:9998;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#0a0a0a;padding:8px 16px 8px 10px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);transition:all 0.2s;font-family:var(--sans)}
 .wc-home-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,0,0,0.18)}
 .wc-home-btn-logo{width:22px;height:22px;background:#0066ff;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px}
-/* Bandeau info flottant : rassure le prospect que les mentions WebConceptor
+/* Bandeau info flottant : rassure le prospect que les mentions Klyora Sites
    disparaissent au moment du paiement — bloqueur fréquent de conversion. */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
@@ -880,7 +880,7 @@ footer{padding:32px 40px 70px;background:var(--ink);color:rgba(255,255,255,0.5);
 <body>
 
   <span class="wc-home-btn-logo">W</span>
-  <span>WebConceptor</span>
+  <span>Klyora Sites</span>
 </a>
 
 ${topStripContent ? `<div class="top-strip">${escape(topStripContent)}</div>` : ""}
@@ -1006,7 +1006,7 @@ ${reviewsHtml}
   </div>
 </section>
 
-<footer>&copy; 2026 — Maquette générée par WebConceptor</footer>
+<footer>&copy; 2026 — Maquette générée par Klyora Sites</footer>
 
 </div>
 

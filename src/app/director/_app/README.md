@@ -1,4 +1,4 @@
-# WebDirector — Kit UI premium pour Next.js 16 + Supabase
+# Klyora Director — Kit UI premium pour Next.js 16 + Supabase
 
 5 écrans React TSX **Client Components** + un système de design
 inspiré de **Stripe Dashboard × Linear × Mercury**, prêts à être

@@ -161,7 +161,7 @@ function buildStitchPrompt(p: StitchProspect): string {
     "- All text in French.",
     "- Elegant, zen, wellness aesthetic — soft greens, warm beiges, white space.",
     "- Service cards: icon + name + short description + price badge.",
-    "- No WebConceptor branding.",
+    "- No Klyora Sites branding.",
     "",
     "=== ⚠️ ABSOLUTE BAN — STRICTLY FORBIDDEN ⚠️ ===",
     "🚫 NEVER use 'Lorem ipsum', 'dolor sit amet', 'consectetur adipiscing' or any Latin placeholder text.",

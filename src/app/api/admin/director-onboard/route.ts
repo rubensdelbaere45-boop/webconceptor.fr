@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/director-onboard — Pipeline Cheval de Troie WebDirector
+ * POST /api/admin/director-onboard — Pipeline Cheval de Troie Klyora Director
  *
  * Étapes :
  *   1. Cible des prospects qualifiés (qa_passed=true, profilés, avec email)
@@ -74,13 +74,13 @@ Accès :
 
 Si vous avez une question : répondez à cet email ou appelez 06 35 59 24 71.
 
-Tom — WebConceptor`;
+Tom — Klyora Sites`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6;background:#f9f9f9">
 
 <div style="background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 100%);color:#fff;padding:32px 28px;border-radius:14px;margin-bottom:24px">
-  <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#FFD700;margin-bottom:6px">WEBCONCEPTOR DIRECTOR</div>
+  <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#FFD700;margin-bottom:6px">KLYORA SITES DIRECTOR</div>
   <h1 style="font-size:24px;margin:0 0 8px;font-weight:800">${escapeHtml(firstName)}, votre tableau de bord est prêt</h1>
   <div style="font-size:14px;color:#ccc">Préparé pour ${escapeHtml(businessName)}</div>
 </div>
@@ -112,7 +112,7 @@ Tom — WebConceptor`;
 
 <p style="margin-top:30px;font-size:14px">Si vous avez une question : répondez à cet email ou appelez <strong>06 35 59 24 71</strong>.</p>
 
-<p style="margin-top:18px">Tom<br><span style="color:#777;font-size:12px">WebConceptor</span></p>
+<p style="margin-top:18px">Tom<br><span style="color:#777;font-size:12px">Klyora Sites</span></p>
 
 </body></html>`;
 
@@ -127,7 +127,7 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — WebConceptor", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
         replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chat,
-        text: `🐴 <b>Cheval de Troie WebDirector</b>\n\n✅ Comptes créés : <b>${created}</b>\n📧 Emails envoyés : <b>${emailed}</b>\n❌ Erreurs : ${errors}\n\nLes prospects vont recevoir leur accès et changer leur mdp.`,
+        text: `🐴 <b>Cheval de Troie Klyora Director</b>\n\n✅ Comptes créés : <b>${created}</b>\n📧 Emails envoyés : <b>${emailed}</b>\n❌ Erreurs : ${errors}\n\nLes prospects vont recevoir leur accès et changer leur mdp.`,
         parse_mode: "HTML",
       }),
     }).catch(() => {});

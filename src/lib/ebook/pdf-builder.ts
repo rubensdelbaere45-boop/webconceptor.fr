@@ -56,7 +56,7 @@ export async function buildPdf(opts: BuildOptions): Promise<Buffer> {
           Author: opts.outline.author_name,
           Subject: opts.outline.niche.topic,
           Keywords: opts.outline.niche.keywords.join(", "),
-          Producer: "WebConceptor KDP Pipeline",
+          Producer: "Klyora Sites KDP Pipeline",
         },
         autoFirstPage: true,
         bufferPages: true,

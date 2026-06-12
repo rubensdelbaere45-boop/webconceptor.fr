@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         "api-key": brevoKey,
       },
       body: JSON.stringify({
-        sender: { name: "WebConceptor Bot", email: "contact@webconceptor.fr" },
+        sender: { name: "Klyora Sites Bot", email: "contact@webconceptor.fr" },
         to: [{ email: "contact@webconceptor.fr", name: "Tom Bauer" }],
         subject: `🎨 Modif demandée — ${prospect.name} (${prospect.city || "?"})`,
         htmlContent: htmlBody,

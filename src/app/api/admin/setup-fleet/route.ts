@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/setup-fleet
  *
- * Setup tout-en-un de la WebConceptor Fleet :
+ * Setup tout-en-un de la Klyora Sites Fleet :
  *   1. Vérifie colonnes Supabase (sales_angle, custom_hook, qa_*, etc.)
  *   2. Importe + active les 5 workflows N8N
  *     (11 Profiler, 12 Sniper, 13 Closer, 14 Déployeur, 15 QA Gatekeeper)

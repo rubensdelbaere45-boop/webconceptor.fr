@@ -40,7 +40,7 @@ function gsmSafe(s: string): string {
 
 function buildSmsContent(prospectName: string, mockupUrl: string): string {
   const name = gsmSafe(prospectName).slice(0, 30);
-  return `Bonjour, votre maquette ${name} est toujours disponible et 100% personnalisable : ${mockupUrl}. Tom - WebConceptor. STOP pour arreter.`;
+  return `Bonjour, votre maquette ${name} est toujours disponible et 100% personnalisable : ${mockupUrl}. Tom - Klyora Sites. STOP pour arreter.`;
 }
 
 // ─── SMS via cascade OVHcloud → Brevo (voir src/lib/sms-provider.ts) ───

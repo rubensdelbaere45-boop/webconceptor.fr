@@ -107,7 +107,7 @@ async function analyzeWebsite(url: string): Promise<{
     const start = Date.now();
     // safeFetch vérifie chaque hop de redirection contre les réseaux privés
     const res = await safeFetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorAudit/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Klyora SitesAudit/1.0)" },
       timeoutMs: 8000,
       maxRedirects: 3,
     });
@@ -328,12 +328,12 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
   <!-- CTA -->
   <div class="cta">
     <h2>Passez à l'action dès aujourd'hui</h2>
-    <p>WebConceptor peut corriger tous ces problèmes pour vous, rapidement et sans prise de tête.</p>
+    <p>Klyora Sites peut corriger tous ces problèmes pour vous, rapidement et sans prise de tête.</p>
     <a href="https://webconceptor.fr">Voir nos services →</a>
   </div>
 
   <div class="footer">
-    <p>Audit réalisé par <strong>WebConceptor</strong> · contact@webconceptor.fr · webconceptor.fr</p>
+    <p>Audit réalisé par <strong>Klyora Sites</strong> · contact@webconceptor.fr · webconceptor.fr</p>
     <p style="margin-top:4px">Rapport confidentiel généré automatiquement pour ${order.owner_name || order.owner_email}</p>
   </div>
 </div>
@@ -360,7 +360,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
       method: "POST",
       headers: { "api-key": apiKey2, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
         to: [{ email: order.owner_email, name: order.owner_name || order.owner_email }],
         subject: `📊 Votre audit présence en ligne — ${order.business_name} (score : ${globalScore}/100)`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;color:#111">
@@ -375,7 +375,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
 </ul>
 <p style="font-size:14px;color:#525252;margin-top:16px">Des questions ? Répondez simplement à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-<strong>Tom Bauer</strong> — WebConceptor<br>contact@webconceptor.fr · 06 35 59 24 71
+<strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr · 06 35 59 24 71
 </div>
 </div>`,
         attachment: [{

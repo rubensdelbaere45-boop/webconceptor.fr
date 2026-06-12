@@ -10,7 +10,7 @@
  * GET /api/director/diagnostic
  * → Retourne le dernier diagnostic du user (si existe).
  *
- * Auth : session WebDirector (cookie)
+ * Auth : session Klyora Director (cookie)
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient, getSessionUser } from "@/lib/director/auth";
@@ -209,7 +209,7 @@ PRIVILÉGIE les failles évidemment confirmées par les données scrappées/INSE
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://webconceptor.fr",
-        "X-Title": "WebDirector — Diagnostic",
+        "X-Title": "Klyora Director — Diagnostic",
       },
       body: JSON.stringify({
         model: "moonshotai/kimi-k2.6:free",
@@ -293,7 +293,7 @@ function buildFallbackDiagnostic(account: any): Faille[] {
       evidence: "Champ website_url vide en base.",
       agent_slug: a.slug, agent_name: a.name, agent_emoji: a.emoji,
       agent_price_eur: `${a.tokens_cost} crédits`,
-      gain_potentiel: "Pack WebConceptor 320€ + ce qui suit",
+      gain_potentiel: "Pack Klyora Sites 320€ + ce qui suit",
     });
   }
   const bt = (account.business_type || "").toLowerCase();
@@ -374,7 +374,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         chat_id: chat,
         parse_mode: "HTML",
-        text: `🔍 <b>WebDirector — Diagnostic lancé</b>\n\n` +
+        text: `🔍 <b>Klyora Director — Diagnostic lancé</b>\n\n` +
               `<b>Client :</b> ${acc.business_name || acc.email}\n` +
               `<b>Failles détectées :</b> ${failles.length}\n` +
               `<b>Agents recommandés :</b> ${agents.length}\n` +
@@ -401,7 +401,7 @@ export async function POST(req: NextRequest) {
       naf_code: enriched.insee.naf_code,
     },
     upsell: acc.is_subscribed ? null : {
-      title: "Pour embaucher tous ces agents, abonnez-vous à WebDirector",
+      title: "Pour embaucher tous ces agents, abonnez-vous à Klyora Director",
       monthly_price_eur: 29.9,
       yearly_price_eur: 320,
       cta_url: "/director/billing",

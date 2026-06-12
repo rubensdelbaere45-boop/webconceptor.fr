@@ -12,7 +12,7 @@ type Props = {
 /**
  * AgentChatStream — animated chat preview shown on the Login screen.
  * Cycles through real-world conversations between a business owner and
- * the WebDirector AI agents. Each thread plays:
+ * the Klyora Director AI agents. Each thread plays:
  *   owner asks → agent answers (typing → message) → result card pops.
  * Designed to feel alive without any real chat backend.
  */

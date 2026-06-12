@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
     '    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
     '  </button>',
     '</form>',
-    '<div id="wcbot-branding">Propulsé par <a href="https://webconceptor.fr" target="_blank" rel="noopener">WebConceptor</a></div>',
+    '<div id="wcbot-branding">Propulsé par <a href="https://webconceptor.fr" target="_blank" rel="noopener">Klyora Sites</a></div>',
   ].join('');
 
   document.body.appendChild(btn);

@@ -1,5 +1,5 @@
 /**
- * WebDirector Design System — Premium Dark Mode Gamifié
+ * Klyora Director Design System — Premium Dark Mode Gamifié
  *
  * Tokens autonomes (pas de dépendance à l'UI existante /prospects/).
  * Pensés pour effet "Wahou" + gamification (paris sportifs).

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Pack ${pack.name} — ${totalCredits} crédits WebDirector`,
+            name: `Pack ${pack.name} — ${totalCredits} crédits Klyora Director`,
             description: `${pack.credits} crédits${pack.bonus_credits > 0 ? ` + ${pack.bonus_credits} bonus` : ""}`,
           },
           unit_amount: Math.round(pack.price_eur * 100),

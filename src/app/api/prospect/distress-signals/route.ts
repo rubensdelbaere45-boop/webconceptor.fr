@@ -70,7 +70,7 @@ Ou : 0 € de création si vous prenez l'abonnement annuel (-10%, soit 540 €/a
 
 Répondez-moi ou appelez : 06 35 59 24 71.
 
-Tom — WebConceptor`;
+Tom — Klyora Sites`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:20px;color:#1a1a1a">
@@ -100,7 +100,7 @@ Tom — WebConceptor`;
 
 <p style="font-size:13px;margin-top:24px">Répondez à cet email ou appelez : <strong>06 35 59 24 71</strong>.</p>
 
-<p style="margin-top:18px">— Tom<br><span style="color:#777;font-size:12px">WebConceptor</span></p>
+<p style="margin-top:18px">— Tom<br><span style="color:#777;font-size:12px">Klyora Sites</span></p>
 
 </body></html>`;
 
@@ -135,7 +135,7 @@ En 3-6 mois, mes clients ont vu leur note passer de 3.5 à 4.6 en moyenne.
 
 Si vous voulez essayer : répondez à cet email ou appelez 06 35 59 24 71.
 
-Tom — WebConceptor`;
+Tom — Klyora Sites`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;padding:20px;color:#1a1a1a">
@@ -166,7 +166,7 @@ Tom — WebConceptor`;
 
 <p style="font-size:13px;margin-top:24px">Répondez à cet email ou appelez : <strong>06 35 59 24 71</strong>.</p>
 
-<p style="margin-top:18px">— Tom<br><span style="color:#777;font-size:12px">WebConceptor</span></p>
+<p style="margin-top:18px">— Tom<br><span style="color:#777;font-size:12px">Klyora Sites</span></p>
 
 </body></html>`;
 
@@ -181,7 +181,7 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — WebConceptor", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
         replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
         to: [{ email: to, name }],
         subject,

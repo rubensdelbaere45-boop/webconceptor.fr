@@ -41,7 +41,7 @@ function gsmSafe(s: string): string {
 function buildHotLeadSms(prospectName: string, mockupUrl: string): string {
   const name = gsmSafe(prospectName).slice(0, 40);
   // 160 chars max pour 1 SMS Brevo = 1 crédit
-  return `Bonjour, Tom de WebConceptor. J'ai vu votre visite sur la maquette ${name}. Offre flash 199 EUR (-47%) expire dans 24h: ${mockupUrl}. Stop: STOP`.slice(0, 160);
+  return `Bonjour, Tom de Klyora Sites. J'ai vu votre visite sur la maquette ${name}. Offre flash 199 EUR (-47%) expire dans 24h: ${mockupUrl}. Stop: STOP`.slice(0, 160);
 }
 
 // ─── SMS via cascade OVHcloud → Brevo (voir src/lib/sms-provider.ts) ───

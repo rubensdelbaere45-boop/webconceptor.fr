@@ -107,7 +107,7 @@ async function runCron(req: NextRequest) {
   const log: string[] = [];
   const results = { found: 0, inserted: 0, sent: 0, errors: [] as string[] };
 
-  // Rotation 1h — décalée par rapport au cron WebConceptor (+50 offset)
+  // Rotation 1h — décalée par rapport au cron Klyora Sites (+50 offset)
   const runIndex = Math.floor(Date.now() / (1 * 60 * 60 * 1000));
   const offset = ((runIndex * QUERIES_PER_RUN) + 50) % RESTAURANT_QUERIES.length;
   const queries: string[] = [];

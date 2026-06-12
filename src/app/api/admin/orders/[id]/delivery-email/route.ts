@@ -34,7 +34,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       <a href="${order.site_url}" style="background:#FFD700;color:#0a0a0a;padding:16px 32px;border-radius:100px;font-weight:800;text-decoration:none;display:inline-block">Voir mon site →</a>
     </div>
     <p style="font-size:13px;color:#666">Une question ou une modification ? Répondez à cet email ou appelez Tom au <strong>06 35 59 24 71</strong>.</p>
-    <p>L'équipe WebConceptor</p>
+    <p>L'équipe Klyora Sites</p>
   </div>
 </div>`;
 
@@ -43,7 +43,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     toName: order.client,
     subject: `🎉 Votre site est en ligne — ${order.site_url}`,
     html,
-    fromName: "Tom — WebConceptor",
+    fromName: "Tom — Klyora Sites",
     fromEmail: "contact@webconceptor.fr",
   });
 

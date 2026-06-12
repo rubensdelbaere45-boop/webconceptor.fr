@@ -189,7 +189,7 @@ function titleCase(s: string): string {
 
 /**
  * Récupère UNE entreprise par son SIRET (14 chiffres).
- * Utile pour enrichir un compte WebDirector avec les données officielles INSEE
+ * Utile pour enrichir un compte Klyora Director avec les données officielles INSEE
  * lors du diagnostic ("Lancer mon diagnostic").
  */
 export async function fetchInseeBySiret(siret: string): Promise<SireneCompany | null> {

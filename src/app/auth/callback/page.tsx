@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 /**
- * /auth/callback — Point d'atterrissage commun après Google OAuth (WebConceptor).
+ * /auth/callback — Point d'atterrissage commun après Google OAuth (Klyora Sites).
  * Supabase y pose le hash #access_token=... et la page attend que la session soit prête
  * avant de rediriger vers le dashboard (ou vers le code en attente).
  */

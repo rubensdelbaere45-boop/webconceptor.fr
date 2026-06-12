@@ -3,7 +3,7 @@
  * Body : { plan: "monthly" | "yearly" }
  * → crée une session Stripe Checkout en mode subscription.
  *
- * Tarifs WebDirector :
+ * Tarifs Klyora Director :
  *   - monthly : 29,90 €/mois
  *   - yearly  : 320 €/an
  */
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: "eur",
           product_data: {
-            name: `WebDirector — Abonnement ${p.label}`,
+            name: `Klyora Director — Abonnement ${p.label}`,
             description: plan === "yearly"
               ? "Accès illimité à tous les agents IA. Économie de 38,80 € vs mensuel."
               : "Accès illimité à tous les agents IA. Résiliable à tout moment.",

@@ -39,7 +39,7 @@ export interface MarketplaceAgent {
   vibe: string;
   description: string;
   color: string;
-  tokens_cost: number;   // coût en crédits WebDirector
+  tokens_cost: number;   // coût en crédits Klyora Director
   status?: "live" | "coming_soon" | "beta";   // "live" par défaut
   coming_soon_reason?: string;
 }
@@ -60,7 +60,7 @@ export interface MarketplaceAgentFull extends MarketplaceAgent {
 
 const MARKETPLACE_DIR = path.join(process.cwd(), "src/lib/director/marketplace");
 
-// Coût par division (en crédits WebDirector)
+// Coût par division (en crédits Klyora Director)
 const COST_BY_DIVISION: Record<string, number> = {
   marketing: 100,
   "paid-media": 120,  // plus complexe (PPC, audit etc.)

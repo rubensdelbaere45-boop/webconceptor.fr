@@ -172,7 +172,7 @@ async function checks(): Promise<CheckResult[]> {
       supabase.from("prospects").select("id", { count: "exact" }).gte("created_at", new Date(Date.now() - 24 * 3600 * 1000).toISOString()),
     ]);
     results.push({
-      name: "Prospection WebConceptor",
+      name: "Prospection Klyora Sites",
       status: (total.count ?? 0) > 0 ? "ok" : "warn",
       message: `${total.count ?? 0} prospects total · ${sent.count ?? 0} envoyés · ${opened.count ?? 0} ouverts · ${converted.count ?? 0} convertis`,
       detail: `Ajoutés ces 24h : ${today.count ?? 0}`,

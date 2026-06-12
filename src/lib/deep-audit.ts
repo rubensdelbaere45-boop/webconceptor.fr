@@ -8,7 +8,7 @@
           navigation, meta tags, forms
      2. UN seul appel Claude Haiku 4.5 avec prompt caching du système
         → Claude reçoit l'extrait structuré (petit input) et produit un
-          brief JSON de ce que la maquette WebConceptor doit contenir.
+          brief JSON de ce que la maquette Klyora Sites doit contenir.
      3. Résultat stocké en DB (`rich_audit` JSONB) — ré-utilisable à
         chaque régénération sans re-auditer.
 
@@ -48,7 +48,7 @@ export interface DeepAudit {
   // Points FAIBLES objectifs du site actuel (problèmes techniques/UX)
   weaknesses: string[];        // ex: "design 2010", "images lentes", "pas HTTPS"
 
-  // Ce que la maquette WebConceptor doit faire DIFFÉREMMENT/MIEUX
+  // Ce que la maquette Klyora Sites doit faire DIFFÉREMMENT/MIEUX
   improvementBrief: {
     heroConcept: string;        // description du hero idéal pour ce prospect
     featuredSections: string[]; // ordre des sections (ex: ["hero", "services", "booking", "reviews"])
@@ -112,7 +112,7 @@ async function fetchKeyPages(siteUrl: string): Promise<{ html: string; subPages:
     const mainRes = await safeFetch(siteUrl, {
       timeoutMs: 10000,
       maxRedirects: 3,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; WebConceptorAudit/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Klyora SitesAudit/1.0)" },
     });
     if (!mainRes.ok) return null;
     const mainHtml = (await mainRes.text()).slice(0, 200_000); // cap à 200 KB
@@ -335,7 +335,7 @@ function extractMenuItemsFromText(text: string): LocalMenuItem[] {
 // (12× moins cher). Cache TTL 5 min → on bénéficie pour tous les prospects
 // traités en rafale dans une campagne.
 
-const AUDIT_SYSTEM_PROMPT = `Tu es un auditeur de sites web pro pour WebConceptor. Tu analyses le site actuel d'un commerçant/artisan français pour produire un brief qui permettra de générer une MAQUETTE SUR-MESURE qui sera objectivement meilleure que leur site actuel.
+const AUDIT_SYSTEM_PROMPT = `Tu es un auditeur de sites web pro pour Klyora Sites. Tu analyses le site actuel d'un commerçant/artisan français pour produire un brief qui permettra de générer une MAQUETTE SUR-MESURE qui sera objectivement meilleure que leur site actuel.
 
 Ton travail : retourner un JSON structuré avec :
 1. L'identité visuelle détectée (couleurs, polices, ton éditorial)

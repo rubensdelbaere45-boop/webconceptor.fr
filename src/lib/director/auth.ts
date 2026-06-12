@@ -1,5 +1,5 @@
 /**
- * Helpers d'authentification WebDirector.
+ * Helpers d'authentification Klyora Director.
  * On stocke un cookie httpOnly avec le JWT Supabase Auth pour les pages /director.
  */
 

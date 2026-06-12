@@ -45,7 +45,7 @@ async function sendConfirmationEmail(ownerEmail: string, ownerName: string, busi
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "Tom Bauer — WebConceptor", email: "contact@webconceptor.fr" },
+      sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
       to: [{ email: ownerEmail, name: ownerName }],
       subject: `✅ Votre agent avis Google est actif — ${businessName}`,
       htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -65,7 +65,7 @@ async function sendConfirmationEmail(ownerEmail: string, ownerName: string, busi
 <p style="font-size:14px;color:#525252">Aucune action supplémentaire n'est requise de votre part. L'agent fonctionne en arrière-plan, 24h/24.</p>
 <p style="font-size:14px;color:#525252;margin-top:16px">Une question ? Répondez directement à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;padding-top:20px;margin-top:24px;font-size:13px;color:#737373">
-  <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong> — WebConceptor</p>
+  <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong> — Klyora Sites</p>
   <p style="margin:0">contact@webconceptor.fr · 06 35 59 24 71</p>
 </div>
 </div>`,

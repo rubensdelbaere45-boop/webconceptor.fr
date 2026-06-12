@@ -471,7 +471,7 @@ function TelechargerInner() {
           <Monitor style={{ width: 14, height: 14, color: "#94a3b8" }} />
           <span style={{ fontSize: 12, color: "#94a3b8" }}>Caissio • Windows • Mac • iPad • iPhone</span>
         </div>
-        <div style={{ fontSize: 11, color: "#cbd5e1" }}>© 2026 WebConceptor. Tous droits réservés.</div>
+        <div style={{ fontSize: 11, color: "#cbd5e1" }}>© 2026 Klyora Sites. Tous droits réservés.</div>
       </footer>
     </div>
   );

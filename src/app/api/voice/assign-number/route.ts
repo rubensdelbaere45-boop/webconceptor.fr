@@ -1,10 +1,10 @@
 /**
  * POST /api/voice/assign-number
- * → Assigne un numéro Vapi à un compte WebDirector.
+ * → Assigne un numéro Vapi à un compte Klyora Director.
  *   Le client reçoit ce numéro Vapi pour son standard IA (resto/coiffeur/etc.)
  *
  * Body : {
- *   account_id: string (WebDirector account)
+ *   account_id: string (Klyora Director account)
  *   vapi_number: "+33XXXXXXXXX" (numéro acheté sur Vapi)
  *   business_type: "restaurant_reservation" | "coiffeur_rdv" | "webconceptor_demarchage"
  * }
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     .select("id, email, business_name")
     .eq("id", accountId)
     .maybeSingle();
-  if (!acc) return NextResponse.json({ error: "Compte WebDirector introuvable" }, { status: 404 });
+  if (!acc) return NextResponse.json({ error: "Compte Klyora Director introuvable" }, { status: 404 });
 
   // Vérifie que le numéro n'est pas déjà utilisé par un autre compte
   const { data: existing } = await supabase

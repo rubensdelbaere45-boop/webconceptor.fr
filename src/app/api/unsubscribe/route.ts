@@ -99,11 +99,11 @@ export async function GET(req: NextRequest) {
   const body = result.ok
     ? `<h1>Désabonnement confirmé</h1>
        <p>${result.message}</p>
-       <p>Vous ne recevrez plus de communications de WebConceptor.</p>`
+       <p>Vous ne recevrez plus de communications de Klyora Sites.</p>`
     : `<h1>Désabonnement</h1>
        <p>${result.message}</p>`;
 
-  return new NextResponse(htmlPage("Désabonnement — WebConceptor", body), {
+  return new NextResponse(htmlPage("Désabonnement — Klyora Sites", body), {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });

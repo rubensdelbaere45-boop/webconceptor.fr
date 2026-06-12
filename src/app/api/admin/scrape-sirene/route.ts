@@ -2,7 +2,7 @@
  * POST /api/admin/scrape-sirene
  *
  * Prospection SIRENE — cible les entreprises CRÉÉES RÉCEMMENT (< N mois)
- * dans les métiers WebConceptor. Argumentaire imbattable :
+ * dans les métiers Klyora Sites. Argumentaire imbattable :
  *   "Vous venez de créer votre entreprise — voici votre site offert"
  *
  * Pourquoi c'est mieux que Google Maps :

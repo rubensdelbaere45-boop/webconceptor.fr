@@ -236,7 +236,7 @@ function buildEmailBody(prospect: Prospect, demoUrl: string): string {
       <a href="https://webconceptor.fr/api/unsubscribe?email={{EMAIL}}" style="color:#c19a56">se désabonner</a>.
     </p>
     <p style="margin:0;font-size:12px;color:#BBB">
-      TableFlow — WebConceptor · Menu digital pour restaurateurs
+      TableFlow — Klyora Sites · Menu digital pour restaurateurs
     </p>
   </div>
 </div>`;
@@ -341,7 +341,7 @@ export async function POST(req: NextRequest) {
 
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
 
-  // Domain cooldown (même logique que WebConceptor)
+  // Domain cooldown (même logique que Klyora Sites)
   const BIG_PROVIDERS = new Set([
     "gmail.com", "googlemail.com", "orange.fr", "wanadoo.fr",
     "free.fr", "laposte.net", "sfr.fr", "neuf.fr", "numericable.fr",

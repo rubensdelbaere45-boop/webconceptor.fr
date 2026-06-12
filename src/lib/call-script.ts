@@ -77,7 +77,7 @@ const BUSINESS_PITCH: Record<string, string> = {
 // du prospect. Respecte la structure voulue par Rubens :
 // 1. Salutation polie + présentation rapide du correspondant
 // 2. "Est-ce que je vous dérange ?" (respect du temps)
-// 3. Self-pitch court (qui est WebConceptor, ce qu'on fait)
+// 3. Self-pitch court (qui est Klyora Sites, ce qu'on fait)
 // 4. Présentation du motif (maquette préparée)
 // 5. Question sur la réception
 // 6. + PERSONNALISATION si engagement (vue X fois, panier abandonné...)
@@ -95,10 +95,10 @@ function buildFallbackOpening(input: CallScriptInput): string {
 
   // Début standard (respectueux, self-présentation)
   const header =
-    `Bonjour, Tom Bauer de WebConceptor à l'appareil. ` +
+    `Bonjour, Tom Bauer de Klyora Sites à l'appareil. ` +
     `Est-ce que je vous dérange une minute ? ` +
     `\n\n` +
-    `Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. `;
+    `Je me présente rapidement : chez Klyora Sites, nous créons et nous modernisons les sites internet pour les professionnels comme vous. `;
 
   if (isColdCall) {
     // Cold call : pas encore de maquette envoyée → on propose
@@ -139,8 +139,8 @@ function buildFallbackOpening(input: CallScriptInput): string {
 // pas appelable, par exemple en lecture directe du fichier). Même structure.
 const FALLBACK_SCRIPT: CallScript = {
   opening:
-    "Bonjour, Tom Bauer de WebConceptor à l'appareil. Est-ce que je vous dérange une minute ?\n\n" +
-    "Je me présente rapidement : chez WebConceptor, nous créons et modernisons les sites internet pour les professionnels comme vous. " +
+    "Bonjour, Tom Bauer de Klyora Sites à l'appareil. Est-ce que je vous dérange une minute ?\n\n" +
+    "Je me présente rapidement : chez Klyora Sites, nous créons et modernisons les sites internet pour les professionnels comme vous. " +
     "J'ai préparé récemment une maquette sur-mesure pour votre établissement, pensée pour améliorer votre visibilité et vos demandes entrantes. " +
     "Je vous l'ai envoyée par email. Avez-vous bien reçu ma maquette ?",
   discoveryQuestions: [
@@ -215,7 +215,7 @@ export async function generateCallScript(input: CallScriptInput): Promise<CallSc
     engagementLine,
   ].filter(Boolean).join("\n");
 
-  const prompt = `Tom Bauer (fondateur WebConceptor, 18 ans mais très professionnel) va appeler UN PROFESSIONNEL qui a reçu par email une maquette de site web.
+  const prompt = `Tom Bauer (fondateur Klyora Sites, 18 ans mais très professionnel) va appeler UN PROFESSIONNEL qui a reçu par email une maquette de site web.
 
 CONTEXTE : Tom ET le prospect auront la maquette OUVERTE sous les yeux pendant l'appel. L'appel EST le rendez-vous — PAS de planification d'un autre RDV. Si le prospect ne peut pas parler → proposer UN RAPPEL TÉLÉPHONIQUE. Jamais de visio/Zoom/Meet.
 
@@ -224,7 +224,7 @@ Si le prospect veut acheter → lien Stripe envoyé immédiatement (1× 199 € 
 Infos prospect :
 ${infoLines}
 
-Contexte offre WebConceptor (à mentionner SEULEMENT si le prospect demande) :
+Contexte offre Klyora Sites (à mentionner SEULEMENT si le prospect demande) :
 - Site vitrine premium sur-mesure : 199 € TTC
 - Paiement en 3× sans frais via Klarna (3 × 66,33 €)
 - Livraison en 5 jours (7 avec nom de domaine)
@@ -244,13 +244,13 @@ RÈGLES IMPÉRATIVES :
 RÈGLES IMPÉRATIVES (non négociables) :
 1. VOUVOIEMENT partout (« vous », « votre », jamais « tu »).
 2. ❌ INTERDICTION des mots : "visio", "visioconférence", "Zoom", "Google Meet", "Teams", "écran partagé", "en ligne" (au sens réunion). UNIQUEMENT téléphone.
-3. TOUJOURS respectueux. TOUJOURS se présenter clairement (qui est Tom, ce qu'est WebConceptor). Pas de pitch agressif.
+3. TOUJOURS respectueux. TOUJOURS se présenter clairement (qui est Tom, ce qu'est Klyora Sites). Pas de pitch agressif.
 4. Si signaux d'engagement → les UTILISER dans l'ouverture pour personnaliser (ex: "j'ai vu que vous étiez sur le point de commander..."). PAS d'invention — uniquement les vrais signaux fournis.
 
 STRUCTURE OBLIGATOIRE de l'ouverture (ordre strict en 4 étapes) :
-  (1) SALUTATION + PRÉSENTATION DE TOM : "Bonjour, Tom Bauer de WebConceptor à l'appareil."
+  (1) SALUTATION + PRÉSENTATION DE TOM : "Bonjour, Tom Bauer de Klyora Sites à l'appareil."
   (2) RESPECT DU TEMPS : "Est-ce que je vous dérange une minute ?" (laisse un blanc pour sa réponse mentale)
-  (3) SELF-PRÉSENTATION DE L'ENTREPRISE + MOTIF : "Je me présente rapidement : chez WebConceptor, nous créons et nous modernisons les sites internet pour les professionnels comme vous. J'ai préparé récemment une maquette sur-mesure pour [NOM], [UN bénéfice concret vrai pour ce métier]. Je vous l'ai envoyée par email."
+  (3) SELF-PRÉSENTATION DE L'ENTREPRISE + MOTIF : "Je me présente rapidement : chez Klyora Sites, nous créons et nous modernisons les sites internet pour les professionnels comme vous. J'ai préparé récemment une maquette sur-mesure pour [NOM], [UN bénéfice concret vrai pour ce métier]. Je vous l'ai envoyée par email."
   (4) QUESTION SUR LA MAQUETTE (adaptée à l'engagement) :
       - Si cart abandon : "D'ailleurs, j'ai vu que vous étiez sur le point de valider la commande avant de quitter la page — je voulais savoir s'il y a eu un souci technique ou une question qui vous a retenu ?"
       - Si vu 5× ou + : "D'ailleurs, j'ai vu que vous l'avez consultée plusieurs fois cette semaine — qu'en avez-vous pensé ? Y a-t-il des éléments qui vous freinent ?"

@@ -170,7 +170,7 @@ export async function POST(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(isOpenRouter ? { "HTTP-Referer": "https://webconceptor.fr", "X-Title": "WebConceptor Chatbot" } : {}),
+        ...(isOpenRouter ? { "HTTP-Referer": "https://webconceptor.fr", "X-Title": "Klyora Sites Chatbot" } : {}),
       },
       body: JSON.stringify({
         model: isOpenRouter ? "anthropic/claude-haiku-4-5" : "claude-haiku-4-5",

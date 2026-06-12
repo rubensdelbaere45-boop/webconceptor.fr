@@ -8,7 +8,7 @@ export default function CGU() {
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">W</span>
           </span>
-          <span className="text-[14px] font-semibold tracking-tight">WebConceptor</span>
+          <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
         </Link>
       </nav>
       <div className="max-w-2xl mx-auto px-6 py-16">
@@ -16,15 +16,15 @@ export default function CGU() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 1 — Objet</h2>
-            <p>Les presentes conditions generales d&apos;utilisation (CGU) regissent l&apos;acces et l&apos;utilisation du site webconceptor.fr ainsi que les prestations de creation de sites web proposees par WebConceptor.</p>
+            <p>Les presentes conditions generales d&apos;utilisation (CGU) regissent l&apos;acces et l&apos;utilisation du site webconceptor.fr ainsi que les prestations de creation de sites web proposees par Klyora Sites.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 2 — Prestations</h2>
-            <p>WebConceptor propose la creation de sites web professionnels sur-mesure. Le prix de base est a partir de 199 euros (paiement unique). Une formule d&apos;hebergement et de maintenance optionnelle est disponible a 50 euros par mois, sans engagement.</p>
+            <p>Klyora Sites propose la creation de sites web professionnels sur-mesure. Le prix de base est a partir de 199 euros (paiement unique). Une formule d&apos;hebergement et de maintenance optionnelle est disponible a 50 euros par mois, sans engagement.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 3 — Processus de commande</h2>
-            <p>Le client remplit le formulaire de demande en ligne. WebConceptor s&apos;engage a recontacter le client sous 48 heures maximum. Un devis personnalise est etabli avant tout debut de prestation. Aucun paiement n&apos;est exige avant validation du devis par le client.</p>
+            <p>Le client remplit le formulaire de demande en ligne. Klyora Sites s&apos;engage a recontacter le client sous 48 heures maximum. Un devis personnalise est etabli avant tout debut de prestation. Aucun paiement n&apos;est exige avant validation du devis par le client.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 4 — Livraison</h2>
@@ -36,11 +36,11 @@ export default function CGU() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 6 — Propriete</h2>
-            <p>A la livraison et apres paiement integral, le client devient proprietaire du site web. Les fichiers source lui sont remis sur demande. WebConceptor conserve le droit de mentionner la realisation dans son portfolio sauf demande contraire ecrite.</p>
+            <p>A la livraison et apres paiement integral, le client devient proprietaire du site web. Les fichiers source lui sont remis sur demande. Klyora Sites conserve le droit de mentionner la realisation dans son portfolio sauf demande contraire ecrite.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 7 — Responsabilite</h2>
-            <p>WebConceptor met tout en oeuvre pour assurer la qualite des prestations. La responsabilite de WebConceptor est limitee au montant de la prestation facturee. WebConceptor ne saurait etre tenu responsable des contenus fournis par le client.</p>
+            <p>Klyora Sites met tout en oeuvre pour assurer la qualite des prestations. La responsabilite de Klyora Sites est limitee au montant de la prestation facturee. Klyora Sites ne saurait etre tenu responsable des contenus fournis par le client.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 8 — Droit applicable</h2>

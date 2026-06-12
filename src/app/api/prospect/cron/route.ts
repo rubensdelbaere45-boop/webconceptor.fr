@@ -17,7 +17,7 @@ import { safeCompare } from "@/lib/security";
    elles ont souvent des commerces sans site web ou avec site vieillissant.
    ───────────────────────────────────────────────────────────────────────────── */
 const DEFAULT_QUERIES = [
-  // ── ZONE AUBENTON (≤60km) — priorité haute : ciblage local WebConceptor ──
+  // ── ZONE AUBENTON (≤60km) — priorité haute : ciblage local Klyora Sites ──
   "restaurant Laon", "restaurant Vervins", "restaurant Hirson", "restaurant Guise", "restaurant Fourmies",
   "coiffeur Laon", "coiffeur Vervins", "coiffeur Hirson", "coiffeur Fourmies",
   "boulangerie artisanale Laon", "boulangerie artisanale Vervins", "boulangerie artisanale Hirson",

@@ -8,7 +8,7 @@ export default function Confidentialite() {
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">W</span>
           </span>
-          <span className="text-[14px] font-semibold tracking-tight">WebConceptor</span>
+          <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
         </Link>
       </nav>
       <div className="max-w-2xl mx-auto px-6 py-16">
@@ -16,7 +16,7 @@ export default function Confidentialite() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Responsable du traitement</h2>
-            <p>WebConceptor — Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
+            <p>Klyora Sites — Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Donnees collectees</h2>

@@ -1,4 +1,4 @@
-# WebDirector — Guide d'intégration Next.js 16 + Supabase + Stripe
+# Klyora Director — Guide d'intégration Next.js 16 + Supabase + Stripe
 
 > Document destiné à un autre agent (Claude) qui va brancher ce kit UI
 > statique sur l'app de production. Tous les écrans sont des **Client

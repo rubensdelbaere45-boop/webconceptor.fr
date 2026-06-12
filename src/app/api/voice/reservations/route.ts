@@ -1,7 +1,7 @@
 /**
  * GET /api/voice/reservations
  * → liste les réservations restaurant générées par l'IA voice
- *   pour le compte WebDirector connecté (ou tout en mode admin)
+ *   pour le compte Klyora Director connecté (ou tout en mode admin)
  *
  * Query params :
  *   ?limit=N          (défaut 30)

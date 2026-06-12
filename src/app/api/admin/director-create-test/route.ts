@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/director-create-test
  * Body: { email, password, business_name?, city?, is_first_login? }
- * → Crée immédiatement un compte WebDirector avec mot de passe connu
+ * → Crée immédiatement un compte Klyora Director avec mot de passe connu
  *   pour test rapide (Tom).
  *
  * Auth: x-admin-key
