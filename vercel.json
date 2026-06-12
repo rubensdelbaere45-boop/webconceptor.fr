@@ -75,6 +75,9 @@
     },
     "src/app/api/cron/vider-brevo/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/cron/check-unsubscribe-replies/route.ts": {
+      "maxDuration": 60
     }
   },
   "regions": ["cdg1"],
@@ -109,6 +112,7 @@
     { "path": "/api/cron/vider-brevo", "schedule": "0 7 * * *" },
     { "path": "/api/cron/vider-brevo", "schedule": "0 12 * * *" },
     { "path": "/api/cron/vider-brevo", "schedule": "0 17 * * *" },
-    { "path": "/api/cron/vider-brevo", "schedule": "0 22 * * *" }
+    { "path": "/api/cron/vider-brevo", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/check-unsubscribe-replies", "schedule": "*/30 * * * *" }
   ]
 }
