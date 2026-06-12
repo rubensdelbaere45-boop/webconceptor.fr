@@ -28,27 +28,32 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  let id = new URL(req.url).searchParams.get("id") || "";
+  const url = new URL(req.url);
+  let id = url.searchParams.get("id") || "";
+  let slug = url.searchParams.get("slug") || "";
 
-  if (!id) {
+  if (!id && !slug) {
     try {
       const body = await req.json();
       if (typeof body?.id === "string") id = body.id;
+      if (typeof body?.slug === "string") slug = body.slug;
     } catch { /* ignore */ }
   }
 
-  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+  if (!id && !slug) {
+    return NextResponse.json({ error: "id OU slug requis" }, { status: 400 });
+  }
+  if (id && !/^[0-9a-f-]{36}$/i.test(id)) {
     return NextResponse.json({ error: "ID prospect invalide" }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();
 
-  // On récupère d'abord le prospect pour le logger avant suppression
-  const { data: existing, error: fetchErr } = await supabase
-    .from("prospects")
-    .select("id, name, slug")
-    .eq("id", id)
-    .maybeSingle();
+  // Lookup par slug ou id
+  let q = supabase.from("prospects").select("id, name, slug");
+  if (id) q = q.eq("id", id);
+  else q = q.eq("slug", slug);
+  const { data: existing, error: fetchErr } = await q.maybeSingle();
 
   if (fetchErr || !existing) {
     return NextResponse.json({ error: "Prospect introuvable" }, { status: 404 });
@@ -57,7 +62,7 @@ async function handler(req: NextRequest) {
   const { error: deleteErr } = await supabase
     .from("prospects")
     .delete()
-    .eq("id", id);
+    .eq("id", existing.id);
 
   if (deleteErr) {
     console.error("[delete] supabase error:", deleteErr);
