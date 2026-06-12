@@ -44,7 +44,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     subject: `🎉 Votre site est en ligne — ${order.site_url}`,
     html,
     fromName: "Tom — Klyora Sites",
-    fromEmail: "contact@webconceptor.fr",
+    fromEmail: "contact@klyora.fr",
   });
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });

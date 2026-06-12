@@ -28,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   await log(id, "info", `Déploiement de ${order.client}…`);
 
   // TODO : appeler l'API Vercel Deployments + IONOS domaine
-  const siteUrl = order.domaine ? `https://${order.domaine}` : `https://${id}.webconceptor.fr`;
+  const siteUrl = order.domaine ? `https://${order.domaine}` : `https://${id}.klyora.fr`;
   const now = new Date().toISOString();
   await supabase.from("orders").update({ deployed: true, deployed_at: now, site_url: siteUrl }).eq("id", id);
   await log(id, "ok", `Site en ligne : ${siteUrl}`);

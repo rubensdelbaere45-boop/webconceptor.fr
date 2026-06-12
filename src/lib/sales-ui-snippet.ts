@@ -686,7 +686,7 @@ body{padding-top:54px !important}
     }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, data: j }; }); })
       .then(function(res){
         if (res.ok && res.data.url) { location.href = res.data.url; return; }
-        err.textContent = res.data.error || 'Erreur technique, réessayez ou écrivez à contact@webconceptor.fr';
+        err.textContent = res.data.error || 'Erreur technique, réessayez ou écrivez à contact@klyora.fr';
         err.classList.add('show');
         submit.disabled = false;
         submit.textContent = 'Payer en ligne (Stripe) →';

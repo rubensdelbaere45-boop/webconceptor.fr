@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   const key = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
   if (!key) {
     return NextResponse.json({
-      reply: "Désolé, je n'arrive pas à me connecter pour le moment. Vous pouvez écrire directement à Tom par email : contact@webconceptor.fr ou l'appeler au 06 35 59 24 71.",
+      reply: "Désolé, je n'arrive pas à me connecter pour le moment. Vous pouvez écrire directement à Tom par email : contact@klyora.fr ou l'appeler au 06 35 59 24 71.",
       shouldEscalate: true,
     });
   }
@@ -180,7 +180,7 @@ RÈGLES STRICTES :
 
     if (!res.ok) {
       return NextResponse.json({
-        reply: "Je n'arrive pas à répondre à cette question. Cliquez sur 'Demander une modification' ou écrivez à contact@webconceptor.fr, Tom répond sous 24 h.",
+        reply: "Je n'arrive pas à répondre à cette question. Cliquez sur 'Demander une modification' ou écrivez à contact@klyora.fr, Tom répond sous 24 h.",
         shouldEscalate: true,
       });
     }
@@ -237,7 +237,7 @@ RÈGLES STRICTES :
     });
   } catch {
     return NextResponse.json({
-      reply: "Désolé, petite coupure. Cliquez sur 'Demander une modification' ou écrivez à contact@webconceptor.fr.",
+      reply: "Désolé, petite coupure. Cliquez sur 'Demander une modification' ou écrivez à contact@klyora.fr.",
       shouldEscalate: true,
     });
   }

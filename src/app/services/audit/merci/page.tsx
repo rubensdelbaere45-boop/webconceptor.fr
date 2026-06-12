@@ -10,9 +10,9 @@ export default function AuditMerciPage() {
         </p>
         <div className="bg-slate-50 rounded-2xl p-5 text-sm text-slate-700 text-left mb-6">
           <p className="font-semibold mb-2">📧 Vérifiez votre boîte email</p>
-          <p>Si vous ne voyez rien dans 10 minutes, écrivez-nous à <strong>contact@webconceptor.fr</strong></p>
+          <p>Si vous ne voyez rien dans 10 minutes, écrivez-nous à <strong>contact@klyora.fr</strong></p>
         </div>
-        <a href="https://webconceptor.fr" className="text-blue-600 text-sm hover:underline">← Retour au site</a>
+        <a href="https://klyora.fr" className="text-blue-600 text-sm hover:underline">← Retour au site</a>
       </div>
     </div>
   );

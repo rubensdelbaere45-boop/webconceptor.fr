@@ -97,7 +97,7 @@ async function sendAdminEmail({
   ville?: string;
 }) {
   const apiKey = process.env.BREVO_API_KEY;
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "contact@webconceptor.fr";
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "contact@klyora.fr";
   if (!apiKey) return;
 
   const hasDomain = isSerenite && domain && domain !== "(aucun)";
@@ -184,7 +184,7 @@ async function sendAdminEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Klyora Sites Bot", email: "contact@webconceptor.fr" },
+        sender: { name: "Klyora Sites Bot", email: "contact@klyora.fr" },
         to: [{ email: adminEmail, name: "Rubens" }],
         subject,
         htmlContent,
@@ -219,7 +219,7 @@ async function scheduleUpsellEmail({
 
   // J+25 : 5 jours avant la fin du mois offert
   const sendAt = new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString();
-  const mockupUrl = `https://webconceptor.fr/prospects/${encodeURIComponent(prospectSlug)}`;
+  const mockupUrl = `https://klyora.fr/prospects/${encodeURIComponent(prospectSlug)}`;
   const hasDomain = domain && domain !== "(aucun)";
 
   const htmlContent = `
@@ -268,7 +268,7 @@ async function scheduleUpsellEmail({
 
     <p style="font-size:13px;color:#888;border-top:1px solid #f0f0f0;padding-top:20px;margin:0;line-height:1.6">
       Une question ? Répondez directement à cet email.<br>
-      <a href="mailto:contact@webconceptor.fr" style="color:#0d1b5e;text-decoration:none">contact@webconceptor.fr</a> — L'équipe Klyora Sites
+      <a href="mailto:contact@klyora.fr" style="color:#0d1b5e;text-decoration:none">contact@klyora.fr</a> — L'équipe Klyora Sites
     </p>
   </div>
 </div>`;
@@ -278,7 +278,7 @@ async function scheduleUpsellEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Klyora Sites", email: "contact@webconceptor.fr" },
+        sender: { name: "Klyora Sites", email: "contact@klyora.fr" },
         to: [{ email: buyerEmail, name: buyerFirstName }],
         subject: `Votre mois Sérénité offert se termine dans 5 jours — ${prospectName}`,
         htmlContent,
@@ -306,7 +306,7 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject: "Paiement reçu — votre site Klyora Sites arrive 🎉",
         htmlContent: `
@@ -336,8 +336,8 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
               </div>
             </div>
             <p style="font-size:14px;line-height:1.6;color:#525252;margin:0 0 8px">Votre code projet : <strong style="color:#0a0a0a;font-size:18px;letter-spacing:0.1em">${code}</strong></p>
-            <a href="https://webconceptor.fr/code?c=${code}" style="display:inline-block;background:#0a0a0a;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;text-decoration:none;margin:12px 0 28px">Suivre mon projet →</a>
-            <p style="font-size:13px;color:#a3a3a3;border-top:1px solid #f0f0f0;padding-top:20px;margin:0">Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none">contact@webconceptor.fr</a><br>L'équipe Klyora Sites</p>
+            <a href="https://klyora.fr/code?c=${code}" style="display:inline-block;background:#0a0a0a;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;text-decoration:none;margin:12px 0 28px">Suivre mon projet →</a>
+            <p style="font-size:13px;color:#a3a3a3;border-top:1px solid #f0f0f0;padding-top:20px;margin:0">Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@klyora.fr" style="color:#0066ff;text-decoration:none">contact@klyora.fr</a><br>L'équipe Klyora Sites</p>
           </div>
         `,
       }),
@@ -660,7 +660,7 @@ export async function POST(req: NextRequest) {
           firstName: firstName.slice(0, 60),
           lastName: (lastName || buyerName).slice(0, 60),
           organization: metadata.buyer_entreprise || undefined,
-          email: buyerEmail || "contact@webconceptor.fr",
+          email: buyerEmail || "contact@klyora.fr",
           phone: buyerTel || "+33635592471",
           street: metadata.buyer_adresse || "",
           city: metadata.buyer_ville || "",
@@ -750,7 +750,7 @@ export async function POST(req: NextRequest) {
           status: "active",
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
         const chatUrl   = `${baseUrl}/chat/${token}`;
         const widgetUrl = `${baseUrl}/api/chatbot/widget?token=${token}`;
         const scriptTag = `<script src="${widgetUrl}" defer></script>`;
@@ -763,7 +763,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { "api-key": brevoKey, "Content-Type": "application/json" },
             body: JSON.stringify({
-              sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
+              sender: { name: "Tom Bauer — Klyora Sites", email: "contact@klyora.fr" },
               to: [{ email: ownerEmail, name: ownerName }],
               subject: `🤖 Votre Chatbot IA est prêt — ${businessName}`,
               htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -795,7 +795,7 @@ export async function POST(req: NextRequest) {
 
 <p style="font-size:14px;color:#525252">Des questions ? Répondez directement à cet email ou appelez le 06 35 59 24 71.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr · webconceptor.fr
+  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@klyora.fr · klyora.fr
 </div>
 </div>`,
             }),
@@ -858,7 +858,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Email avec lien de connexion Google
-      const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+      const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
       const authUrl   = `${baseUrl}/api/gmb/auth?token=${authToken}`;
       const brevoKey  = process.env.BREVO_API_KEY;
 
@@ -868,7 +868,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "api-key": brevoKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
+            sender: { name: "Tom Bauer — Klyora Sites", email: "contact@klyora.fr" },
             to: [{ email: ownerEmail, name: ownerName }],
             subject: `🌟 Activez votre Agent Avis Google — ${businessName}`,
             htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -893,7 +893,7 @@ export async function POST(req: NextRequest) {
 
 <p style="font-size:14px;color:#525252">Ce lien est personnel et valide 30 jours. Des questions ? Répondez à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr
+  <strong>Tom Bauer</strong> — Klyora Sites<br>contact@klyora.fr
 </div>
 </div>`,
           }),
@@ -946,7 +946,7 @@ export async function POST(req: NextRequest) {
 
         if (newOrder) {
           // Déclencher la génération en arrière-plan
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
           fetch(`${baseUrl}/api/audit-ia`, {
             method: "POST",
             headers: {
@@ -1074,7 +1074,7 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Email de livraison complet ──
-        const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+        const baseUrl   = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
         const firstName = (ownerName || "").split(" ")[0] || "vous";
         const brevoKey  = process.env.BREVO_API_KEY;
 
@@ -1134,7 +1134,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { "api-key": brevoKey, "Content-Type": "application/json" },
             body: JSON.stringify({
-              sender: { name: "Tom — AGENTConceptor", email: "contact@webconceptor.fr" },
+              sender: { name: "Tom — AGENTConceptor", email: "contact@klyora.fr" },
               to: [{ email: ownerEmail, name: ownerName }],
               subject: `🤖 Vos agents IA sont prêts — ${businessName}`,
               htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -1155,7 +1155,7 @@ ${agentBlocks.join("\n")}
 
 <div style="border-top:1px solid #e5e5e5;padding-top:20px;margin-top:24px;font-size:13px;color:#737373">
   <strong style="color:#0a0a0a">Tom Bauer</strong> — AGENTConceptor / Klyora Sites<br>
-  contact@webconceptor.fr · webconceptor.fr
+  contact@klyora.fr · klyora.fr
 </div>
 </div>`,
             }),

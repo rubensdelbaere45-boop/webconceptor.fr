@@ -48,7 +48,7 @@ function buildCloserEmail(p: Prospect): { subject: string; html: string; text: s
   friday.setDate(now.getDate() + daysUntilFriday);
   const fridayStr = friday.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+  const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
   const firstName = p.name.split(/[ -]/)[0];
 
   const subject = `${firstName}, frais de setup offerts si abonnement avant ${fridayStr.split(" ")[0]}`;
@@ -118,8 +118,8 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
-        replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "contact@klyora.fr" },
+        replyTo: { name: "Tom", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

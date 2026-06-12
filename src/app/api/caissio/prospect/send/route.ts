@@ -122,8 +122,8 @@ function buildCaissioEmailHtml({
     <p style="font-size:13px;color:#6B7280">La configuration prend moins de 5 minutes. Vous importez vos produits depuis un fichier Excel, ou vous les saisissez directement. Aucune formation nécessaire.</p>
   </div>
   <div class="footer">
-    <p>Caissio par <a href="https://webconceptor.fr">Klyora Sites</a> · ${city}</p>
-    <p style="margin-top:6px">Pour ne plus recevoir ces emails : <a href="mailto:contact@webconceptor.fr?subject=Désabonnement ${encodeURIComponent(name)}">se désabonner</a></p>
+    <p>Caissio par <a href="https://klyora.fr">Klyora Sites</a> · ${city}</p>
+    <p style="margin-top:6px">Pour ne plus recevoir ces emails : <a href="mailto:contact@klyora.fr?subject=Désabonnement ${encodeURIComponent(name)}">se désabonner</a></p>
   </div>
 </div>
 </body>
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
   const dry_run    = Boolean(body.dry_run);
 
   const brevoKey  = process.env.BREVO_API_KEY;
-  const appUrl    = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const appUrl    = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
   if (!brevoKey) return NextResponse.json({ error: "BREVO_API_KEY manquant" }, { status: 500 });
 
   const supabase = getSupabase();
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { "api-key": brevoKey, "Content-Type": "application/json" },
         body: JSON.stringify({
-          sender:    { name: "Caissio", email: "contact@webconceptor.fr" },
+          sender:    { name: "Caissio", email: "contact@klyora.fr" },
           to:        [{ email: p.email, name: p.name }],
           subject:   `Caissio — la caisse pour les ${p.business_type || "commerces"} à ${p.city || "chez vous"} (7 jours offerts)`,
           htmlContent: html,

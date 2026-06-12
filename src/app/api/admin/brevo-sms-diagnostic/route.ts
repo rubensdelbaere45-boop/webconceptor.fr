@@ -44,7 +44,7 @@ interface SendOutcome {
 }
 
 async function sendOne(apiKey: string, sender: string, to: string, marker: string): Promise<SendOutcome> {
-  const content = `[${marker}] Test sender "${sender}" — webconceptor.fr. STOP arret.`;
+  const content = `[${marker}] Test sender "${sender}" — klyora.fr. STOP arret.`;
   try {
     const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
       method: "POST",

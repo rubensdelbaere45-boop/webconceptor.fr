@@ -147,7 +147,7 @@ async function handler(req: NextRequest) {
     const mobile = toMobileE164(p.phone || "");
     if (!mobile) continue; // safety (déjà filtré mais double check)
 
-    const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
     const content = buildHotLeadSms(p.name, mockupUrl);
     const sms = await sendBrevoSms(mobile, content);
 

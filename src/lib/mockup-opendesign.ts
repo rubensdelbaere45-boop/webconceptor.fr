@@ -263,7 +263,7 @@ function detectMetierFromName(name: string): string | null {
 export function generateOpenDesignMockup(
   prospect: OpenDesignProspect,
   content: MockupContent,
-  origin: string = "https://webconceptor.fr"
+  origin: string = "https://klyora.fr"
 ): string {
   // ── Fail-safe métier : si nom dit "menuiserie" mais type = plombier,
   //    on utilise le type détecté du nom (la donnée la plus fiable)

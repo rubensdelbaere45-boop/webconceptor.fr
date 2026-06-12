@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   return NextResponse.redirect(
-    "https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/latest/download/Caissio-Setup.exe",
+    "https://github.com/rubensdelbaere45-boop/klyora.fr/releases/latest/download/Caissio-Setup.exe",
     { status: 302 }
   );
 }

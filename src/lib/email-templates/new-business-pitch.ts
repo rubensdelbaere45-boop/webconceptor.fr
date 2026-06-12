@@ -101,7 +101,7 @@ export function buildNewBusinessEmail(opts: NewBusinessPitchOptions): { subject:
     <p style="margin-top:24px">
       Tom Bauer<br>
       <strong>Klyora Sites</strong><br>
-      <a href="mailto:contact@webconceptor.fr" style="color:#0066ff">contact@webconceptor.fr</a>
+      <a href="mailto:contact@klyora.fr" style="color:#0066ff">contact@klyora.fr</a>
     </p>
 
     <hr style="border:none;border-top:1px solid #eee;margin:20px 0">

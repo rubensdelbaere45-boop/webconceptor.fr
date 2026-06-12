@@ -40,7 +40,7 @@ p{font-size:15px;color:#525252;line-height:1.6;margin:0 0 10px}
 <div class="card">
 <div class="logo">W</div>
 ${body}
-<a class="back" href="https://webconceptor.fr">webconceptor.fr</a>
+<a class="back" href="https://klyora.fr">klyora.fr</a>
 </div>
 </body></html>`;
 }
@@ -86,7 +86,7 @@ async function processUnsubscribe(id: string | null, email: string | null): Prom
       ? { ok: true, message: "Votre adresse a bien été retirée de nos listes." }
       : { ok: false, message: "Nous n'avons pas trouvé votre adresse dans nos listes. Vous êtes déjà désabonné." };
   } catch {
-    return { ok: false, message: "Erreur technique, réessayez dans quelques minutes ou écrivez à contact@webconceptor.fr." };
+    return { ok: false, message: "Erreur technique, réessayez dans quelques minutes ou écrivez à contact@klyora.fr." };
   }
 }
 

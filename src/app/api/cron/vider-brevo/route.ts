@@ -17,7 +17,7 @@ import { safeCompare } from "@/lib/security";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const ORIGIN = "https://webconceptor.fr";
+const ORIGIN = "https://klyora.fr";
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || "";
 const CRON_SECRET = process.env.CRON_SECRET || "";
 

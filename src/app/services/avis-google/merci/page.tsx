@@ -12,7 +12,7 @@ export default function AvisGoogleMerciPage() {
           <p className="font-semibold mb-2">📧 Vérifiez votre boîte email</p>
           <p>L&apos;email de connexion arrive dans 1-2 minutes. Vérifiez vos spams si nécessaire.</p>
         </div>
-        <a href="https://webconceptor.fr" className="text-blue-600 text-sm hover:underline">← Retour au site</a>
+        <a href="https://klyora.fr" className="text-blue-600 text-sm hover:underline">← Retour au site</a>
       </div>
     </div>
   );

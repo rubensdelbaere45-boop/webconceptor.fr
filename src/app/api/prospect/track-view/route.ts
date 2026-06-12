@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       const email = String(p.email || "—");
       const rating = p.google_rating ? `${p.google_rating}/5 · ${p.google_reviews_count || 0} avis` : "—";
       const siteLabel = p.site_quality === "none" ? "❌ AUCUN site" : p.site_quality === "poor" ? "⚠️ Site vieillissant" : "Site existant";
-      const mockupUrl = `https://webconceptor.fr/prospects/${slug}`;
+      const mockupUrl = `https://klyora.fr/prospects/${slug}`;
       const phoneLink = phone !== "—" ? `\n\n<a href="tel:${phone.replace(/\s/g, "")}">📞 Appeler ${phone}</a>` : "";
 
       const msg = isFirstView

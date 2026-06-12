@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
    Récupère les couleurs/config du client
    et génère le script à la volée.
 
-   Usage : <script src="https://webconceptor.fr/api/chatbot/widget?token=XXX"></script>
+   Usage : <script src="https://klyora.fr/api/chatbot/widget?token=XXX"></script>
    ══════════════════════════════════════════ */
 
 function getSupabase() {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
   const color = bot.accent_color || "#0066ff";
   const businessName = escapeJs(bot.business_name || "Assistant");
   const welcome = escapeJs(bot.welcome_message || "Bonjour ! Comment puis-je vous aider ?");
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
     '    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
     '  </button>',
     '</form>',
-    '<div id="wcbot-branding">Propulsé par <a href="https://webconceptor.fr" target="_blank" rel="noopener">Klyora Sites</a></div>',
+    '<div id="wcbot-branding">Propulsé par <a href="https://klyora.fr" target="_blank" rel="noopener">Klyora Sites</a></div>',
   ].join('');
 
   document.body.appendChild(btn);

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name: name || to }],
         subject,
         htmlContent: html,

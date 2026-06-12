@@ -26,11 +26,11 @@ Je souhaite faire valider mon expéditeur SMS alphanumérique sur mon compte Bre
 
 📛 Nom de l'expéditeur souhaité : WebConcept (10 caractères)
 🏢 Activité : Création de sites web professionnels pour artisans et commerces de proximité (TPE françaises)
-🌐 Site web : https://webconceptor.fr
+🌐 Site web : https://klyora.fr
 📞 Téléphone du gérant : 06 35 59 24 71
 
 📋 Contexte :
-- J'envoie des SMS transactionnels à des prospects qui ont ouvert leur maquette de site web sur webconceptor.fr
+- J'envoie des SMS transactionnels à des prospects qui ont ouvert leur maquette de site web sur klyora.fr
 - Tous les destinataires ont eu un point de contact préalable (email de prospection avec lien vers leur maquette personnalisée)
 - Les SMS contiennent toujours la mention "STOP pour arrêter" et un opt-out actif
 - Volume estimé : 50-100 SMS/mois
@@ -52,7 +52,7 @@ SIRET / SIREN disponible sur demande.`;
     message_to_copy: template,
     where_to_paste: "Chat support Brevo (bouton bleu en bas à droite de https://app.brevo.com)",
     files_to_attach: [
-      "Screenshot https://webconceptor.fr (page d'accueil)",
+      "Screenshot https://klyora.fr (page d'accueil)",
       "Screenshot des mentions légales mentionnant 'Klyora Sites'",
       "Screenshot du checkout avec opt-in SMS",
     ],

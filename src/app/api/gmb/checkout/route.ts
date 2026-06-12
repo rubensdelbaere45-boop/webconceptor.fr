@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     const priceId = process.env.STRIPE_GMB_PRICE_ID || "price_gmb_149_monthly";
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

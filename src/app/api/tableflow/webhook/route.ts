@@ -7,7 +7,7 @@ import Stripe from "stripe";
    Webhook Stripe dédié à TableFlow.
 
    À configurer dans Stripe Dashboard :
-   → Endpoint : https://webconceptor.fr/api/tableflow/webhook
+   → Endpoint : https://klyora.fr/api/tableflow/webhook
    → Events   : checkout.session.completed
                 customer.subscription.deleted
 
@@ -21,7 +21,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder"
 });
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET_TABLEFLOW || "";
-const BASE_URL       = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+const BASE_URL       = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
 function getSupabase() {
   return createClient(
@@ -99,7 +99,7 @@ async function sendActivationEmail({
     <p style="font-size:13px;color:#9CA3AF;text-align:center;margin-top:-12px">Lien unique et sécurisé — gardez-le précieusement</p>
 
     <div style="background:#FEF9C3;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;margin:20px 0">
-      <p style="margin:0;font-size:13px;color:#78350F">⚠️ <strong>Conservez ce lien.</strong> C'est votre accès admin. Si vous le perdez, contactez-nous à <a href="mailto:contact@webconceptor.fr" style="color:#c19a56">contact@webconceptor.fr</a></p>
+      <p style="margin:0;font-size:13px;color:#78350F">⚠️ <strong>Conservez ce lien.</strong> C'est votre accès admin. Si vous le perdez, contactez-nous à <a href="mailto:contact@klyora.fr" style="color:#c19a56">contact@klyora.fr</a></p>
     </div>
 
     <p style="font-weight:700;color:#111827">Vos 3 premières actions :</p>
@@ -120,8 +120,8 @@ async function sendActivationEmail({
     <a href="${menuUrl}" class="btn-secondary">👁 Voir ma carte comme mes clients</a>
   </div>
   <div class="footer">
-    <p>Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
-    <p style="margin-top:8px">TableFlow par <a href="https://webconceptor.fr">Klyora Sites</a> · <a href="#">Se désabonner</a></p>
+    <p>Une question ? Répondez directement à cet email ou écrivez à <a href="mailto:contact@klyora.fr">contact@klyora.fr</a></p>
+    <p style="margin-top:8px">TableFlow par <a href="https://klyora.fr">Klyora Sites</a> · <a href="#">Se désabonner</a></p>
   </div>
 </div>
 </body>
@@ -132,7 +132,7 @@ async function sendActivationEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender:  { name: "TableFlow", email: "contact@webconceptor.fr" },
+        sender:  { name: "TableFlow", email: "contact@klyora.fr" },
         to:      [{ email: toEmail, name: toName }],
         subject: `🎉 Votre menu TableFlow est activé — ${restaurantName}`,
         htmlContent: htmlBody,

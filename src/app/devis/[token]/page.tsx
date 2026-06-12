@@ -101,7 +101,7 @@ export default async function DevisPage({ params }: Props) {
 
         <p className="text-center text-xs text-gray-400 mt-6">
           Propulsé par{" "}
-          <a href="https://webconceptor.fr/agentconceptor" target="_blank" rel="noopener noreferrer"
+          <a href="https://klyora.fr/agentconceptor" target="_blank" rel="noopener noreferrer"
             className="text-blue-500 hover:underline">AGENTConceptor</a>
           {" "}· Agent Devis IA
         </p>

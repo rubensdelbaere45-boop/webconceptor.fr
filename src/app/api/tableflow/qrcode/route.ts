@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "slug manquant" }, { status: 400 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
   const menuUrl = `${baseUrl}/restaurant/${slug}`;
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(menuUrl)}&margin=10&qzone=1&color=1a1310`;

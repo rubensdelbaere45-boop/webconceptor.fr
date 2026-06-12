@@ -124,6 +124,6 @@ export async function POST(req: NextRequest) {
       name: script.agent_name,
       greeting: script.greeting.slice(0, 100) + "…",
     },
-    next_step: `Configure le numéro Vapi → serverUrl = https://webconceptor.fr/api/voice/inbound-call`,
+    next_step: `Configure le numéro Vapi → serverUrl = https://klyora.fr/api/voice/inbound-call`,
   });
 }

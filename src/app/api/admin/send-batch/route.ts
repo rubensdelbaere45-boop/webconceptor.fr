@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (guard) return guard;
 
   const { batchSize = 50 } = await req.json().catch(() => ({} as { batchSize?: number }));
-  const origin = process.env.NEXT_PUBLIC_BASE_URL || "https://webconceptor.fr";
+  const origin = process.env.NEXT_PUBLIC_BASE_URL || "https://klyora.fr";
   const adminKey = process.env.ADMIN_SECRET_KEY || "";
 
   const res = await fetch(`${origin}/api/prospect/send`, {

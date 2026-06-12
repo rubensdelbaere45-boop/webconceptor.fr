@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   return NextResponse.redirect(
-    "https://github.com/rubensdelbaere45-boop/webconceptor.fr/releases/latest/download/Caissio.dmg",
+    "https://github.com/rubensdelbaere45-boop/klyora.fr/releases/latest/download/Caissio.dmg",
     { status: 302 }
   );
 }

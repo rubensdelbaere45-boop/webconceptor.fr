@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Aucun agent sélectionné" }, { status: 400 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
     // Construire la liste des agents finaux
     const finalAgents = isPack ? VALID_AGENTS : agents;

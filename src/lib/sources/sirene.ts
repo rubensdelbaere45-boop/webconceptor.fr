@@ -129,7 +129,7 @@ export async function searchSirene(opts: SireneSearchOptions): Promise<SireneCom
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(15_000),
-      headers: { "User-Agent": "Klyora Sites/1.0 (contact@webconceptor.fr)" },
+      headers: { "User-Agent": "Klyora Sites/1.0 (contact@klyora.fr)" },
     });
     if (!res.ok) return [];
     const data = await res.json();

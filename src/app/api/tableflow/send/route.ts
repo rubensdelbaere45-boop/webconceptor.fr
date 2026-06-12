@@ -233,7 +233,7 @@ function buildEmailBody(prospect: Prospect, demoUrl: string): string {
     <p style="margin:0 0 8px;font-size:13px;color:#888;line-height:1.5">
       Cet email vous a été envoyé car ${prospect.name} n'a pas encore de menu digital.
       Si vous ne souhaitez plus recevoir nos messages :
-      <a href="https://webconceptor.fr/api/unsubscribe?email={{EMAIL}}" style="color:#c19a56">se désabonner</a>.
+      <a href="https://klyora.fr/api/unsubscribe?email={{EMAIL}}" style="color:#c19a56">se désabonner</a>.
     </p>
     <p style="margin:0;font-size:12px;color:#BBB">
       TableFlow — Klyora Sites · Menu digital pour restaurateurs
@@ -282,12 +282,12 @@ async function sendViaBrevo(
       "api-key": brevoKey,
     },
     body: JSON.stringify({
-      sender: { name: "Rubens de TableFlow", email: "rubens@webconceptor.fr" },
+      sender: { name: "Rubens de TableFlow", email: "contact@klyora.fr" },
       to: [{ email: to, name: restaurantName }],
       subject,
       htmlContent: htmlBody,
       headers: {
-        "List-Unsubscribe": `<https://webconceptor.fr/api/unsubscribe?email=${encodeURIComponent(to)}>`,
+        "List-Unsubscribe": `<https://klyora.fr/api/unsubscribe?email=${encodeURIComponent(to)}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         "X-Campaign": "tableflow-menu-digital",
       },
@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin();
-  const origin = "https://webconceptor.fr";
+  const origin = "https://klyora.fr";
 
   // Récupère les prospects à envoyer (status = found)
   const { data: prospects, error: fetchErr } = await supabase

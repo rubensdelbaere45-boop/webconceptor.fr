@@ -35,17 +35,17 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (!sub) {
-    return new NextResponse("Lien expiré ou invalide. Contactez contact@webconceptor.fr", { status: 404 });
+    return new NextResponse("Lien expiré ou invalide. Contactez contact@klyora.fr", { status: 404 });
   }
 
   if (sub.status === "active") {
     // Déjà connecté — rediriger vers un message de confirmation
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
     return NextResponse.redirect(`${baseUrl}/services/avis-google/deja-connecte`);
   }
 
   const clientId     = process.env.GOOGLE_OAUTH_CLIENT_ID || "";
-  const redirectUri  = `${process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr"}/api/gmb/callback`;
+  const redirectUri  = `${process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr"}/api/gmb/callback`;
   const scope        = "https://www.googleapis.com/auth/business.manage";
 
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");

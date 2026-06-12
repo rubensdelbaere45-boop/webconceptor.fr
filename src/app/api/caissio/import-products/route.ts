@@ -51,7 +51,7 @@ ${truncated}
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://webconceptor.fr",
+        "HTTP-Referer": "https://klyora.fr",
         "X-Title": "Caissio Import",
       },
       body: JSON.stringify({

@@ -183,7 +183,7 @@ async function checks(): Promise<CheckResult[]> {
 
   // ── 8. Endpoint /api/prospect/send ──
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
     const sendRes = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(5000) });
     if (sendRes.ok) {
       results.push({ name: "API Health", status: "ok", message: "Endpoint /api/health répond correctement" });

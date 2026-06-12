@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (token && chatId) {
-    const mockupUrl = `https://webconceptor.fr/prospects/${prospect_slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${prospect_slug}`;
     const msg =
       `🧪 <b>DÉMO TESTÉE — prospect ultra chaud</b>\n\n` +
       `<b>🍽 Restaurant :</b> ${escapeTelegram(prospect.name)}\n` +
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
     smsStatus === "sent"
       ? `Réservation confirmée — vous recevez le SMS de confirmation dans quelques secondes. (${currentCount + 1}/${DEMO_SMS_MAX} SMS de démo utilisés)`
       : smsStatus === "quota_reached"
-      ? `Réservation enregistrée, mais vous avez déjà utilisé les ${DEMO_SMS_MAX} SMS de démonstration disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : contact@webconceptor.fr`
+      ? `Réservation enregistrée, mais vous avez déjà utilisé les ${DEMO_SMS_MAX} SMS de démonstration disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : contact@klyora.fr`
       : smsStatus === "failed"
       ? "Réservation enregistrée, mais nous n'avons pas pu envoyer le SMS de confirmation. Vérifiez que votre numéro est au format français."
       : "Réservation enregistrée.";

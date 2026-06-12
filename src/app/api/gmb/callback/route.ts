@@ -18,7 +18,7 @@ function getSupabase() {
   );
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
 function htmlPage(title: string, body: string): string {
   return `<!DOCTYPE html><html lang="fr"><head>
@@ -45,7 +45,7 @@ async function sendConfirmationEmail(ownerEmail: string, ownerName: string, busi
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
+      sender: { name: "Tom Bauer — Klyora Sites", email: "contact@klyora.fr" },
       to: [{ email: ownerEmail, name: ownerName }],
       subject: `✅ Votre agent avis Google est actif — ${businessName}`,
       htmlContent: `<div style="font-family:'Inter',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a">
@@ -66,7 +66,7 @@ async function sendConfirmationEmail(ownerEmail: string, ownerName: string, busi
 <p style="font-size:14px;color:#525252;margin-top:16px">Une question ? Répondez directement à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;padding-top:20px;margin-top:24px;font-size:13px;color:#737373">
   <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong> — Klyora Sites</p>
-  <p style="margin:0">contact@webconceptor.fr · 06 35 59 24 71</p>
+  <p style="margin:0">contact@klyora.fr · 06 35 59 24 71</p>
 </div>
 </div>`,
     }),
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
         <div class="icon">❌</div>
         <h1>Connexion annulée</h1>
         <p>Vous avez annulé la connexion Google. <a href="${baseUrl}/api/gmb/auth?token=${authToken}">Réessayer</a></p>
-        <p>Besoin d'aide ? Écrivez à <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
+        <p>Besoin d'aide ? Écrivez à <a href="mailto:contact@klyora.fr">contact@klyora.fr</a></p>
       `),
       { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
 
   if (!sub) {
     return new NextResponse(
-      htmlPage("Lien invalide", `<div class="icon">⚠️</div><h1>Lien invalide</h1><p>Contactez <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>`),
+      htmlPage("Lien invalide", `<div class="icon">⚠️</div><h1>Lien invalide</h1><p>Contactez <a href="mailto:contact@klyora.fr">contact@klyora.fr</a></p>`),
       { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
   }
@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
       <h1>Votre agent est actif !</h1>
       <p>Félicitations ! Votre agent IA va maintenant répondre automatiquement à tous les avis Google de <strong>${sub.business_name}</strong>.</p>
       <p>Vous allez recevoir un email de confirmation dans quelques instants.</p>
-      <p style="margin-top:24px;font-size:13px;color:#9ca3af">Une question ? <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
+      <p style="margin-top:24px;font-size:13px;color:#9ca3af">Une question ? <a href="mailto:contact@klyora.fr">contact@klyora.fr</a></p>
     `),
     { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
   );

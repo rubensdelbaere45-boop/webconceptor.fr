@@ -54,7 +54,7 @@ function buildFinalPushEmail(prospectName: string, mockupUrl: string, unsubscrib
   <p style="font-size:14px;color:#525252;margin:0">
     <strong style="color:#1a1a1a">Tom Bauer</strong><br>
     Klyora Sites<br>
-    contact@webconceptor.fr · 06 35 59 24 71
+    contact@klyora.fr · 06 35 59 24 71
   </p>
 
   <p style="font-size:11px;color:#999;margin:32px 0 0;padding-top:16px;border-top:1px solid #eee">
@@ -79,7 +79,7 @@ Bien cordialement,
 
 Tom Bauer
 Klyora Sites
-contact@webconceptor.fr · 06 35 59 24 71
+contact@klyora.fr · 06 35 59 24 71
 
 —
 Pour ne plus recevoir de messages de notre part : ${unsubscribeUrl}`;
@@ -95,14 +95,14 @@ async function sendEmail(to: string, name: string, subject: string, html: string
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,
         textContent: text,
         // RFC 2369 + RFC 8058 — Gmail/Yahoo bulk sender policy depuis fév 2024
         headers: {
-          "List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:unsubscribe@webconceptor.fr?subject=unsubscribe>`,
+          "List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:unsubscribe@klyora.fr?subject=unsubscribe>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       }),
@@ -148,8 +148,8 @@ async function handler(req: NextRequest) {
   const results: Array<{ id: string; status: string }> = [];
 
   for (const p of prospects) {
-    const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
-    const unsubscribeUrl = `https://webconceptor.fr/api/unsubscribe?id=${p.id}&email=${encodeURIComponent(p.email)}`;
+    const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
+    const unsubscribeUrl = `https://klyora.fr/api/unsubscribe?id=${p.id}&email=${encodeURIComponent(p.email)}`;
     const { subject, html, text } = buildFinalPushEmail(p.name, mockupUrl, unsubscribeUrl);
 
     const targets: string[] = [p.email];

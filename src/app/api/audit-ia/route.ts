@@ -191,7 +191,7 @@ async function generateAuditReport(order: {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(isOR ? { "HTTP-Referer": "https://webconceptor.fr" } : {}),
+        ...(isOR ? { "HTTP-Referer": "https://klyora.fr" } : {}),
       },
       body: JSON.stringify({
         model: isOR ? "anthropic/claude-haiku-4-5" : "claude-haiku-4-5",
@@ -329,11 +329,11 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
   <div class="cta">
     <h2>Passez à l'action dès aujourd'hui</h2>
     <p>Klyora Sites peut corriger tous ces problèmes pour vous, rapidement et sans prise de tête.</p>
-    <a href="https://webconceptor.fr">Voir nos services →</a>
+    <a href="https://klyora.fr">Voir nos services →</a>
   </div>
 
   <div class="footer">
-    <p>Audit réalisé par <strong>Klyora Sites</strong> · contact@webconceptor.fr · webconceptor.fr</p>
+    <p>Audit réalisé par <strong>Klyora Sites</strong> · contact@klyora.fr · klyora.fr</p>
     <p style="margin-top:4px">Rapport confidentiel généré automatiquement pour ${order.owner_name || order.owner_email}</p>
   </div>
 </div>
@@ -360,7 +360,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
       method: "POST",
       headers: { "api-key": apiKey2, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer — Klyora Sites", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer — Klyora Sites", email: "contact@klyora.fr" },
         to: [{ email: order.owner_email, name: order.owner_name || order.owner_email }],
         subject: `📊 Votre audit présence en ligne — ${order.business_name} (score : ${globalScore}/100)`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;color:#111">
@@ -375,7 +375,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#1
 </ul>
 <p style="font-size:14px;color:#525252;margin-top:16px">Des questions ? Répondez simplement à cet email.</p>
 <div style="border-top:1px solid #e5e5e5;margin-top:24px;padding-top:16px;font-size:13px;color:#737373">
-<strong>Tom Bauer</strong> — Klyora Sites<br>contact@webconceptor.fr · 06 35 59 24 71
+<strong>Tom Bauer</strong> — Klyora Sites<br>contact@klyora.fr · 06 35 59 24 71
 </div>
 </div>`,
         attachment: [{
@@ -408,7 +408,7 @@ export async function POST(req: NextRequest) {
       }
 
       const priceId = process.env.STRIPE_AUDIT_PRICE_ID || "price_audit_49";
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL   || "https://webconceptor.fr";
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL   || "https://klyora.fr";
 
       const session = await stripe.checkout.sessions.create({
         mode: "payment",

@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (token && chatId) {
-    const mockupUrl = `https://webconceptor.fr/prospects/${prospect_slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${prospect_slug}`;
     const msg =
       `🛒 <b>PANIER OUVERT — ULTRA HOT LEAD</b>\n\n` +
       `<b>${escapeTelegram(prospect.name)}</b>\n` +

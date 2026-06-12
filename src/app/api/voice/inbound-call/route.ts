@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       },
       voice: { provider: script.voice_provider || "openai", voiceId: script.voice_id || "nova" },
       maxDurationSeconds: script.max_duration_sec || 240,
-      serverUrl: `https://webconceptor.fr/api/voice/vapi-webhook`,
+      serverUrl: `https://klyora.fr/api/voice/vapi-webhook`,
       analysisPlan: {
         structuredDataSchema: {
           type: "object",

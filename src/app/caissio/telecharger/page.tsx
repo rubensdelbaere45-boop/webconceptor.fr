@@ -182,7 +182,7 @@ function TelechargerInner() {
                       <div style={{ fontSize: 11, color: "#94a3b8" }}>Sans téléchargement</div>
                     </div>
                   </div>
-                  <Step n={1} title="Ouvrir Chrome" desc="Allez sur webconceptor.fr/caissio dans Chrome." img="🌐" />
+                  <Step n={1} title="Ouvrir Chrome" desc="Allez sur klyora.fr/caissio dans Chrome." img="🌐" />
                   <Step n={2} title='Cliquer ⊕' desc='Icône ⊕ dans la barre d&apos;adresse → "Installer Caissio".' img="⊕" />
                 </div>
                 <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 20, padding: 24 }}>
@@ -193,7 +193,7 @@ function TelechargerInner() {
                       <div style={{ fontSize: 11, color: "#94a3b8" }}>Déjà sur Windows</div>
                     </div>
                   </div>
-                  <Step n={1} title="Ouvrir Edge" desc="Allez sur webconceptor.fr/caissio dans Edge." img="🔵" />
+                  <Step n={1} title="Ouvrir Edge" desc="Allez sur klyora.fr/caissio dans Edge." img="🔵" />
                   <Step n={2} title="Menu ···" desc='Cliquez ··· → Applications → "Installer ce site comme app".' img="⋯" />
                 </div>
               </div>
@@ -269,7 +269,7 @@ function TelechargerInner() {
                   <div style={{ marginLeft: "auto", background: "#10b981", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>⭐ Recommandé</div>
                 </div>
                 <Step n={1} title="Ouvrir Chrome sur Mac" desc="Lancez Chrome. Si besoin, téléchargez-le sur google.com/chrome." img="🌐" />
-                <Step n={2} title="Accéder à Caissio" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio" img="🔗" />
+                <Step n={2} title="Accéder à Caissio" desc="Dans la barre d'adresse, tapez : klyora.fr/caissio" img="🔗" />
                 <Step n={3} title='Icône d&apos;installation' desc="Dans la barre d'adresse, une icône ⊕ apparaît à droite. Cliquez dessus." img="⊕" />
                 <Step n={4} title="Installer dans le Dock" desc='Cliquez "Installer". Caissio s&apos;ajoute à votre Launchpad et peut être glissé dans le Dock.' img="🖥️" />
                 <div style={{ marginTop: 16, padding: "12px 16px", background: "#ede9fe", borderRadius: 12, fontSize: 13, color: "#4f46e5", fontWeight: 600 }}>
@@ -287,7 +287,7 @@ function TelechargerInner() {
                   </div>
                 </div>
                 <Step n={1} title="Ouvrir Safari" desc="Safari est le navigateur natif Apple, disponible dans votre Dock ou Launchpad." img="🧭" />
-                <Step n={2} title="Accéder à Caissio" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio" img="🔗" />
+                <Step n={2} title="Accéder à Caissio" desc="Dans la barre d'adresse, tapez : klyora.fr/caissio" img="🔗" />
                 <Step n={3} title="Menu Partage" desc='Cliquez sur l&apos;icône de partage (carré avec flèche ↑) dans la barre d&apos;outils.' img="⬆️" />
                 <Step n={4} title="Ajouter au Dock" desc='"Ajouter au Dock" dans le menu. Caissio reçoit son icône dans votre Dock.' img="🍎" />
                 <div style={{ marginTop: 16, padding: "12px 16px", background: "#f0fdf4", borderRadius: 12, fontSize: 13, color: "#166534", fontWeight: 600 }}>
@@ -365,7 +365,7 @@ function TelechargerInner() {
                   <div style={{ marginLeft: "auto", background: "#10b981", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>⭐ Idéal</div>
                 </div>
                 <Step n={1} title="Ouvrir Safari sur iPad" desc="Safari est pré-installé sur tout iPad. Ouvrez-le depuis l'écran d'accueil." img="🧭" />
-                <Step n={2} title="Aller sur Caissio" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio/login" img="🔗" />
+                <Step n={2} title="Aller sur Caissio" desc="Dans la barre d'adresse, tapez : klyora.fr/caissio/login" img="🔗" />
                 <Step n={3} title="Icône Partager" desc="Appuyez sur l'icône ⬆️ en bas (ou en haut selon l'iPad) de Safari." img="⬆️" />
                 <Step n={4} title="Sur l'écran d'accueil" desc='Appuyez sur "Sur l&apos;écran d&apos;accueil". Renommez en "Caissio" et appuyez sur "Ajouter".' img="🏠" />
                 <div style={{ marginTop: 16, padding: "12px 16px", background: "#ede9fe", borderRadius: 12, fontSize: 13, color: "#4f46e5", fontWeight: 600 }}>
@@ -382,7 +382,7 @@ function TelechargerInner() {
                   </div>
                 </div>
                 <Step n={1} title="Ouvrir Safari sur iPhone" desc="Lancez Safari (navigateur Apple par défaut sur iPhone)." img="🧭" />
-                <Step n={2} title="Aller sur Caissio" desc="Dans la barre d'adresse, tapez : webconceptor.fr/caissio/login" img="🔗" />
+                <Step n={2} title="Aller sur Caissio" desc="Dans la barre d'adresse, tapez : klyora.fr/caissio/login" img="🔗" />
                 <Step n={3} title="Icône Partager" desc="Appuyez sur l'icône ⬆️ en bas de l'écran pour ouvrir le menu de partage." img="⬆️" />
                 <Step n={4} title="Sur l'écran d'accueil" desc="Appuyez sur « Sur l&apos;écran d&apos;accueil » et validez. L'icône Caissio apparaît." img="🏠" />
                 <div style={{ marginTop: 16, padding: "12px 16px", background: "#f0fdf4", borderRadius: 12, fontSize: 13, color: "#166534", fontWeight: 600 }}>

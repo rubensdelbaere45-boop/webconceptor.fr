@@ -122,7 +122,7 @@ export async function confirmBusinessTypeViaSirene(
   try {
     const res = await safeFetch(url, {
       timeoutMs: 8000,
-      headers: { "User-Agent": "Klyora Sites/1.0 (contact@webconceptor.fr)" },
+      headers: { "User-Agent": "Klyora Sites/1.0 (contact@klyora.fr)" },
     });
     if (!res.ok) {
       return { matched: false, business_type: null, ape_code: null, ape_label: null, siren: null, source: "none" };

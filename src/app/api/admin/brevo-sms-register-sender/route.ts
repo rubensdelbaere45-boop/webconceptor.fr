@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
         name: "WebConcept",
-        email: "tom@webconceptor.fr",
+        email: "contact@klyora.fr",
       }),
       signal: AbortSignal.timeout(10_000),
     });

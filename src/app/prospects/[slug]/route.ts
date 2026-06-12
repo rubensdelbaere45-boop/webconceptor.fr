@@ -165,7 +165,7 @@ export async function GET(
 
   if (error || !data) {
     return new NextResponse(
-      `<!DOCTYPE html><html><head><title>Maquette introuvable</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Maquette introuvable</h1><p>Cette maquette n'existe pas ou a été retirée.</p><p><a href="https://webconceptor.fr">Retour à Klyora Sites</a></p></body></html>`,
+      `<!DOCTYPE html><html><head><title>Maquette introuvable</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Maquette introuvable</h1><p>Cette maquette n'existe pas ou a été retirée.</p><p><a href="https://klyora.fr">Retour à Klyora Sites</a></p></body></html>`,
       { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
   }
@@ -183,7 +183,7 @@ export async function GET(
     if (isRestoMetier) {
       // Message clair : maquette pas encore générée, cliquer Envoyer dans l'admin
       return new NextResponse(
-        `<!DOCTYPE html><html><head><title>Maquette pas encore générée</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a;margin-bottom:8px}h2{color:#525252;font-size:16px;font-weight:500;margin-bottom:30px}p{max-width:540px;margin:0 auto 20px}a{color:#0066ff}.btn{display:inline-block;padding:12px 24px;background:#0a0a0a;color:#fff;border-radius:999px;text-decoration:none;font-weight:600;margin-top:12px}</style></head><body><h1>Maquette pas encore générée</h1><h2>${data.name}</h2><p>La maquette n'a pas encore été préparée pour ce prospect (type restaurant/boulangerie — nécessite génération complète avec Claude).</p><p>Dans ton admin, clique sur <strong>« Envoyer »</strong> (mode dry-run) ou <strong>« Générer »</strong> pour ce prospect. La maquette sera alors disponible sous ce lien.</p><a class="btn" href="https://webconceptor.fr/admin/prospects">Retour à l'admin</a></body></html>`,
+        `<!DOCTYPE html><html><head><title>Maquette pas encore générée</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a;margin-bottom:8px}h2{color:#525252;font-size:16px;font-weight:500;margin-bottom:30px}p{max-width:540px;margin:0 auto 20px}a{color:#0066ff}.btn{display:inline-block;padding:12px 24px;background:#0a0a0a;color:#fff;border-radius:999px;text-decoration:none;font-weight:600;margin-top:12px}</style></head><body><h1>Maquette pas encore générée</h1><h2>${data.name}</h2><p>La maquette n'a pas encore été préparée pour ce prospect (type restaurant/boulangerie — nécessite génération complète avec Claude).</p><p>Dans ton admin, clique sur <strong>« Envoyer »</strong> (mode dry-run) ou <strong>« Générer »</strong> pour ce prospect. La maquette sera alors disponible sous ce lien.</p><a class="btn" href="https://klyora.fr/admin/prospects">Retour à l'admin</a></body></html>`,
         { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
       );
     }
@@ -229,7 +229,7 @@ export async function GET(
     } catch (err) {
       console.error("[prospects/slug] on-demand generation failed:", err);
       return new NextResponse(
-        `<!DOCTYPE html><html><head><title>Maquette indisponible</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Génération de maquette impossible</h1><p>Une erreur est survenue. Essayez "Envoyer" dans l'admin pour forcer la génération.</p><p><a href="https://webconceptor.fr/admin/prospects">Retour à l'admin</a></p></body></html>`,
+        `<!DOCTYPE html><html><head><title>Maquette indisponible</title><meta charset="UTF-8"><style>body{font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;color:#525252}h1{color:#0a0a0a}a{color:#0066ff}</style></head><body><h1>Génération de maquette impossible</h1><p>Une erreur est survenue. Essayez "Envoyer" dans l'admin pour forcer la génération.</p><p><a href="https://klyora.fr/admin/prospects">Retour à l'admin</a></p></body></html>`,
         { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } }
       );
     }
@@ -320,7 +320,7 @@ export async function GET(
           `<b>🎯 Accroches RDV si hésitation :</b>\n${hooksBlock}\n\n` +
           `<b>🛡 Objections :</b>\n${objectionsBlock}\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
-          `🎯 <a href="https://webconceptor.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
+          `🎯 <a href="https://klyora.fr/prospects/${escapeTelegram(slug)}">Voir la maquette envoyée</a>` +
           (data.website ? `\n🌐 <a href="${escapeTelegram(data.website)}">Son site actuel</a>` : "");
 
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

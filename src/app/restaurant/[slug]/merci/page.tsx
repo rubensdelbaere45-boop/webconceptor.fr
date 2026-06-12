@@ -12,7 +12,7 @@ function getSupabase() {
   );
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
 export default async function MerciPage({
   params,
@@ -199,8 +199,8 @@ export default async function MerciPage({
             }}>
               <p style={{ fontSize: 13, color: "#9CA3AF" }}>
                 Une question ? Répondez à l&apos;email de confirmation ou écrivez à{" "}
-                <a href="mailto:contact@webconceptor.fr" style={{ color: "#c19a56", fontWeight: 600 }}>
-                  contact@webconceptor.fr
+                <a href="mailto:contact@klyora.fr" style={{ color: "#c19a56", fontWeight: 600 }}>
+                  contact@klyora.fr
                 </a>
               </p>
             </div>

@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
   const results: Array<{ id: string; name: string; status: string; reason?: string }> = [];
   let regenerated = 0;
   let errors = 0;
-  const origin = req.nextUrl.origin || "https://webconceptor.fr";
+  const origin = req.nextUrl.origin || "https://klyora.fr";
 
   for (const p of prospects) {
     // Garde-fou métier : si le nom révèle un métier ≠ business_type → on saute

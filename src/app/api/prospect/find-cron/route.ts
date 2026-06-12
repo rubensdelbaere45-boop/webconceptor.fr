@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorise" }, { status: 401 });
   }
 
-  const origin = "https://webconceptor.fr";
+  const origin = "https://klyora.fr";
   const adminKey = process.env.ADMIN_SECRET_KEY || "";
   const log: string[] = [];
   const results = { found: 0, inserted: 0, errors: [] as string[] };

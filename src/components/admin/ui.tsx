@@ -140,7 +140,7 @@ export function MockupPreview({ name, mockupKind, mockupUrl, height = 240 }: Moc
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#febc2e' }}></span>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#28c840' }}></span>
         <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--txt-3)', fontFamily: 'monospace' }}>
-          maquette.webconceptor.fr/{name.toLowerCase().replace(/\s/g, '-').slice(0, 20)}
+          maquette.klyora.fr/{name.toLowerCase().replace(/\s/g, '-').slice(0, 20)}
         </span>
       </div>
 

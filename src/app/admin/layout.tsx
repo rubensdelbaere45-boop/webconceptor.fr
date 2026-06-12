@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }}>WC</div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12.5, fontWeight: 600 }}>Admin</div>
-              <div style={{ fontSize: 11, color: 'var(--txt-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>admin@webconceptor.fr</div>
+              <div style={{ fontSize: 11, color: 'var(--txt-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>contact@klyora.fr</div>
             </div>
           </div>
         </div>

@@ -576,7 +576,7 @@ export default function AdminClient({ restaurant, initialItems }: AdminClientPro
               <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 16 }}>
                 Pointe vers :<br />
                 <a href={menuUrl} target="_blank" rel="noreferrer" style={{ color: "#c19a56", fontWeight: 600, wordBreak: "break-all" }}>
-                  webconceptor.fr{menuUrl}
+                  klyora.fr{menuUrl}
                 </a>
               </p>
             </div>

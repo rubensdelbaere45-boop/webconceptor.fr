@@ -759,10 +759,10 @@ export default function Home() {
           >
             <p className="text-[14px] text-[#737373] mb-4">Une autre question ?</p>
             <a
-              href="mailto:contact@webconceptor.fr"
+              href="mailto:contact@klyora.fr"
               className="text-[14px] font-semibold text-[#0066ff] hover:underline"
             >
-              contact@webconceptor.fr →
+              contact@klyora.fr →
             </a>
           </motion.div>
         </div>

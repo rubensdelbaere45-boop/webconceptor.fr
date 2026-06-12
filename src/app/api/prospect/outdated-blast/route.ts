@@ -51,7 +51,7 @@ function escapeHtml(s: string): string {
 function buildRenovatorEmail(p: Prospect): { subject: string; html: string; text: string } {
   const firstName = p.name.split(/[ -]/)[0];
   const cityTxt = p.city ? ` à ${p.city}` : "";
-  const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+  const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
   const websiteHost = p.website ? p.website.replace(/^https?:\/\/(www\.)?/, "").split("/")[0] : "votre site";
 
   const signals = (p.obsolete_signals || {}) as Record<string, unknown>;
@@ -120,7 +120,7 @@ ${issueList.map(i => `  <li>${escapeHtml(i)}</li>`).join("\n")}
 
 function buildArchaeologistEmail(p: Prospect): { subject: string; html: string; text: string } {
   const firstName = p.name.split(/[ -]/)[0];
-  const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+  const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
   const websiteHost = p.website ? p.website.replace(/^https?:\/\/(www\.)?/, "").split("/")[0] : "votre site";
 
   const signals = (p.obsolete_signals || {}) as Record<string, unknown>;
@@ -204,8 +204,8 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
-        replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "contact@klyora.fr" },
+        replyTo: { name: "Tom", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

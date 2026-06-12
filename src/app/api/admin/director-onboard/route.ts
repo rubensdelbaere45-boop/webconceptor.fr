@@ -127,8 +127,8 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
-        replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "contact@klyora.fr" },
+        replyTo: { name: "Tom", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

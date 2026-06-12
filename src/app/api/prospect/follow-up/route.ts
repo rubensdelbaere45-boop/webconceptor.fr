@@ -34,7 +34,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to }],
         subject,
         htmlContent: html,
@@ -60,8 +60,8 @@ function followUpDay3Email(prospectName: string, mockupUrl: string): string {
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
     <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
-    <p><a href="https://webconceptor.fr" style="color:#0066ff;text-decoration:none">webconceptor.fr</a></p>
+    <p style="margin-bottom:2px">contact@klyora.fr &middot; 06 35 59 24 71</p>
+    <p><a href="https://klyora.fr" style="color:#0066ff;text-decoration:none">klyora.fr</a></p>
   </div>
 </div>`;
 }
@@ -83,7 +83,7 @@ function followUpDay7Email(prospectName: string, mockupUrl: string): string {
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
     <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
+    <p style="margin-bottom:2px">contact@klyora.fr &middot; 06 35 59 24 71</p>
   </div>
 </div>`;
 }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     .lt("sent_at", day7Cutoff)
     .limit(150);
 
-  const origin = "https://webconceptor.fr";
+  const origin = "https://klyora.fr";
   const results: Array<{ id: string; name: string; stage: string; status: "sent" | "skipped" | "failed" }> = [];
   let sentCount = 0;
 

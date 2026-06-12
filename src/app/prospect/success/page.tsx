@@ -40,7 +40,7 @@ function SuccessContent() {
           <div className="text-left bg-[#f9f5ef] rounded-lg p-5 mb-8">
             <p className="text-sm text-[#1a1310] font-semibold mb-2">Une question ? Contactez-moi :</p>
             <p className="text-sm text-[#4a4340] mb-1">
-              📧 <a href="mailto:contact@webconceptor.fr" className="text-[#c19a56] font-semibold hover:underline">contact@webconceptor.fr</a>
+              📧 <a href="mailto:contact@klyora.fr" className="text-[#c19a56] font-semibold hover:underline">contact@klyora.fr</a>
             </p>
             <p className="text-sm text-[#4a4340]">
               📞 <a href="tel:+33635592471" className="text-[#c19a56] font-semibold hover:underline">06 35 59 24 71</a>
@@ -61,7 +61,7 @@ function SuccessContent() {
         </div>
 
         <p className="text-center text-xs text-[#8b7e6e] mt-6">
-          Tom Bauer · Fondateur Klyora Sites · <a href="https://webconceptor.fr" className="hover:text-[#c19a56]">webconceptor.fr</a>
+          Tom Bauer · Fondateur Klyora Sites · <a href="https://klyora.fr" className="hover:text-[#c19a56]">klyora.fr</a>
         </p>
       </div>
     </div>

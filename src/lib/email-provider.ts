@@ -31,7 +31,7 @@ export interface SendEmailResult {
   error?: string;
 }
 
-const FROM_EMAIL_DEFAULT = "contact@webconceptor.fr";
+const FROM_EMAIL_DEFAULT = "contact@klyora.fr";
 const FROM_NAME_DEFAULT = "Klyora Sites";
 
 // ── Brevo (jusqu'au 17 juin) ─────────────────────────────────────
@@ -136,8 +136,8 @@ async function sendViaResend(params: SendEmailParams): Promise<SendEmailResult> 
   if (!apiKey) return { ok: false, provider: "resend", error: "RESEND_API_KEY manquante" };
 
   // Domaine vérifié obligatoire pour from sur ton domaine.
-  // Tant que webconceptor.fr pas vérifié sur Resend → onboarding@resend.dev
-  // ou utilise contact@webconceptor.fr SI domaine DNS validé.
+  // Tant que klyora.fr pas vérifié sur Resend → onboarding@resend.dev
+  // ou utilise contact@klyora.fr SI domaine DNS validé.
   const from = `${params.fromName || FROM_NAME_DEFAULT} <${params.fromEmail || (process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev")}>`;
 
   const body = {
@@ -183,7 +183,7 @@ async function sendViaResend(params: SendEmailParams): Promise<SendEmailResult> 
 }
 
 // ── SMTP direct via Nodemailer (illimité, gratuit) ──────────────
-// Utilise un compte SMTP réel : IONOS (pro@webconceptor.fr), Gmail,
+// Utilise un compte SMTP réel : IONOS (contact@klyora.fr), Gmail,
 // OVH, etc. Pas de quota fournisseur — limité uniquement par la
 // politique anti-spam de ton hébergeur SMTP.
 //
@@ -191,7 +191,7 @@ async function sendViaResend(params: SendEmailParams): Promise<SendEmailResult> 
 //   SMTP_HOST       (ex: smtp.ionos.fr)
 //   SMTP_PORT       (defaut 587)
 //   SMTP_SECURE     ('true' pour port 465, sinon false → STARTTLS)
-//   SMTP_USER       (adresse complète : contact@webconceptor.fr)
+//   SMTP_USER       (adresse complète : contact@klyora.fr)
 //   SMTP_PASS       (mot de passe du compte mail)
 //   SMTP_FROM_EMAIL (optionnel : adresse from override)
 //   SMTP_FROM_NAME  (optionnel : nom from override)

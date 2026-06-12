@@ -603,7 +603,7 @@ async function sendEmail(
     // List-Unsubscribe : obligatoire Gmail/Yahoo bulk sender policy depuis fev 2024.
     // Sans ce header, Gmail affiche "Spam" au lieu de "Se désabonner" → plaintes → blocages.
     // Le one-click POST (RFC 8058) est géré par /api/unsubscribe.
-    const baseUrl = "https://webconceptor.fr";
+    const baseUrl = "https://klyora.fr";
     const unsubUrl = prospectId
       ? `${baseUrl}/api/unsubscribe?id=${encodeURIComponent(prospectId)}&email=${encodeURIComponent(to)}`
       : `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(to)}`;
@@ -612,13 +612,13 @@ async function sendEmail(
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name: toName || to }],
         subject,
         htmlContent: htmlBody,
         headers: {
           // RFC 2369 : lien cliquable dans les clients email
-          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@webconceptor.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
+          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@klyora.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
           // RFC 8058 : one-click POST (Gmail affiche le bouton "Se désabonner" directement)
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
@@ -829,13 +829,13 @@ function buildLuxuryEmail(
     <div style="border-top:1px solid #e8dfd0;padding-top:24px;font-size:13px;color:#5a5045">
       <p style="margin:0 0 4px;font-weight:600;color:#1a1310;font-family:-apple-system,sans-serif">Tom Bauer — Klyora Sites</p>
       <p style="margin:0 0 4px;font-family:-apple-system,sans-serif"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a></p>
-      <p style="margin:0;font-family:-apple-system,sans-serif"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
+      <p style="margin:0;font-family:-apple-system,sans-serif"><a href="https://klyora.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">klyora.fr</a></p>
     </div>
 
   </div>
 
   <div style="padding:12px 36px 16px;border-top:1px solid #f0e8db">
-    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5;font-family:-apple-system,sans-serif">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
+    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5;font-family:-apple-system,sans-serif">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://klyora.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
   </div>
 </div>`;
 }
@@ -891,14 +891,14 @@ function buildShortEmail(
 
     <div style="border-top:1px solid #ece4d8;padding-top:20px;font-size:13px;color:#5a5045">
       <p style="margin:0 0 3px;font-weight:600;color:#1a1310">Tom Bauer — Klyora Sites</p>
-      <p style="margin:0 0 3px"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a> &nbsp;·&nbsp; <a href="mailto:contact@webconceptor.fr" style="color:#5a5045;text-decoration:none">contact@webconceptor.fr</a></p>
-      <p style="margin:0"><a href="https://webconceptor.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">webconceptor.fr</a></p>
+      <p style="margin:0 0 3px"><a href="tel:+33635592471" style="color:#5a5045;text-decoration:none">06 35 59 24 71</a> &nbsp;·&nbsp; <a href="mailto:contact@klyora.fr" style="color:#5a5045;text-decoration:none">contact@klyora.fr</a></p>
+      <p style="margin:0"><a href="https://klyora.fr" style="color:#c9a96e;text-decoration:none;font-size:12px">klyora.fr</a></p>
     </div>
 
   </div>
 
   <div style="padding:12px 28px 16px;border-top:1px solid #f0e8db">
-    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
+    <p style="font-size:11px;color:#b0a090;margin:0;line-height:1.5">Vous recevez cet email car <strong>${escape(prospect.name)}</strong> est référencé publiquement sur Google Maps. <a href="https://klyora.fr/api/unsubscribe?id=${encodeURIComponent(prospect.id)}" style="color:#b0a090;text-decoration:underline">Se désabonner</a>.</p>
   </div>
 
 </div>`;
@@ -1001,7 +1001,7 @@ async function handleSend(req: NextRequest) {
 
   // The email link must always point to the real site — never trust the Origin
   // header (an attacker with the admin key could otherwise craft phishing links).
-  const origin = "https://webconceptor.fr";
+  const origin = "https://klyora.fr";
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
 
   // Hard deadline — Vercel Pro autorise 300 s pour la route send (vercel.json).

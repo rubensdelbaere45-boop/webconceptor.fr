@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
    À configurer dans Brevo :
    Dashboard → Paramètres → Webhooks → Transactionnel
-   URL : https://www.webconceptor.fr/api/webhooks/brevo
+   URL : https://www.klyora.fr/api/webhooks/brevo
    Événements : hard_bounce, soft_bounce, complaint, unsubscribe, blocked
 
    Chaque événement Brevo contient :

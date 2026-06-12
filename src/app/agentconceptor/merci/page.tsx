@@ -49,14 +49,14 @@ function MerciContent() {
           <p className="font-semibold text-violet-300 mb-2 text-sm">📧 Vérifiez votre boîte email</p>
           <p className="text-slate-400 text-sm">
             Si vous ne voyez rien dans 5 minutes, vérifiez vos spams ou contactez-nous :{" "}
-            <a href="mailto:contact@webconceptor.fr" className="text-violet-400 hover:underline">
-              contact@webconceptor.fr
+            <a href="mailto:contact@klyora.fr" className="text-violet-400 hover:underline">
+              contact@klyora.fr
             </a>
           </p>
         </div>
 
         <a
-          href="https://webconceptor.fr/agentconceptor"
+          href="https://klyora.fr/agentconceptor"
           className="text-slate-500 text-sm hover:text-slate-300 transition-colors"
         >
           ← Retour au store

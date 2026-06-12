@@ -77,7 +77,7 @@ Personnalise selon la saison ${season} et le mois de ${month}.`;
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          ...(isOR ? { "HTTP-Referer": "https://webconceptor.fr" } : {}),
+          ...(isOR ? { "HTTP-Referer": "https://klyora.fr" } : {}),
         },
         body: JSON.stringify({
           model: isOR ? "anthropic/claude-haiku-4-5" : "claude-haiku-4-5",
@@ -190,7 +190,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f8f9fa;color:#1
 
   <div class="footer">
     <p>AGENTConceptor · Agent Contenu Réseaux Sociaux</p>
-    <p style="margin-top:2px">contact@webconceptor.fr · <a href="https://webconceptor.fr" style="color:#7c3aed">webconceptor.fr</a></p>
+    <p style="margin-top:2px">contact@klyora.fr · <a href="https://klyora.fr" style="color:#7c3aed">klyora.fr</a></p>
   </div>
 </div>
 </body>
@@ -235,7 +235,7 @@ async function handler(req: NextRequest) {
           method: "POST",
           headers: { "api-key": brevoKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            sender: { name: "Tom — AGENTConceptor", email: "contact@webconceptor.fr" },
+            sender: { name: "Tom — AGENTConceptor", email: "contact@klyora.fr" },
             to: [{ email: sub.owner_email, name: sub.owner_name || sub.business_name }],
             subject: `📱 Vos 5 posts de la semaine — ${sub.business_name}`,
             htmlContent: emailHtml,

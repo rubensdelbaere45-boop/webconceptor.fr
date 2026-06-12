@@ -75,7 +75,7 @@ Génère entre 2 et 5 lignes de devis réalistes et détaillées. Sois précis s
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          ...(isOR ? { "HTTP-Referer": "https://webconceptor.fr" } : {}),
+          ...(isOR ? { "HTTP-Referer": "https://klyora.fr" } : {}),
         },
         body: JSON.stringify({
           model: isOR ? "anthropic/claude-haiku-4-5" : "claude-haiku-4-5",
@@ -178,7 +178,7 @@ td .detail{font-size:12px;color:#6b7280;font-weight:400;display:block;margin-top
   <div class="header">
     <div>
       <div class="logo">AGENT<span>Conceptor</span></div>
-      <p style="font-size:12px;color:#6b7280;margin-top:4px">Agent Devis IA — webconceptor.fr</p>
+      <p style="font-size:12px;color:#6b7280;margin-top:4px">Agent Devis IA — klyora.fr</p>
     </div>
     <div class="devis-num">
       <h2>${params.devisNumber}</h2>
@@ -246,7 +246,7 @@ td .detail{font-size:12px;color:#6b7280;font-weight:400;display:block;margin-top
 
   <div class="footer">
     <p style="margin-bottom:4px">Devis généré automatiquement par AGENTConceptor · Agent Devis IA</p>
-    <p>Ce document a valeur contractuelle une fois signé par les deux parties · <a href="https://webconceptor.fr" style="color:#0066ff">webconceptor.fr</a></p>
+    <p>Ce document a valeur contractuelle une fois signé par les deux parties · <a href="https://klyora.fr" style="color:#0066ff">klyora.fr</a></p>
   </div>
 </div>
 </body>
@@ -352,7 +352,7 @@ export async function POST(
       method: "POST",
       headers: { "api-key": brevoKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: sub.business_name, email: "contact@webconceptor.fr" },
+        sender: { name: sub.business_name, email: "contact@klyora.fr" },
         to: [{ email: clientEmail, name: clientName }],
         subject: `Votre devis ${devisNumber} — ${sub.business_name}`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
@@ -373,7 +373,7 @@ export async function POST(
       method: "POST",
       headers: { "api-key": brevoKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "AGENTConceptor", email: "contact@webconceptor.fr" },
+        sender: { name: "AGENTConceptor", email: "contact@klyora.fr" },
         to: [{ email: sub.owner_email, name: sub.owner_name || sub.business_name }],
         subject: `📝 Nouveau devis généré — ${clientName} (${devisNumber})`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">

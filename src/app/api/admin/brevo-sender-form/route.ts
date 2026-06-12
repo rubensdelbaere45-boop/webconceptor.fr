@@ -37,18 +37,18 @@ export async function GET(req: NextRequest) {
         note: "Si tu as une raison sociale officielle (SARL, EI, etc.), utilise-la à la place. Sinon 'Klyora Sites' suffit.",
       },
       "Site web de l'entreprise": {
-        value: "https://webconceptor.fr",
+        value: "https://klyora.fr",
         length: "23/253",
       },
       "Preuve de marque": {
         instructions: "Télécharge le PDF généré sur /api/admin/brevo-trademark-proof et upload-le ici.",
-        download_url: "https://webconceptor.fr/api/admin/brevo-trademark-proof?key=Rubens2026-Klyora Sites",
-        alternative: "Si Brevo refuse le PDF auto-généré, screenshot la home de webconceptor.fr en PDF.",
+        download_url: "https://klyora.fr/api/admin/brevo-trademark-proof?key=Rubens2026-Klyora Sites",
+        alternative: "Si Brevo refuse le PDF auto-généré, screenshot la home de klyora.fr en PDF.",
       },
     },
     sms_content_step: {
       note: "Brevo va te demander un EXEMPLE de SMS que tu envoies. Voici un template type :",
-      example_sms: "Bonjour, votre maquette Klyora Sites (Chez Stephane) est disponible : https://webconceptor.fr/prospects/xxx. Tom 0635592471. STOP arret.",
+      example_sms: "Bonjour, votre maquette Klyora Sites (Chez Stephane) est disponible : https://klyora.fr/prospects/xxx. Tom 0635592471. STOP arret.",
       length: "~159/160 chars",
       compliance_notes: [
         "✅ Contient le nom de l'expéditeur (Klyora Sites)",

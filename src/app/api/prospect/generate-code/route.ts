@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         already_existed: true,
         code: existing.code,
         project_id: existing.id,
-        code_url: `https://webconceptor.fr/code?c=${existing.code}`,
+        code_url: `https://klyora.fr/code?c=${existing.code}`,
       });
     }
   }
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  const mockupUrl = `https://webconceptor.fr/prospects/${prospect.slug}`;
+  const mockupUrl = `https://klyora.fr/prospects/${prospect.slug}`;
   const isResto = prospect.business_type === "restaurant";
   const title = `Site web ${isResto ? "restaurant" : "vitrine"} — ${prospect.name}`;
 
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       (prospect.email ? `✉️ ${prospect.email}\n` : "") +
       `\n<b>Code :</b> <code>${code}</code>\n` +
       `<b>Prix :</b> 199 € TTC (ou 3× sans frais)\n\n` +
-      `<a href="https://webconceptor.fr/code?c=${code}">Lien direct /code</a>`;
+      `<a href="https://klyora.fr/code?c=${code}">Lien direct /code</a>`;
     fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -160,6 +160,6 @@ export async function POST(req: NextRequest) {
     already_existed: false,
     code,
     project_id: project.id,
-    code_url: `https://webconceptor.fr/code?c=${code}`,
+    code_url: `https://klyora.fr/code?c=${code}`,
   });
 }

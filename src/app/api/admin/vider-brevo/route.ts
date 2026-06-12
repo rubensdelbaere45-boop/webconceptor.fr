@@ -23,7 +23,7 @@ import { safeCompare } from "@/lib/security";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // Plan Hobby Vercel max
 
-const ORIGIN = "https://webconceptor.fr";
+const ORIGIN = "https://klyora.fr";
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || "";
 
 // Routes outbound à enchaîner. force=true bypasse couvre-feu.

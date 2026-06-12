@@ -19,7 +19,7 @@ function getSupabase() {
   );
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

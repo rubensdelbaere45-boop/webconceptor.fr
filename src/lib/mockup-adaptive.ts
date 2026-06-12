@@ -716,7 +716,7 @@ export function generateAdaptiveMockupHtml(
 <!--
   ─────────────────────────────────────────────────────
   Design, code et intégration : Klyora Sites
-  https://webconceptor.fr
+  https://klyora.fr
   Maquette personnalisée pour ${escape(prospect.name)}
   Thème couleur extrait du site actuel — ${theme.primary}
   Toute reproduction, même partielle, est interdite.
@@ -726,7 +726,7 @@ export function generateAdaptiveMockupHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="Klyora Sites — https://webconceptor.fr">
+<meta name="author" content="Klyora Sites — https://klyora.fr">
 <meta name="copyright" content="© Klyora Sites — Reproduction interdite">
 <meta name="robots" content="noindex,noarchive">
 <title>${escape(prospect.name)} — ${escape(config.metaTitle)}${cityStr ? ` à ${cityStr}` : ""}</title>
@@ -1011,7 +1011,7 @@ ${reviewsHtml}
 </div>
 
   les mentions ci-présentes sont retirées à l'achat &middot;
-  <a href="https://webconceptor.fr" target="_blank">webconceptor.fr</a>
+  <a href="https://klyora.fr" target="_blank">klyora.fr</a>
 </div>
 
 </body>

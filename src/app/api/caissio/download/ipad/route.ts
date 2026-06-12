@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   return NextResponse.redirect(
-    "https://www.webconceptor.fr/caissio/login?install=1",
+    "https://www.klyora.fr/caissio/login?install=1",
     { status: 302 }
   );
 }

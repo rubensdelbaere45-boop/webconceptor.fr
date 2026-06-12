@@ -9,7 +9,7 @@
      toujours présent par défaut
    - Rate-limit global au niveau process : pause N ms entre chaque appel
      → spread des envois sur la journée, ESP voient une cadence humaine
-   - Sender uniforme "Tom Bauer <contact@webconceptor.fr>"
+   - Sender uniforme "Tom Bauer <contact@klyora.fr>"
 
    Tous les endpoints d'envoi (send, blast-flash, final-push, email-reminders,
    cart-abandon, follow-up, send-code) doivent utiliser sendBrevoEmail() au
@@ -27,7 +27,7 @@ export interface BrevoSendOptions {
   unsubscribeUrl?: string;
   /** Nom de l'expéditeur affiché. Défaut : "Tom Bauer". */
   senderName?: string;
-  /** Email de l'expéditeur. Défaut : contact@webconceptor.fr. */
+  /** Email de l'expéditeur. Défaut : contact@klyora.fr. */
   senderEmail?: string;
   /** Désactive le tracking de clic (= pas de wrapping des liens par Brevo).
    * Défaut : true (meilleure délivrabilité). */
@@ -69,7 +69,7 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
 
   // List-Unsubscribe (RFC 2369 + RFC 8058) — Gmail/Yahoo bulk policy depuis fév 2024
   if (opts.unsubscribeUrl) {
-    headers["List-Unsubscribe"] = `<${opts.unsubscribeUrl}>, <mailto:unsubscribe@webconceptor.fr?subject=unsubscribe>`;
+    headers["List-Unsubscribe"] = `<${opts.unsubscribeUrl}>, <mailto:unsubscribe@klyora.fr?subject=unsubscribe>`;
     headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
   }
 
@@ -82,7 +82,7 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
   const body: Record<string, unknown> = {
     sender: {
       name: opts.senderName || "Tom Bauer",
-      email: opts.senderEmail || "contact@webconceptor.fr",
+      email: opts.senderEmail || "contact@klyora.fr",
     },
     to: [{ email: opts.to, name: opts.toName || opts.to }],
     subject: opts.subject,

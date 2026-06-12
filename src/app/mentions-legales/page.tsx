@@ -16,7 +16,7 @@ export default function MentionsLegales() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Editeur du site</h2>
-            <p>Le site webconceptor.fr est edite par Klyora Sites, entreprise individuelle de creation de sites web professionnels.</p>
+            <p>Le site klyora.fr est edite par Klyora Sites, entreprise individuelle de creation de sites web professionnels.</p>
             <p>Responsable de la publication : Rubens Delbaere<br />Email : rubensdelbaere7@icloud.com</p>
           </section>
           <section>
@@ -25,7 +25,7 @@ export default function MentionsLegales() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Propriete intellectuelle</h2>
-            <p>L&apos;ensemble des contenus presents sur le site webconceptor.fr (textes, images, logos, graphismes, icones) sont proteges par les lois relatives a la propriete intellectuelle. Toute reproduction, meme partielle, est interdite sans autorisation prealable.</p>
+            <p>L&apos;ensemble des contenus presents sur le site klyora.fr (textes, images, logos, graphismes, icones) sont proteges par les lois relatives a la propriete intellectuelle. Toute reproduction, meme partielle, est interdite sans autorisation prealable.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Donnees personnelles</h2>

@@ -718,7 +718,7 @@ async function findEmailsOnWebsite(website: string): Promise<string[]> {
 
     // Vérification MX DNS : écarte les emails dont le domaine n'accepte pas de mail.
     // Réduit drastiquement les hard bounces Brevo (8,6% → ~3%) et préserve la
-    // réputation du domaine d'envoi webconceptor.fr.
+    // réputation du domaine d'envoi klyora.fr.
     const valid: string[] = [];
     for (const e of sorted) {
       if (valid.length >= 3) break;

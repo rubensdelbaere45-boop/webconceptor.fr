@@ -322,7 +322,7 @@ export async function POST(req: NextRequest) {
   const limit    = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "30", 10)));
   const slug     = url.searchParams.get("slug");
   const useAI    = url.searchParams.get("ai") !== "false"; // AI activée par défaut
-  const origin   = "https://webconceptor.fr";
+  const origin   = "https://klyora.fr";
   const aiApiKey = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || "";
 
   const supabase = getSupabaseAdmin();

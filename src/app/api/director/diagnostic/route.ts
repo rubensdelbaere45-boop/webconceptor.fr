@@ -208,7 +208,7 @@ PRIVILÉGIE les failles évidemment confirmées par les données scrappées/INSE
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://webconceptor.fr",
+        "HTTP-Referer": "https://klyora.fr",
         "X-Title": "Klyora Director — Diagnostic",
       },
       body: JSON.stringify({

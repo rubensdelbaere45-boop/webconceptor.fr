@@ -92,12 +92,12 @@ export async function POST(req: NextRequest) {
     // otherwise fall back to prod. Prevents an attacker from crafting a checkout
     // that sends Stripe success redirect to a malicious site.
     const ALLOWED_ORIGINS = new Set([
-      "https://webconceptor.fr",
-      "https://www.webconceptor.fr",
+      "https://klyora.fr",
+      "https://www.klyora.fr",
       "http://localhost:3000",
     ]);
     const reqOrigin = req.headers.get("origin") || "";
-    const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
+    const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://klyora.fr";
 
     // Build line items (inferred type from usage)
     type LineItem = NonNullable<NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]>["line_items"]>[number];

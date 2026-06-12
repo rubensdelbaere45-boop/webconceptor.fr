@@ -23,7 +23,7 @@ async function runCron(req: NextRequest) {
   }
 
   const batchSize = Number(req.nextUrl.searchParams.get("batch")) || 10;
-  const origin    = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const origin    = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
   const ak        = process.env.ADMIN_SECRET_KEY || "";
 
   const log: string[] = [];

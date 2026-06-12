@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   // URL publique maquette
-  const mockupUrl = prospect.slug ? `https://webconceptor.fr/prospects/${prospect.slug}` : null;
+  const mockupUrl = prospect.slug ? `https://klyora.fr/prospects/${prospect.slug}` : null;
 
   // Audit des emails envoyés
   const emailsSent: Array<{ type: string; at: string }> = [];

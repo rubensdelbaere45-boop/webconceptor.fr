@@ -35,7 +35,7 @@ export async function sendEbookEmail(p: EmailParams): Promise<{ ok: boolean; err
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Klyora Sites — E-Books", email: "noreply@webconceptor.fr" },
+        sender: { name: "Klyora Sites — E-Books", email: "noreply@klyora.fr" },
         to: [{ email: p.to, name: "Tom" }],
         subject,
         htmlContent: htmlBody,

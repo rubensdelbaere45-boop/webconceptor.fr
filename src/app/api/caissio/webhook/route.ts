@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder"
 });
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET_CAISSIO || "";
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
 /* ─── Telegram ───────────────────────────────────────────────────────────── */
 async function notifyTelegram(msg: string) {
@@ -106,8 +106,8 @@ async function sendWelcomeEmail({
     </div>
   </div>
   <div class="footer">
-    <p>Une question ? Écrivez-nous à <a href="mailto:contact@webconceptor.fr">contact@webconceptor.fr</a></p>
-    <p style="margin-top:8px">Caissio par <a href="https://webconceptor.fr">Klyora Sites</a></p>
+    <p>Une question ? Écrivez-nous à <a href="mailto:contact@klyora.fr">contact@klyora.fr</a></p>
+    <p style="margin-top:8px">Caissio par <a href="https://klyora.fr">Klyora Sites</a></p>
   </div>
 </div>
 </body>
@@ -118,7 +118,7 @@ async function sendWelcomeEmail({
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender:  { name: "Caissio", email: "contact@webconceptor.fr" },
+        sender:  { name: "Caissio", email: "contact@klyora.fr" },
         to:      [{ email: toEmail, name: toName }],
         subject: `🎉 Votre abonnement Caissio ${p.label} est activé !`,
         htmlContent: html,

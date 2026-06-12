@@ -5,7 +5,7 @@
 
    v2 — 09/06/2026:
    - Rebrand AGENTConceptor → Klyora Director (sender, branding, URLs)
-   - CTA → https://webconceptor.fr/director (au lieu de /agentconceptor)
+   - CTA → https://klyora.fr/director (au lieu de /agentconceptor)
    - Copy 100% personnalisé via IA Kimi K2 (gratuit OpenRouter)
    - Analyse des failles concrètes du prospect (note Google, nb avis, métier)
    - Ton accompagnant, pas commercial
@@ -250,7 +250,7 @@ Rédige le mail. JSON uniquement, rien d'autre.`;
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://webconceptor.fr",
+        "HTTP-Referer": "https://klyora.fr",
         "X-Title": "Klyora Director — Prospection Cold",
       },
       body: JSON.stringify({
@@ -360,7 +360,7 @@ function buildHtmlEmail(
   ${credBlock}
 
   <div style="margin:24px 0 18px">
-    <a href="https://webconceptor.fr/director/login${credentials ? `?email=${encodeURIComponent(credentials.email)}` : ""}" style="display:inline-block;background:#0a2540;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:8px;letter-spacing:0.02em">
+    <a href="https://klyora.fr/director/login${credentials ? `?email=${encodeURIComponent(credentials.email)}` : ""}" style="display:inline-block;background:#0a2540;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:8px;letter-spacing:0.02em">
       ${ctaText}
     </a>
   </div>
@@ -368,7 +368,7 @@ function buildHtmlEmail(
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 22px;color:#1a1a1a">${esc(copy.closing)}</p>
 
   <p style="font-size:15.5px;line-height:1.65;margin:0 0 4px;color:#1a1a1a">Tom</p>
-  <p style="font-size:13.5px;color:#6b7280;margin:0">Klyora Sites — <a href="https://webconceptor.fr" style="color:#6b7280;text-decoration:underline">webconceptor.fr</a></p>
+  <p style="font-size:13.5px;color:#6b7280;margin:0">Klyora Sites — <a href="https://klyora.fr" style="color:#6b7280;text-decoration:underline">klyora.fr</a></p>
 
   <hr style="margin:32px 0 16px;border:none;border-top:1px solid #e5e7eb">
   <p style="font-size:11.5px;color:#9ca3af;margin:0;line-height:1.5">
@@ -395,7 +395,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabase();
   const brevoKey = process.env.BREVO_API_KEY || "";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr";
 
   let columnExists = true;
   let selectedProspects: Prospect[] = [];
@@ -479,8 +479,8 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { "api-key": brevoKey, "Content-Type": "application/json" },
         body: JSON.stringify({
-          sender: { name: "Tom — Klyora Director", email: "contact@webconceptor.fr" },
-          replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
+          sender: { name: "Tom — Klyora Director", email: "contact@klyora.fr" },
+          replyTo: { name: "Tom", email: "contact@klyora.fr" },
           to: [{ email: prospect.email, name: prospect.name || "" }],
           subject: copy.subject,
           htmlContent,

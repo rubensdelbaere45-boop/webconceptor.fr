@@ -119,7 +119,7 @@ async function generateReply(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(isOR ? { "HTTP-Referer": "https://webconceptor.fr" } : {}),
+        ...(isOR ? { "HTTP-Referer": "https://klyora.fr" } : {}),
       },
       body: JSON.stringify({
         model: isOR ? "anthropic/claude-haiku-4-5" : "claude-haiku-4-5",

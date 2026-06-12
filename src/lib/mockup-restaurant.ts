@@ -635,7 +635,7 @@ export function generateRestaurantMockupHtml(
   const menuPricesBanner = !menuHasRealPrices
     ? `<div class="menu-prices-banner">
         <strong>📝 Tarifs personnalisés à venir</strong>
-        Envoyez-nous votre carte actuelle par email à <a href="mailto:contact@webconceptor.fr?subject=Ma%20carte%20pour%20la%20maquette">contact@webconceptor.fr</a> — nous affinerons votre maquette avec vos vrais plats et vos vrais prix sous 24 h.
+        Envoyez-nous votre carte actuelle par email à <a href="mailto:contact@klyora.fr?subject=Ma%20carte%20pour%20la%20maquette">contact@klyora.fr</a> — nous affinerons votre maquette avec vos vrais plats et vos vrais prix sous 24 h.
       </div>`
     : "";
 
@@ -663,7 +663,7 @@ export function generateRestaurantMockupHtml(
 <!--
   ─────────────────────────────────────────────────────
   Design, code et intégration : Klyora Sites
-  https://webconceptor.fr
+  https://klyora.fr
   Maquette générée pour ${esc(prospect.name)} · Theme: ${theme.id} · Fonts: ${fontPair.id}
   Toute reproduction, même partielle, est interdite.
   ─────────────────────────────────────────────────────
@@ -672,7 +672,7 @@ export function generateRestaurantMockupHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="Klyora Sites — https://webconceptor.fr">
+<meta name="author" content="Klyora Sites — https://klyora.fr">
 <meta name="copyright" content="© Klyora Sites — Reproduction interdite">
 <meta name="robots" content="noindex,noarchive">
 <title>${esc(prospect.name)}${prospect.city ? " — " + esc(prospect.city) : ""} · ${esc(content.cuisineType || labels.topStrip)}</title>
@@ -1992,7 +1992,7 @@ async function bkConfirmOk() {
     if (successTitle && successText) {
       if (data.sms_status === "quota_reached") {
         successTitle.textContent = "🔒 Quota SMS démo atteint";
-        successText.innerHTML = "Vous avez déjà utilisé les <strong>3 SMS de démonstration</strong> disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : <strong>contact@webconceptor.fr</strong>";
+        successText.innerHTML = "Vous avez déjà utilisé les <strong>3 SMS de démonstration</strong> disponibles pour cet établissement. Contactez-nous si vous souhaitez tester à nouveau : <strong>contact@klyora.fr</strong>";
       } else if (data.sms_status === "sent") {
         successTitle.textContent = "📲 SMS envoyé !";
         const remaining = typeof data.sms_remaining === "number" ? data.sms_remaining : 0;
@@ -2193,7 +2193,7 @@ async function pmSubmit() {
     // Redirect to Stripe Checkout
     window.location.href = data.url;
   } catch (e) {
-    err.textContent = e.message || "Erreur, réessayez ou contactez contact@webconceptor.fr";
+    err.textContent = e.message || "Erreur, réessayez ou contactez contact@klyora.fr";
     err.className = "pm-error show";
     btn.disabled = false;
     btn.textContent = originalText;

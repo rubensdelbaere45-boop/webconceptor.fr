@@ -8,7 +8,7 @@ import { rateLimit, getClientIp } from "@/lib/security";
    une modification complexe (couleurs, photos, nouvelle section…).
 
    - Enregistre la demande dans la DB (champ user_edits)
-   - Envoie un email à contact@webconceptor.fr via Brevo
+   - Envoie un email à contact@klyora.fr via Brevo
    Body : { slug, request }
    Rate-limit : 5 demandes / 10min / IP (anti-spam).
    ══════════════════════════════════════════ */
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   // Envoyer un email à Tom via Brevo
   const brevoKey = process.env.BREVO_API_KEY;
   if (brevoKey) {
-    const prospectUrl = `https://webconceptor.fr/prospects/${slug}`;
+    const prospectUrl = `https://klyora.fr/prospects/${slug}`;
     const htmlBody = `
 <h2>🎨 Demande de modification — ${prospect.name}</h2>
 <table style="border-collapse:collapse;width:100%;font-family:system-ui,sans-serif;font-size:14px">
@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
         "api-key": brevoKey,
       },
       body: JSON.stringify({
-        sender: { name: "Klyora Sites Bot", email: "contact@webconceptor.fr" },
-        to: [{ email: "contact@webconceptor.fr", name: "Tom Bauer" }],
+        sender: { name: "Klyora Sites Bot", email: "contact@klyora.fr" },
+        to: [{ email: "contact@klyora.fr", name: "Tom Bauer" }],
         subject: `🎨 Modif demandée — ${prospect.name} (${prospect.city || "?"})`,
         htmlContent: htmlBody,
       }),

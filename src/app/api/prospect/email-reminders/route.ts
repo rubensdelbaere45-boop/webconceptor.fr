@@ -54,17 +54,17 @@ function buildReminderEmail(prospectName: string, mockupUrl: string, prospectId?
 
   <div style="background:#f8f9fa;border-left:3px solid #0066ff;padding:18px 20px;margin:24px 0;border-radius:6px">
     <p style="font-size:14px;color:#0a0a0a;margin-bottom:6px;font-weight:600">Une question ? Contactez-moi :</p>
-    <p style="font-size:14px;color:#525252;margin-bottom:4px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#0066ff;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
+    <p style="font-size:14px;color:#525252;margin-bottom:4px">📧 <a href="mailto:contact@klyora.fr" style="color:#0066ff;text-decoration:none"><strong>contact@klyora.fr</strong></a></p>
     <p style="font-size:14px;color:#525252;margin:0">📞 <a href="tel:+33635592471" style="color:#0066ff;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
   </div>
 
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
     <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr &middot; 06 35 59 24 71</p>
-    <p><a href="https://webconceptor.fr" style="color:#0066ff;text-decoration:none">webconceptor.fr</a></p>
+    <p style="margin-bottom:2px">contact@klyora.fr &middot; 06 35 59 24 71</p>
+    <p><a href="https://klyora.fr" style="color:#0066ff;text-decoration:none">klyora.fr</a></p>
   </div>
-  <p style="font-size:11px;color:#a3a3a3;margin-top:24px;border-top:1px solid #f5f5f5;padding-top:16px">Vous recevez cet email dans le cadre d'un premier contact commercial. Pour ne plus être contacté, <a href="https://webconceptor.fr/api/unsubscribe?id=${encodeURIComponent(prospectId || '')}" style="color:#a3a3a3">cliquez ici pour vous désabonner</a>.</p>
+  <p style="font-size:11px;color:#a3a3a3;margin-top:24px;border-top:1px solid #f5f5f5;padding-top:16px">Vous recevez cet email dans le cadre d'un premier contact commercial. Pour ne plus être contacté, <a href="https://klyora.fr/api/unsubscribe?id=${encodeURIComponent(prospectId || '')}" style="color:#a3a3a3">cliquez ici pour vous désabonner</a>.</p>
 </div>`;
   return { subject, html };
 }
@@ -73,7 +73,7 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
   try {
-    const baseUrl = "https://webconceptor.fr";
+    const baseUrl = "https://klyora.fr";
     const unsubUrl = prospectId
       ? `${baseUrl}/api/unsubscribe?id=${encodeURIComponent(prospectId)}&email=${encodeURIComponent(to)}`
       : `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(to)}`;
@@ -85,12 +85,12 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,
         headers: {
-          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@webconceptor.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
+          "List-Unsubscribe": `<${unsubUrl}>, <mailto:contact@klyora.fr?subject=unsubscribe%20${encodeURIComponent(to)}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       }),
@@ -155,7 +155,7 @@ async function handler(req: NextRequest) {
   const results: Array<{ id: string; name: string; status: string; error?: string }> = [];
 
   for (const p of prospects) {
-    const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
     const { subject, html } = buildReminderEmail(p.name, mockupUrl, p.id);
 
     // Envoi au mail principal + additional_emails (max 2 destinataires)

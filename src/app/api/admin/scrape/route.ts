@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const { query } = await req.json().catch(() => ({} as { query?: string }));
-  const origin = process.env.NEXT_PUBLIC_BASE_URL || "https://webconceptor.fr";
+  const origin = process.env.NEXT_PUBLIC_BASE_URL || "https://klyora.fr";
   const cronSecret = process.env.CRON_SECRET || "";
 
   // Délègue au cron existant

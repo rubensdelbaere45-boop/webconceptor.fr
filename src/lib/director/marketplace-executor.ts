@@ -72,7 +72,7 @@ async function executeViaOpenRouter(agent: MarketplaceAgentFull, ctx: AgentConte
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://webconceptor.fr",
+        "HTTP-Referer": "https://klyora.fr",
         "X-Title": "Klyora Director — Marketplace Agent",
       },
       body: JSON.stringify({

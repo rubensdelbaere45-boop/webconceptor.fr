@@ -37,8 +37,8 @@ const DOMAIN_RE = /^[a-z0-9](-?[a-z0-9])+$/i;
 const TLD_RE = /^[a-z]{2,8}$/i;
 
 const ALLOWED_ORIGINS = new Set([
-  "https://webconceptor.fr",
-  "https://www.webconceptor.fr",
+  "https://klyora.fr",
+  "https://www.klyora.fr",
   "http://localhost:3000",
 ]);
 
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
   }
 
   const reqOrigin = req.headers.get("origin") || "";
-  const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://webconceptor.fr";
+  const origin = ALLOWED_ORIGINS.has(reqOrigin) ? reqOrigin : "https://klyora.fr";
 
   const sharedMeta = {
     source: "self_serve_mockup_v2",
@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[prospect/checkout V2] Stripe error:", err);
     return NextResponse.json(
-      { error: "Impossible de créer la session de paiement. Réessayez ou contactez contact@webconceptor.fr." },
+      { error: "Impossible de créer la session de paiement. Réessayez ou contactez contact@klyora.fr." },
       { status: 500 }
     );
   }

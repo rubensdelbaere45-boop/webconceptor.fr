@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
           `Status : ${eventType}\n` +
           `Il y a : <b>${minutesAgo} min</b>\n\n` +
           `📞 <b><a href="tel:${phoneDisplay}">Appelle : ${escapeTelegram(phoneDisplay)}</a></b>\n` +
-          `📱 <a href="https://webconceptor.fr/prospects/${p.slug}">Voir sa maquette</a>\n\n` +
+          `📱 <a href="https://klyora.fr/prospects/${p.slug}">Voir sa maquette</a>\n\n` +
           (p.custom_hook ? `<i>Accroche : ${escapeTelegram(p.custom_hook)}</i>` : "");
 
         try {

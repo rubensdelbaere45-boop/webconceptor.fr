@@ -39,9 +39,9 @@ export function middleware(req: NextRequest) {
   res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self), interest-cohort=()");
   res.headers.set("X-DNS-Prefetch-Control", "off");
 
-  // HSTS : only on prod (webconceptor.fr)
+  // HSTS : only on prod (klyora.fr)
   const host = req.headers.get("host") || "";
-  if (host.endsWith("webconceptor.fr")) {
+  if (host.endsWith("klyora.fr")) {
     res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   }
 

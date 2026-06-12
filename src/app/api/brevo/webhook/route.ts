@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
    POST /api/brevo/webhook
    Reçoit les événements Brevo en temps réel.
    Config Brevo → Transactionnel → Webhooks :
-     URL : https://webconceptor.fr/api/brevo/webhook
+     URL : https://klyora.fr/api/brevo/webhook
      Événements : hard_bounce, blocked, invalid_email, unsubscribed
    ══════════════════════════════════════════ */
 

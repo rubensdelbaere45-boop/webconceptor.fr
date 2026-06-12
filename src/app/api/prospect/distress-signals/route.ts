@@ -49,7 +49,7 @@ function escapeHtml(s: string): string {
 function buildNoWebsiteEmail(p: ProspectRow): { subject: string; html: string; text: string } {
   const firstName = p.name.split(/[ -]/)[0];
   const cityTxt = p.city ? ` à ${p.city}` : "";
-  const mockupUrl = p.slug ? `https://webconceptor.fr/prospects/${p.slug}` : "https://webconceptor.fr";
+  const mockupUrl = p.slug ? `https://klyora.fr/prospects/${p.slug}` : "https://klyora.fr";
   const subject = `${firstName}, vos concurrents${cityTxt} captent vos clients sur Google`;
 
   const text = `Bonjour,
@@ -112,7 +112,7 @@ Tom — Klyora Sites`;
 function buildLowRatingEmail(p: ProspectRow): { subject: string; html: string; text: string } {
   const firstName = p.name.split(/[ -]/)[0];
   const cityTxt = p.city ? ` à ${p.city}` : "";
-  const mockupUrl = p.slug ? `https://webconceptor.fr/prospects/${p.slug}` : "https://webconceptor.fr";
+  const mockupUrl = p.slug ? `https://klyora.fr/prospects/${p.slug}` : "https://klyora.fr";
   const ratingTxt = p.google_rating ? `${p.google_rating.toFixed(1)}/5` : "";
   const reviewsTxt = p.google_reviews_count ? ` (${p.google_reviews_count} avis)` : "";
 
@@ -181,8 +181,8 @@ async function sendBrevoEmail(to: string, name: string, subject: string, html: s
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom — Klyora Sites", email: "tom@webconceptor.fr" },
-        replyTo: { name: "Tom", email: "tom@webconceptor.fr" },
+        sender: { name: "Tom — Klyora Sites", email: "contact@klyora.fr" },
+        replyTo: { name: "Tom", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,

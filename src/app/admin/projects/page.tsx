@@ -149,7 +149,7 @@ export default function AdminPage() {
                 <label className="text-sm font-medium text-gray-700 block mb-1">URL de la maquette</label>
                 <input type="url" value={form.preview_url} onChange={e => setForm({ ...form, preview_url: e.target.value })}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  placeholder="https://webconceptor.fr/prospects/xxx" />
+                  placeholder="https://klyora.fr/prospects/xxx" />
               </div>
             </div>
 

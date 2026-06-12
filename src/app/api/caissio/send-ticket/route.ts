@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender:     { name: body.storeName, email: "contact@webconceptor.fr" },
+        sender:     { name: body.storeName, email: "contact@klyora.fr" },
         to:         [{ email: body.toEmail }],
         subject:    `🧾 Votre ticket — ${body.storeName}`,
         htmlContent: html,

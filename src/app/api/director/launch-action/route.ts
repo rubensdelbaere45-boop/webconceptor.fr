@@ -72,7 +72,7 @@ ${html}
 <hr style="margin:32px 0;border:none;border-top:1px solid #E5E7EB">
 <p style="font-size:13px;color:#6B7280">Connectez-vous à votre tableau de bord Klyora Director pour voir l'historique de toutes vos missions et lancer de nouvelles campagnes.</p>
 <p style="text-align:center;margin:24px 0">
-<a href="https://webconceptor.fr/director/dashboard" style="display:inline-block;background:#0A2540;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700">Mon Tableau de Bord →</a>
+<a href="https://klyora.fr/director/dashboard" style="display:inline-block;background:#0A2540;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700">Mon Tableau de Bord →</a>
 </p>
 </body></html>`;
 
@@ -81,8 +81,8 @@ ${html}
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: `${agentName} (Klyora Director)`, email: "tom@webconceptor.fr" },
-        replyTo: { name: "Tom — Klyora Director", email: "tom@webconceptor.fr" },
+        sender: { name: `${agentName} (Klyora Director)`, email: "contact@klyora.fr" },
+        replyTo: { name: "Tom — Klyora Director", email: "contact@klyora.fr" },
         to: [{ email, name: businessName }],
         subject: `${agentName} a terminé : votre rapport est prêt`,
         htmlContent: fullHtml,

@@ -53,7 +53,7 @@ function buildCartAbandonEmail(prospectName: string, mockupUrl: string): { subje
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
     <p style="margin-bottom:4px">Fondateur, Klyora Sites</p>
-    <p style="margin-bottom:2px">contact@webconceptor.fr · 06 35 59 24 71</p>
+    <p style="margin-bottom:2px">contact@klyora.fr · 06 35 59 24 71</p>
   </div>
 </div>`;
   return { subject, html };
@@ -67,7 +67,7 @@ async function sendEmail(to: string, name: string, subject: string, html: string
       method: "POST",
       headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: to, name }],
         subject,
         htmlContent: html,
@@ -114,7 +114,7 @@ async function handler(req: NextRequest) {
   const results: Array<{ id: string; status: string }> = [];
 
   for (const p of prospects) {
-    const mockupUrl = `https://webconceptor.fr/prospects/${p.slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
     const { subject, html } = buildCartAbandonEmail(p.name, mockupUrl);
 
     const targets: string[] = [p.email];

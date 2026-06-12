@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
         business_type: businessType.slice(0, 100),
         city:          city.slice(0, 100),
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr"}/services/chatbot/merci?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${process.env.NEXT_PUBLIC_APP_URL || "https://webconceptor.fr"}/services/chatbot`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr"}/services/chatbot/merci?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${process.env.NEXT_PUBLIC_APP_URL || "https://klyora.fr"}/services/chatbot`,
       locale: "fr",
       subscription_data: {
         metadata: {

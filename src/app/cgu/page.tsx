@@ -16,7 +16,7 @@ export default function CGU() {
         <div className="prose prose-sm prose-gray max-w-none text-[14px] text-[#525252] leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 1 — Objet</h2>
-            <p>Les presentes conditions generales d&apos;utilisation (CGU) regissent l&apos;acces et l&apos;utilisation du site webconceptor.fr ainsi que les prestations de creation de sites web proposees par Klyora Sites.</p>
+            <p>Les presentes conditions generales d&apos;utilisation (CGU) regissent l&apos;acces et l&apos;utilisation du site klyora.fr ainsi que les prestations de creation de sites web proposees par Klyora Sites.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 2 — Prestations</h2>

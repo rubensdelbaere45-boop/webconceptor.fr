@@ -179,7 +179,7 @@ export async function generateMockup(
       about_scraped: odProspect.about_scraped,
       menu_items: prospect.menu_items?.map(m => ({ name: m.name, price: m.price, description: m.description })) || null,
     });
-    const odHtml = generateOpenDesignMockup(odProspect, content, opts.origin || "https://webconceptor.fr");
+    const odHtml = generateOpenDesignMockup(odProspect, content, opts.origin || "https://klyora.fr");
 
     // Validation par le gatekeeper
     const qa = strictGatekeeper(odHtml, {

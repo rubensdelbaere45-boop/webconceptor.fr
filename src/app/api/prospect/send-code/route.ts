@@ -90,7 +90,7 @@ function buildCodeEmailHtml(opts: {
     <!-- CTA button -->
     <div style="text-align:center;margin:32px 0">
       <a href="${esc(codeUrl)}" style="display:inline-block;padding:18px 44px;background:#0066ff;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;font-size:13px;box-shadow:0 4px 20px rgba(0,102,255,0.25)">Entrer mon code →</a>
-      <p style="margin:16px 0 0;font-size:12px;color:#8b7e6e">ou collez le code sur webconceptor.fr/code</p>
+      <p style="margin:16px 0 0;font-size:12px;color:#8b7e6e">ou collez le code sur klyora.fr/code</p>
     </div>
 
     <!-- Link to view mockup again -->
@@ -107,7 +107,7 @@ function buildCodeEmailHtml(opts: {
           <div style="flex-shrink:0;width:28px;height:28px;background:#c19a56;color:#fff;border-radius:50%;font-weight:700;font-size:14px;line-height:28px;text-align:center">1</div>
           <div>
             <p style="margin:0;font-weight:600;color:#1a1310;font-size:14px">Vous saisissez votre code</p>
-            <p style="margin:4px 0 0;color:#4a4340;font-size:13px;line-height:1.6">Sur <a href="${esc(codeUrl)}" style="color:#c19a56">webconceptor.fr/code</a>, vous voyez un aperçu détaillé du projet et choisissez votre nom de domaine.</p>
+            <p style="margin:4px 0 0;color:#4a4340;font-size:13px;line-height:1.6">Sur <a href="${esc(codeUrl)}" style="color:#c19a56">klyora.fr/code</a>, vous voyez un aperçu détaillé du projet et choisissez votre nom de domaine.</p>
           </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px">
@@ -154,7 +154,7 @@ function buildCodeEmailHtml(opts: {
     <!-- Question block with contact info -->
     <div style="background:#fff;border-left:3px solid #c19a56;padding:20px 24px;margin:32px 0;border-radius:4px">
       <p style="font-size:14px;color:#1a1310;margin:0 0 12px;font-weight:600">Une question avant de valider ?</p>
-      <p style="font-size:14px;color:#4a4340;margin:0 0 6px">📧 <a href="mailto:contact@webconceptor.fr" style="color:#c19a56;text-decoration:none"><strong>contact@webconceptor.fr</strong></a></p>
+      <p style="font-size:14px;color:#4a4340;margin:0 0 6px">📧 <a href="mailto:contact@klyora.fr" style="color:#c19a56;text-decoration:none"><strong>contact@klyora.fr</strong></a></p>
       <p style="font-size:14px;color:#4a4340;margin:0 0 12px">📞 <a href="tel:+33635592471" style="color:#c19a56;text-decoration:none"><strong>06 35 59 24 71</strong></a></p>
       <p style="font-size:12px;color:#8b7e6e;margin:0;font-style:italic">Merci de signaler à l'opérateur votre nom, prénom et le nom de votre enseigne (<strong style="color:#1a1310">${esc(prospectName)}</strong>) afin que votre dossier soit retrouvé rapidement.</p>
     </div>
@@ -168,7 +168,7 @@ function buildCodeEmailHtml(opts: {
     <div style="border-top:1px solid #e8dfd0;padding-top:24px;margin-top:40px">
       <p style="margin:0 0 4px;font-size:14px"><strong style="color:#1a1310">Tom Bauer</strong></p>
       <p style="margin:0 0 4px;font-size:13px;color:#8b7e6e">Fondateur, Klyora Sites</p>
-      <p style="margin:0;font-size:12px;color:#8b7e6e">contact@webconceptor.fr &middot; 06 35 59 24 71 &middot; <a href="https://webconceptor.fr" style="color:#c19a56;text-decoration:none">webconceptor.fr</a></p>
+      <p style="margin:0;font-size:12px;color:#8b7e6e">contact@klyora.fr &middot; 06 35 59 24 71 &middot; <a href="https://klyora.fr" style="color:#c19a56;text-decoration:none">klyora.fr</a></p>
     </div>
 
   </div>
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    const mockupUrl = `https://webconceptor.fr/prospects/${prospect.slug}`;
+    const mockupUrl = `https://klyora.fr/prospects/${prospect.slug}`;
     const isResto = prospect.business_type === "restaurant";
     const title = `Site web ${isResto ? "restaurant" : "vitrine"} — ${prospect.name}`;
 
@@ -263,8 +263,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Build email
-  const codeUrl = `https://webconceptor.fr/code?c=${code}`;
-  const mockupUrl = `https://webconceptor.fr/prospects/${prospect.slug}`;
+  const codeUrl = `https://klyora.fr/code?c=${code}`;
+  const mockupUrl = `https://klyora.fr/prospects/${prospect.slug}`;
   const emailHtml = buildCodeEmailHtml({
     prospectName: prospect.name,
     code,
@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "api-key": brevoKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        sender: { name: "Tom Bauer", email: "contact@webconceptor.fr" },
+        sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
         to: [{ email: prospect.email, name: prospect.name }],
         subject: `Votre code d'accès pour ${prospect.name} — Klyora Sites`,
         htmlContent: emailHtml,

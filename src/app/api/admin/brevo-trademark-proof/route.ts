@@ -61,8 +61,8 @@ function buildTrademarkPdf(): Promise<Buffer> {
       doc.fontSize(24).font("Helvetica-Bold").fillColor("#0a0a0a");
       doc.text("Klyora Sites", { align: "left" });
       doc.fontSize(11).font("Helvetica").fillColor("#666");
-      doc.text("https://webconceptor.fr", { align: "left" });
-      doc.text("contact@webconceptor.fr · 06 35 59 24 71", { align: "left" });
+      doc.text("https://klyora.fr", { align: "left" });
+      doc.text("contact@klyora.fr · 06 35 59 24 71", { align: "left" });
       doc.moveDown(2);
 
       // ── Titre ──
@@ -78,10 +78,10 @@ function buildTrademarkPdf(): Promise<Buffer> {
 
 1. Exploiter activement le nom commercial "Klyora Sites" pour mon activité de création de sites web professionnels destinés aux artisans, commerces de proximité et indépendants en France.
 
-2. Être propriétaire du nom de domaine webconceptor.fr (enregistrement actif vérifiable via WHOIS public).
+2. Être propriétaire du nom de domaine klyora.fr (enregistrement actif vérifiable via WHOIS public).
 
 3. Utiliser ce nom commercial publiquement sur :
-   - Le site web https://webconceptor.fr (accessible publiquement)
+   - Le site web https://klyora.fr (accessible publiquement)
    - Les emails transactionnels envoyés à mes prospects et clients
    - Les communications téléphoniques (numéro : 06 35 59 24 71)
    - Les supports marketing en ligne
@@ -104,11 +104,11 @@ function buildTrademarkPdf(): Promise<Buffer> {
       doc.text("Références publiques vérifiables :", { align: "left" });
       doc.moveDown(0.5);
       doc.font("Helvetica").fontSize(10);
-      doc.text("• Site web actif : https://webconceptor.fr");
-      doc.text("• Mentions légales : https://webconceptor.fr/mentions-legales");
-      doc.text("• Politique de confidentialité : https://webconceptor.fr/confidentialite");
+      doc.text("• Site web actif : https://klyora.fr");
+      doc.text("• Mentions légales : https://klyora.fr/mentions-legales");
+      doc.text("• Politique de confidentialité : https://klyora.fr/confidentialite");
       doc.text("• Téléphone de contact : 06 35 59 24 71");
-      doc.text("• Email de contact : contact@webconceptor.fr");
+      doc.text("• Email de contact : contact@klyora.fr");
       doc.moveDown(2);
 
       // ── Date + signature ──
