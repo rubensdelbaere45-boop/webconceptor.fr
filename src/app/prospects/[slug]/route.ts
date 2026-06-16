@@ -159,9 +159,27 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality, menu_items, reviews, about_scraped, website_photos, site_style_dna, hours, is_luxury")
+    .select("id, name, mockup_html, opened_at, phone, email, address, city, google_rating, google_reviews_count, business_type, website, site_quality, menu_items, reviews, about_scraped, website_photos, site_style_dna, hours, is_luxury, access_code")
     .eq("slug", slug)
     .maybeSingle();
+
+  // ─── GATE PAR CODE D'ACCÈS (protection légale anti-huissier) ─────────
+  // Si le prospect a un code et que le cookie n'est pas présent → on
+  // affiche le formulaire de saisie au lieu de la maquette.
+  if (data?.access_code) {
+    const { hasValidAccessCookie, renderGatePage } = await import("@/lib/access-code");
+    const valid = hasValidAccessCookie(req, slug, data.access_code);
+    if (!valid) {
+      return new NextResponse(renderGatePage({ slug, prospectName: data.name || undefined, error: false }), {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Robots-Tag": "noindex, nofollow",
+        },
+      });
+    }
+  }
 
   if (error || !data) {
     return new NextResponse(
