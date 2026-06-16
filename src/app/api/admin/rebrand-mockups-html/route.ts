@@ -59,12 +59,16 @@ async function handler(req: NextRequest) {
   }
 
   const dryRun = req.nextUrl.searchParams.get("dry_run") === "1";
+  const offset = Math.max(0, parseInt(req.nextUrl.searchParams.get("offset") || "0", 10));
+  const limit = Math.min(1000, parseInt(req.nextUrl.searchParams.get("limit") || "1000", 10));
   const supabase = db();
 
   const { data, error } = await supabase
     .from("prospects")
     .select("id, name, slug, mockup_html")
-    .not("mockup_html", "is", null);
+    .not("mockup_html", "is", null)
+    .order("id", { ascending: true })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
