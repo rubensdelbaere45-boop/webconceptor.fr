@@ -227,7 +227,7 @@ ${infoLines}
 Contexte offre Klyora Sites (à mentionner SEULEMENT si le prospect demande) :
 - Site vitrine premium sur-mesure : 199 € TTC
 - Paiement en 3× sans frais via Klarna (3 × 66,33 €)
-- Livraison en 5 jours (7 avec nom de domaine)
+- Livraison en quelques minutes (7 avec nom de domaine)
 - Module réservation en ligne intégré (0 commission vs TheFork 2,50 €/couvert)
 - Espace admin simple
 - Option Sérénité 50 €/mois : hébergement + modifications illimitées

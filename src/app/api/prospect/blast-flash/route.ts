@@ -68,7 +68,7 @@ Je me permets de revenir vers vous au sujet de la maquette de site que je vous a
 Vous trouverez la maquette à cette adresse :
 ${mockupUrl}
 
-Pour rappel, le tarif est de 320 € TTC tout compris. La livraison se fait en 5 jours ouvrés et la garantie satisfait-ou-remboursé est de 14 jours.
+Pour rappel, le tarif est de 320 € TTC tout compris. La livraison se fait en quelques minutes et la garantie satisfait-ou-remboursé est de 14 jours.
 
 Si vous souhaitez avancer, des ajustements, ou simplement un devis écrit, répondez-moi directement à ce mail — je lis toutes les réponses personnellement.
 

@@ -198,7 +198,7 @@ async function sendAdminEmail({
 /* ══════════════════════════════════════════
    Brevo : email de relance J+25 (upsell Sérénité)
    Planifié via scheduledAt → Brevo envoie automatiquement
-   5 jours avant la fin du mois offert.
+   quelques minutes avant la fin du mois offert.
    ══════════════════════════════════════════ */
 
 async function scheduleUpsellEmail({
@@ -217,7 +217,7 @@ async function scheduleUpsellEmail({
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey || !buyerEmail) return;
 
-  // J+25 : 5 jours avant la fin du mois offert
+  // J+25 : quelques minutes avant la fin du mois offert
   const sendAt = new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString();
   const mockupUrl = `https://klyora.fr/prospects/${encodeURIComponent(prospectSlug)}`;
   const hasDomain = domain && domain !== "(aucun)";
@@ -228,7 +228,7 @@ async function scheduleUpsellEmail({
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#0d1b5e,#1a2d7a);padding:32px 32px 28px;border-radius:12px 12px 0 0">
     <p style="margin:0 0 16px;display:inline-block;background:rgba(255,255,255,.12);color:#FFD700;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:100px">Klyora Sites</p>
-    <h1 style="margin:0;font-size:24px;font-weight:800;color:#fff;line-height:1.3">Votre mois Sérénité offert<br>se termine dans <span style="color:#FFD700">5 jours</span> ☀️</h1>
+    <h1 style="margin:0;font-size:24px;font-weight:800;color:#fff;line-height:1.3">Votre mois Sérénité offert<br>se termine dans <span style="color:#FFD700">quelques minutes</span> ☀️</h1>
   </div>
 
   <!-- Body -->
@@ -238,12 +238,12 @@ async function scheduleUpsellEmail({
 
     <p style="font-size:15px;line-height:1.7;color:#333;margin:0 0 20px">
       Depuis un mois, votre site <strong>${prospectName}</strong>${hasDomain ? ` sur <strong>${domain}</strong>` : ""} est hébergé, mis à jour et surveillé dans le cadre de votre mois Sérénité offert.
-      <strong>Dans 5 jours, ce service s'arrête</strong> — sauf si vous choisissez de continuer.
+      <strong>Dans quelques minutes, ce service s'arrête</strong> — sauf si vous choisissez de continuer.
     </p>
 
     <!-- Ce que vous perdez -->
     <div style="background:#fff8f0;border:1.5px solid #f0c070;border-radius:10px;padding:18px 22px;margin:0 0 22px">
-      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#8a5a00;text-transform:uppercase;letter-spacing:.08em">Ce qui s'arrête dans 5 jours :</p>
+      <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#8a5a00;text-transform:uppercase;letter-spacing:.08em">Ce qui s'arrête dans quelques minutes :</p>
       <ul style="margin:0;padding:0 0 0 18px;font-size:14px;color:#555;line-height:2">
         <li>❌ Hébergement sécurisé de votre site</li>
         <li>❌ Mises à jour illimitées sur simple email</li>
@@ -280,7 +280,7 @@ async function scheduleUpsellEmail({
       body: JSON.stringify({
         sender: { name: "Klyora Sites", email: "contact@klyora.fr" },
         to: [{ email: buyerEmail, name: buyerFirstName }],
-        subject: `Votre mois Sérénité offert se termine dans 5 jours — ${prospectName}`,
+        subject: `Votre mois Sérénité offert se termine dans quelques minutes — ${prospectName}`,
         htmlContent,
         scheduledAt: sendAt,
       }),
@@ -328,7 +328,7 @@ async function sendConfirmationEmail(to: string, name: string, code: string, dom
               </div>
               <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
                 <span style="background:#0066ff;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center">2</span>
-                <p style="font-size:14px;color:#525252;margin:0;line-height:1.5">Finalisation de votre site (délai <strong>5 jours ouvrés</strong>)</p>
+                <p style="font-size:14px;color:#525252;margin:0;line-height:1.5">Finalisation de votre site (délai <strong>quelques minutes</strong>)</p>
               </div>
               <div style="display:flex;align-items:flex-start;gap:12px">
                 <span style="background:#0066ff;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center">3</span>
@@ -580,7 +580,7 @@ export async function POST(req: NextRequest) {
       });
 
       // ─── Email de relance J+25 pour formule Simple ─────────────────────
-      // Planifié via Brevo scheduledAt : envoyé 5 jours avant la fin du mois offert
+      // Planifié via Brevo scheduledAt : envoyé quelques minutes avant la fin du mois offert
       if (!hasSerenite && buyerEmail) {
         const buyerFirstName = metadata.buyer_prenom || buyerName.split(" ")[0] || "vous";
         await scheduleUpsellEmail({

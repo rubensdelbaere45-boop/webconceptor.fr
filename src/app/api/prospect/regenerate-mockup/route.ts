@@ -106,7 +106,7 @@ function buildLocalContent(p: MinimalProspect) {
     aboutText,
     menuItems,
     talkingPoints: [
-      "Site livré en 5 jours ouvrés",
+      "Site livré instantanément",
       "Modifications illimitées incluses",
       "Compatible mobile et tablette",
     ],

@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
           : `Site web Simple — ${prospect.name}`,
         description: tier === "luxury"
           ? "Design exclusif sur-mesure, livraison 7 jours · frais de configuration uniques"
-          : "Création sur-mesure, livraison 5 jours · frais de configuration uniques",
+          : "Création sur-mesure, livraison quelques minutes · frais de configuration uniques",
       },
       unit_amount: SETUP_FEE_CENTS[tier],
     },

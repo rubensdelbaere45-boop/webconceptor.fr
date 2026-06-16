@@ -157,7 +157,7 @@ export default function AdminPage() {
               <label className="text-sm font-medium text-gray-700 block mb-1">Détails du contrat</label>
               <textarea value={form.contract_text} onChange={e => setForm({ ...form, contract_text: e.target.value })}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 min-h-[100px] resize-y"
-                placeholder="- Design sur-mesure 11 pages&#10;- SEO local Paris/IDF&#10;- Hébergement 1 an inclus&#10;- Livraison 5 jours&#10;- Retours illimités" />
+                placeholder="- Design sur-mesure 11 pages&#10;- SEO local Paris/IDF&#10;- Hébergement 1 an inclus&#10;- Livraison quelques minutes&#10;- Retours illimités" />
             </div>
 
             <div>

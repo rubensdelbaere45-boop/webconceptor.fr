@@ -62,7 +62,7 @@ Je m'appelle Tom, je crée des sites pour des artisans et indépendants. J'ai pr
 
 → ${mockupUrl}
 
-Si elle vous plaît, on peut la mettre en ligne en 5 jours. Vous payez :
+Si elle vous plaît, on peut la mettre en ligne en quelques minutes. Vous payez :
 - 320 € de création (one-shot)
 - + 17,90 €/mois pour l'hébergement et les modifications illimitées
 
@@ -91,7 +91,7 @@ Tom — Klyora Sites`;
 <a href="${mockupUrl}" style="display:inline-block;padding:14px 28px;background:#0a0a0a;color:#FFD700;text-decoration:none;font-weight:800;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;font-size:13px">Voir ma maquette →</a>
 </p>
 
-<p style="font-size:14px">Si elle vous plaît, on peut la mettre en ligne <strong>en 5 jours</strong> :</p>
+<p style="font-size:14px">Si elle vous plaît, on peut la mettre en ligne <strong>en quelques minutes</strong> :</p>
 <ul style="font-size:14px;line-height:1.7">
   <li>320 € de création (paiement unique)</li>
   <li>+ 17,90 €/mois hébergement + modifications illimitées</li>

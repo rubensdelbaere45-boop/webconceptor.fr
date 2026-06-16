@@ -28,7 +28,7 @@ export default function CGU() {
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 4 — Livraison</h2>
-            <p>Le delai moyen de livraison est de 5 jours ouvrables apres validation du devis et reception du paiement. Le client dispose de retours illimites jusqu&apos;a satisfaction complete du resultat.</p>
+            <p>Le delai moyen de livraison est de quelques minutes ouvrables apres validation du devis et reception du paiement. Le client dispose de retours illimites jusqu&apos;a satisfaction complete du resultat.</p>
           </section>
           <section>
             <h2 className="text-lg font-semibold text-[#0a0a0a] mb-2">Article 5 — Formule Serenite</h2>

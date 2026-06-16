@@ -45,7 +45,7 @@ function escapeHtml(s: string): string {
 
 function buildSniperEmail(p: Prospect): { subject: string; html: string; text: string } {
   const firstName = p.name.split(/[ -]/)[0];
-  const hook = p.custom_hook || `Un site pro pour ${p.name}, livré en 5 jours.`;
+  const hook = p.custom_hook || `Un site pro pour ${p.name}, livré instantanément.`;
   const mockupUrl = `https://klyora.fr/prospects/${p.slug}`;
 
   // Subject : on cherche un truc qui se démarque dans l'inbox
@@ -60,7 +60,7 @@ function buildSniperEmail(p: Prospect): { subject: string; html: string; text: s
     mature_business:      `${firstName}, transformer le bouche-à-oreille en clics Google`,
     established_business: `${firstName}, votre expérience mérite une vitrine en ligne`,
     historic_business:    `${firstName}, votre histoire mérite d'être valorisée en ligne`,
-    generic:              `${firstName}, votre site pro en 5 jours`,
+    generic:              `${firstName}, votre site pro en quelques minutes`,
   };
   const subject = subjectByAngle[p.sales_angle || "generic"] || subjectByAngle.generic;
 

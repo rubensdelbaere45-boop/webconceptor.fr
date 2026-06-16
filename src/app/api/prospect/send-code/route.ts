@@ -133,7 +133,7 @@ function buildCodeEmailHtml(opts: {
       <div style="padding:12px 0;border-bottom:1px solid rgba(193,154,86,0.2)">
         <p style="font-size:15px;color:#fff;font-weight:600;margin:0 0 4px">Site seul</p>
         <p style="font-size:14px;color:rgba(249,245,239,0.8);margin:0;line-height:1.5">
-          <strong style="color:#c19a56">5 jours ouvrés maximum</strong> après paiement. Livré sur l'URL provisoire Klyora Sites.
+          <strong style="color:#c19a56">quelques minutes maximum</strong> après paiement. Livré sur l'URL provisoire Klyora Sites.
         </p>
       </div>
       <div style="padding:16px 0 0">
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
       `• Design responsive (PC, tablette, mobile)\n` +
       `• Hébergement 30 jours inclus\n` +
       `• Nom de domaine (facturé selon extension)\n\n` +
-      `Délai : 5 jours ouvrés après paiement (7 jours grand max avec option Sérénité et nom de domaine).\n\n` +
+      `Délai : quelques minutes après paiement (7 jours grand max avec option Sérénité et nom de domaine).\n\n` +
       `Modifications incluses : jusqu'à 2 rounds de corrections.`;
 
     const { error: projErr } = await supabase

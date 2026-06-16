@@ -147,7 +147,7 @@ J'ai donc pris l'initiative de recoder entièrement votre site avec les technolo
 
 → ${mockupUrl}
 
-L'ancien site, on l'archive proprement. Le nouveau prend le relais en 5 jours.
+L'ancien site, on l'archive proprement. Le nouveau prend le relais en quelques minutes.
 
 Tarif : 320 € one-shot ou 0 € + 17,90 €/mois (tout inclus, modifiable à volonté).
 
@@ -183,7 +183,7 @@ Tom — Klyora Sites — 06 35 59 24 71`;
 <a href="${mockupUrl}" style="display:inline-block;padding:14px 28px;background:#0a0a0a;color:#FFD700;text-decoration:none;font-weight:800;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;font-size:13px">Voir le nouveau site →</a>
 </p>
 
-<p style="font-size:14px;color:#666">L'ancien site, on l'archive proprement. Le nouveau prend le relais en 5 jours.</p>
+<p style="font-size:14px;color:#666">L'ancien site, on l'archive proprement. Le nouveau prend le relais en quelques minutes.</p>
 
 <p style="font-size:14px">Tarif : <strong>320 €</strong> one-shot ou <strong>0 € + 17,90 €/mois</strong> (tout inclus, modifiable à volonté).</p>
 

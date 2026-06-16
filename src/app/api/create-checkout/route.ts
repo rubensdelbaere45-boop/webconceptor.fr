@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
           currency: "eur",
           product_data: {
             name: `Site web Klyora Sites — ${project.title}`,
-            description: "Creation de site web professionnel sur-mesure (livraison 5 jours)",
+            description: "Creation de site web professionnel sur-mesure (livraison quelques minutes)",
           },
           unit_amount: project.price_cents || 32000,
         },

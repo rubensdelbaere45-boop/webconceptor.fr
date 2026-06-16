@@ -133,7 +133,7 @@ ${domainBlock}
 <h2 style="font-size:16px;margin-top:24px">Prochaines étapes</h2>
 <ol style="font-size:14px;line-height:1.7">
   <li>Tom prend contact dans les 24h pour valider votre maquette finale</li>
-  <li>Mise en ligne sous 5 jours ouvrables (7 jours en Luxury)</li>
+  <li>Mise en ligne instantanément ouvrables (7 jours en Luxury)</li>
   <li>Vous recevrez un accès admin pour vos modifications</li>
 </ol>
 

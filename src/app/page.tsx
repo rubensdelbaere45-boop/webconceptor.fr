@@ -138,7 +138,7 @@ const sereniteItems = [
 const faqs = [
   {
     q: "Combien de temps pour livrer un site ?",
-    a: "5 jours ouvrés en moyenne. Dès validation de votre devis, nous concevons la maquette en 48h, puis nous intégrons votre contenu et apportons les ajustements jusqu\u2019à satisfaction complète."
+    a: "quelques minutes en moyenne. Dès validation de votre devis, nous concevons la maquette en 48h, puis nous intégrons votre contenu et apportons les ajustements jusqu\u2019à satisfaction complète."
   },
   {
     q: "Que se passe-t-il si je n\u2019aime pas le résultat ?",
@@ -374,7 +374,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-[#525252] text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Nouveau site ou refonte d&apos;un site existant. Design premium, livré en 5 jours. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
+            Nouveau site ou refonte d&apos;un site existant. Design premium, livré instantanément. <strong>À partir de 320 € TTC</strong> — <span className="text-[#0066ff] font-semibold">ou 3× sans frais</span>.<br />
             <span className="text-[#a3a3a3] text-base">1 mois Sérénité offert à l&apos;ouverture · Hébergement &amp; suivi ensuite 50 €/mois.</span>
           </motion.p>
 
@@ -670,7 +670,7 @@ export default function Home() {
               <div className="relative z-10">
                 <p className="text-[12px] text-white/40 mb-1">À partir de</p>
                 <p className="text-5xl font-extrabold tracking-tight mb-1">320 <span className="text-xl font-medium text-white/50">&euro;</span></p>
-                <p className="text-[13px] text-white/40 mb-8">Paiement unique &middot; Livraison 5 jours</p>
+                <p className="text-[13px] text-white/40 mb-8">Paiement unique &middot; Livraison quelques minutes</p>
                 <div className="space-y-2.5 mb-8">
                   {included.map((i) => (
                     <div key={i} className="flex items-center gap-2.5">

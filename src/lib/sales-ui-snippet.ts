@@ -167,18 +167,84 @@ body{padding-top:54px !important}
 }
 </style>
 
+<style>
+/* Bouton "Comment ça marche" + overlay explication */
+.wc-sx-how-btn{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:100px;cursor:pointer;letter-spacing:0.04em;white-space:nowrap;transition:all 0.15s}
+.wc-sx-how-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.55)}
+.wc-sx-how-overlay{position:fixed;inset:0;z-index:10001;background:rgba(10,10,10,0.78);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.wc-sx-how-overlay.open{display:flex}
+.wc-sx-how-modal{background:#fff;max-width:620px;width:100%;border-radius:16px;padding:32px 32px 26px;box-shadow:0 30px 80px rgba(0,0,0,0.45);position:relative;margin:auto;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;box-sizing:border-box}
+.wc-sx-how-modal h3{font-size:22px;font-weight:700;margin:0 0 6px;letter-spacing:-0.01em;padding-right:36px}
+.wc-sx-how-sub{font-size:13.5px;color:#6b6b6b;margin:0 0 22px;line-height:1.55}
+.wc-sx-how-step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+.wc-sx-how-num{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#0066ff;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.wc-sx-how-body{flex:1}
+.wc-sx-how-body h4{font-size:15px;font-weight:700;margin:0 0 4px;color:#0a0a0a}
+.wc-sx-how-body p{font-size:13px;color:#525252;line-height:1.55;margin:0}
+.wc-sx-how-reassure{background:#f0f6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;color:#0a0a0a;line-height:1.6}
+.wc-sx-how-reassure strong{color:#0066ff}
+@media(max-width:500px){.wc-sx-how-modal{padding:22px 18px;border-radius:12px}.wc-sx-how-modal h3{font-size:18px}}
+</style>
+
 <div class="wc-sx-cta" id="wc-sx-cta" role="region" aria-label="Commandez votre site Klyora Sites">
   <div class="wc-sx-cta-left">
     <span class="wc-sx-cta-title">Votre site web professionnel</span>
     <div class="wc-sx-cta-trust">
-      <span class="wc-sx-cta-t">✓ Livraison rapide et suivie</span>
+      <span class="wc-sx-cta-t">✓ Livraison instantanée</span>
       <span class="wc-sx-cta-dot">·</span>
       <span class="wc-sx-cta-t">Remboursé 14j</span>
       <span class="wc-sx-cta-dot">·</span>
       <span class="wc-sx-cta-t">Paiement sécurisé</span>
     </div>
   </div>
-  <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande → ${basePriceNbsp}</button>
+  <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
+    <button class="wc-sx-how-btn" type="button" onclick="wcSxHowOpen()">Comment ça marche&nbsp;?</button>
+    <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande → ${basePriceNbsp}</button>
+  </div>
+</div>
+
+<div class="wc-sx-how-overlay" id="wc-sx-how-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)wcSxHowClose()">
+  <div class="wc-sx-how-modal">
+    <button class="wc-sx-close" type="button" onclick="wcSxHowClose()" aria-label="Fermer">×</button>
+    <h3>Comment ça marche ?</h3>
+    <p class="wc-sx-how-sub">Une fois votre paiement validé, tout est automatique. Voici exactement ce qui se passe :</p>
+
+    <div class="wc-sx-how-step">
+      <div class="wc-sx-how-num">1</div>
+      <div class="wc-sx-how-body">
+        <h4>Paiement sécurisé via Stripe</h4>
+        <p>Carte bancaire ou 3× sans frais. Vous recevez une facture et un mail de confirmation immédiat.</p>
+      </div>
+    </div>
+
+    <div class="wc-sx-how-step">
+      <div class="wc-sx-how-num">2</div>
+      <div class="wc-sx-how-body">
+        <h4>Achat automatique de votre nom de domaine</h4>
+        <p>Dès la validation du paiement, si vous avez choisi un nom de domaine, nous l'enregistrons immédiatement via notre API IONOS. Aucune action de votre part.</p>
+      </div>
+    </div>
+
+    <div class="wc-sx-how-step">
+      <div class="wc-sx-how-num">3</div>
+      <div class="wc-sx-how-body">
+        <h4>Publication automatique du site</h4>
+        <p>Avec l'<strong>option Sérénité</strong> (1<sup>er</sup> mois offert) : votre site est mis en ligne automatiquement sous quelques minutes. Sans l'option Sérénité : les fichiers du site vous sont envoyés par email pour que vous puissiez les héberger vous-même.</p>
+      </div>
+    </div>
+
+    <div class="wc-sx-how-step">
+      <div class="wc-sx-how-num">4</div>
+      <div class="wc-sx-how-body">
+        <h4>Mail de confirmation : "Votre site est en ligne"</h4>
+        <p>Dès que le site est accessible publiquement, vous recevez un email avec le lien direct et les accès à votre espace client.</p>
+      </div>
+    </div>
+
+    <div class="wc-sx-how-reassure">
+      <strong>Garantie satisfait ou remboursé 14 jours.</strong> Si quelque chose ne vous convient pas dans les 14 premiers jours, vous obtenez un remboursement intégral, sans question. Modifications illimitées incluses pendant toute la durée de la Sérénité.
+    </div>
+  </div>
 </div>
 
 <!-- Float-call retiré : Tom veut UNIQUEMENT la bande noire en haut avec "Je commande" -->
@@ -190,11 +256,11 @@ body{padding-top:54px !important}
     <button class="wc-sx-close" type="button" onclick="wcSxClose()" aria-label="Fermer">×</button>
     <div class="wc-sx-kicker">Votre site web</div>
     <h3>${safeName}</h3>
-    <p class="wc-sx-subtitle">Commande en 2 minutes · Livraison sous 5 jours · Satisfait ou remboursé 14 jours.</p>
+    <p class="wc-sx-subtitle">Commande en 2 minutes · Livraison instantanément · Satisfait ou remboursé 14 jours.</p>
     <div class="wc-sx-trust">
       <span>Remboursé 14j</span>
       <span>Stripe sécurisé</span>
-      <span>Livré 5 jours</span>
+      <span>Livré quelques minutes</span>
       <span>Facture fournie</span>
     </div>
 
@@ -214,7 +280,7 @@ body{padding-top:54px !important}
           <div class="wc-sx-plan-price">${basePriceNbsp}</div>
           <div class="wc-sx-plan-sub">${planSub}</div>
           <ul>
-            <li>Livré sous 5 jours</li>
+            <li>Livré instantanément</li>
             <li>${isLuxury ? "Design exclusif sur-mesure par nos créatifs" : "Design premium responsive"}</li>
             <li>URL provisoire offerte</li>
             <li>${isLuxury ? "Modifications illimitées 30j" : "2 rounds de modifications"}</li>
@@ -446,6 +512,24 @@ body{padding-top:54px !important}
   };
   window.wcSxClose = function() {
     var ov = document.getElementById('wc-sx-overlay');
+    if (ov) { ov.classList.remove('open'); document.body.style.overflow = ''; }
+  };
+
+  /* ─── "Comment ça marche" overlay ─────────────────────────── */
+  window.wcSxHowOpen = function() {
+    var ov = document.getElementById('wc-sx-how-overlay');
+    if (!ov) return;
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    try {
+      fetch('/api/prospect/modal-opened', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ prospect_slug: SLUG, modal: 'how-it-works' })
+      }).catch(function(){});
+    } catch(e){}
+  };
+  window.wcSxHowClose = function() {
+    var ov = document.getElementById('wc-sx-how-overlay');
     if (ov) { ov.classList.remove('open'); document.body.style.overflow = ''; }
   };
 

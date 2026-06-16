@@ -1612,7 +1612,7 @@ ${
       <div class="pm-trust-row">
         <span class="pm-trust-item">🛡 Satisfait ou remboursé 14 jours</span>
         <span class="pm-trust-item">🔒 Paiement sécurisé Stripe</span>
-        <span class="pm-trust-item">⚡ Livré en 5 jours ouvrés</span>
+        <span class="pm-trust-item">⚡ Livré en quelques minutes</span>
       </div>
     </div>
 
@@ -1653,7 +1653,7 @@ ${
           <div class="pm-plan-price-sub" style="color:#c19a56;font-weight:600">⚡ -35% — Offre de lancement</div>
           <div class="pm-plan-price-sub">ou 3× sans frais (3 × 106,67 €)</div>
           <ul>
-            <li>✓ Livraison sous 5 jours</li>
+            <li>✓ Livraison instantanément</li>
             <li>✓ Design premium responsive</li>
             <li>✓ Module réservation intégré <strong>(0 commission)</strong></li>
             <li>✓ URL provisoire Klyora Sites</li>

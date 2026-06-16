@@ -42,7 +42,7 @@ function SuccessContent() {
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 bg-[#0066ff] text-white rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">2</span>
-              <span>Votre site est finalise (delai 5 jours ouvres)</span>
+              <span>Votre site est finalise (delai quelques minutes ouvres)</span>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 bg-[#0066ff] text-white rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">3</span>

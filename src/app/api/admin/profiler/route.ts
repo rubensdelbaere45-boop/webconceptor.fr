@@ -192,7 +192,7 @@ function fallbackHook(p: Prospect, angle: Angle): string {
     case "mature_business":     return `Après ${ageInt || 3} ans à construire votre clientèle${cityTxt}, c'est le moment de transformer le bouche-à-oreille en visites Google.`;
     case "established_business":return `${ageInt || 8} ans${cityTxt} et vos clients vous connaissent — votre site doit refléter cette expérience pour rassurer les prospects.`;
     case "historic_business":   return `Une entreprise comme la vôtre, créée ${createdYear ? "en " + createdYear : "il y a plus de 15 ans"}${cityTxt}, mérite une vitrine digitale qui valorise ce parcours.`;
-    default:                    return `Un site web pro pour ${p.name}, livré en 5 jours, à 50€/mois tout compris.`;
+    default:                    return `Un site web pro pour ${p.name}, livré instantanément, à 50€/mois tout compris.`;
   }
 }
 

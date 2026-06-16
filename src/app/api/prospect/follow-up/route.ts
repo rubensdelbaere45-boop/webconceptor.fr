@@ -55,7 +55,7 @@ function followUpDay3Email(prospectName: string, mockupUrl: string): string {
     <p style="font-size:13px;color:#525252;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700">Voir ou revoir la maquette</p>
     <a href="${mockupUrl}" style="display:inline-block;margin-top:8px;padding:12px 24px;background:#0066ff;color:#fff;text-decoration:none;border-radius:100px;font-weight:600;font-size:14px">Voir ma maquette →</a>
   </div>
-  <p style="font-size:14px;color:#525252;margin-bottom:16px"><strong>Pour rappel :</strong> 320 € TTC tout compris, livraison en 5 jours, ou en 3 fois sans frais (3 × 106,67 €).</p>
+  <p style="font-size:14px;color:#525252;margin-bottom:16px"><strong>Pour rappel :</strong> 320 € TTC tout compris, livraison instantanée, ou en 3 fois sans frais (3 × 106,67 €).</p>
   <p style="font-size:14px;color:#525252;margin-bottom:24px">Répondez-moi simplement à ce mail si vous avez la moindre question — je m'adapte à vos envies (photos, couleurs, textes).</p>
   <div style="border-top:1px solid #e5e5e5;padding-top:20px;font-size:13px;color:#737373">
     <p style="margin-bottom:4px"><strong style="color:#0a0a0a">Tom Bauer</strong></p>
@@ -70,7 +70,7 @@ function followUpDay7Email(prospectName: string, mockupUrl: string): string {
   return `<div style="font-family:Inter,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#0a0a0a;line-height:1.6">
   <p style="font-size:15px;margin-bottom:16px">Bonjour,</p>
   <p style="font-size:15px;margin-bottom:16px">Je me permets un dernier petit message — je ne veux pas encombrer votre boîte mail.</p>
-  <p style="font-size:15px;margin-bottom:16px">La maquette que j'avais préparée pour <strong>${prospectName}</strong> est toujours en ligne. Si vous souhaitez avancer, je peux commencer la création de votre site dès cette semaine et la livrer en 5 jours.</p>
+  <p style="font-size:15px;margin-bottom:16px">La maquette que j'avais préparée pour <strong>${prospectName}</strong> est toujours en ligne. Si vous souhaitez avancer, je peux commencer la création de votre site dès cette semaine et la livrer en quelques minutes.</p>
   <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:18px 20px;margin:24px 0;border-radius:6px">
     <p style="font-size:13px;color:#78350f;margin-bottom:6px;font-weight:600">Sans réponse de votre part, je retirerai la maquette de nos serveurs dans les prochains jours.</p>
     <p style="font-size:13px;color:#78350f;margin:0">C'est juste pour libérer l'espace — vous pouvez toujours revenir vers moi à tout moment.</p>

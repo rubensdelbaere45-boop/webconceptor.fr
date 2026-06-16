@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     `• Design responsive (PC, tablette, mobile)\n` +
     `• Hébergement 30 jours inclus\n` +
     `• Nom de domaine (facturé selon extension)\n\n` +
-    `Délai : livraison en 5 jours ouvrés après réception du paiement.\n\n` +
+    `Délai : livraison instantanée après réception du paiement.\n\n` +
     `Modifications incluses : jusqu'à 2 rounds de corrections.\n\n` +
     `Au-delà : option Formule Sérénité à 50 €/mois (hébergement + mises à jour illimitées).`;
 

@@ -535,7 +535,7 @@ function renderComparison(ctx: RenderCtx): string {
         <ul>
           ${toAdd.map((i) => `<li>✓ ${escape(i)}</li>`).join("")}
           <li>✓ Design premium responsive mobile</li>
-          <li>✓ Livré en 5 jours, 100% propriétaire</li>
+          <li>✓ Livré en quelques minutes, 100% propriétaire</li>
         </ul>
       </div>
     </div>
