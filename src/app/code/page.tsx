@@ -236,9 +236,9 @@ function CodePageContent() {
             <nav className="h-14 px-6 flex items-center justify-between backdrop-blur-xl bg-white/5 border-b border-white/10">
               <Link href="/" className="flex items-center gap-2">
                 <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-                  <span className="text-white text-[10px] font-bold">W</span>
+                  <span className="text-white text-[10px] font-bold">K</span>
                 </span>
-                <span className="text-[14px] font-semibold tracking-tight text-white">Web<span className="text-[#0066ff]">Conceptor</span></span>
+                <span className="text-[14px] font-semibold tracking-tight text-white">Klyora<span className="text-[#0066ff]"> Sites</span></span>
               </Link>
               <button
                 onClick={() => setShowCheckout(false)}
@@ -562,9 +562,9 @@ function CodePageContent() {
         <nav className="h-14 px-6 flex items-center justify-between border-b border-[#f5f5f5] bg-white">
           <Link href="/" className="flex items-center gap-2">
             <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">W</span>
+              <span className="text-white text-[10px] font-bold">K</span>
             </span>
-            <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+            <span className="text-[14px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
           </Link>
           <Link href="/dashboard" className="text-sm text-gray-500 hover:text-black transition">Mon espace</Link>
         </nav>
@@ -650,9 +650,9 @@ function CodePageContent() {
         <nav className="h-14 px-6 flex items-center justify-between border-b border-[#f5f5f5]">
           <Link href="/" className="flex items-center gap-2">
             <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">W</span>
+              <span className="text-white text-[10px] font-bold">K</span>
             </span>
-            <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+            <span className="text-[14px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
           </Link>
         </nav>
         <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -711,9 +711,9 @@ function CodePageContent() {
       <nav className="h-14 px-6 flex items-center justify-between border-b border-[#f5f5f5]">
         <Link href="/" className="flex items-center gap-2">
           <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">W</span>
+            <span className="text-white text-[10px] font-bold">K</span>
           </span>
-          <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+          <span className="text-[14px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
         </Link>
         <Link href="/" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors">Retour</Link>
       </nav>

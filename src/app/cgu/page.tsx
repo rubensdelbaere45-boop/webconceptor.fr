@@ -6,7 +6,7 @@ export default function CGU() {
       <nav className="h-14 px-6 flex items-center border-b border-[#f5f5f5]">
         <Link href="/" className="flex items-center gap-2">
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">W</span>
+            <span className="text-white text-[10px] font-bold">K</span>
           </span>
           <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
         </Link>

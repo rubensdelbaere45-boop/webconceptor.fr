@@ -796,9 +796,9 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-7 h-7 bg-[#0066ff] rounded-lg flex items-center justify-center">
-                  <span className="text-white text-[11px] font-bold">W</span>
+                  <span className="text-white text-[11px] font-bold">K</span>
                 </span>
-                <span className="text-[16px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+                <span className="text-[16px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
               </div>
               <p className="text-[13px] text-[#737373] max-w-xs leading-relaxed">
                 Agence française de création et refonte de sites professionnels.

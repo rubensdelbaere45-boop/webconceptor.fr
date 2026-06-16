@@ -438,9 +438,9 @@ export default function DemandePage() {
       <nav className="h-16 px-6 flex items-center justify-between border-b border-[#f5f5f5]">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="w-7 h-7 bg-[#0066ff] rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-bold">W</span>
+            <span className="text-white text-xs font-bold">K</span>
           </span>
-          <span className="text-[15px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+          <span className="text-[15px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
         </Link>
         <Link href="/" className="text-[13px] text-[#737373] hover:text-[#0a0a0a] transition-colors">Retour</Link>
       </nav>

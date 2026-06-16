@@ -49,7 +49,7 @@ export default function AuthCallback() {
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
         <span style={{ width: 8, height: 8, background: "#2563eb", borderRadius: 2, display: "inline-block" }} />
         <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em" }}>
-          Web<span style={{ color: "#2563eb" }}>Conceptor</span>
+          Klyora<span style={{ color: "#2563eb" }}> Sites</span>
         </span>
       </div>
       <div style={{ fontSize: 15, color: "#475569", fontWeight: 500, marginBottom: 20 }}>{status}</div>

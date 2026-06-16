@@ -66,7 +66,7 @@ function buildCodeEmailHtml(opts: {
   <div style="padding:40px 40px 32px;text-align:center;border-bottom:1px solid #e8dfd0">
     <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px">
       <span style="display:inline-block;width:28px;height:28px;background:#0066ff;border-radius:6px;color:#fff;font-weight:900;font-size:14px;line-height:28px;text-align:center">W</span>
-      <span style="font-size:18px;font-weight:700;color:#1a1310;letter-spacing:-0.01em">Web<span style="color:#0066ff">Conceptor</span></span>
+      <span style="font-size:18px;font-weight:700;color:#1a1310;letter-spacing:-0.01em">Klyora<span style="color:#0066ff"> Sites</span></span>
     </div>
     <p style="color:#8b7e6e;font-size:13px;margin:0;font-style:italic">Votre site web, prêt à être validé.</p>
   </div>

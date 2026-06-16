@@ -95,7 +95,7 @@ export default function DashboardPage() {
       <nav className="h-14 px-6 flex items-center justify-between border-b border-[#f5f5f5] bg-white">
         <Link href="/" className="flex items-center gap-2">
           <span className="w-6 h-6 bg-[#0a0a0a] rounded-md flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">W</span>
+            <span className="text-white text-[10px] font-bold">K</span>
           </span>
           <span className="text-[14px] font-semibold tracking-tight">Klyora Sites</span>
           {isAdmin && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded">ADMIN</span>}

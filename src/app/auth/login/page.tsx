@@ -60,7 +60,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="text-lg font-bold tracking-tight inline-flex items-center gap-2">
-            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Web<span className="text-blue-600">Conceptor</span>
+            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Klyora<span className="text-blue-600"> Sites</span>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight mt-6">Connexion</h1>
           <p className="text-sm text-gray-500 mt-2">Accédez à votre espace client</p>

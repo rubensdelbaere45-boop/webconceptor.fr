@@ -90,7 +90,7 @@ export default function EnterCodePage() {
       <div className="min-h-screen bg-gray-50">
         <nav className="h-16 px-6 flex items-center justify-between border-b border-gray-100 bg-white">
           <Link href="/dashboard" className="text-base font-bold tracking-tight flex items-center gap-2">
-            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Web<span className="text-blue-600">Conceptor</span>
+            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Klyora<span className="text-blue-600"> Sites</span>
           </Link>
           <Link href="/dashboard" className="text-sm text-gray-500 hover:text-black transition">← Dashboard</Link>
         </nav>
@@ -171,7 +171,7 @@ export default function EnterCodePage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/dashboard" className="text-lg font-bold tracking-tight inline-flex items-center gap-2">
-            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Web<span className="text-blue-600">Conceptor</span>
+            <span className="w-2 h-2 bg-blue-600 rounded-sm" />Klyora<span className="text-blue-600"> Sites</span>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight mt-6">Entrer un code</h1>
           <p className="text-sm text-gray-500 mt-2">
