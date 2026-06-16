@@ -100,9 +100,9 @@ async function handler(req: NextRequest) {
 
   const { data: prospects, error } = await supabase
     .from("prospects")
-    .select("id, name, email, slug")
+    .select("id, name, email, slug, status")
     .not("sent_at", "is", null)
-    .is("converted_at", null)
+    .neq("status", "converted")
     .is("unsubscribed_at", null)
     .is("migration_notified_at", null)
     .not("slug", "is", null)
