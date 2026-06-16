@@ -29,6 +29,14 @@ function db() {
 // Hosts d'images acceptés (Unsplash + nos propres assets)
 const SAFE_HOST = /^(?:https?:)?\/\/(?:images\.unsplash\.com|source\.unsplash\.com|klyora\.fr|picsum\.photos|placehold\.co|via\.placeholder\.com|fonts\.gstatic\.com|fonts\.googleapis\.com)/i;
 
+// URLs Unsplash KNOWN BAD (HTTP 404) — à remplacer impérativement.
+// Format = clé Unsplash uniquement (pas l'URL complète) pour matcher toutes
+// les variantes de query strings.
+const BROKEN_UNSPLASH_IDS = [
+  "photo-1540555700478-4be289fbec6d",
+  "photo-1540555700478-4be289fbecef",
+];
+
 // Image fallback par métier (toutes Unsplash, sans visages, intérieur/produit)
 const FALLBACK_BY_TYPE: Record<string, string[]> = {
   restaurant:  [
@@ -79,20 +87,24 @@ function pickFallback(type: string | null | undefined, idx: number): string {
   return pool[idx % pool.length];
 }
 
+function isBrokenUnsplash(url: string): boolean {
+  return BROKEN_UNSPLASH_IDS.some((id) => url.includes(id));
+}
+
 function fixImagesInHtml(html: string, businessType: string | null): { html: string; replaced: number } {
   let count = 0;
   let idx = 0;
 
   // Pattern 1 : src="..." dans <img>, <source>, <link>
   let out = html.replace(/(\bsrc\s*=\s*)(["'])(https?:\/\/[^"']+)(\2)/gi, (m, prefix, q, url, q2) => {
-    if (SAFE_HOST.test(url)) return m;
+    if (SAFE_HOST.test(url) && !isBrokenUnsplash(url)) return m;
     count++;
     return `${prefix}${q}${pickFallback(businessType, idx++)}${q2}`;
   });
 
   // Pattern 2 : background-image: url("...") dans style inline ou <style>
   out = out.replace(/(background(?:-image)?\s*:\s*url\(\s*)(["']?)(https?:\/\/[^"')\s]+)(\2)(\s*\))/gi, (m, prefix, q, url, q2, suffix) => {
-    if (SAFE_HOST.test(url)) return m;
+    if (SAFE_HOST.test(url) && !isBrokenUnsplash(url)) return m;
     count++;
     return `${prefix}${q}${pickFallback(businessType, idx++)}${q2}${suffix}`;
   });
@@ -103,7 +115,7 @@ function fixImagesInHtml(html: string, businessType: string | null): { html: str
     let changed = false;
     const newParts = parts.map((p: string) => {
       const [u, descriptor] = p.split(/\s+/, 2);
-      if (!u || SAFE_HOST.test(u)) return p;
+      if (!u || (SAFE_HOST.test(u) && !isBrokenUnsplash(u))) return p;
       changed = true;
       count++;
       return `${pickFallback(businessType, idx++)}${descriptor ? " " + descriptor : ""}`;
