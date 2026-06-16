@@ -25,38 +25,44 @@ const JUNK_PATTERNS = [
  * Mots-clés métier pour Unsplash dynamique.
  * Plus ils sont spécifiques, plus les photos collent au métier.
  */
+/**
+ * ⚠️ POLITIQUE STRICTE NO-PEOPLE (juin 2026) :
+ * Aucune photo de visage humain dans une maquette — un cas passé nous a coûté
+ * un préjudice. Les keywords ci-dessous sont volontairement orientés
+ * "interior / product / object / texture" pour éviter les portraits.
+ */
 const UNSPLASH_KEYWORDS: Record<string, string[]> = {
-  restaurant:    ["french-restaurant", "cuisine-bistro", "plated-food", "wine-glass"],
-  gastronomique: ["fine-dining", "plated-dish", "michelin", "elegant-restaurant"],
-  brasserie:     ["french-brasserie", "bistro", "wine-bar"],
-  bistrot:       ["bistro-france", "cozy-restaurant", "wine-cellar"],
-  cafe:          ["parisian-cafe", "espresso", "croissant-coffee", "cafe-terrace"],
-  glacier:       ["ice-cream-shop", "gelato", "summer-cone", "artisan-ice-cream"],
-  boulangerie:   ["french-bakery", "fresh-bread", "boulangerie-paris", "baguette"],
-  patisserie:    ["french-pastry", "macarons", "patisserie-window", "eclair"],
-  chocolatier:   ["chocolate-shop", "artisan-chocolate", "truffles", "praline"],
-  coiffeur:      ["hair-salon", "hairdresser", "barber-shop-modern", "stylish-hair"],
-  institut:      ["beauty-spa", "facial-treatment", "wellness-massage", "skin-care"],
-  spa:           ["luxury-spa", "massage-stones", "relaxation", "zen-spa"],
-  plombier:      ["plumber-tools", "pipes-modern-bathroom", "wrench-work", "plumbing-repair"],
-  electricien:   ["electrician-work", "electrical-panel", "wiring-house", "circuit-breaker"],
-  chauffagiste:  ["heating-boiler", "radiator-modern", "furnace-installation"],
-  garage:        ["auto-repair", "mechanic-garage", "car-workshop", "automotive-service"],
-  carrosserie:   ["body-shop", "car-paint", "automotive-bodywork"],
-  menuisier:     ["woodworker", "carpenter-workshop", "wooden-furniture-craft", "custom-cabinets"],
-  serrurier:     ["locksmith-tools", "secure-door", "modern-lock", "security-door"],
-  carreleur:     ["tile-installation", "bathroom-tiles", "modern-tiles", "tiler-work"],
-  peintre:       ["interior-paint", "house-painting", "brush-roller", "wall-paint"],
-  couvreur:      ["roofer-work", "modern-roof", "tile-roof", "roofing-construction"],
-  macon:         ["mason-work", "brick-laying", "construction-site", "stone-house"],
-  charpentier:   ["timber-frame", "wooden-roof-structure", "carpenter-roof"],
-  fleuriste:     ["flower-shop", "bouquet-roses", "florist-arrangement", "fresh-flowers"],
-  dentiste:      ["dental-office", "modern-dentist", "dentist-chair", "dental-care"],
-  osteo:         ["osteopath", "physiotherapy", "massage-therapy", "wellness-treatment"],
-  salle_sport:   ["gym-modern", "fitness-class", "weight-training", "crossfit-gym"],
-  auto_ecole:    ["driving-lesson", "driving-school", "car-instructor"],
-  epicerie:      ["grocery-store", "fresh-produce", "organic-market", "fruits-vegetables"],
-  default:       ["small-business", "local-shop-france", "artisan-workshop"],
+  restaurant:    ["empty-restaurant-interior", "plated-dish", "wine-glass-table", "elegant-dining-room"],
+  gastronomique: ["plated-dish-fine-dining", "michelin-plate", "minimalist-table", "wine-cellar"],
+  brasserie:    ["empty-brasserie", "wine-bar-interior", "bistro-table", "pastis-glass"],
+  bistrot:      ["bistro-interior", "wine-cellar", "table-setting", "wine-bottles"],
+  cafe:         ["empty-cafe-interior", "espresso-cup", "croissant-coffee", "latte-art"],
+  glacier:      ["gelato-display", "ice-cream-cone", "sorbet-bowl", "ice-cream-shop-window"],
+  boulangerie:  ["fresh-bread-loaves", "baguette-display", "boulangerie-window", "wooden-bread-counter"],
+  patisserie:   ["macarons-display", "patisserie-window", "eclair-row", "tart-display"],
+  chocolatier:  ["chocolate-truffles", "artisan-chocolate-bar", "praline-display", "cocoa-beans"],
+  coiffeur:     ["empty-salon-interior", "scissors-comb", "hair-products-display", "modern-salon-design"],
+  institut:     ["spa-stones-flat-lay", "candles-relaxation", "essential-oils-display", "salon-interior-empty"],
+  spa:          ["spa-stones-zen", "candles-bamboo", "essential-oils", "spa-treatment-room-empty"],
+  plombier:     ["pipes-wrench", "modern-bathroom-empty", "bathroom-fixtures", "plumbing-tools-flat"],
+  electricien:  ["electrical-panel", "circuit-breaker", "wiring-tools", "modern-light-installation"],
+  chauffagiste: ["heating-boiler-installation", "modern-radiator", "thermostat-modern", "heating-system"],
+  garage:       ["auto-workshop-interior", "car-on-lift", "mechanic-tools-flat", "tire-stack"],
+  carrosserie:  ["car-paint-spray-booth", "polished-car-bodywork", "auto-painting-tools"],
+  menuisier:    ["wood-workshop-interior", "wooden-furniture-detail", "carpenter-tools-flat", "wood-grain"],
+  serrurier:    ["modern-lock-detail", "secure-door-installation", "lock-tools-flat"],
+  carreleur:    ["tile-pattern", "modern-bathroom-tiles", "tile-installation-detail"],
+  peintre:      ["interior-paint-colors", "brush-roller-flat", "wall-paint-texture", "painted-room-empty"],
+  couvreur:     ["modern-roof-tiles", "roof-construction", "slate-roof-pattern"],
+  macon:        ["stone-house-detail", "construction-site", "brick-wall-pattern"],
+  charpentier:  ["timber-frame-structure", "wooden-roof-beam", "carpentry-detail"],
+  fleuriste:    ["flower-bouquet-arrangement", "florist-shop-window", "rose-display", "wildflower-vase"],
+  dentiste:     ["dental-office-interior-empty", "dental-tools-flat", "modern-dental-chair-empty"],
+  osteo:        ["wellness-room-empty", "treatment-table-empty", "spa-stones-flat"],
+  salle_sport:  ["empty-gym-interior", "dumbbell-rack", "modern-gym-equipment", "fitness-studio-empty"],
+  auto_ecole:   ["dashboard-detail", "driving-school-car-exterior", "steering-wheel-close-up"],
+  epicerie:     ["fresh-produce-display", "fruits-vegetables-stall", "organic-market-shelf", "artisan-products"],
+  default:      ["artisan-workshop-empty", "small-shop-window", "storefront-france", "boutique-interior"],
 };
 
 /**
@@ -111,16 +117,14 @@ function unsplashDynamic(keywords: string[], width = 2000, height = 1200, seed?:
 
 /**
  * Résout la photo HERO (grande image principale) pour un prospect.
- * Priorité : photos scrapées valides → Unsplash dynamique → Static.
+ *
+ * ⚠️ POLITIQUE NO-PEOPLE (juin 2026) : les photos scrapées du prospect
+ * (Google Places, Pages Jaunes) sont volontairement IGNORÉES — elles
+ * peuvent contenir des visages (gérant, employés, clients) et un cas
+ * passé nous a coûté un préjudice. Seule Unsplash dynamique (avec
+ * keywords orientés intérieur/produit/objet) est utilisée.
  */
-export function resolveHeroPhoto(prospectPhotos: string[] | undefined | null, businessType: string): string {
-  // 1. Première photo scrapée valide
-  if (Array.isArray(prospectPhotos)) {
-    for (const p of prospectPhotos) {
-      if (isValidPhoto(p)) return p;
-    }
-  }
-  // 2. Unsplash dynamique
+export function resolveHeroPhoto(_prospectPhotos: string[] | undefined | null, businessType: string): string {
   const kws = UNSPLASH_KEYWORDS[businessType] || UNSPLASH_KEYWORDS.default;
   return unsplashDynamic(kws, 2000, 1200);
 }
@@ -130,30 +134,21 @@ export function resolveHeroPhoto(prospectPhotos: string[] | undefined | null, bu
  * Garantit au moins N photos uniques.
  */
 export function resolveSecondaryPhotos(
-  prospectPhotos: string[] | undefined | null,
+  _prospectPhotos: string[] | undefined | null,
   businessType: string,
   count = 6,
   seedPrefix = ""
 ): string[] {
+  // POLITIQUE NO-PEOPLE : on n'utilise PAS les photos scrapées (visages potentiels).
+  // 100% Unsplash dynamique avec keywords orientés intérieur/objet/produit.
   const out: string[] = [];
-
-  // 1. Toutes les photos scrapées valides
-  if (Array.isArray(prospectPhotos)) {
-    for (const p of prospectPhotos) {
-      if (isValidPhoto(p) && !out.includes(p)) out.push(p);
-      if (out.length >= count) return out;
-    }
-  }
-
-  // 2. Compléter avec Unsplash dynamique varié
   const kws = UNSPLASH_KEYWORDS[businessType] || UNSPLASH_KEYWORDS.default;
   let i = 0;
   while (out.length < count) {
     const url = unsplashDynamic(kws, 1200, 800, `${seedPrefix}${i++}`);
     out.push(url);
-    if (i > 30) break; // safety
+    if (i > 30) break;
   }
-
   return out;
 }
 
