@@ -81,6 +81,12 @@
     },
     "src/app/api/cron/poll-published-sites/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/cron/email-agent/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/regen-after-feedback/route.ts": {
+      "maxDuration": 300
     }
   },
   "regions": [
@@ -218,6 +224,26 @@
     {
       "path": "/api/cron/poll-published-sites",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/email-agent",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/email-agent",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/email-agent",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/email-agent",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/regen-after-feedback",
+      "schedule": "30 9 * * *"
     }
   ]
 }
