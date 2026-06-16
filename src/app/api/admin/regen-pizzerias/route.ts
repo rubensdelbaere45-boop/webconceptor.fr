@@ -29,10 +29,14 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = db();
+  // Matche les pizzerias par business_type ('pizzeria') OU par nom contenant
+  // 'pizz' (couvre 'PIZZERIA', 'pizza', 'pizzeria' etc.) — beaucoup de
+  // prospects sont classés business_type='restaurant' mais sont en fait
+  // des pizzerias (nom contient pizza).
   const { data } = await supabase
     .from("prospects")
-    .select("id, slug, name, city, address, phone, email, website_photos, reviews")
-    .eq("business_type", "pizzeria")
+    .select("id, slug, name, city, address, phone, email, website_photos, reviews, business_type")
+    .or("business_type.eq.pizzeria,name.ilike.%pizz%,slug.ilike.%pizz%")
     .limit(500);
 
   const list = data || [];

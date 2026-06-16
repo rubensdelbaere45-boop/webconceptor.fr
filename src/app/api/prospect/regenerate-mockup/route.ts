@@ -379,7 +379,10 @@ export async function POST(req: NextRequest) {
       // Pour business_type=pizzeria, on shortcut tout le pipeline IA :
       // template visuel premium dédié, 100% local, instantané.
       // ══════════════════════════════════════════
-      if (p.business_type === "pizzeria") {
+      // Détecte aussi pizzerias par nom (souvent classées 'restaurant')
+      const looksLikePizzeria = p.business_type === "pizzeria" ||
+        /pizz/i.test(p.name || "") || /pizz/i.test(p.slug || "");
+      if (looksLikePizzeria) {
         try {
           const pizzaHtml = generateStitchPizzeriaMockupHtml({
             id: p.id, slug: p.slug, name: p.name,
