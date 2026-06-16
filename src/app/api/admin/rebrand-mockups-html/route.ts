@@ -44,6 +44,12 @@ function rebrand(html: string): { html: string; touched: number } {
   out = replace(out, /noreply@webconceptor\.fr/g, "noreply@klyora.fr");
   out = replace(out, /unsubscribe@webconceptor\.fr/g, "unsubscribe@klyora.fr");
 
+  // Cleanup du marqueur interne "Générique premium (fallback)" qui apparaissait
+  // dans les titles pour signaler une maquette générée avec template fallback.
+  // → ne doit JAMAIS être visible côté prospect.
+  out = replace(out, / — Générique premium \(fallback\)/g, "");
+  out = replace(out, /Générique premium \(fallback\)/g, "");
+
   return { html: out, touched: count };
 }
 
