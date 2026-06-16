@@ -46,9 +46,23 @@ function rebrand(html: string): { html: string; touched: number } {
 
   // Cleanup du marqueur interne "Générique premium (fallback)" qui apparaissait
   // dans les titles pour signaler une maquette générée avec template fallback.
-  // → ne doit JAMAIS être visible côté prospect.
   out = replace(out, / — Générique premium \(fallback\)/g, "");
   out = replace(out, /Générique premium \(fallback\)/g, "");
+
+  // "5 jours" → "instantané" / "quelques minutes" (politique livraison instantanée)
+  out = replace(out, /livré en 5 jours ouvrés/g, "livré instantanément");
+  out = replace(out, /livré en 5 jours/g, "livré instantanément");
+  out = replace(out, /livraison en 5 jours ouvrés/g, "livraison instantanée");
+  out = replace(out, /livraison en 5 jours/g, "livraison instantanée");
+  out = replace(out, /Livraison en 5 jours/g, "Livraison instantanée");
+  out = replace(out, /en 5 jours ouvrés/g, "en quelques minutes");
+  out = replace(out, /en 5 jours/g, "en quelques minutes");
+  out = replace(out, /sous 5 jours ouvrés/g, "instantanément");
+  out = replace(out, /sous 5 jours/g, "instantanément");
+  out = replace(out, /5 jours ouvrés/g, "quelques minutes");
+  out = replace(out, /\b5 jours\b/g, "quelques minutes");
+  out = replace(out, /cinq jours ouvrés/g, "quelques minutes");
+  out = replace(out, /cinq jours/g, "quelques minutes");
 
   return { html: out, touched: count };
 }
