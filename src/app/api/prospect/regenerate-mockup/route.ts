@@ -4,6 +4,7 @@ import { safeCompare } from "@/lib/security";
 import { generateRestaurantMockupHtml, type RestaurantProspect, BUSINESS_TYPE_VIBE } from "@/lib/mockup-restaurant";
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
+import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
 
@@ -372,6 +373,30 @@ export async function POST(req: NextRequest) {
     }
     try {
       let html: string;
+
+      // ══════════════════════════════════════════
+      // PRIORITÉ 0 — PIZZERIA STITCH (pixel-pixel Pupazzo + Three.js 3D)
+      // Pour business_type=pizzeria, on shortcut tout le pipeline IA :
+      // template visuel premium dédié, 100% local, instantané.
+      // ══════════════════════════════════════════
+      if (p.business_type === "pizzeria") {
+        try {
+          const pizzaHtml = generateStitchPizzeriaMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            website_photos: (p.website_photos as string[]) || (p.photos as string[]) || null,
+            reviews: (p.reviews as Array<{ author?: string; text?: string; rating?: number }>) || null,
+          });
+          if (pizzaHtml && pizzaHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: pizzaHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "stitch_pizzeria_ok", chars: pizzaHtml.length });
+            continue;
+          }
+        } catch (pizzErr) {
+          console.warn(`[regenerate] pizzeria template failed for ${p.slug}:`, pizzErr);
+        }
+      }
 
       // ══════════════════════════════════════════
       // PRIORITÉ 1 — DNA PREMIUM (pattern Stitch)
