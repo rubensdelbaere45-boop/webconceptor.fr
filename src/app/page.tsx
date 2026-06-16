@@ -10,15 +10,15 @@ import { supabase } from "@/lib/supabase";
    ══════════════════════════════════════════ */
 
 const sites = [
-  { name: "Proxi", type: "Commerce de proximité", city: "France", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop", url: "/exemples/proxi.html" },
-  { name: "Maison Tête", type: "Restaurant", city: "Lyon", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-tete.html" },
-  { name: "Studio Lamarre", type: "Architecte", city: "Paris", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80&auto=format&fit=crop", url: "/exemples/studio-lamarre.html" },
-  { name: "Domaine Pontevès", type: "Vigneron", city: "Provence", img: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=900&q=80&auto=format&fit=crop", url: "/exemples/domaine-ponteves.html" },
-  { name: "Clara Nové", type: "Photographe", city: "Bordeaux", img: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=900&q=80&auto=format&fit=crop", url: "/exemples/clara-nove.html" },
-  { name: "Cabinet Moreau", type: "Avocat", city: "Paris", img: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900&q=80&auto=format&fit=crop", url: "/exemples/cabinet-moreau.html" },
-  { name: "Dr. Lefèvre", type: "Médecin", city: "Marseille", img: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=900&q=80&auto=format&fit=crop", url: "/exemples/dr-lefevre.html" },
-  { name: "L\u2019Atelier Sato", type: "Pâtisserie", city: "Lyon", img: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=900&q=80&auto=format&fit=crop", url: "/exemples/atelier-sato.html" },
-  { name: "Maison Rivière", type: "Hôtel", city: "Nice", img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-riviere.html" },
+  { name: "Maquette exemple", type: "Commerce de proximité", city: "France", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop", url: "/exemples/proxi.html" },
+  { name: "Maquette exemple", type: "Restaurant", city: "Lyon", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-tete.html" },
+  { name: "Maquette exemple", type: "Architecte", city: "Paris", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80&auto=format&fit=crop", url: "/exemples/studio-lamarre.html" },
+  { name: "Maquette exemple", type: "Vigneron", city: "Provence", img: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=900&q=80&auto=format&fit=crop", url: "/exemples/domaine-ponteves.html" },
+  { name: "Maquette exemple", type: "Photographe", city: "Bordeaux", img: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=900&q=80&auto=format&fit=crop", url: "/exemples/clara-nove.html" },
+  { name: "Maquette exemple", type: "Avocat", city: "Paris", img: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900&q=80&auto=format&fit=crop", url: "/exemples/cabinet-moreau.html" },
+  { name: "Maquette exemple", type: "Médecin", city: "Marseille", img: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=900&q=80&auto=format&fit=crop", url: "/exemples/dr-lefevre.html" },
+  { name: "Maquette exemple", type: "Pâtisserie", city: "Lyon", img: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=900&q=80&auto=format&fit=crop", url: "/exemples/atelier-sato.html" },
+  { name: "Maquette exemple", type: "Hôtel", city: "Nice", img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=80&auto=format&fit=crop", url: "/exemples/maison-riviere.html" },
 ];
 
 const benefits = [
