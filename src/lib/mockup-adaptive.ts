@@ -342,7 +342,14 @@ const BUSINESS_CONFIG: Record<string, BusinessConfig> = {
 };
 
 function getConfig(businessType?: string): BusinessConfig {
-  return BUSINESS_CONFIG[businessType || ""] || BUSINESS_CONFIG.epicerie;
+  // Garde-fou : si business_type contient un marqueur interne (legacy DB)
+  // ou est non-référencé, on tombe sur la config "epicerie" qui est
+  // suffisamment neutre pour servir de fallback côté prospect.
+  const bt = (businessType || "").trim().toLowerCase();
+  if (!bt || bt.includes("fallback") || bt.includes("générique") || bt.includes("generique")) {
+    return BUSINESS_CONFIG.epicerie;
+  }
+  return BUSINESS_CONFIG[bt] || BUSINESS_CONFIG.epicerie;
 }
 
 /* ══════════════════════════════════════════
