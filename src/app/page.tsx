@@ -293,9 +293,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto h-14 px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="w-6 h-6 bg-[#0066ff] rounded-md flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">W</span>
+              <span className="text-white text-[10px] font-bold">K</span>
             </span>
-            <span className="text-[14px] font-semibold tracking-tight">Web<span className="text-[#0066ff]">Conceptor</span></span>
+            <span className="text-[14px] font-semibold tracking-tight">Klyora<span className="text-[#0066ff]"> Sites</span></span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-[13px] text-[#737373]">
             <a href="#realisations" className="hover:text-[#0a0a0a] transition-colors">Réalisations</a>
