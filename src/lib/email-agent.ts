@@ -20,7 +20,7 @@
 import Imap from "imap";
 import { simpleParser, type ParsedMail } from "mailparser";
 import { createClient } from "@supabase/supabase-js";
-import { callLlm } from "@/lib/ebook/llm-client";
+import { llmCall } from "@/lib/ebook/llm-client";
 import { sendBrevoEmail } from "@/lib/brevo-send";
 import { getOrCreateAccessCode } from "@/lib/access-code";
 
@@ -194,7 +194,7 @@ Subject: ${mail.subject}
 
 ${mail.text || mail.html.replace(/<[^>]+>/g, " ").slice(0, 3000)}`;
 
-  const result = await callLlm({
+  const result = await llmCall({
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: 400,
