@@ -206,3 +206,65 @@ export async function buyDomain(domainName: string, buyer: IonosContactInfo): Pr
     responseBody: lastResponseBody,
   };
 }
+
+/* ══════════════════════════════════════════
+   DNS — pointe un domaine acheté chez IONOS vers Vercel
+   ══════════════════════════════════════════ */
+
+/**
+ * Récupère la zoneId d'un domaine (nécessaire pour modifier les DNS).
+ */
+async function getZoneId(domainName: string): Promise<string | null> {
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+  const res = await fetch(`${IONOS_BASE}/dns/v1/zones?filter.q=${encodeURIComponent(domainName)}`, {
+    headers: { "X-API-Key": apiKey, Accept: "application/json" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => []);
+  const arr = Array.isArray(data) ? data : data.items || [];
+  for (const z of arr) {
+    if (z?.name?.toLowerCase() === domainName.toLowerCase()) return z.id;
+  }
+  return null;
+}
+
+/**
+ * Pointe le domaine vers Vercel :
+ *   - A @         → 216.198.79.1
+ *   - CNAME www   → cname.vercel-dns.com
+ * Garde les records mail (MX, SPF, DKIM, DMARC) intacts.
+ *
+ * Retourne true si les 2 records ont bien été appliqués.
+ */
+export async function pointDomainToVercel(domainName: string): Promise<{ ok: boolean; error?: string; zoneId?: string }> {
+  const apiKey = getApiKey();
+  if (!apiKey) return { ok: false, error: "IONOS_API_KEY manquante" };
+
+  const zoneId = await getZoneId(domainName);
+  if (!zoneId) return { ok: false, error: `zone ${domainName} introuvable chez IONOS` };
+
+  const records = [
+    { name: domainName,            type: "A",     content: "216.198.79.1",        ttl: 3600, prio: 0, disabled: false },
+    { name: `www.${domainName}`,   type: "CNAME", content: "cname.vercel-dns.com", ttl: 3600, prio: 0, disabled: false },
+  ];
+
+  const res = await fetch(`${IONOS_BASE}/dns/v1/zones/${zoneId}/records`, {
+    method: "PATCH",
+    headers: {
+      "X-API-Key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(records),
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    return { ok: false, error: `IONOS DNS HTTP ${res.status}: ${detail.slice(0, 200)}`, zoneId };
+  }
+
+  return { ok: true, zoneId };
+}

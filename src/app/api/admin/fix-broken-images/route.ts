@@ -55,9 +55,9 @@ const FALLBACK_BY_TYPE: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1600&q=85&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&q=85&auto=format&fit=crop",
   ],
-  institut: ["https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1600&q=85&auto=format&fit=crop"],
+  institut: ["https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=85&auto=format&fit=crop"],
   spa: [
-    "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1600&q=85&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=85&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1591343395082-e120087004b4?w=1600&q=85&auto=format&fit=crop",
   ],
   fleuriste: ["https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1600&q=85&auto=format&fit=crop"],

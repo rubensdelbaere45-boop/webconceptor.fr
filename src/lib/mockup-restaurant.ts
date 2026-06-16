@@ -351,7 +351,7 @@ const FALLBACK_PHOTOS_BY_TYPE: Record<string, string[]> = {
   ],
   spa: [
     "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1600&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1600&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=1600&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1600&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=1600&q=80&auto=format&fit=crop",

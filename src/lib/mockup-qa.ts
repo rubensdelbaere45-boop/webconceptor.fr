@@ -14,7 +14,7 @@ const FALLBACK_HERO: Record<string, string> = {
   patisserie: "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=1600&q=80&auto=format&fit=crop",
   glacier: "https://images.unsplash.com/photo-1567206563114-c179900d7065?w=1600&q=80&auto=format&fit=crop",
   coiffeur: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&q=80&auto=format&fit=crop",
-  institut: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1600&q=80&auto=format&fit=crop",
+  institut: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=80&auto=format&fit=crop",
   plombier: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1600&q=80&auto=format&fit=crop",
   electricien: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1600&q=80&auto=format&fit=crop",
   garage: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1600&q=80&auto=format&fit=crop",

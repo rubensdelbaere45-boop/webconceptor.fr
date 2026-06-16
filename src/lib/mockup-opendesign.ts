@@ -133,7 +133,7 @@ const HERO_PHOTOS: Record<string, string> = {
   cafe: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=2000&q=90&auto=format&fit=crop",
   glacier: "https://images.unsplash.com/photo-1567206563114-c179900d7065?w=2000&q=90&auto=format&fit=crop",
   coiffeur: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=2000&q=90&auto=format&fit=crop",
-  institut: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=2000&q=90&auto=format&fit=crop",
+  institut: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=2000&q=90&auto=format&fit=crop",
   plombier: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=2000&q=90&auto=format&fit=crop",
   electricien: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=2000&q=90&auto=format&fit=crop",
   garage: "https://images.unsplash.com/photo-1632823471565-1ecdf5664c1e?w=2000&q=90&auto=format&fit=crop",

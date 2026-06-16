@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { escapeTelegram } from "@/lib/security";
 import { buyDomain, type IonosContactInfo } from "@/lib/ionos";
+import { publishSite } from "@/lib/site-publisher";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2026-03-25.dahlia",
@@ -699,6 +700,41 @@ export async function POST(req: NextRequest) {
               ? `DOMAINE ACHETE: ${domain}\nClient: ${firstName} ${lastName} - ${buyerTel}`
               : `URGENT! Domaine ${domain} ECHEC achat automatique!\nAchete manuellement sur IONOS maintenant!\nClient: ${firstName} ${lastName} - ${buyerTel}`
           );
+        }
+
+        // ─── PUBLICATION AUTO SUR VERCEL ──────────────────────────────
+        // Si l'achat IONOS a réussi, on enchaîne immédiatement le deploy
+        // Vercel + pointage DNS + mail "site bientôt en ligne".
+        if (result.success && prospectId) {
+          try {
+            const { data: prospectRow } = await supabase
+              .from("prospects")
+              .select("name, email, mockup_html")
+              .eq("id", prospectId)
+              .maybeSingle();
+            if (prospectRow?.mockup_html) {
+              const pub = await publishSite({
+                prospectId,
+                mockupHtml: prospectRow.mockup_html,
+                prospectName: prospectRow.name || firstName,
+                prospectEmail: prospectRow.email || buyerEmail,
+                domainName: domain,
+                buyerContact: contact,
+              });
+              if (tgToken && chatId) {
+                const tgMsg = pub.success
+                  ? `🚀 <b>SITE PUBLIÉ</b>\n${escapeTelegram(pub.finalUrl || domain)}\n<i>Mail "bientôt en ligne" envoyé au client.</i>`
+                  : `⚠️ <b>PUBLICATION VERCEL EN ÉCHEC</b> — domaine ${escapeTelegram(domain)} acheté mais deploy KO. Reprise manuelle requise.`;
+                fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ chat_id: chatId, text: tgMsg, parse_mode: "HTML" }),
+                }).catch(() => {});
+              }
+            }
+          } catch (pubErr) {
+            console.error("[stripe-webhook] publishSite error:", pubErr);
+          }
         }
       }
 

@@ -52,11 +52,17 @@ const MIN_GAP_MS = Number(process.env.BREVO_MIN_GAP_MS || 200);
  * - Rate-limit global : si appelé en burst, espacement de MIN_GAP_MS entre
  *   chaque envoi (par défaut 200 ms = 5 emails/seconde max)
  */
+import { sendViaIonosSmtp } from "@/lib/nodemailer-fallback";
+
+/**
+ * Tente l'envoi via Brevo, et bascule automatiquement sur IONOS SMTP
+ * (Nodemailer) si Brevo retourne 401/402/429 ou si BREVO_API_KEY est absente.
+ */
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
-    console.error("[brevo-send] BREVO_API_KEY missing");
-    return false;
+    console.warn("[brevo-send] BREVO_API_KEY missing — fallback IONOS SMTP");
+    return sendViaIonosSmtp(opts);
   }
 
   // Rate-limit global
@@ -105,11 +111,18 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       console.error("[brevo-send] HTTP", res.status, detail.slice(0, 300));
+      // Fallback IONOS SMTP : quota dépassé (402), rate-limit (429), auth (401)
+      // ou serveur Brevo down (5xx). Codes 400 (bad request) NE déclenchent
+      // PAS le fallback — c'est notre faute, pas Brevo.
+      if (res.status === 401 || res.status === 402 || res.status === 429 || res.status >= 500) {
+        console.warn("[brevo-send] → bascule fallback IONOS SMTP");
+        return sendViaIonosSmtp(opts);
+      }
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[brevo-send] fetch error:", err);
-    return false;
+    console.error("[brevo-send] fetch error → fallback IONOS SMTP:", err);
+    return sendViaIonosSmtp(opts);
   }
 }

@@ -372,7 +372,7 @@ const UNSPLASH_BY_DNA: Record<string, string[]> = {
     `https://images.unsplash.com/photo-1492106087820-71f1a00d2b11${UQ}`, // shampoing
   ],
   esthetique_spa: [
-    `https://images.unsplash.com/photo-1540555700478-4be289fbecef${UQ}`, // spa zen pierres
+    `https://images.unsplash.com/photo-1571902943202-507ec2618e8f${UQ}`, // spa zen pierres
     `https://images.unsplash.com/photo-1544161515-4ab6ce6db874${UQ}`,    // soin visage
     `https://images.unsplash.com/photo-1596178065887-1198b6148b2b${UQ}`, // massage
     `https://images.unsplash.com/photo-1519823551278-64ac92734fb1${UQ}`, // bougies
