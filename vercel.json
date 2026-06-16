@@ -11,7 +11,7 @@
       "maxDuration": 300
     },
     "src/app/api/prospect/find/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "src/app/api/prospect/find-cron/route.ts": {
       "maxDuration": 300
