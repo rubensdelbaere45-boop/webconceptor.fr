@@ -188,7 +188,73 @@ Critères de classification :
 
 Sois STRICT sur le JSON. Pas de texte hors JSON.`;
 
+/**
+ * Pré-classification rule-based : détecte les intentions évidentes
+ * sans appel LLM. Réduit drastiquement les "JSON parse fail" et économise
+ * les tokens. Si aucune règle ne matche → fallback LLM.
+ */
+function preClassify(mail: FetchedMail): ClassifiedEmail | null {
+  // On combine subject + texte (le subject est très révélateur)
+  const subj = (mail.subject || "").toLowerCase();
+  const body = (mail.text || mail.html.replace(/<[^>]+>/g, " ") || "").toLowerCase();
+  const all = `${subj}\n${body}`.slice(0, 4000);
+
+  // UNSUBSCRIBE — refus explicite ou demande d'arrêt
+  if (
+    /\b(stop|d[ée]sabonn|ne (?:plus|me) sollicite|me d[ée]sinscri|unsubscribe|retir[eè] de (?:vos|cette|votre|la) liste|ne (?:m')?envoyez plus|cessez de m['e]?envoyer)\b/i.test(all) ||
+    /\b(?:pas|non) int[ée]ress[ée]e?\b/i.test(all) ||
+    /\bne (?:souhaite|veu[xt]) pas\b/i.test(all) ||
+    /\bd[ée]j[àa] (?:un|notre|mon) site\b/i.test(all) ||
+    /\bg[ée]r[ée] par (?:la franchise|notre franchise|un prestataire)\b/i.test(all)
+  ) {
+    return { intent: "UNSUBSCRIBE", confidence: 0.92, reasoning: "rule-based: refus ou demande de désabonnement" };
+  }
+
+  // BROKEN_LINK — lien cassé
+  if (
+    /\b(404|page introuvable|page introuvable|lien ne (?:marche|fonctionne) pas|n['e]arrive pas à (?:ouvrir|acc[eé]der)|erreur (?:404|sur le lien))\b/i.test(all)
+  ) {
+    return { intent: "BROKEN_LINK", confidence: 0.9, reasoning: "rule-based: mention d'erreur ou lien cassé" };
+  }
+
+  // PRICE_INQUIRY — demande de prix
+  if (
+    /\b(combien (?:[çc]a co[uû]te|est-ce|coûterait)|quel (?:est|serait) (?:le|votre) (?:prix|tarif)|votre tarif|prix \?|tarif \?|combien pour)\b/i.test(all)
+  ) {
+    return { intent: "PRICE_INQUIRY", confidence: 0.9, reasoning: "rule-based: demande de prix" };
+  }
+
+  // DELAY_INQUIRY — délai
+  if (
+    /\b(combien de temps|d[ée]lai (?:de )?livraison|quand (?:est-ce|sera|reçoit|aurais|aurai) (?:livr|fini|prêt))\b/i.test(all)
+  ) {
+    return { intent: "DELAY_INQUIRY", confidence: 0.88, reasoning: "rule-based: question sur le délai" };
+  }
+
+  // REGEN_REQUEST — pas du tout content sans instructions
+  if (
+    /(c['e]est|n['e]est) pas (?:du tout )?(?:ce que je|ma)\b|pas du tout ma (?:bo[iî]te|maquette)|(?:bof|moche|d[ée]gueulasse|nul|pas terrible)\b|[àa] refaire|tout est [àa] revoir/i.test(all)
+  ) {
+    return { intent: "REGEN_REQUEST", confidence: 0.78, reasoning: "rule-based: mécontent sans détails" };
+  }
+
+  // INTERESTED_LEAD — demande RDV / appel / informations concrètes
+  if (
+    /\b(je suis int[ée]ress|on (?:peut|pourrait) (?:en )?(?:discuter|parler|s'appeler)|m['e]appeler|me rappeler|(?:rendez[- ]vous|rdv)|envoyez[- ]moi (?:un|le) devis|j['e]aimerais (?:en savoir plus|discuter)|comment on (?:fait|proc[èe]de))\b/i.test(all) ||
+    /\b(?:proposez|envoyez)[- ]moi (?:plus d['e]informations|un devis|un appel)\b/i.test(all)
+  ) {
+    return { intent: "INTERESTED_LEAD", confidence: 0.85, reasoning: "rule-based: signal d'intérêt explicite" };
+  }
+
+  return null;
+}
+
 export async function classifyEmail(mail: FetchedMail): Promise<ClassifiedEmail> {
+  // 1) Pré-classification rule-based (cas évidents, sans LLM)
+  const pre = preClassify(mail);
+  if (pre) return pre;
+
+  // 2) Fallback LLM pour les cas complexes
   const userPrompt = `From: ${mail.fromName} <${mail.from}>
 Subject: ${mail.subject}
 
@@ -202,10 +268,11 @@ ${mail.text || mail.html.replace(/<[^>]+>/g, " ").slice(0, 3000)}`;
   }).catch(() => "");
 
   try {
-    // Extraction robuste : trouve le 1er { … } du résultat
     const text = typeof result === "string" ? result : (result as { content?: string })?.content || "";
-    const match = text.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(match ? match[0] : text);
+    // Retire les markdown fences éventuels (```json ... ```)
+    const cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```\s*$/g, "").trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : cleaned);
     return {
       intent: (parsed.intent || "OTHER") as EmailIntent,
       confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
@@ -213,7 +280,10 @@ ${mail.text || mail.html.replace(/<[^>]+>/g, " ").slice(0, 3000)}`;
       regen_instructions: parsed.regen_instructions ? String(parsed.regen_instructions).slice(0, 600) : undefined,
     };
   } catch {
-    return { intent: "OTHER", confidence: 0, reasoning: "JSON parse fail" };
+    // Log le raw pour debug : on garde le 1er char de la réponse LLM
+    const rawText = typeof result === "string" ? result : (result as { content?: string })?.content || "";
+    const rawPreview = rawText.slice(0, 80).replace(/\s+/g, " ");
+    return { intent: "OTHER", confidence: 0, reasoning: `JSON parse fail | raw="${rawPreview}"` };
   }
 }
 
