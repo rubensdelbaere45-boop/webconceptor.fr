@@ -433,9 +433,15 @@ export async function runEmailAgent(opts?: { limit?: number }): Promise<AgentRun
 
   for (const mail of mails) {
     try {
-      // Skip our own bounces & out-of-office
-      if (/postmaster|mailer-daemon|noreply|no-reply|donotreply/i.test(mail.from)) {
-        await logMessage(null, mail, "SPAM_OR_BOT", "skipped (system sender)");
+      // Skip our own bounces, out-of-office, et toutes auto-réponses connues
+      const fromLow = mail.from.toLowerCase();
+      const subjectLow = (mail.subject || "").toLowerCase();
+      const isSystemSender =
+        /postmaster|mailer-daemon|noreply|no-reply|donotreply|auto-reply|autoreply|do-not-reply|notification|newsletter|do_not_reply/i.test(fromLow) ||
+        /^(auto.?reply|out of office|absence|hors bureau|i am out|absent|en cong[eé])/i.test(subjectLow) ||
+        /^(re:.*automatic|automatic reply|réponse automatique)/i.test(subjectLow);
+      if (isSystemSender) {
+        await logMessage(null, mail, "SPAM_OR_BOT", `skipped (auto/system sender: ${fromLow})`);
         continue;
       }
 
