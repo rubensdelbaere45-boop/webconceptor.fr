@@ -199,13 +199,16 @@ function preClassify(mail: FetchedMail): ClassifiedEmail | null {
   const body = (mail.text || mail.html.replace(/<[^>]+>/g, " ") || "").toLowerCase();
   const all = `${subj}\n${body}`.slice(0, 4000);
 
-  // UNSUBSCRIBE — refus explicite ou demande d'arrêt
+  // UNSUBSCRIBE — refus explicite ou demande d'arrêt (FR pluriel + politesse)
   if (
-    /\b(stop|d[ée]sabonn|ne (?:plus|me) sollicite|me d[ée]sinscri|unsubscribe|retir[eè] de (?:vos|cette|votre|la) liste|ne (?:m')?envoyez plus|cessez de m['e]?envoyer)\b/i.test(all) ||
-    /\b(?:pas|non) int[ée]ress[ée]e?\b/i.test(all) ||
-    /\bne (?:souhaite|veu[xt]) pas\b/i.test(all) ||
-    /\bd[ée]j[àa] (?:un|notre|mon) site\b/i.test(all) ||
-    /\bg[ée]r[ée] par (?:la franchise|notre franchise|un prestataire)\b/i.test(all)
+    /\b(stop|d[ée]sabonn|ne (?:plus|me) sollicite|me d[ée]sinscri|unsubscribe|retir[eè] de (?:vos|cette|votre|la) liste|ne (?:m'|nous )?envoy(?:ez|er) plus|cessez de m['e]?envoyer)\b/i.test(all) ||
+    /\b(?:pas|non) int[ée]ress[ée]e?s?\b/i.test(all) ||
+    /\b(?:nous )?ne (?:souhait(?:e|ons|ent|ez)|veu[xt]|voulons|voulez|d[eé]sirons|d[eé]sirez) pas\b/i.test(all) ||
+    /\bne (?:souhait|d[eé]sir|veu[xt]|voul)\w* pas (?:modifier|changer|faire|prendre)\b/i.test(all) ||
+    /\bd[ée]j[àa] (?:un|notre|mon|leur|une) (?:site|prestataire|agence)\b/i.test(all) ||
+    /\bg[ée]r[ée] par (?:la franchise|notre franchise|un prestataire|une agence|notre groupe)\b/i.test(all) ||
+    /\bmerci (?:de|pour) (?:votre|cette) (?:proposition|d[eé]marche|attention)[, ]+mais\b/i.test(all) ||
+    /\bne (?:donne|donnez) (?:pas|aucune) suite\b/i.test(all)
   ) {
     return { intent: "UNSUBSCRIBE", confidence: 0.92, reasoning: "rule-based: refus ou demande de désabonnement" };
   }
