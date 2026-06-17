@@ -370,17 +370,58 @@ async function replyRegenRequest(mail: FetchedMail, prospectName: string) {
     toName: prospectName,
     subject: `Re: ${mail.subject}`,
     htmlContent: `<p>Bonjour ${firstName},</p>
-<p>Merci pour votre retour ! Je vais refaire la maquette selon vos goûts.</p>
-<p>Pour bien la cibler, j'aurais besoin de quelques précisions — répondez simplement à ce mail :</p>
-<ul>
-  <li><strong>Couleurs</strong> : quelle ambiance (sobre, lumineuse, colorée…) ?</li>
-  <li><strong>Sections</strong> : que voulez-vous mettre en avant (produits, services, équipe, photos…) ?</li>
-  <li><strong>Photos</strong> : un lien Drive/Dropbox où vous mettriez vos photos, ou je continue avec des photos type ?</li>
-  <li><strong>Inspiration</strong> : un site web qui vous plaît (même un concurrent) ?</li>
-</ul>
-<p>Dès réception, je relance la génération et je vous renvoie un nouveau lien sous 24h.</p>
-<p>Tom — Klyora Sites</p>`,
-    textContent: `Bonjour ${firstName},\n\nMerci pour votre retour. Pour refaire la maquette, j'ai besoin de :\n- Vos préférences de couleurs\n- Les sections à mettre en avant\n- Un lien Drive avec vos photos (ou j'utilise des photos type)\n- Un site qui vous inspire (même concurrent)\n\nRépondez à ce mail et je relance la génération sous 24h.\n\nTom — Klyora Sites`,
+
+<p>Merci pour votre retour, c'est précieux. Nous allons refaire votre maquette
+pour qu'elle corresponde exactement à ce que vous voulez.</p>
+
+<p>Pour bien la cibler, pouvez-vous répondre à ce mail avec les éléments suivants ?</p>
+
+<ol style="line-height:1.8">
+  <li><strong>Qu'est-ce qui ne vous a pas convenu</strong> dans la première version ?
+      (Trop sobre, pas assez "vous", couleurs, photos, structure…)</li>
+
+  <li><strong>Quel métier ou quel angle</strong> voulez-vous mettre en avant en premier ?
+      (Le produit phare, votre savoir-faire, votre histoire, votre équipe, vos avis…)</li>
+
+  <li><strong>Quelle ambiance de couleurs</strong> souhaitez-vous ?
+      (Chaude/froide, sobre/colorée, claire/sombre — donnez-moi une couleur dominante
+      si vous en avez une.)</li>
+
+  <li><strong>Quelles fonctionnalités</strong> sont importantes pour votre activité ?
+      (Réservation en ligne, formulaire de devis, prise de rendez-vous, click & collect,
+      espace clients, blog, e-commerce…)</li>
+
+  <li><strong>Avez-vous des photos ou des visuels</strong> à intégrer ?
+      Envoyez-les nous en pièce jointe directement par mail, ou un lien
+      Google Drive / WeTransfer / Dropbox — nous nous occupons du reste.</li>
+</ol>
+
+<p>Dès réception, <strong>notre équipe vous prépare la nouvelle maquette et vous la
+retransmet rapidement</strong> (généralement sous 24h ouvrées). Aucune action de votre
+part en dehors de la réponse à ce mail.</p>
+
+<p>À très vite,<br>
+L'équipe Klyora Sites<br>
+<a href="mailto:contact@klyora.fr" style="color:#0066ff">contact@klyora.fr</a></p>`,
+    textContent: `Bonjour ${firstName},
+
+Merci pour votre retour. Nous allons refaire votre maquette pour qu'elle corresponde
+exactement à ce que vous voulez.
+
+Pour bien la cibler, pouvez-vous répondre à ce mail avec :
+
+1. Ce qui ne vous a pas convenu dans la première version ?
+2. Quel métier ou angle voulez-vous mettre en avant ?
+3. Quelle ambiance de couleurs souhaitez-vous ?
+4. Quelles fonctionnalités sont importantes (réservation, devis, e-commerce, etc.) ?
+5. Avez-vous des photos à intégrer ? (Envoyez-les en pièce jointe ou un lien Drive/WeTransfer)
+
+Dès réception, notre équipe vous prépare la nouvelle maquette et vous la retransmet
+rapidement (sous 24h ouvrées).
+
+À très vite,
+L'équipe Klyora Sites
+contact@klyora.fr`,
   });
 }
 
