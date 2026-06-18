@@ -178,8 +178,32 @@ export async function GET(
     const { hasValidAccessCookie, renderGatePage, buildAccessCookie, normalizeAccessCode } = await import("@/lib/access-code");
     const urlCode = new URL(req.url).searchParams.get("code") || "";
 
-    // 1) Code dans l'URL → tente l'auto-unlock
-    if (urlCode) {
+    // ── MASTER CODE (Tom uniquement) ──────────────────────────────────
+    // Si MASTER_ACCESS_CODE est défini en env Vercel et que le code dans
+    // l'URL matche, unlock toutes les maquettes sans contraintes.
+    // Cookie séparé "klyora_master_access" valable 30 jours.
+    // Pas de log dans prospect_access_attempts pour ne pas polluer
+    // les stats funnel.
+    const masterCode = (process.env.MASTER_ACCESS_CODE || "").trim();
+    const masterCookieMatch = (req.headers.get("cookie") || "").match(/klyora_master_access=([^;]+)/);
+    const hasMasterCookie = masterCode && masterCookieMatch && decodeURIComponent(masterCookieMatch[1]) === masterCode;
+    const masterFromUrl = masterCode && urlCode.trim() === masterCode;
+
+    if (hasMasterCookie) {
+      // Master cookie présent → laisse passer sans rien faire
+    } else if (masterFromUrl) {
+      // Master code dans l'URL → set cookie 30j + redirige clean
+      const cleanUrl = `/prospects/${encodeURIComponent(slug)}`;
+      return new NextResponse(null, {
+        status: 302,
+        headers: {
+          Location: cleanUrl,
+          "Set-Cookie": `klyora_master_access=${encodeURIComponent(masterCode)}; Path=/; Max-Age=2592000; SameSite=Lax; HttpOnly; Secure`,
+          "Cache-Control": "no-store",
+        },
+      });
+    } else if (urlCode) {
+      // 1) Code dans l'URL → tente l'auto-unlock prospect
       const normalized = normalizeAccessCode(urlCode);
       if (normalized === data.access_code) {
         // Log dans prospect_access_attempts (visite réussie via URL)
@@ -221,8 +245,8 @@ export async function GET(
       // Code dans URL invalide → on continue vers le check cookie / gate
     }
 
-    // 2) Cookie déjà set ?
-    const valid = hasValidAccessCookie(req, slug, data.access_code);
+    // 2) Cookie déjà set ? (master OU prospect)
+    const valid = hasMasterCookie || hasValidAccessCookie(req, slug, data.access_code);
     if (!valid) {
       // 3) Affiche le gate
       return new NextResponse(renderGatePage({ slug, prospectName: data.name || undefined, error: false }), {
