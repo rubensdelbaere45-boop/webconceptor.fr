@@ -5,6 +5,7 @@ import { generateRestaurantMockupHtml, type RestaurantProspect, BUSINESS_TYPE_VI
 import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-custom";
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
 import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
+import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
 
@@ -379,6 +380,27 @@ export async function POST(req: NextRequest) {
       // Pour business_type=pizzeria, on shortcut tout le pipeline IA :
       // template visuel premium dédié, 100% local, instantané.
       // ══════════════════════════════════════════
+      // ── PLOMBIER : template Stitch dédié (bento grid + bandeau urgence)
+      const looksLikePlombier = p.business_type === "plombier" ||
+        /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
+      if (looksLikePlombier) {
+        try {
+          const plombierHtml = generateStitchPlombierMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            website_photos: (p.website_photos as string[]) || (p.photos as string[]) || null,
+          });
+          if (plombierHtml && plombierHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: plombierHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "stitch_plombier_ok", chars: plombierHtml.length });
+            continue;
+          }
+        } catch (plErr) {
+          console.warn(`[regenerate] plombier template failed for ${p.slug}:`, plErr);
+        }
+      }
+
       // Détecte aussi pizzerias par nom (souvent classées 'restaurant')
       const looksLikePizzeria = p.business_type === "pizzeria" ||
         /pizz/i.test(p.name || "") || /pizz/i.test(p.slug || "");
