@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
+import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,6 +45,18 @@ export async function POST(req: NextRequest) {
   let html: string | null = null;
   let templateUsed = "none";
 
+  // Électricien priority (pixel-pixel Stitch)
+  const looksLikeElectricien = p.business_type === "electricien" || /\b(electric|électrici|électrique)/i.test(p.name || "") || /\b(electric|électrici|électrique)/i.test(p.slug || "");
+  if (looksLikeElectricien) {
+    html = generateStitchElectricienMockupHtml({
+      id: p.id, slug: p.slug, name: p.name,
+      city: p.city || null, address: p.address || null,
+      phone: p.phone || null, email: p.email || null,
+      website_photos: (p.website_photos as string[]) || null,
+    });
+    templateUsed = "electricien-full";
+  } else {
+
   // Plombier priority
   const looksLikePlombier = p.business_type === "plombier" || /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
   if (looksLikePlombier) {
@@ -62,6 +75,7 @@ export async function POST(req: NextRequest) {
       website_photos: (p.website_photos as string[]) || null,
     }, p.business_type);
     templateUsed = `engine:${config.key}`;
+  }
   }
 
   if (!html || html.length < 5000) {

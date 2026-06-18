@@ -6,6 +6,7 @@ import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-cust
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
 import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
+import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
@@ -381,6 +382,29 @@ export async function POST(req: NextRequest) {
       // Pour business_type=pizzeria, on shortcut tout le pipeline IA :
       // template visuel premium dédié, 100% local, instantané.
       // ══════════════════════════════════════════
+      // ── ÉLECTRICIEN : template Stitch pixel-pixel intégral (Hero split,
+      //    section dark "Précision Signature", section "Matériaux Nobles")
+      const looksLikeElectricien = p.business_type === "electricien" ||
+        /\b(electric|électrici|électrique)/i.test(p.name || "") ||
+        /\b(electric|électrici|électrique)/i.test(p.slug || "");
+      if (looksLikeElectricien) {
+        try {
+          const electHtml = generateStitchElectricienMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            website_photos: (p.website_photos as string[]) || (p.photos as string[]) || null,
+          });
+          if (electHtml && electHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: electHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "stitch_electricien_full_ok", chars: electHtml.length });
+            continue;
+          }
+        } catch (eErr) {
+          console.warn(`[regenerate] electricien-full failed for ${p.slug}:`, eErr);
+        }
+      }
+
       // ── STITCH METIER ENGINE : 14 métiers premium (électricien, garage,
       //    dentiste, ostéo, café, auto-école, épicerie fine, boulangerie,
       //    fleuriste, menuisier, couvreur, vétérinaire, coiffeur, institut)
