@@ -37,7 +37,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/closer-opened",
+        "url": "https://klyora.fr/api/prospect/closer-opened",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

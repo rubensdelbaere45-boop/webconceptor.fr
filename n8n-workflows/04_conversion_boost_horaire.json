@@ -22,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/hot-lead-sms",
+        "url": "https://klyora.fr/api/prospect/hot-lead-sms",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -55,7 +55,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/cart-abandon",
+        "url": "https://klyora.fr/api/prospect/cart-abandon",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -111,5 +111,5 @@
     "saveManualExecutions": true,
     "executionTimeout": 90
   },
-  "tags": ["webconceptor", "conversion"]
+  "tags": ["klyora", "conversion"]
 }

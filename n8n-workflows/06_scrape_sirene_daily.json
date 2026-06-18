@@ -19,7 +19,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/scrape-sirene",
+        "url": "https://klyora.fr/api/admin/scrape-sirene",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/ebook/generate-daily?slot=1",
+        "url": "https://klyora.fr/api/ebook/generate-daily?slot=1",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -48,7 +48,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/ebook/generate-daily?slot=2",
+        "url": "https://klyora.fr/api/ebook/generate-daily?slot=2",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

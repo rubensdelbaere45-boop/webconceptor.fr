@@ -22,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/send",
+        "url": "https://klyora.fr/api/prospect/send",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -107,5 +107,5 @@
     "saveManualExecutions": true,
     "executionTimeout": 330
   },
-  "tags": ["webconceptor", "envoi"]
+  "tags": ["klyora", "envoi"]
 }

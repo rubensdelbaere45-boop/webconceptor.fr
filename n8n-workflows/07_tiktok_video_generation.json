@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/generate-tiktok-video",
+        "url": "https://klyora.fr/api/admin/generate-tiktok-video",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

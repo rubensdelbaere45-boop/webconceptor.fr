@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/analyze-outdated",
+        "url": "https://klyora.fr/api/admin/analyze-outdated",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

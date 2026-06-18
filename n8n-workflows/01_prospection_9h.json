@@ -22,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/cron",
+        "url": "https://klyora.fr/api/prospect/cron",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -174,5 +174,5 @@
     "saveExecutionProgress": true,
     "executionTimeout": 330
   },
-  "tags": ["webconceptor", "prospection"]
+  "tags": ["klyora", "prospection"]
 }

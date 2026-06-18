@@ -22,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/email-reminders",
+        "url": "https://klyora.fr/api/prospect/email-reminders",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -105,5 +105,5 @@
     "saveManualExecutions": true,
     "executionTimeout": 150
   },
-  "tags": ["webconceptor", "relances"]
+  "tags": ["klyora", "relances"]
 }

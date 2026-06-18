@@ -26,7 +26,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/prospect/outdated-blast",
+        "url": "https://klyora.fr/api/prospect/outdated-blast",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

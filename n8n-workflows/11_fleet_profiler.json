@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/profiler",
+        "url": "https://klyora.fr/api/admin/profiler",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

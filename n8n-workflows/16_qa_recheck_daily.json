@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/qa-recheck-all",
+        "url": "https://klyora.fr/api/admin/qa-recheck-all",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

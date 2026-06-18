@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://webconceptor.fr/api/admin/deployeur",
+        "url": "https://klyora.fr/api/admin/deployeur",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
