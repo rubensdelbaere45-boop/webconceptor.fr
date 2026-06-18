@@ -164,12 +164,67 @@ export async function GET(
     .maybeSingle();
 
   // ─── GATE PAR CODE D'ACCÈS (protection légale anti-huissier) ─────────
-  // Si le prospect a un code et que le cookie n'est pas présent → on
-  // affiche le formulaire de saisie au lieu de la maquette.
+  // Si le prospect a un code :
+  //   1. Si ?code=XXXX-XXXX dans l'URL et qu'il matche → auto-unlock,
+  //      set cookie + redirige vers URL sans le code (propre).
+  //   2. Sinon si cookie valide → laisse passer.
+  //   3. Sinon → page de gate.
+  //
+  // Le pré-fill ?code= dans les mails élimine 99% de la friction tout en
+  // restant légalement protégé (l'huissier qui veut faire constat n'a aucun
+  // code donc tombe sur le gate ; chaque prospect a un code unique non
+  // partageable car traçable en DB via prospect_access_attempts).
   if (data?.access_code) {
-    const { hasValidAccessCookie, renderGatePage } = await import("@/lib/access-code");
+    const { hasValidAccessCookie, renderGatePage, buildAccessCookie, normalizeAccessCode } = await import("@/lib/access-code");
+    const urlCode = url.searchParams.get("code") || "";
+
+    // 1) Code dans l'URL → tente l'auto-unlock
+    if (urlCode) {
+      const normalized = normalizeAccessCode(urlCode);
+      if (normalized === data.access_code) {
+        // Log dans prospect_access_attempts (visite réussie via URL)
+        await supabase.from("prospect_access_attempts").insert({
+          prospect_id: data.id,
+          slug,
+          code_tried: urlCode.slice(0, 32),
+          success: true,
+          ip: req.headers.get("x-forwarded-for") || null,
+          user_agent: (req.headers.get("user-agent") || "").slice(0, 500),
+          referer: (req.headers.get("referer") || "").slice(0, 500),
+        });
+        // Increment unlock counter + set first_unlocked
+        const { data: cur } = await supabase
+          .from("prospects")
+          .select("access_code_first_unlocked_at, access_code_unlock_count")
+          .eq("id", data.id)
+          .maybeSingle();
+        const firstUnlock = !cur?.access_code_first_unlocked_at;
+        await supabase
+          .from("prospects")
+          .update({
+            access_code_unlock_count: (cur?.access_code_unlock_count || 0) + 1,
+            ...(firstUnlock ? { access_code_first_unlocked_at: new Date().toISOString() } : {}),
+          })
+          .eq("id", data.id);
+
+        // Redirect vers URL sans le code + set cookie 30j
+        const cleanUrl = `/prospects/${encodeURIComponent(slug)}`;
+        return new NextResponse(null, {
+          status: 302,
+          headers: {
+            Location: cleanUrl,
+            "Set-Cookie": buildAccessCookie(slug, normalized),
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+      // Code dans URL invalide → on continue vers le check cookie / gate
+    }
+
+    // 2) Cookie déjà set ?
     const valid = hasValidAccessCookie(req, slug, data.access_code);
     if (!valid) {
+      // 3) Affiche le gate
       return new NextResponse(renderGatePage({ slug, prospectName: data.name || undefined, error: false }), {
         status: 200,
         headers: {
