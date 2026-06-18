@@ -6,6 +6,7 @@ import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-cust
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
 import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
+import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
 
@@ -380,6 +381,32 @@ export async function POST(req: NextRequest) {
       // Pour business_type=pizzeria, on shortcut tout le pipeline IA :
       // template visuel premium dédié, 100% local, instantané.
       // ══════════════════════════════════════════
+      // ── STITCH METIER ENGINE : 14 métiers premium (électricien, garage,
+      //    dentiste, ostéo, café, auto-école, épicerie fine, boulangerie,
+      //    fleuriste, menuisier, couvreur, vétérinaire, coiffeur, institut)
+      const metierConfig = findMetierConfig({
+        name: p.name,
+        slug: p.slug,
+        business_type: p.business_type,
+      });
+      if (metierConfig && metierConfig.key !== "plombier") {
+        try {
+          const metierHtml = generateStitchMetierMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            website_photos: (p.website_photos as string[]) || (p.photos as string[]) || null,
+          }, p.business_type);
+          if (metierHtml && metierHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: metierHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: `stitch_${metierConfig.key}_ok`, chars: metierHtml.length });
+            continue;
+          }
+        } catch (mErr) {
+          console.warn(`[regenerate] ${metierConfig.key} template failed for ${p.slug}:`, mErr);
+        }
+      }
+
       // ── PLOMBIER : template Stitch dédié (bento grid + bandeau urgence)
       const looksLikePlombier = p.business_type === "plombier" ||
         /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
