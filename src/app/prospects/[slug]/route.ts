@@ -176,7 +176,7 @@ export async function GET(
   // partageable car traçable en DB via prospect_access_attempts).
   if (data?.access_code) {
     const { hasValidAccessCookie, renderGatePage, buildAccessCookie, normalizeAccessCode } = await import("@/lib/access-code");
-    const urlCode = url.searchParams.get("code") || "";
+    const urlCode = new URL(req.url).searchParams.get("code") || "";
 
     // 1) Code dans l'URL → tente l'auto-unlock
     if (urlCode) {
