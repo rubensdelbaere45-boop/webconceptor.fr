@@ -75,6 +75,21 @@ export async function POST(req: NextRequest, context: { params: Promise<{ slug: 
   const userAgent = req.headers.get("user-agent") || "";
   const referer = req.headers.get("referer") || "";
 
+  // ── MASTER CODE (Tom uniquement) ──────────────────────────────────
+  // Si le code saisi correspond à MASTER_ACCESS_CODE, on set le cookie
+  // master et on redirige. Aucun log, aucune notif.
+  const masterCode = (process.env.MASTER_ACCESS_CODE || "").trim();
+  if (masterCode && codeTried.trim() === masterCode) {
+    return new NextResponse(null, {
+      status: 302,
+      headers: {
+        Location: `/prospects/${encodeURIComponent(slug)}`,
+        "Set-Cookie": `klyora_master_access=${encodeURIComponent(masterCode)}; Path=/; Max-Age=2592000; SameSite=Lax; HttpOnly; Secure`,
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   const result = await verifyAccessCode({ slug, codeTried, ip, userAgent, referer });
 
   if (!result.ok) {
