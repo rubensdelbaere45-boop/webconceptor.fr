@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare, escapeTelegram } from "@/lib/security";
+import { getOrCreateAccessCode } from "@/lib/access-code";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -198,7 +199,7 @@ export async function POST(req: NextRequest) {
   // Load prospect
   const { data: prospect, error: findErr } = await supabase
     .from("prospects")
-    .select("id, name, slug, email, city, business_type, project_code, mockup_html")
+    .select("id, name, slug, email, city, business_type, project_code, mockup_html, access_code")
     .eq("id", prospect_id)
     .maybeSingle();
 
@@ -226,7 +227,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    const mockupUrl = `https://klyora.fr/prospects/${prospect.slug}`;
+    // Génère un access_code si manquant (pour pré-fill l'URL et éviter
+    // la friction du formulaire de saisie).
+    let accessCode = prospect.access_code as string | null;
+    if (!accessCode) accessCode = await getOrCreateAccessCode(prospect.id);
+    const mockupUrl = accessCode
+      ? `https://klyora.fr/prospects/${prospect.slug}?code=${encodeURIComponent(accessCode)}`
+      : `https://klyora.fr/prospects/${prospect.slug}`;
     const isResto = prospect.business_type === "restaurant";
     const title = `Site web ${isResto ? "restaurant" : "vitrine"} — ${prospect.name}`;
 
@@ -262,9 +269,13 @@ export async function POST(req: NextRequest) {
     await supabase.from("prospects").update({ project_code: code }).eq("id", prospect.id);
   }
 
-  // Build email
+  // Build email — mockupUrl pré-rempli avec access_code (auto-unlock + redirect 302)
   const codeUrl = `https://klyora.fr/code?c=${code}`;
-  const mockupUrl = `https://klyora.fr/prospects/${prospect.slug}`;
+  let accessCodeFinal = (prospect.access_code as string | null) || null;
+  if (!accessCodeFinal) accessCodeFinal = await getOrCreateAccessCode(prospect.id);
+  const mockupUrl = accessCodeFinal
+    ? `https://klyora.fr/prospects/${prospect.slug}?code=${encodeURIComponent(accessCodeFinal)}`
+    : `https://klyora.fr/prospects/${prospect.slug}`;
   const emailHtml = buildCodeEmailHtml({
     prospectName: prospect.name,
     code,

@@ -343,7 +343,10 @@ async function replyUnsubscribe(mail: FetchedMail, prospectName: string) {
 async function replyBrokenLink(mail: FetchedMail, prospect: { name: string; slug: string; access_code: string | null }) {
   const code = prospect.access_code || (await getOrCreateAccessCode((await findProspectByEmail(mail.from))?.id || ""));
   const firstName = prospect.name.split(" ")[0] || "";
-  const url = `https://klyora.fr/prospects/${prospect.slug}`;
+  // URL pré-remplie avec le code (auto-unlock + redirect propre)
+  const url = code
+    ? `https://klyora.fr/prospects/${prospect.slug}?code=${encodeURIComponent(code)}`
+    : `https://klyora.fr/prospects/${prospect.slug}`;
   await sendBrevoEmail({
     to: mail.from,
     toName: prospect.name,
@@ -450,7 +453,10 @@ async function replyRegenInstruction(mail: FetchedMail, prospect: { id: string; 
 
 async function replyPrice(mail: FetchedMail, prospect: { name: string; slug: string; access_code: string | null }) {
   const firstName = prospect.name.split(" ")[0] || "";
-  const url = `https://klyora.fr/prospects/${prospect.slug}`;
+  // URL pré-remplie (auto-unlock + redirect propre)
+  const url = prospect.access_code
+    ? `https://klyora.fr/prospects/${prospect.slug}?code=${encodeURIComponent(prospect.access_code)}`
+    : `https://klyora.fr/prospects/${prospect.slug}`;
   await sendBrevoEmail({
     to: mail.from,
     toName: prospect.name,
