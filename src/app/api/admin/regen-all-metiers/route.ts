@@ -17,6 +17,9 @@ import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig, METIER_CONFIGS } from "@/lib/mockup-stitch-engine";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
+import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
+import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 
 function detectMetierFullKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -74,6 +77,72 @@ export async function POST(req: NextRequest) {
   const samplesByMetier: Record<string, { slug: string; name: string }> = {};
 
   for (const p of list) {
+    // PRIORITÉ 0a : électricien -> template dédié pixel-pixel
+    const looksLikeElectricien = p.business_type === "electricien" || /\b(electric|électrici|électrique)/i.test(p.name || "") || /\b(electric|électrici|électrique)/i.test(p.slug || "");
+    if (looksLikeElectricien) {
+      if (metierFilter && metierFilter !== "electricien") { skipped++; continue; }
+      try {
+        const html = generateStitchElectricienMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          website_photos: (p.website_photos as string[]) || null,
+        });
+        if (html && html.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) { updated++; counts["full:electricien"] = (counts["full:electricien"] || 0) + 1; if (!samplesByMetier["electricien"]) samplesByMetier["electricien"] = { slug: p.slug, name: p.name }; continue; }
+        }
+        errors++;
+      } catch { errors++; }
+      continue;
+    }
+
+    // PRIORITÉ 0b : dentiste -> template dédié pixel-pixel
+    const looksLikeDentiste = p.business_type === "dentiste" || /\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/i.test(p.name || "") || /\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/i.test(p.slug || "");
+    if (looksLikeDentiste) {
+      if (metierFilter && metierFilter !== "dentiste") { skipped++; continue; }
+      try {
+        const html = generateStitchDentisteFullMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+        });
+        if (html && html.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) { updated++; counts["full:dentiste"] = (counts["full:dentiste"] || 0) + 1; if (!samplesByMetier["dentiste"]) samplesByMetier["dentiste"] = { slug: p.slug, name: p.name }; continue; }
+        }
+        errors++;
+      } catch { errors++; }
+      continue;
+    }
+
+    // PRIORITÉ 0c : plombier -> template dédié pixel-pixel
+    const looksLikePlombier = p.business_type === "plombier" || /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
+    if (looksLikePlombier) {
+      if (metierFilter && metierFilter !== "plombier") { skipped++; continue; }
+      try {
+        const html = generateStitchPlombierFullMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+        });
+        if (html && html.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) { updated++; counts["full:plombier"] = (counts["full:plombier"] || 0) + 1; if (!samplesByMetier["plombier"]) samplesByMetier["plombier"] = { slug: p.slug, name: p.name }; continue; }
+        }
+        errors++;
+      } catch { errors++; }
+      continue;
+    }
+
     // PRIORITÉ 1 : Stitch FULL lib (12 métiers avec fixes nav/bandeau/horaires)
     const fullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
     if (fullKey && isMetierSupported(fullKey)) {
