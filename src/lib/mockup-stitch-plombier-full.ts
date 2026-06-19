@@ -60,11 +60,33 @@ export function generateStitchPlombierFullMockupHtml(p: PlombierFullProspect): s
     ? `<div class="flex items-center justify-center gap-3 mt-6"><div class="flex gap-1 text-[#ca8a04]">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="font-label-lg">${p.google_rating}/5 — ${p.google_reviews_count} avis Google</span></div>`
     : "";
 
-  const hoursHtml = p.hours ? `
-    <div class="bg-white border border-outline-variant p-10 paper-shadow">
-      <span class="material-symbols-outlined text-[#1e40af] text-4xl mb-4 inline-block" style="font-variation-settings: 'FILL' 1;">schedule</span>
-      <h3 class="font-headline-lg text-xl mb-4">Horaires</h3>
-      <div class="text-on-surface-variant text-sm whitespace-pre-line">${escape(p.hours)}</div>
+  // Parse horaires : transforme "lundi: 08:30 – 12:00, 13:30 – 18:00 | mardi: ..."
+  // en table propre avec 1 jour par ligne.
+  const hoursLines = (p.hours || "")
+    .split(/\s*\|\s*/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  const hoursHtml = hoursLines.length ? `
+    <div class="bg-white border border-outline-variant p-8 paper-shadow text-left">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="material-symbols-outlined text-[#1e40af] text-3xl" style="font-variation-settings: 'FILL' 1;">schedule</span>
+        <h3 class="font-headline-lg text-xl">Horaires</h3>
+      </div>
+      <table class="w-full text-sm">
+        <tbody>
+          ${hoursLines.map(line => {
+            const m = line.match(/^([^:]+):\s*(.+)$/);
+            if (!m) return `<tr><td colspan="2" class="py-1.5 text-on-surface-variant">${escape(line)}</td></tr>`;
+            const day = escape(m[1].trim());
+            const hrs = escape(m[2].trim());
+            const isClosed = /ferm[ée]/i.test(hrs);
+            return `<tr class="border-b border-outline-variant/40 last:border-0">
+              <td class="py-2 capitalize font-medium text-on-surface w-1/3">${day}</td>
+              <td class="py-2 text-on-surface-variant ${isClosed ? 'italic opacity-60' : ''}">${hrs}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
     </div>` : "";
 
   return `<!DOCTYPE html>
@@ -114,8 +136,8 @@ export function generateStitchPlombierFullMockupHtml(p: PlombierFullProspect): s
 <body class="antialiased min-h-screen flex flex-col">
 <div class="texture-overlay"></div>
 
-<!-- NAV (pixel-pixel Stitch) -->
-<nav class="fixed top-0 w-full z-50 bg-surface/95 backdrop-blur-sm border-b border-outline-variant shadow-sm" id="navbar">
+<!-- NAV (sticky sous la sales-ui-bar de 54px) -->
+<nav class="sticky top-[54px] w-full z-40 bg-surface/95 backdrop-blur-sm border-b border-outline-variant shadow-sm" id="navbar">
   <div class="flex justify-between items-center h-20 px-mobile-padding md:px-desktop-padding max-w-container-max mx-auto">
     <a class="font-headline-lg text-3xl tracking-tighter text-primary flex items-center gap-2" href="#">
       <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">plumbing</span>
@@ -132,11 +154,11 @@ export function generateStitchPlombierFullMockupHtml(p: PlombierFullProspect): s
   </div>
 </nav>
 
-<!-- EMERGENCY BANNER (pixel-pixel Stitch) -->
-<div class="bg-[#1e40af] text-white pt-24 pb-3 px-mobile-padding md:px-desktop-padding text-center shadow-md">
+<!-- EMERGENCY BANNER (compact, pas de pt-24 inutile car la nav est sticky) -->
+<div class="bg-[#1e40af] text-white py-2.5 px-mobile-padding md:px-desktop-padding text-center shadow-md">
   <div class="max-w-container-max mx-auto flex items-center justify-center gap-2">
-    <span class="material-symbols-outlined animate-pulse text-[#0ea5e9]" style="font-variation-settings: 'FILL' 1;">emergency</span>
-    <span class="font-label-lg tracking-widest uppercase text-sm">Disponible 7j/7 — Délai d'intervention 2h max</span>
+    <span class="material-symbols-outlined animate-pulse text-[#0ea5e9] text-base" style="font-variation-settings: 'FILL' 1;">emergency</span>
+    <span class="font-label-lg tracking-widest uppercase text-xs md:text-sm">Disponible 7j/7 — Délai d'intervention 2h max</span>
   </div>
 </div>
 

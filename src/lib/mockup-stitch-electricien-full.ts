@@ -114,8 +114,8 @@ export function generateStitchElectricienMockupHtml(p: ElectricienProspect): str
 <body class="bg-background text-on-background antialiased overflow-x-hidden selection:bg-accent selection:text-white relative">
 <div class="texture-overlay"></div>
 
-<!-- NAV -->
-<nav class="bg-surface/90 backdrop-blur-md fixed top-0 w-full z-50 border-b border-outline-variant">
+<!-- NAV (sticky sous la sales-ui-bar 54px) -->
+<nav class="bg-surface/95 backdrop-blur-md sticky top-[54px] w-full z-40 border-b border-outline-variant shadow-sm">
   <div class="flex justify-between items-center h-20 px-mobile-padding md:px-desktop-padding max-w-container-max mx-auto">
     <a class="font-headline-lg text-2xl md:text-3xl tracking-tighter text-primary" href="#">${nameUpper}</a>
     <div class="hidden md:flex items-center gap-8">
@@ -129,7 +129,7 @@ export function generateStitchElectricienMockupHtml(p: ElectricienProspect): str
   </div>
 </nav>
 
-<main class="pt-20">
+<main>
 <!-- HERO Split Layout (pixel-pixel Stitch) -->
 <section id="savoir" class="relative min-h-[90vh] flex items-center bg-surface-container-lowest overflow-hidden">
   <div class="grid grid-cols-1 lg:grid-cols-12 w-full max-w-full">

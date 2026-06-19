@@ -12,6 +12,7 @@ import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
 import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
+import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +57,21 @@ export async function POST(req: NextRequest) {
       website_photos: (p.website_photos as string[]) || null,
     });
     templateUsed = "electricien-full";
+  } else {
+
+  // Dentiste priority — template Stitch FULL pixel-pixel
+  const looksLikeDentiste = p.business_type === "dentiste" || /\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/i.test(p.name || "") || /\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/i.test(p.slug || "");
+  if (looksLikeDentiste) {
+    html = generateStitchDentisteFullMockupHtml({
+      id: p.id, slug: p.slug, name: p.name,
+      city: p.city || null, address: p.address || null,
+      phone: p.phone || null, email: p.email || null,
+      hours: (p as { hours?: string }).hours || null,
+      google_rating: (p as { google_rating?: number }).google_rating || null,
+      google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+      reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+    });
+    templateUsed = "dentiste-full";
   } else {
 
   // Plombier priority — template Stitch FULL pixel-pixel

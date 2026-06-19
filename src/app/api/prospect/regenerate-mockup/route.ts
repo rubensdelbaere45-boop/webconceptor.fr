@@ -8,6 +8,7 @@ import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
 import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
+import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
@@ -429,6 +430,31 @@ export async function POST(req: NextRequest) {
           }
         } catch (mErr) {
           console.warn(`[regenerate] ${metierConfig.key} template failed for ${p.slug}:`, mErr);
+        }
+      }
+
+      // ── DENTISTE : template Stitch FULL pixel-pixel + 4 sections vendeuses
+      const looksLikeDentiste = p.business_type === "dentiste" ||
+        /\b(dentiste|dental|orthodont|chirurg.*dentaire|cabinet[ -]dentaire)/i.test(p.name || "") ||
+        /\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/i.test(p.slug || "");
+      if (looksLikeDentiste) {
+        try {
+          const dentisteHtml = generateStitchDentisteFullMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            hours: (p.hours as string) || null,
+            google_rating: p.google_rating || null,
+            google_reviews_count: p.google_reviews_count || null,
+            reviews: (p.reviews as Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }>) || null,
+          });
+          if (dentisteHtml && dentisteHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: dentisteHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "stitch_dentiste_full_ok", chars: dentisteHtml.length });
+            continue;
+          }
+        } catch (dErr) {
+          console.warn(`[regenerate] dentiste-full template failed for ${p.slug}:`, dErr);
         }
       }
 
