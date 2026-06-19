@@ -16,6 +16,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig, METIER_CONFIGS } from "@/lib/mockup-stitch-engine";
+import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+
+function detectMetierFullKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
+  const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
+  if (/\bost[eé]o/.test(haystack)) return "osteo";
+  if (/\bgarage|garagi|m[eé]canicien|carrosseri/.test(haystack)) return "garage";
+  if (/\binstitut|esth[eé]ti|beaut[eé]/.test(haystack)) return "institut";
+  if (/\bcaf[eé](?!fer)/.test(haystack)) return "cafe";
+  if (/\bboulanger/.test(haystack)) return "boulangerie";
+  if (/\bmenuis/.test(haystack)) return "menuisier";
+  if (/\bfleurist/.test(haystack)) return "fleuriste";
+  if (/\bcoiffeu|salon\s*de\s*coiffure/.test(haystack)) return "coiffeur";
+  if (/\bauto[\s-]*[eé]cole/.test(haystack)) return "autoecole";
+  if (/\b[eé]picerie/.test(haystack)) return "epicerie";
+  if (/\bcouvreur|toitur|zinguer/.test(haystack)) return "couvreur";
+  if (/\bv[eé]t[eé]rinaire|clinique\s*animal/.test(haystack)) return "veterinaire";
+  return null;
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,7 +58,7 @@ export async function POST(req: NextRequest) {
   const supabase = db();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, slug, name, city, address, phone, email, website_photos, business_type")
+    .select("id, slug, name, city, address, phone, email, website_photos, business_type, hours, reviews, google_rating, google_reviews_count")
     .order("id", { ascending: true })
     .range(offset, offset + limit - 1);
 
@@ -53,13 +71,52 @@ export async function POST(req: NextRequest) {
   let errors = 0;
   const samples: Array<{ slug: string; metier: string }> = [];
 
+  const samplesByMetier: Record<string, { slug: string; name: string }> = {};
+
   for (const p of list) {
+    // PRIORITÉ 1 : Stitch FULL lib (12 métiers avec fixes nav/bandeau/horaires)
+    const fullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+    if (fullKey && isMetierSupported(fullKey)) {
+      if (metierFilter && fullKey !== metierFilter) {
+        skipped++;
+        continue;
+      }
+      try {
+        const html = generateStitchMetierFullMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+        }, fullKey);
+        if (html && html.length > 5000) {
+          const { error: upErr } = await supabase
+            .from("prospects")
+            .update({ mockup_html: html, updated_at: new Date().toISOString() })
+            .eq("id", p.id);
+          if (!upErr) {
+            updated++;
+            counts[`full:${fullKey}`] = (counts[`full:${fullKey}`] || 0) + 1;
+            if (!samplesByMetier[fullKey]) samplesByMetier[fullKey] = { slug: p.slug, name: p.name };
+            if (samples.length < 30) samples.push({ slug: p.slug, metier: `full:${fullKey}` });
+            continue;
+          }
+        }
+        errors++;
+      } catch {
+        errors++;
+      }
+      continue;
+    }
+
+    // PRIORITÉ 2 : engine legacy (autres métiers non supportés par lib full)
     const config = findMetierConfig({ name: p.name, slug: p.slug, business_type: p.business_type });
     if (!config) {
       skipped++;
       continue;
     }
-    // Skip plombier (template dédié géré ailleurs)
     if (config.key === "plombier") {
       skipped++;
       continue;
@@ -85,7 +142,7 @@ export async function POST(req: NextRequest) {
         if (!upErr) {
           updated++;
           counts[config.key] = (counts[config.key] || 0) + 1;
-          if (samples.length < 15) samples.push({ slug: p.slug, metier: config.key });
+          if (samples.length < 30) samples.push({ slug: p.slug, metier: config.key });
         } else { errors++; }
       } else {
         errors++;
@@ -105,6 +162,7 @@ export async function POST(req: NextRequest) {
     by_metier: counts,
     available_metiers: METIER_CONFIGS.map((c) => c.key),
     samples,
+    samples_by_metier_full: samplesByMetier,
   });
 }
 
