@@ -6,6 +6,7 @@ import { generateCustomMockupHtml, type CustomProspect } from "@/lib/mockup-cust
 import { generateStitchMockup, type StitchProspect } from "@/lib/stitch-mockup";
 import { generateStitchPizzeriaMockupHtml } from "@/lib/mockup-stitch-pizzeria";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
+import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
@@ -431,24 +432,27 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ── PLOMBIER : template Stitch dédié (bento grid + bandeau urgence)
+      // ── PLOMBIER : template Stitch FULL pixel-pixel + 4 sections vendeuses
       const looksLikePlombier = p.business_type === "plombier" ||
         /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
       if (looksLikePlombier) {
         try {
-          const plombierHtml = generateStitchPlombierMockupHtml({
+          const plombierHtml = generateStitchPlombierFullMockupHtml({
             id: p.id, slug: p.slug, name: p.name,
             city: p.city || null, address: p.address || null,
             phone: p.phone || null, email: p.email || null,
-            website_photos: (p.website_photos as string[]) || (p.photos as string[]) || null,
+            hours: (p.hours as string) || null,
+            google_rating: p.google_rating || null,
+            google_reviews_count: p.google_reviews_count || null,
+            reviews: (p.reviews as Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }>) || null,
           });
           if (plombierHtml && plombierHtml.length > 8000) {
             await supabase.from("prospects").update({ mockup_html: plombierHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
-            results.push({ slug: p.slug, name: p.name, status: "stitch_plombier_ok", chars: plombierHtml.length });
+            results.push({ slug: p.slug, name: p.name, status: "stitch_plombier_full_ok", chars: plombierHtml.length });
             continue;
           }
         } catch (plErr) {
-          console.warn(`[regenerate] plombier template failed for ${p.slug}:`, plErr);
+          console.warn(`[regenerate] plombier-full template failed for ${p.slug}:`, plErr);
         }
       }
 

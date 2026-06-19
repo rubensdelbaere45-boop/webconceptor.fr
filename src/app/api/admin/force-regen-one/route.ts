@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
+import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   const supabase = db();
   const { data: p } = await supabase
     .from("prospects")
-    .select("id, slug, name, city, address, phone, email, website_photos, business_type")
+    .select("id, slug, name, city, address, phone, email, website_photos, business_type, hours, reviews, google_rating, google_reviews_count")
     .eq("slug", slug)
     .maybeSingle();
   if (!p) return NextResponse.json({ error: "prospect introuvable" }, { status: 404 });
@@ -57,16 +58,19 @@ export async function POST(req: NextRequest) {
     templateUsed = "electricien-full";
   } else {
 
-  // Plombier priority
+  // Plombier priority — template Stitch FULL pixel-pixel
   const looksLikePlombier = p.business_type === "plombier" || /\bplomb/i.test(p.name || "") || /\bplomb/i.test(p.slug || "");
   if (looksLikePlombier) {
-    html = generateStitchPlombierMockupHtml({
+    html = generateStitchPlombierFullMockupHtml({
       id: p.id, slug: p.slug, name: p.name,
       city: p.city || null, address: p.address || null,
       phone: p.phone || null, email: p.email || null,
-      website_photos: (p.website_photos as string[]) || null,
+      hours: (p as { hours?: string }).hours || null,
+      google_rating: (p as { google_rating?: number }).google_rating || null,
+      google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+      reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
     });
-    templateUsed = "plombier";
+    templateUsed = "plombier-full";
   } else if (config) {
     html = generateStitchMetierMockupHtml({
       id: p.id, slug: p.slug, name: p.name,
