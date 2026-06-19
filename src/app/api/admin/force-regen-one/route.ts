@@ -14,6 +14,24 @@ import { generateStitchPlombierMockupHtml } from "@/lib/mockup-stitch-plombier";
 import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
+import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+
+function detectMetierKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
+  const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
+  if (/\bost[eé]o/.test(haystack)) return "osteo";
+  if (/\bgarage|garagi|m[eé]canicien|carrosseri/.test(haystack)) return "garage";
+  if (/\binstitut|esth[eé]ti|beaut[eé]/.test(haystack)) return "institut";
+  if (/\bcaf[eé](?!fer)/.test(haystack)) return "cafe";
+  if (/\bboulanger/.test(haystack)) return "boulangerie";
+  if (/\bmenuis/.test(haystack)) return "menuisier";
+  if (/\bfleurist/.test(haystack)) return "fleuriste";
+  if (/\bcoiffeu|salon\s*de\s*coiffure/.test(haystack)) return "coiffeur";
+  if (/\bauto[\s-]*[eé]cole/.test(haystack)) return "autoecole";
+  if (/\b[eé]picerie/.test(haystack)) return "epicerie";
+  if (/\bcouvreur|toitur|zinguer/.test(haystack)) return "couvreur";
+  if (/\bv[eé]t[eé]rinaire|clinique\s*animal/.test(haystack)) return "veterinaire";
+  return null;
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -87,14 +105,29 @@ export async function POST(req: NextRequest) {
       reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
     });
     templateUsed = "plombier-full";
-  } else if (config) {
-    html = generateStitchMetierMockupHtml({
-      id: p.id, slug: p.slug, name: p.name,
-      city: p.city || null, address: p.address || null,
-      phone: p.phone || null, email: p.email || null,
-      website_photos: (p.website_photos as string[]) || null,
-    }, p.business_type);
-    templateUsed = `engine:${config.key}`;
+  } else {
+    // 12 autres métiers : lib paramétrée (mêmes 3 fixes nav/bandeau/horaires)
+    const metierKey = detectMetierKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+    if (metierKey && isMetierSupported(metierKey)) {
+      html = generateStitchMetierFullMockupHtml({
+        id: p.id, slug: p.slug, name: p.name,
+        city: p.city || null, address: p.address || null,
+        phone: p.phone || null, email: p.email || null,
+        hours: (p as { hours?: string }).hours || null,
+        google_rating: (p as { google_rating?: number }).google_rating || null,
+        google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+        reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+      }, metierKey);
+      templateUsed = `metier-full:${metierKey}`;
+    } else if (config) {
+      html = generateStitchMetierMockupHtml({
+        id: p.id, slug: p.slug, name: p.name,
+        city: p.city || null, address: p.address || null,
+        phone: p.phone || null, email: p.email || null,
+        website_photos: (p.website_photos as string[]) || null,
+      }, p.business_type);
+      templateUsed = `engine:${config.key}`;
+    }
   }
   }
   }

@@ -10,6 +10,24 @@ import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombi
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
+import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+
+function detectMetierFullKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
+  const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
+  if (/\bost[eé]o/.test(haystack)) return "osteo";
+  if (/\bgarage|garagi|m[eé]canicien|carrosseri/.test(haystack)) return "garage";
+  if (/\binstitut|esth[eé]ti|beaut[eé]/.test(haystack)) return "institut";
+  if (/\bcaf[eé](?!fer)/.test(haystack)) return "cafe";
+  if (/\bboulanger/.test(haystack)) return "boulangerie";
+  if (/\bmenuis/.test(haystack)) return "menuisier";
+  if (/\bfleurist/.test(haystack)) return "fleuriste";
+  if (/\bcoiffeu|salon\s*de\s*coiffure/.test(haystack)) return "coiffeur";
+  if (/\bauto[\s-]*[eé]cole/.test(haystack)) return "autoecole";
+  if (/\b[eé]picerie/.test(haystack)) return "epicerie";
+  if (/\bcouvreur|toitur|zinguer/.test(haystack)) return "couvreur";
+  if (/\bv[eé]t[eé]rinaire|clinique\s*animal/.test(haystack)) return "veterinaire";
+  return null;
+}
 import { generatePremiumDnaMockup, type DnaProspect } from "@/lib/mockup-dna";
 import type { DeepAudit } from "@/lib/deep-audit";
 
@@ -501,6 +519,33 @@ export async function POST(req: NextRequest) {
           }
         } catch (pizzErr) {
           console.warn(`[regenerate] pizzeria template failed for ${p.slug}:`, pizzErr);
+        }
+      }
+
+      // ══════════════════════════════════════════
+      // PRIORITÉ — 12 métiers Stitch FULL (ostéo, garage, institut, café,
+      // boulangerie, menuisier, fleuriste, coiffeur, auto-école, épicerie,
+      // couvreur, vétérinaire). Lib paramétrée avec fixes nav/bandeau/horaires.
+      // ══════════════════════════════════════════
+      const metierFullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+      if (metierFullKey && isMetierSupported(metierFullKey)) {
+        try {
+          const metierFullHtml = generateStitchMetierFullMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            hours: (p as { hours?: string }).hours || null,
+            google_rating: (p as { google_rating?: number }).google_rating || null,
+            google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+            reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          }, metierFullKey);
+          if (metierFullHtml && metierFullHtml.length > 8000) {
+            await supabase.from("prospects").update({ mockup_html: metierFullHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: `metier_full_ok:${metierFullKey}`, chars: metierFullHtml.length });
+            continue;
+          }
+        } catch (metierErr) {
+          console.warn(`[regenerate] metier-full ${metierFullKey} failed for ${p.slug}:`, metierErr);
         }
       }
 
