@@ -27,7 +27,7 @@ function detectMetierFullKey(p: { business_type?: string | null; name?: string |
   if (/\bgarage|garagi|m[eé]canicien|carrosseri/.test(haystack)) return "garage";
   if (/\binstitut|esth[eé]ti|beaut[eé]/.test(haystack)) return "institut";
   if (/\bcaf[eé](?!fer)/.test(haystack)) return "cafe";
-  if (/\bboulanger/.test(haystack)) return "boulangerie";
+  if (/\b(boulanger|p[aâ]tisser|p[aâ]tissi)/.test(haystack)) return "boulangerie";
   if (/\bmenuis/.test(haystack)) return "menuisier";
   if (/\bfleurist/.test(haystack)) return "fleuriste";
   if (/\bcoiffeu|salon\s*de\s*coiffure/.test(haystack)) return "coiffeur";
