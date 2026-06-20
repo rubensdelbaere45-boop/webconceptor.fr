@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const supabase = db();
   const { data: p } = await supabase
     .from("prospects")
-    .select("id, slug, website, site_style_dna")
+    .select("id, slug, name, city, business_type, website, site_style_dna")
     .eq("slug", slug)
     .maybeSingle();
   if (!p) return NextResponse.json({ error: "prospect introuvable" }, { status: 404 });
@@ -47,7 +47,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ skipped: "already_scraped", slug, website: p.website, scrapedAt: (p.site_style_dna as { scrapedAt?: string }).scrapedAt });
   }
 
-  const dna = await scrapeWebsiteDna(p.website);
+  // Si garage, passer le nom+ville pour tenter La Centrale en fallback véhicules
+  const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((p.business_type || "") + " " + (p.name || ""));
+  const dna = await scrapeWebsiteDna(p.website, {
+    garageName: isGarage ? p.name : undefined,
+    garageCity: isGarage ? p.city : undefined,
+  });
   const { error: upErr } = await supabase
     .from("prospects")
     .update({ site_style_dna: dna, updated_at: new Date().toISOString() })

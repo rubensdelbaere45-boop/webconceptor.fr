@@ -330,11 +330,25 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
 
     // === V2 : extraction profonde ===
 
-    // Toutes les images (résolues en absolu, max 30)
+    // Toutes les images (résolues en absolu, max 30, FILTRÉ qualité)
     const allImages: string[] = [];
     $("img").each((_, el) => {
       const src = $(el).attr("src") || $(el).attr("data-src") || "";
-      if (!src || /favicon|sprite|spacer|pixel|tracking/i.test(src)) return;
+      if (!src) return;
+      // Skip favicons, sprites, pixels tracking, badges, icônes
+      if (/favicon|sprite|spacer|pixel|tracking|badge|icon|logo[-_/]|^.*\/logo\.|cropped-/i.test(src)) return;
+      // Skip SVG (souvent logos/icônes)
+      if (/\.svg(\?|$)/i.test(src)) return;
+      // Skip GIF (souvent loaders)
+      if (/\.gif(\?|$)/i.test(src)) return;
+      // Filtre par dimensions déclarées : si width OU height < 200, skip
+      const w = parseInt($(el).attr("width") || "0", 10);
+      const h = parseInt($(el).attr("height") || "0", 10);
+      if (w > 0 && w < 200) return;
+      if (h > 0 && h < 200) return;
+      // Filtre par alt qui suggère un logo/avatar
+      const alt = ($(el).attr("alt") || "").toLowerCase();
+      if (/logo|avatar|profile|favicon|sprite/i.test(alt)) return;
       const abs = absoluteUrl(src, websiteUrl);
       if (abs && !allImages.includes(abs) && allImages.length < 30) allImages.push(abs);
     });
@@ -530,9 +544,9 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
 
 /**
  * Wrapper qui : scrape la home + identifie les pages "vehicules/occasions/stock"
- * et les re-scrape pour merger les vehicules.
+ * + tente La Centrale pour les garages.
  */
-export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs?: number; maxSubPages?: number } = {}): Promise<WebsiteDna> {
+export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs?: number; maxSubPages?: number; garageName?: string; garageCity?: string } = {}): Promise<WebsiteDna> {
   const timeoutMs = opts.timeoutMs ?? 12000;
   const maxSubPages = opts.maxSubPages ?? 3;
   const homeDna = await scrapeWebsiteDna(websiteUrl, { timeoutMs });
@@ -551,6 +565,27 @@ export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs
     for (const v of vehicles) {
       if (allVehicles.length >= 24) break;
       if (!allVehicles.some(x => x.title === v.title && x.price === v.price)) allVehicles.push(v);
+    }
+  }
+
+  // Si garage et < 5 véhicules détectés sur leur site, tente La Centrale
+  if (opts.garageName && allVehicles.length < 5) {
+    try {
+      const { scrapeLaCentraleForGarage } = await import("./scrape-lacentrale");
+      const lcVehicles = await scrapeLaCentraleForGarage({
+        garageName: opts.garageName,
+        city: opts.garageCity || null,
+        timeoutMs: 8000,
+        maxResults: 16,
+      });
+      for (const v of lcVehicles) {
+        if (allVehicles.length >= 24) break;
+        if (!allVehicles.some(x => x.title === v.title && x.price === v.price)) {
+          allVehicles.push({ title: v.title, price: v.price, year: v.year, km: v.km, fuel: v.fuel, image: v.image, url: v.url });
+        }
+      }
+    } catch (err) {
+      console.warn("[deep] La Centrale failed:", err);
     }
   }
 

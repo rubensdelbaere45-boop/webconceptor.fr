@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const supabase = db();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, slug, website, site_style_dna")
+    .select("id, slug, name, city, business_type, website, site_style_dna")
     .not("website", "is", null)
     .order("id", { ascending: true })
     .range(offset, offset + limit - 1);
@@ -54,7 +54,12 @@ export async function POST(req: NextRequest) {
     if (!force && p.site_style_dna && (p.site_style_dna as { scrapedAt?: string }).scrapedAt) {
       skipped++; continue;
     }
-    const dna = await scrapeWebsiteDna(p.website, { timeoutMs: 12000 });
+    const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test(((p.business_type as string) || "") + " " + ((p.name as string) || ""));
+    const dna = await scrapeWebsiteDna(p.website, {
+      timeoutMs: 12000,
+      garageName: isGarage ? (p.name as string) : undefined,
+      garageCity: isGarage ? (p.city as string) : undefined,
+    });
     if (dna.error) { failed++; continue; }
     const { error: upErr } = await supabase
       .from("prospects")

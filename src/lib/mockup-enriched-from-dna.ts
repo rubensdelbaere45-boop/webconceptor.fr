@@ -79,16 +79,13 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
 
   // Véhicules détectés (uniquement garages/concessions)
   const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((p.business_type || "") + " " + name);
-  const detectedVehicles = (dna.detectedVehicles || []).slice(0, 8);
-  // Fallback : si garage mais aucune voiture détectée, on affiche 4 placeholders
-  // pour donner l'idée + permettre un lead "Je réserve un essai"
-  const showVehiclesSection = isGarage;
-  const vehiclesToShow: NonNullable<typeof dna.detectedVehicles> = detectedVehicles.length > 0 ? detectedVehicles : (isGarage ? [
-    { title: "Catalogue véhicules disponible", year: undefined, price: undefined, km: undefined },
-    { title: "Demandez la liste complète", year: undefined, price: undefined, km: undefined },
-    { title: "Véhicules neufs & occasion", year: undefined, price: undefined, km: undefined },
-    { title: "Reprise possible de votre véhicule", year: undefined, price: undefined, km: undefined },
-  ] : []);
+  // On ne garde QUE les véhicules avec une vraie image (sinon le placeholder gris est dégueu)
+  const detectedVehicles = (dna.detectedVehicles || [])
+    .filter(v => v.image && v.image.startsWith("http"))
+    .slice(0, 12);
+  // Section affichée uniquement si garage ET vrais véhicules avec photos
+  const showVehiclesSection = isGarage && detectedVehicles.length > 0;
+  const vehiclesToShow = detectedVehicles;
 
   // Top 3 avis Google
   const topReviews = (p.reviews || []).filter(r => r.text && (r.text || "").length > 30).slice(0, 3);
@@ -353,39 +350,65 @@ ${articles.length ? `
 </section>` : ""}
 
 ${showVehiclesSection && vehiclesToShow.length > 0 ? `
-<!-- VÉHICULES DISPONIBLES (garages/concessions) -->
+<!-- VÉHICULES DISPONIBLES (garages avec vraies photos détectées) -->
 <section id="vehicules" class="py-24 bg-tint-medium relative overflow-hidden">
   <div class="float-deco-1" style="top: 20%; right: -150px;"></div>
   <div class="max-w-7xl mx-auto px-6 relative z-10">
     <div class="text-center mb-16">
-      <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Nos stocks à ${city || "votre disposition"}</span>
-      <h2 class="font-serif text-4xl lg:text-5xl">Nos véhicules <span class="gradient-text">disponibles</span></h2>
-      ${detectedVehicles.length === 0 ? `<p class="text-neutral-600 mt-4 max-w-xl mx-auto">Catalogue mis à jour quotidiennement. Réservez un essai en ligne, on s'occupe du reste.</p>` : `<p class="text-neutral-600 mt-4">${detectedVehicles.length}+ véhicules en stock — réservez votre essai en 1 clic</p>`}
+      <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Nos stocks${city ? ` à ${city}` : ""}</span>
+      <h2 class="font-serif text-4xl lg:text-5xl mb-4">Nos véhicules <span class="gradient-text">disponibles</span></h2>
+      <p class="text-neutral-600 max-w-xl mx-auto">${vehiclesToShow.length} véhicule${vehiclesToShow.length > 1 ? "s" : ""} en stock — réservez votre essai en 1 clic</p>
     </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-${Math.min(vehiclesToShow.length, 4)} gap-6">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       ${vehiclesToShow.map((v, i) => `
-        <div class="bg-white rounded-2xl overflow-hidden hover-lift shadow-sm border border-neutral-200 fade-up fade-up-delay-${Math.min(i, 3)} relative">
-          ${v.image ? `<div class="aspect-video overflow-hidden"><img src="${esc(v.image)}" alt="${esc(v.title)}" class="w-full h-full object-cover hover:scale-105 transition duration-500" /></div>` : `<div class="aspect-video flex items-center justify-center" style="background: linear-gradient(135deg, ${primary}22, ${accent}22);"><span class="material-symbols-outlined text-6xl text-primary opacity-40">directions_car</span></div>`}
-          ${v.year || v.price ? `<div class="absolute top-3 right-3 glass px-3 py-1.5 rounded-full text-xs font-bold">${v.year ? esc(v.year) : ""}${v.year && v.price ? " · " : ""}${v.price ? esc(v.price) : ""}</div>` : ""}
+        <div class="bg-white rounded-2xl overflow-hidden hover-lift shadow-lg border border-neutral-100 fade-up fade-up-delay-${Math.min(i % 4, 3)} relative group">
+          <div class="aspect-[4/3] overflow-hidden bg-neutral-100">
+            <img src="${esc(v.image!)}" alt="${esc(v.title)}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" loading="lazy" />
+          </div>
+          ${v.price ? `<div class="absolute top-3 right-3 bg-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md" style="color: ${primary}">${esc(v.price)}</div>` : ""}
           <div class="p-5">
-            <h3 class="font-serif text-lg leading-tight mb-3 line-clamp-2">${esc(v.title)}</h3>
+            <h3 class="font-serif text-lg leading-tight mb-3 line-clamp-2 min-h-[3rem]">${esc(v.title)}</h3>
             <div class="flex flex-wrap gap-2 mb-4 text-xs">
+              ${v.year ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">event</span>${esc(v.year)}</span>` : ""}
               ${v.km ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">speed</span>${esc(v.km)}</span>` : ""}
               ${v.fuel ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">local_gas_station</span>${esc(v.fuel)}</span>` : ""}
-              ${v.year && !v.price ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">event</span>${esc(v.year)}</span>` : ""}
             </div>
-            <button type="button" onclick="openKlyoraModal('essai', ${JSON.stringify(v.title).replace(/"/g, "&quot;")})" class="w-full bg-primary text-white py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm" style="box-shadow: 0 4px 14px ${primary}40">
-              <span class="material-symbols-outlined text-base">car_rental</span>Je réserve un essai
-            </button>
+            <div class="flex gap-2">
+              <button type="button" onclick="openKlyoraModal('essai', ${JSON.stringify(v.title).replace(/"/g, "&quot;")})" class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm" style="box-shadow: 0 4px 14px ${primary}40">
+                <span class="material-symbols-outlined text-base">car_rental</span>Essai
+              </button>
+              ${v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener" class="bg-neutral-100 text-neutral-700 px-3 py-2.5 rounded-xl font-bold hover:bg-neutral-200 transition flex items-center justify-center" title="Voir la fiche"><span class="material-symbols-outlined text-base">open_in_new</span></a>` : ""}
+            </div>
           </div>
         </div>`).join("")}
     </div>
-    ${detectedVehicles.length === 0 ? `<div class="text-center mt-12"><button type="button" onclick="openKlyoraModal('brochure')" class="bg-white border-2 border-primary text-primary px-8 py-3 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">download</span>Recevoir le catalogue complet</button></div>` : ""}
+    <div class="text-center mt-12">
+      <button type="button" onclick="openKlyoraModal('brochure')" class="bg-white border-2 border-primary text-primary px-8 py-3 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2 hover-lift">
+        <span class="material-symbols-outlined">download</span>Recevoir le catalogue complet
+      </button>
+    </div>
   </div>
 </section>` : ""}
 
-${galleryImages.length >= 3 ? `
-<!-- GALERIE photos avec fond cream -->
+${isGarage && vehiclesToShow.length === 0 ? `
+<!-- Garage SANS véhicules détectés : CTA fort pour stimuler l'ajout du catalogue -->
+<section id="vehicules" class="py-24 bg-tint-medium relative overflow-hidden">
+  <div class="float-deco-1" style="top: 20%; right: -150px;"></div>
+  <div class="max-w-3xl mx-auto px-6 relative z-10 text-center">
+    <span class="material-symbols-outlined text-6xl text-primary opacity-40 mb-4 block">directions_car</span>
+    <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Votre catalogue, en ligne</span>
+    <h2 class="font-serif text-4xl lg:text-5xl mb-6">Vos véhicules <span class="gradient-text">vendus en ligne</span></h2>
+    <p class="text-lg text-neutral-700 leading-relaxed mb-8">
+      Ce site est prêt à recevoir <strong>tout votre catalogue de véhicules</strong> : photos, prix, kilométrage, fiches techniques. Les visiteurs réservent leur essai en 1 clic, vous recevez la demande directement par SMS et email.
+    </p>
+    <button type="button" onclick="openKlyoraModal('brochure')" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55">
+      <span class="material-symbols-outlined">storefront</span>Mettre mon catalogue en ligne
+    </button>
+  </div>
+</section>` : ""}
+
+${galleryImages.length >= 3 && !isGarage ? `
+<!-- GALERIE photos avec fond cream (skip garages : leurs images sont génériques) -->
 <section class="py-24 bg-tint-cream">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-12">
