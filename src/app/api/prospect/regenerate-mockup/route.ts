@@ -12,6 +12,7 @@ import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentis
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
 import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
+import { tryGenerateStitchPixel, detectStitchPixelMetier } from "@/lib/mockup-stitch-pixel-dispatcher";
 
 function detectMetierFullKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -528,6 +529,23 @@ export async function POST(req: NextRequest) {
       // boulangerie, menuisier, fleuriste, coiffeur, auto-école, épicerie,
       // couvreur, vétérinaire). Lib paramétrée avec fixes nav/bandeau/horaires.
       // ══════════════════════════════════════════
+      // ═══ PIXEL-PIXEL Stitch dispatcher (priorité ABSOLUE — 12 métiers) ═══
+      const _pixelKey = detectStitchPixelMetier({ business_type: p.business_type, name: p.name, slug: p.slug });
+      const _pixelResult = tryGenerateStitchPixel(_pixelKey, {
+        id: p.id, slug: p.slug, name: p.name,
+        city: p.city || null, address: p.address || null,
+        phone: p.phone || null, email: p.email || null,
+        hours: (p as { hours?: string }).hours || null,
+        google_rating: (p as { google_rating?: number }).google_rating || null,
+        google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+        reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+      });
+      if (_pixelResult && _pixelResult.html.length > 5000) {
+        await supabase.from("prospects").update({ mockup_html: _pixelResult.html, updated_at: new Date().toISOString() }).eq("id", p.id);
+        results.push({ slug: p.slug, name: p.name, status: _pixelResult.templateUsed + "_ok", chars: _pixelResult.html.length });
+        continue;
+      }
+
       const metierFullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
       // PIXEL-PIXEL Stitch boulangerie/patisserie (priorité absolue)
       if (metierFullKey === "boulangerie") {

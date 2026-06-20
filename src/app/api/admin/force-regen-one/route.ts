@@ -16,6 +16,7 @@ import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentis
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
 import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
+import { tryGenerateStitchPixel, detectStitchPixelMetier } from "@/lib/mockup-stitch-pixel-dispatcher";
 
 function detectMetierKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -66,6 +67,24 @@ export async function POST(req: NextRequest) {
   let html: string | null = null;
   let templateUsed = "none";
 
+  // ═══ PIXEL-PIXEL Stitch dispatcher (priorité ABSOLUE — 12 métiers) ═══
+  const pixelKey = detectStitchPixelMetier({ business_type: p.business_type, name: p.name, slug: p.slug });
+  const pixelResult = tryGenerateStitchPixel(pixelKey, {
+    id: p.id, slug: p.slug, name: p.name,
+    city: p.city || null, address: p.address || null,
+    phone: p.phone || null, email: p.email || null,
+    hours: (p as { hours?: string }).hours || null,
+    google_rating: (p as { google_rating?: number }).google_rating || null,
+    google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+    reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+  });
+  if (pixelResult) {
+    html = pixelResult.html;
+    templateUsed = pixelResult.templateUsed;
+  }
+
+  // Légacy fallback (si pixel dispatcher n'a pas matché)
+  if (!html) {
   // Électricien priority (pixel-pixel Stitch)
   const looksLikeElectricien = p.business_type === "electricien" || /\b(electric|électrici|électrique)/i.test(p.name || "") || /\b(electric|électrici|électrique)/i.test(p.slug || "");
   if (looksLikeElectricien) {
@@ -145,6 +164,7 @@ export async function POST(req: NextRequest) {
   }
   }
   }
+  } // end legacy fallback
 
   if (!html || html.length < 5000) {
     return NextResponse.json({

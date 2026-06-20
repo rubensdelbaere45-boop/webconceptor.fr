@@ -18,6 +18,7 @@ import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig, METIER_CONFIGS } from "@/lib/mockup-stitch-engine";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
 import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
+import { tryGenerateStitchPixel, detectStitchPixelMetier } from "@/lib/mockup-stitch-pixel-dispatcher";
 import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
@@ -78,6 +79,34 @@ export async function POST(req: NextRequest) {
   const samplesByMetier: Record<string, { slug: string; name: string }> = {};
 
   for (const p of list) {
+    // ═══ PIXEL-PIXEL Stitch dispatcher (priorité ABSOLUE — 12 métiers) ═══
+    const _pixelKey = detectStitchPixelMetier({ business_type: p.business_type, name: p.name, slug: p.slug });
+    const _pixelResult = tryGenerateStitchPixel(_pixelKey, {
+      id: p.id, slug: p.slug, name: p.name,
+      city: p.city || null, address: p.address || null,
+      phone: p.phone || null, email: p.email || null,
+      hours: (p as { hours?: string }).hours || null,
+      google_rating: (p as { google_rating?: number }).google_rating || null,
+      google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+      reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+    });
+    if (_pixelResult) {
+      if (metierFilter && _pixelKey !== metierFilter) { skipped++; continue; }
+      try {
+        if (_pixelResult.html.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: _pixelResult.html, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) {
+            updated++;
+            counts[_pixelResult.templateUsed] = (counts[_pixelResult.templateUsed] || 0) + 1;
+            if (_pixelKey && !samplesByMetier[_pixelKey]) samplesByMetier[_pixelKey] = { slug: p.slug, name: p.name };
+            continue;
+          }
+        }
+        errors++;
+      } catch { errors++; }
+      continue;
+    }
+
     // PRIORITÉ 0a : électricien -> template dédié pixel-pixel
     const looksLikeElectricien = p.business_type === "electricien" || /\b(electric|électrici|électrique)/i.test(p.name || "") || /\b(electric|électrici|électrique)/i.test(p.slug || "");
     if (looksLikeElectricien) {
