@@ -31,6 +31,32 @@ export type WebsiteDna = {
   scrapedAt: string;
   sourceUrl: string;
   error?: string;
+  // === V2 : extraction profonde pour reproduire la richesse du vrai site ===
+  /** Toutes les images (jusqu'à 30) avec leurs URLs absolues. */
+  allImages?: string[];
+  /** Tous les headings H1/H2/H3 (jusqu'à 30) — pas juste 8. */
+  allHeadings?: string[];
+  /** Liste détectée de services/produits (cards, listes, repeated patterns). */
+  detectedServices?: Array<{ title: string; desc?: string; image?: string }>;
+  /** Liens internes détectés (sitemap) avec leur texte + URL. */
+  internalLinks?: Array<{ text: string; url: string }>;
+  /** Texte hero (h1 principal + paragraphe d'intro). */
+  heroTitle?: string;
+  heroSubtitle?: string;
+  /** "About / Qui sommes-nous" text si détecté. */
+  aboutText?: string;
+  /** Téléphones additionnels trouvés sur le site (formats français). */
+  detectedPhones?: string[];
+  /** Adresses additionnelles (rue, code postal). */
+  detectedAddresses?: string[];
+  /** Email contact trouvé. */
+  detectedEmails?: string[];
+  /** Réseaux sociaux (Facebook, Instagram, LinkedIn, X). */
+  socialLinks?: Array<{ network: string; url: string }>;
+  /** Indicateur : le site a-t-il un blog/actualités ? */
+  hasBlog?: boolean;
+  /** Pages atteintes (au-delà de la home) — sample 3-5 URLs. */
+  scrapedPages?: number;
 };
 
 /** Normalise une couleur en hex 6-char minuscule. */
@@ -230,6 +256,122 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
       if (t && t.length < 40 && navLinks.length < 10 && !navLinks.includes(t)) navLinks.push(t);
     });
 
+    // === V2 : extraction profonde ===
+
+    // Toutes les images (résolues en absolu, max 30)
+    const allImages: string[] = [];
+    $("img").each((_, el) => {
+      const src = $(el).attr("src") || $(el).attr("data-src") || "";
+      if (!src || /favicon|sprite|spacer|pixel|tracking/i.test(src)) return;
+      const abs = absoluteUrl(src, websiteUrl);
+      if (abs && !allImages.includes(abs) && allImages.length < 30) allImages.push(abs);
+    });
+
+    // Tous les headings (max 30, > 4 chars, < 120 chars)
+    const allHeadings: string[] = [];
+    $("h1, h2, h3").each((_, el) => {
+      const t = $(el).text().trim().replace(/\s+/g, " ");
+      if (t.length >= 4 && t.length <= 120 && !allHeadings.includes(t) && allHeadings.length < 30) {
+        allHeadings.push(t);
+      }
+    });
+
+    // Hero title + subtitle (h1 principal + 1er <p> non vide après)
+    let heroTitle: string | undefined;
+    let heroSubtitle: string | undefined;
+    const firstH1 = $("h1").first();
+    if (firstH1.length) {
+      const t = firstH1.text().trim().replace(/\s+/g, " ");
+      if (t && t.length <= 120) heroTitle = t;
+      const nextP = firstH1.nextAll("p").first();
+      if (nextP.length) {
+        const pt = nextP.text().trim().replace(/\s+/g, " ");
+        if (pt && pt.length >= 20 && pt.length <= 300) heroSubtitle = pt;
+      }
+    }
+
+    // Services détectés : patterns répétés (cards avec h3 + p, ou liste de divs avec image)
+    const detectedServices: Array<{ title: string; desc?: string; image?: string }> = [];
+    $("section, .services, .features, .card, [class*='service'], [class*='product']").each((_, sec) => {
+      $(sec).find("h2, h3, h4").each((_, h) => {
+        if (detectedServices.length >= 12) return false;
+        const title = $(h).text().trim().replace(/\s+/g, " ");
+        if (title.length < 4 || title.length > 80) return;
+        if (detectedServices.some(s => s.title === title)) return;
+        const descEl = $(h).nextAll("p").first();
+        const desc = descEl.length ? descEl.text().trim().replace(/\s+/g, " ").slice(0, 200) : undefined;
+        const imgEl = $(h).parent().find("img").first();
+        const imgSrc = imgEl.attr("src");
+        const img = imgSrc ? absoluteUrl(imgSrc, websiteUrl) : undefined;
+        detectedServices.push({ title, desc, image: img || undefined });
+      });
+    });
+
+    // Liens internes (sitemap) — uniques par URL
+    const internalLinks: Array<{ text: string; url: string }> = [];
+    const baseDomain = (() => { try { return new URL(websiteUrl).hostname; } catch { return null; } })();
+    $("a[href]").each((_, el) => {
+      if (internalLinks.length >= 30) return false;
+      const href = $(el).attr("href") || "";
+      const text = $(el).text().trim().replace(/\s+/g, " ");
+      if (!text || text.length < 2 || text.length > 60) return;
+      const abs = absoluteUrl(href, websiteUrl);
+      if (!abs) return;
+      try {
+        const u = new URL(abs);
+        if (baseDomain && u.hostname === baseDomain && !internalLinks.some(l => l.url === abs)) {
+          internalLinks.push({ text, url: abs });
+        }
+      } catch { /* ignore */ }
+    });
+
+    // About text : 1er paragraphe long dans une section "qui sommes-nous" ou "à propos"
+    let aboutText: string | undefined;
+    $("section, div").each((_, el) => {
+      if (aboutText) return false;
+      const txt = ($(el).find("h1, h2, h3").first().text() || "").toLowerCase();
+      if (/qui sommes|à propos|about|notre histoire|notre groupe|notre entreprise/.test(txt)) {
+        const p = $(el).find("p").first().text().trim().replace(/\s+/g, " ");
+        if (p.length > 60) aboutText = p.slice(0, 500);
+      }
+    });
+
+    // Téléphones FR détectés (au format 0X XX XX XX XX ou +33...)
+    const phoneRegex = /\b(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}\b/g;
+    const phoneMatches = (html.match(phoneRegex) || []).map(p => p.replace(/\s+/g, " ").trim());
+    const detectedPhones = Array.from(new Set(phoneMatches)).slice(0, 5);
+
+    // Adresses FR détectées (rue + code postal)
+    const addressRegex = /\d+[^,\n]{3,50}\b\d{5}\s+[A-ZÉÈ][a-zé-]+/g;
+    const addressMatches = (html.match(addressRegex) || []).map(a => a.trim().replace(/\s+/g, " "));
+    const detectedAddresses = Array.from(new Set(addressMatches)).slice(0, 5);
+
+    // Emails
+    const emailRegex = /[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const emailMatches = (html.match(emailRegex) || []).filter(e => !/\.(png|jpg|svg|gif)$/i.test(e));
+    const detectedEmails = Array.from(new Set(emailMatches)).slice(0, 3);
+
+    // Réseaux sociaux
+    const socialLinks: Array<{ network: string; url: string }> = [];
+    const socialPatterns: Array<{ network: string; re: RegExp }> = [
+      { network: "facebook", re: /facebook\.com\/[^\s"'<>]+/i },
+      { network: "instagram", re: /instagram\.com\/[^\s"'<>]+/i },
+      { network: "linkedin", re: /linkedin\.com\/[^\s"'<>]+/i },
+      { network: "x", re: /(?:twitter|x)\.com\/[^\s"'<>]+/i },
+      { network: "youtube", re: /youtube\.com\/[^\s"'<>]+/i },
+      { network: "tiktok", re: /tiktok\.com\/[^\s"'<>]+/i },
+    ];
+    for (const { network, re } of socialPatterns) {
+      const m = html.match(re);
+      if (m && !socialLinks.some(s => s.network === network)) {
+        const url = "https://" + m[0].replace(/^https?:\/\//, "");
+        socialLinks.push({ network, url });
+      }
+    }
+
+    // Blog/actualités détecté ?
+    const hasBlog = internalLinks.some(l => /blog|actualit|news|article/i.test(l.url + " " + l.text));
+
     return {
       ...baseDna,
       primaryColor,
@@ -241,6 +383,19 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
       keywords,
       sectionTitles,
       navLinks,
+      allImages,
+      allHeadings,
+      detectedServices,
+      internalLinks,
+      heroTitle,
+      heroSubtitle,
+      aboutText,
+      detectedPhones,
+      detectedAddresses,
+      detectedEmails,
+      socialLinks,
+      hasBlog,
+      scrapedPages: 1,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";
