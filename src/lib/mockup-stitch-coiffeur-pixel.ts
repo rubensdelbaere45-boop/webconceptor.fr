@@ -36,7 +36,7 @@ export function generateStitchCoiffeurPixelMockupHtml(p: CoiffeurPixelProspect):
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
-  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
+  const hoursInline = renderStitchHoursInline(p.hours, "${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>
@@ -360,7 +360,7 @@ export function generateStitchCoiffeurPixelMockupHtml(p: CoiffeurPixelProspect):
 <span class="material-symbols-outlined text-primary mt-1">schedule</span>
 <div>
 <h4 class="font-label-lg text-label-lg text-primary uppercase tracking-widest mb-1">Horaires</h4>
-<p class="font-body-md text-body-md text-on-surface-variant">\${hoursInline}</p>
+<p class="font-body-md text-body-md text-on-surface-variant">${hoursInline}</p>
 </div>
 </div>
 <div class="flex items-start gap-4">

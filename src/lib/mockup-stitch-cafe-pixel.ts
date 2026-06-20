@@ -36,7 +36,7 @@ export function generateStitchCafePixelMockupHtml(p: CafePixelProspect): string 
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
-  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
+  const hoursInline = renderStitchHoursInline(p.hours, "${hoursInline}");
   const testimonialsHtml = renderStitchTestimonialsBoulangerieStyle(p.reviews || null, [
     { text: "Le meilleur café du quartier, ambiance cosy et grains torréfiés sur place. Une vraie pépite.", author: "Sophie M., Journaliste" },
     { text: "Un endroit unique pour télétravailler. Wi-Fi rapide, prises partout, et le brunch est à tomber.", author: "Thomas L., Développeur" },
@@ -293,7 +293,7 @@ export function generateStitchCafePixelMockupHtml(p: CafePixelProspect): string 
 <span class="material-symbols-outlined text-secondary">schedule</span>
 <div>
 <p class="font-label-lg uppercase mb-2">Horaires</p>
-<p class="font-body text-xl text-on-surface-variant">\${hoursInline}</p>
+<p class="font-body text-xl text-on-surface-variant">${hoursInline}</p>
 </div>
 </div>
 <div class="flex items-start gap-6">

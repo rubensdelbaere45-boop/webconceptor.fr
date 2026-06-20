@@ -36,7 +36,7 @@ export function generateStitchOsteoPixelMockupHtml(p: OsteoPixelProspect): strin
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
-  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}<br/>Dimanche : Fermé");
+  const hoursInline = renderStitchHoursInline(p.hours, "${hoursInline}<br/>Dimanche : Fermé");
   return `<!DOCTYPE html>
 
 <html class="light" lang="fr"><head>

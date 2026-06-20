@@ -36,7 +36,7 @@ export function generateStitchVeterinairePixelMockupHtml(p: VeterinairePixelPros
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
-  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}<br/>Urgences 24/7");
+  const hoursInline = renderStitchHoursInline(p.hours, "${hoursInline}<br/>Urgences 24/7");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>

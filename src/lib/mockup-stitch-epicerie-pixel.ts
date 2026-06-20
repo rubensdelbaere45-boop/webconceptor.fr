@@ -36,7 +36,7 @@ export function generateStitchEpiceriePixelMockupHtml(p: EpiceriePixelProspect):
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
-  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
+  const hoursInline = renderStitchHoursInline(p.hours, "${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>
@@ -323,7 +323,7 @@ export function generateStitchEpiceriePixelMockupHtml(p: EpiceriePixelProspect):
 <span class="material-symbols-outlined text-surface-tint mt-1" data-icon="schedule">schedule</span>
 <div>
 <p class="font-label-lg text-label-lg text-primary">Horaires</p>
-<p class="font-body-md text-body-md text-on-surface-variant">\${hoursInline}</p>
+<p class="font-body-md text-body-md text-on-surface-variant">${hoursInline}</p>
 </div>
 </li>
 </ul>
