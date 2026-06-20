@@ -15,6 +15,7 @@ import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombi
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
 
 function detectMetierKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -108,6 +109,19 @@ export async function POST(req: NextRequest) {
   } else {
     // 12 autres métiers : lib paramétrée (mêmes 3 fixes nav/bandeau/horaires)
     const metierKey = detectMetierKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+    // PIXEL-PIXEL Stitch boulangerie/patisserie (priorité ABSOLUE sur la factory)
+    if (metierKey === "boulangerie") {
+      html = generateStitchBoulangeriePixelMockupHtml({
+        id: p.id, slug: p.slug, name: p.name,
+        city: p.city || null, address: p.address || null,
+        phone: p.phone || null, email: p.email || null,
+        hours: (p as { hours?: string }).hours || null,
+        google_rating: (p as { google_rating?: number }).google_rating || null,
+        google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+        reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+      });
+      templateUsed = "boulangerie-pixel-stitch";
+    } else
     if (metierKey && isMetierSupported(metierKey)) {
       html = generateStitchMetierFullMockupHtml({
         id: p.id, slug: p.slug, name: p.name,

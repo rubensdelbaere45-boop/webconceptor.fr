@@ -17,6 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
 import { generateStitchMetierMockupHtml, findMetierConfig, METIER_CONFIGS } from "@/lib/mockup-stitch-engine";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
 import { generateStitchPlombierFullMockupHtml } from "@/lib/mockup-stitch-plombier-full";
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electricien-full";
@@ -137,6 +138,29 @@ export async function POST(req: NextRequest) {
         if (html && html.length > 5000) {
           const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
           if (!upErr) { updated++; counts["full:plombier"] = (counts["full:plombier"] || 0) + 1; if (!samplesByMetier["plombier"]) samplesByMetier["plombier"] = { slug: p.slug, name: p.name }; continue; }
+        }
+        errors++;
+      } catch { errors++; }
+      continue;
+    }
+
+    // PRIORITÉ 0d : boulangerie/patisserie -> template PIXEL-PIXEL Stitch
+    const _fullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+    if (_fullKey === "boulangerie") {
+      if (metierFilter && metierFilter !== "boulangerie") { skipped++; continue; }
+      try {
+        const html = generateStitchBoulangeriePixelMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+        });
+        if (html && html.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) { updated++; counts["pixel:boulangerie"] = (counts["pixel:boulangerie"] || 0) + 1; if (!samplesByMetier["boulangerie"]) samplesByMetier["boulangerie"] = { slug: p.slug, name: p.name }; continue; }
         }
         errors++;
       } catch { errors++; }

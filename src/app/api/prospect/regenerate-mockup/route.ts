@@ -11,6 +11,7 @@ import { generateStitchElectricienMockupHtml } from "@/lib/mockup-stitch-electri
 import { generateStitchDentisteFullMockupHtml } from "@/lib/mockup-stitch-dentiste-full";
 import { generateStitchMetierMockupHtml, findMetierConfig } from "@/lib/mockup-stitch-engine";
 import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/mockup-stitch-metiers-all";
+import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
 
 function detectMetierFullKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -528,6 +529,27 @@ export async function POST(req: NextRequest) {
       // couvreur, vétérinaire). Lib paramétrée avec fixes nav/bandeau/horaires.
       // ══════════════════════════════════════════
       const metierFullKey = detectMetierFullKey({ business_type: p.business_type, name: p.name, slug: p.slug });
+      // PIXEL-PIXEL Stitch boulangerie/patisserie (priorité absolue)
+      if (metierFullKey === "boulangerie") {
+        try {
+          const pixelHtml = generateStitchBoulangeriePixelMockupHtml({
+            id: p.id, slug: p.slug, name: p.name,
+            city: p.city || null, address: p.address || null,
+            phone: p.phone || null, email: p.email || null,
+            hours: (p as { hours?: string }).hours || null,
+            google_rating: (p as { google_rating?: number }).google_rating || null,
+            google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+            reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          });
+          if (pixelHtml && pixelHtml.length > 5000) {
+            await supabase.from("prospects").update({ mockup_html: pixelHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+            results.push({ slug: p.slug, name: p.name, status: "boulangerie_pixel_stitch_ok", chars: pixelHtml.length });
+            continue;
+          }
+        } catch (pixErr) {
+          console.warn(`[regenerate] boulangerie pixel failed for ${p.slug}:`, pixErr);
+        }
+      }
       if (metierFullKey && isMetierSupported(metierFullKey)) {
         try {
           const metierFullHtml = generateStitchMetierFullMockupHtml({
