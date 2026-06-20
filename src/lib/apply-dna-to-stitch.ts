@@ -13,23 +13,33 @@
  */
 import type { WebsiteDna } from "./scrape-prospect-site";
 
-/** Couleur primaire de chaque template Stitch (à remplacer). */
+/**
+ * Couleur "marque" de chaque template Stitch (réellement utilisée dans le
+ * HTML rendu via classes Tailwind hardcodées type `bg-[#xxx]`).
+ *
+ * Pour les templates noir/blanc (peu/pas de couleur marque), on garde la
+ * valeur d'origine mais le swap aura peu d'effet visuel — c'est OK, le
+ * design Stitch est censé rester pixel-pixel.
+ *
+ * Valeurs validées par script Python sur les vrais code.html du dossier
+ * stitch_klyora_stitch_templates/ (le 20/06/2026).
+ */
 const TEMPLATE_PRIMARY_COLORS: Record<string, { primary: string; accent: string }> = {
-  "pixel:boulangerie":  { primary: "#c2410c", accent: "#f59e0b" },
-  "pixel:cafe":         { primary: "#78350f", accent: "#fbbf24" }, // suppose-fallback
-  "pixel:osteo":        { primary: "#0e7c3a", accent: "#84cc16" },
-  "pixel:garage":       { primary: "#dc2626", accent: "#1f2937" },
-  "pixel:institut":     { primary: "#be185d", accent: "#fbcfe8" },
-  "pixel:menuisier":    { primary: "#78350f", accent: "#d97706" },
-  "pixel:fleuriste":    { primary: "#9d174d", accent: "#f9a8d4" },
-  "pixel:coiffeur":     { primary: "#1f2937", accent: "#fbbf24" },
-  "pixel:autoecole":    { primary: "#1e40af", accent: "#fbbf24" },
-  "pixel:epicerie":     { primary: "#65a30d", accent: "#fbbf24" },
-  "pixel:couvreur":     { primary: "#1f2937", accent: "#dc2626" },
-  "pixel:veterinaire":  { primary: "#0e7c3a", accent: "#84cc16" },
-  "pixel:plombier":     { primary: "#1e40af", accent: "#0ea5e9" },
-  "pixel:electricien":  { primary: "#ca8a04", accent: "#000000" },
-  "pixel:dentiste":     { primary: "#000000", accent: "#ca8a04" },
+  "pixel:plombier":     { primary: "#1e40af", accent: "#0ea5e9" }, // bleu+cyan (vu 10x+4x)
+  "pixel:electricien":  { primary: "#ca8a04", accent: "#000000" }, // or sur noir
+  "pixel:dentiste":     { primary: "#000000", accent: "#ca8a04" }, // noir sur or
+  "pixel:boulangerie":  { primary: "#c2410c", accent: "#f59e0b" }, // orange brûlé + ambre
+  "pixel:osteo":        { primary: "#000000", accent: "#666666" }, // noir/gris (peu colorée)
+  "pixel:garage":       { primary: "#b91c1c", accent: "#1f2937" }, // rouge sombre + gris
+  "pixel:institut":     { primary: "#7e22ce", accent: "#fae8ff" }, // violet + lavande
+  "pixel:cafe":         { primary: "#78350f", accent: "#fbbf24" }, // brun + ambre
+  "pixel:menuisier":    { primary: "#78350f", accent: "#fde68a" }, // brun bois + jaune doré
+  "pixel:fleuriste":    { primary: "#166534", accent: "#84cc16" }, // vert
+  "pixel:coiffeur":     { primary: "#000000", accent: "#666666" }, // noir/gris
+  "pixel:autoecole":    { primary: "#000000", accent: "#666666" }, // noir/gris
+  "pixel:epicerie":     { primary: "#000000", accent: "#666666" }, // noir/gris
+  "pixel:couvreur":     { primary: "#000000", accent: "#666666" }, // noir/gris
+  "pixel:veterinaire":  { primary: "#0891b2", accent: "#666666" }, // cyan
 };
 
 /** Récupère la luminance d'une couleur hex (0-255). */
