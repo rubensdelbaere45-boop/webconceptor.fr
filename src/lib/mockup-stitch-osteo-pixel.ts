@@ -22,6 +22,7 @@ export type OsteoPixelProspect = {
   google_rating?: number | null;
   google_reviews_count?: number | null;
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
+  site_style_dna?: unknown;
 };
 
 import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";

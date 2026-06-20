@@ -22,8 +22,12 @@ import { generateStitchVeterinairePixelMockupHtml } from "./mockup-stitch-veteri
 import { generateStitchPlombierPixelMockupHtml } from "./mockup-stitch-plombier-pixel";
 import { generateStitchElectricienPixelMockupHtml } from "./mockup-stitch-electricien-pixel";
 import { generateStitchDentistePixelMockupHtml } from "./mockup-stitch-dentiste-pixel";
+import { applyDnaToStitchHtml } from "./apply-dna-to-stitch";
+import type { WebsiteDna } from "./scrape-prospect-site";
 
-export type StitchPixelProspect = BoulangeriePixelProspect;
+export type StitchPixelProspect = BoulangeriePixelProspect & {
+  site_style_dna?: WebsiteDna | null;
+};
 
 export function detectStitchPixelMetier(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -48,24 +52,31 @@ export function detectStitchPixelMetier(p: { business_type?: string | null; name
 export function tryGenerateStitchPixel(metierKey: string | null, p: StitchPixelProspect): { html: string; templateUsed: string } | null {
   if (!metierKey) return null;
   try {
+    let result: { html: string; templateUsed: string } | null = null;
     switch (metierKey) {
-      case "plombier":     return { html: generateStitchPlombierPixelMockupHtml(p),     templateUsed: "pixel:plombier" };
-      case "electricien":  return { html: generateStitchElectricienPixelMockupHtml(p),  templateUsed: "pixel:electricien" };
-      case "dentiste":     return { html: generateStitchDentistePixelMockupHtml(p),     templateUsed: "pixel:dentiste" };
-      case "boulangerie":  return { html: generateStitchBoulangeriePixelMockupHtml(p),  templateUsed: "pixel:boulangerie" };
-      case "osteo":        return { html: generateStitchOsteoPixelMockupHtml(p),        templateUsed: "pixel:osteo" };
-      case "garage":       return { html: generateStitchGaragePixelMockupHtml(p),       templateUsed: "pixel:garage" };
-      case "institut":     return { html: generateStitchInstitutPixelMockupHtml(p),     templateUsed: "pixel:institut" };
-      case "cafe":         return { html: generateStitchCafePixelMockupHtml(p),         templateUsed: "pixel:cafe" };
-      case "menuisier":    return { html: generateStitchMenuisierPixelMockupHtml(p),    templateUsed: "pixel:menuisier" };
-      case "fleuriste":    return { html: generateStitchFleuristePixelMockupHtml(p),    templateUsed: "pixel:fleuriste" };
-      case "coiffeur":     return { html: generateStitchCoiffeurPixelMockupHtml(p),     templateUsed: "pixel:coiffeur" };
-      case "autoecole":    return { html: generateStitchAutoecolePixelMockupHtml(p),    templateUsed: "pixel:autoecole" };
-      case "epicerie":     return { html: generateStitchEpiceriePixelMockupHtml(p),     templateUsed: "pixel:epicerie" };
-      case "couvreur":     return { html: generateStitchCouvreurPixelMockupHtml(p),     templateUsed: "pixel:couvreur" };
-      case "veterinaire":  return { html: generateStitchVeterinairePixelMockupHtml(p),  templateUsed: "pixel:veterinaire" };
+      case "plombier":     result = { html: generateStitchPlombierPixelMockupHtml(p),     templateUsed: "pixel:plombier" }; break;
+      case "electricien":  result = { html: generateStitchElectricienPixelMockupHtml(p),  templateUsed: "pixel:electricien" }; break;
+      case "dentiste":     result = { html: generateStitchDentistePixelMockupHtml(p),     templateUsed: "pixel:dentiste" }; break;
+      case "boulangerie":  result = { html: generateStitchBoulangeriePixelMockupHtml(p),  templateUsed: "pixel:boulangerie" }; break;
+      case "osteo":        result = { html: generateStitchOsteoPixelMockupHtml(p),        templateUsed: "pixel:osteo" }; break;
+      case "garage":       result = { html: generateStitchGaragePixelMockupHtml(p),       templateUsed: "pixel:garage" }; break;
+      case "institut":     result = { html: generateStitchInstitutPixelMockupHtml(p),     templateUsed: "pixel:institut" }; break;
+      case "cafe":         result = { html: generateStitchCafePixelMockupHtml(p),         templateUsed: "pixel:cafe" }; break;
+      case "menuisier":    result = { html: generateStitchMenuisierPixelMockupHtml(p),    templateUsed: "pixel:menuisier" }; break;
+      case "fleuriste":    result = { html: generateStitchFleuristePixelMockupHtml(p),    templateUsed: "pixel:fleuriste" }; break;
+      case "coiffeur":     result = { html: generateStitchCoiffeurPixelMockupHtml(p),     templateUsed: "pixel:coiffeur" }; break;
+      case "autoecole":    result = { html: generateStitchAutoecolePixelMockupHtml(p),    templateUsed: "pixel:autoecole" }; break;
+      case "epicerie":     result = { html: generateStitchEpiceriePixelMockupHtml(p),     templateUsed: "pixel:epicerie" }; break;
+      case "couvreur":     result = { html: generateStitchCouvreurPixelMockupHtml(p),     templateUsed: "pixel:couvreur" }; break;
+      case "veterinaire":  result = { html: generateStitchVeterinairePixelMockupHtml(p),  templateUsed: "pixel:veterinaire" }; break;
       default: return null;
     }
+    // Apply DNA scrapé du site existant (palette + logo) — design Stitch
+    // pixel-pixel intact, juste rebrand aux couleurs du prospect
+    if (result && p.site_style_dna) {
+      result = { html: applyDnaToStitchHtml(result.html, result.templateUsed, p.site_style_dna), templateUsed: result.templateUsed + "+dna" };
+    }
+    return result;
   } catch (err) {
     console.warn(`[stitch-pixel] generator failed for ${metierKey}:`, err);
     return null;

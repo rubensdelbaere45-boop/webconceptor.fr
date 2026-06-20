@@ -1,0 +1,249 @@
+/**
+ * Scrape le site web existant d'un prospect pour extraire son DNA visuel.
+ *
+ * Output (stocké dans prospects.site_style_dna JSONB) :
+ * {
+ *   primaryColor: "#c2410c",          // couleur dominante (hex)
+ *   accentColor: "#f59e0b",           // couleur secondaire
+ *   dominantColors: ["#c2410c", ...], // top 5 couleurs (compat ancien schéma)
+ *   logoUrl: "https://...",           // logo absolu
+ *   heroImageUrl: "https://...",      // image hero candidate
+ *   fontFamilies: ["Roboto", ...],    // polices détectées
+ *   keywords: ["artisanal", ...],     // mots-clés meta description / titre
+ *   sectionTitles: ["Nos services", ...], // h1/h2 trouvés
+ *   navLinks: ["Accueil", "Produits", ...], // nav text
+ *   scrapedAt: "2026-06-20T16:45:00Z",
+ *   sourceUrl: "https://prospect.fr",
+ * }
+ */
+import * as cheerio from "cheerio";
+
+export type WebsiteDna = {
+  primaryColor: string | null;
+  accentColor: string | null;
+  dominantColors: string[];
+  logoUrl: string | null;
+  heroImageUrl: string | null;
+  fontFamilies: string[];
+  keywords: string[];
+  sectionTitles: string[];
+  navLinks: string[];
+  scrapedAt: string;
+  sourceUrl: string;
+  error?: string;
+};
+
+/** Normalise une couleur en hex 6-char minuscule. */
+function normalizeColor(input: string): string | null {
+  const s = input.trim().toLowerCase();
+  // #rgb → #rrggbb
+  if (/^#[0-9a-f]{3}$/.test(s)) {
+    return "#" + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+  }
+  // #rrggbb
+  if (/^#[0-9a-f]{6}$/.test(s)) return s;
+  // rgb(r,g,b)
+  const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (m) {
+    const r = parseInt(m[1], 10), g = parseInt(m[2], 10), b = parseInt(m[3], 10);
+    if ([r, g, b].some(v => v < 0 || v > 255)) return null;
+    return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+  // named colors (subset)
+  const named: Record<string, string> = {
+    red: "#ff0000", green: "#008000", blue: "#0000ff", black: "#000000",
+    white: "#ffffff", gray: "#808080", grey: "#808080", orange: "#ffa500",
+    yellow: "#ffff00", purple: "#800080", pink: "#ffc0cb", brown: "#a52a2a",
+  };
+  return named[s] || null;
+}
+
+/** Filtre couleurs trop claires (proche blanc) ou trop sombres (proche noir). */
+function isInterestingColor(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  // Ignore quasi-blanc (>240) et quasi-noir (<20)
+  if (luminance > 240 || luminance < 20) return false;
+  // Ignore gris saturation < 10 (variations entre R/G/B très faibles)
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max - min < 25) return false;
+  return true;
+}
+
+/** Compte les occurrences de couleurs dans HTML+CSS. */
+function extractDominantColors(html: string, css: string, max = 5): string[] {
+  const allText = html + "\n" + css;
+  const colorMatches: string[] = [];
+  // Hex colors
+  const hexMatches = allText.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+  for (const m of hexMatches) {
+    if (m.length === 4 || m.length === 7) {
+      const norm = normalizeColor(m);
+      if (norm) colorMatches.push(norm);
+    }
+  }
+  // RGB colors
+  const rgbMatches = allText.match(/rgba?\([^)]+\)/g) || [];
+  for (const m of rgbMatches) {
+    const norm = normalizeColor(m);
+    if (norm) colorMatches.push(norm);
+  }
+  // Count + filter
+  const counts: Record<string, number> = {};
+  for (const c of colorMatches) {
+    if (!isInterestingColor(c)) continue;
+    counts[c] = (counts[c] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, max)
+    .map(([c]) => c);
+}
+
+/** Résolve URL relative en absolue. */
+function absoluteUrl(src: string, base: string): string | null {
+  try {
+    return new URL(src, base).toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Scrape le site web du prospect. Retourne le DNA visuel. */
+export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: number } = {}): Promise<WebsiteDna> {
+  const sourceUrl = websiteUrl;
+  const timeoutMs = opts.timeoutMs ?? 15000;
+  const baseDna: WebsiteDna = {
+    primaryColor: null, accentColor: null, dominantColors: [],
+    logoUrl: null, heroImageUrl: null,
+    fontFamilies: [], keywords: [], sectionTitles: [], navLinks: [],
+    scrapedAt: new Date().toISOString(), sourceUrl,
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(websiteUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; KlyoraBot/1.0; +https://klyora.fr)",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return { ...baseDna, error: `HTTP ${res.status}` };
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    // === Polices ===
+    const fontFamilies = new Set<string>();
+    $('link[href*="fonts.googleapis.com"]').each((_, el) => {
+      const href = $(el).attr("href") || "";
+      const m = href.match(/family=([^&:]+)/g) || [];
+      for (const f of m) {
+        const name = decodeURIComponent(f.replace(/^family=/, "")).replace(/\+/g, " ").split(":")[0];
+        if (name) fontFamilies.add(name);
+      }
+    });
+    // CSS inline font-family
+    const inlineCss = $("style").map((_, el) => $(el).html() || "").get().join("\n");
+    const ffMatches = inlineCss.match(/font-family\s*:\s*([^;}]+)/g) || [];
+    for (const m of ffMatches) {
+      const cleaned = m.replace(/font-family\s*:\s*/, "").replace(/[!"'].*$/, "").trim();
+      const firstFont = cleaned.split(",")[0].replace(/['"]/g, "").trim();
+      if (firstFont && firstFont.length < 40 && !/inherit|sans-serif|serif|monospace/i.test(firstFont)) {
+        fontFamilies.add(firstFont);
+      }
+    }
+
+    // === Couleurs ===
+    let primaryColor: string | null = null;
+    // Meta theme-color
+    const metaTheme = $('meta[name="theme-color"]').attr("content");
+    if (metaTheme) primaryColor = normalizeColor(metaTheme);
+    // Si pas, extract dominante
+    const dominantColors = extractDominantColors(html, inlineCss, 5);
+    if (!primaryColor && dominantColors.length) primaryColor = dominantColors[0];
+    const accentColor = dominantColors.length > 1 ? dominantColors[1] : null;
+
+    // === Logo ===
+    let logoUrl: string | null = null;
+    const candidates = [
+      $('link[rel="apple-touch-icon"]').attr("href"),
+      $('link[rel="icon"]').attr("href"),
+      $('header img').first().attr("src"),
+      $('nav img').first().attr("src"),
+      $('a[href="/"] img').first().attr("src"),
+      $('img[alt*="logo" i]').first().attr("src"),
+      $('img[class*="logo" i]').first().attr("src"),
+      $('meta[property="og:image"]').attr("content"),
+    ];
+    for (const c of candidates) {
+      if (!c) continue;
+      const abs = absoluteUrl(c, websiteUrl);
+      if (abs) { logoUrl = abs; break; }
+    }
+
+    // === Hero image ===
+    let heroImageUrl: string | null = null;
+    const heroCandidates = [
+      $('section img').first().attr("src"),
+      $('main img').first().attr("src"),
+      $('img[class*="hero" i]').first().attr("src"),
+      $('img[class*="banner" i]').first().attr("src"),
+      $('meta[property="og:image"]').attr("content"),
+    ];
+    for (const c of heroCandidates) {
+      if (!c) continue;
+      const abs = absoluteUrl(c, websiteUrl);
+      if (abs && abs !== logoUrl) { heroImageUrl = abs; break; }
+    }
+
+    // === Keywords (meta description + title) ===
+    const keywords: string[] = [];
+    const desc = $('meta[name="description"]').attr("content") || "";
+    const title = $("title").text() || "";
+    const text = (title + " " + desc).toLowerCase();
+    // Mots-clés métier intéressants
+    const stopwords = new Set(["le", "la", "les", "de", "du", "des", "à", "en", "un", "une", "et", "ou", "pour", "avec", "sur", "votre", "notre", "vous", "nous", "qui", "que", "dont", "sont", "est", "ce", "ces", "cette", "tout", "tous", "site", "web", "page", "accueil", "professionnel"]);
+    const words = text.match(/[a-zà-ÿ]{4,}/gi) || [];
+    const wordCounts: Record<string, number> = {};
+    for (const w of words) {
+      const lw = w.toLowerCase();
+      if (stopwords.has(lw)) continue;
+      wordCounts[lw] = (wordCounts[lw] || 0) + 1;
+    }
+    keywords.push(...Object.entries(wordCounts).sort(([, a], [, b]) => b - a).slice(0, 8).map(([w]) => w));
+
+    // === Section titles + nav links ===
+    const sectionTitles: string[] = [];
+    $("h1, h2").each((_, el) => {
+      const t = $(el).text().trim();
+      if (t && t.length < 80 && sectionTitles.length < 8) sectionTitles.push(t);
+    });
+    const navLinks: string[] = [];
+    $("nav a, header a").each((_, el) => {
+      const t = $(el).text().trim();
+      if (t && t.length < 40 && navLinks.length < 10 && !navLinks.includes(t)) navLinks.push(t);
+    });
+
+    return {
+      ...baseDna,
+      primaryColor,
+      accentColor,
+      dominantColors,
+      logoUrl,
+      heroImageUrl,
+      fontFamilies: Array.from(fontFamilies).slice(0, 5),
+      keywords,
+      sectionTitles,
+      navLinks,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    return { ...baseDna, error: msg };
+  }
+}

@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   const supabase = db();
   const { data, error } = await supabase
     .from("prospects")
-    .select("id, slug, name, city, address, phone, email, website_photos, business_type, hours, reviews, google_rating, google_reviews_count")
+    .select("id, slug, name, city, address, phone, email, website_photos, business_type, hours, reviews, google_rating, google_reviews_count, site_style_dna")
     .order("id", { ascending: true })
     .range(offset, offset + limit - 1);
 
@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
           google_rating: (p as { google_rating?: number }).google_rating || null,
           google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
           reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          site_style_dna: (p as { site_style_dna?: unknown }).site_style_dna as never || null,
         });
         if (html && html.length > 5000) {
           const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest) {
           google_rating: (p as { google_rating?: number }).google_rating || null,
           google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
           reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          site_style_dna: (p as { site_style_dna?: unknown }).site_style_dna as never || null,
         });
         if (html && html.length > 5000) {
           const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);
@@ -186,6 +188,7 @@ export async function POST(req: NextRequest) {
           google_rating: (p as { google_rating?: number }).google_rating || null,
           google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
           reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          site_style_dna: (p as { site_style_dna?: unknown }).site_style_dna as never || null,
         });
         if (html && html.length > 5000) {
           const { error: upErr } = await supabase.from("prospects").update({ mockup_html: html, updated_at: new Date().toISOString() }).eq("id", p.id);

@@ -539,6 +539,7 @@ export async function POST(req: NextRequest) {
         google_rating: (p as { google_rating?: number }).google_rating || null,
         google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
         reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+        site_style_dna: (p as { site_style_dna?: unknown }).site_style_dna as never || null,
       });
       if (_pixelResult && _pixelResult.html.length > 5000) {
         await supabase.from("prospects").update({ mockup_html: _pixelResult.html, updated_at: new Date().toISOString() }).eq("id", p.id);
