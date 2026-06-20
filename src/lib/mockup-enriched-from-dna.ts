@@ -44,6 +44,7 @@ export function isEnrichedDnaWorthIt(dna: WebsiteDna | null | undefined): boolea
 export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const dna = p.site_style_dna!;
   const name = esc(p.name);
+  const slug = esc(p.slug);
   const city = esc(p.city || "");
   const phoneDisplay = esc(p.phone || dna.detectedPhones?.[0] || "");
   const phoneDigits = (p.phone || dna.detectedPhones?.[0] || "").replace(/[^\d+]/g, "");
