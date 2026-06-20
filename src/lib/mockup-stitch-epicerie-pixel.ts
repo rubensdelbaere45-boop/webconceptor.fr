@@ -24,6 +24,8 @@ export type EpiceriePixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchEpiceriePixelMockupHtml(p: EpiceriePixelProspect):
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>
@@ -320,7 +323,7 @@ export function generateStitchEpiceriePixelMockupHtml(p: EpiceriePixelProspect):
 <span class="material-symbols-outlined text-surface-tint mt-1" data-icon="schedule">schedule</span>
 <div>
 <p class="font-label-lg text-label-lg text-primary">Horaires</p>
-<p class="font-body-md text-body-md text-on-surface-variant">Mardi - Samedi : 9h30 - 19h30<br/>Dimanche : 9h30 - 13h00</p>
+<p class="font-body-md text-body-md text-on-surface-variant">\${hoursInline}</p>
 </div>
 </li>
 </ul>

@@ -24,6 +24,8 @@ export type VeterinairePixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchVeterinairePixelMockupHtml(p: VeterinairePixelPros
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}<br/>Urgences 24/7");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>

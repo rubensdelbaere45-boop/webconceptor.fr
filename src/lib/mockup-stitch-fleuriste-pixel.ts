@@ -24,6 +24,8 @@ export type FleuristePixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchFleuristePixelMockupHtml(p: FleuristePixelProspect
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="light" lang="fr"><head>
@@ -396,7 +399,7 @@ export function generateStitchFleuristePixelMockupHtml(p: FleuristePixelProspect
 <span class="material-symbols-outlined text-white/50">schedule</span>
 <div>
 <h4 class="font-label-lg text-label-lg text-white mb-1">Horaires</h4>
-<p class="font-body-md text-body-md text-sm text-on-tertiary-container/80">Mar - Sam : 9h00 - 19h30<br/>Dim : 9h00 - 13h00</p>
+<p class="font-body-md text-body-md text-sm text-on-tertiary-container/80">\${hoursInline}</p>
 </div>
 </div>
 </div>

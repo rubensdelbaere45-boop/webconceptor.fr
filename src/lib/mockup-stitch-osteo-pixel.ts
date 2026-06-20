@@ -24,6 +24,8 @@ export type OsteoPixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchOsteoPixelMockupHtml(p: OsteoPixelProspect): strin
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}<br/>Dimanche : Fermé");
   return `<!DOCTYPE html>
 
 <html class="light" lang="fr"><head>

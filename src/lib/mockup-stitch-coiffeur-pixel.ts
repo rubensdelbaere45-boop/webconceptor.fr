@@ -24,6 +24,8 @@ export type CoiffeurPixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchCoiffeurPixelMockupHtml(p: CoiffeurPixelProspect):
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="scroll-smooth" lang="fr"><head>
@@ -357,7 +360,7 @@ export function generateStitchCoiffeurPixelMockupHtml(p: CoiffeurPixelProspect):
 <span class="material-symbols-outlined text-primary mt-1">schedule</span>
 <div>
 <h4 class="font-label-lg text-label-lg text-primary uppercase tracking-widest mb-1">Horaires</h4>
-<p class="font-body-md text-body-md text-on-surface-variant">Mardi - Samedi : 9h00 - 19h00<br/>Fermé le Lundi et Dimanche</p>
+<p class="font-body-md text-body-md text-on-surface-variant">\${hoursInline}</p>
 </div>
 </div>
 <div class="flex items-start gap-4">

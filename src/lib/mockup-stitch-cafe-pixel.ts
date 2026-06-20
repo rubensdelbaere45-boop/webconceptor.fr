@@ -24,6 +24,8 @@ export type CafePixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline, renderStitchTestimonialsBoulangerieStyle } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,12 @@ export function generateStitchCafePixelMockupHtml(p: CafePixelProspect): string 
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
+  const testimonialsHtml = renderStitchTestimonialsBoulangerieStyle(p.reviews || null, [
+    { text: "Le meilleur café du quartier, ambiance cosy et grains torréfiés sur place. Une vraie pépite.", author: "Sophie M., Journaliste" },
+    { text: "Un endroit unique pour télétravailler. Wi-Fi rapide, prises partout, et le brunch est à tomber.", author: "Thomas L., Développeur" },
+    { text: "Le service est attentionné, les pâtisseries faites maison sont incroyables. Mon QG du week-end.", author: "Marie K., Habituée" },
+  ], 'bg-primary p-10 rounded-2xl italic text-lg leading-relaxed text-on-primary/90 relative shadow-xl');
   return `<!DOCTYPE html>
 
 <html class="light" lang="fr"><head>
@@ -285,7 +293,7 @@ export function generateStitchCafePixelMockupHtml(p: CafePixelProspect): string 
 <span class="material-symbols-outlined text-secondary">schedule</span>
 <div>
 <p class="font-label-lg uppercase mb-2">Horaires</p>
-<p class="font-body text-xl text-on-surface-variant">Lundi - Samedi : 7h30 - 20h00<br/>Dimanche : Fermé</p>
+<p class="font-body text-xl text-on-surface-variant">\${hoursInline}</p>
 </div>
 </div>
 <div class="flex items-start gap-6">

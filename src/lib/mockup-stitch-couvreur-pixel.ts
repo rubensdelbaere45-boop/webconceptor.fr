@@ -24,6 +24,8 @@ export type CouvreurPixelProspect = {
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
 };
 
+import { renderStitchHoursInline } from "./mockup-stitch-pixel-helpers";
+
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -34,6 +36,7 @@ export function generateStitchCouvreurPixelMockupHtml(p: CouvreurPixelProspect):
   const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
   const addressDisplay = p.address ? esc(p.address) : `12 rue principale, ${city}`;
   const year = new Date().getFullYear();
+  const hoursInline = renderStitchHoursInline(p.hours, "\${hoursInline}");
   return `<!DOCTYPE html>
 
 <html class="light" lang="fr"><head>
@@ -419,7 +422,7 @@ export function generateStitchCouvreurPixelMockupHtml(p: CouvreurPixelProspect):
 <div class="md:col-span-4 space-y-6">
 <h4 class="font-label-lg text-label-sm uppercase tracking-widest text-white/40">Horaires</h4>
 <div class="space-y-2 font-body-md text-on-primary/70">
-<p>Lundi - Vendredi : 8:00 — 18:00</p>
+<p>\${hoursInline}</p>
 <p>Samedi : Sur rendez-vous</p>
 <p class="pt-4 italic">Urgences 24/7 pour les interventions toiture</p>
 </div>
