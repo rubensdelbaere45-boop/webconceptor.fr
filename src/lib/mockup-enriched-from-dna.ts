@@ -251,9 +251,10 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
         <span class="gradient-text">${heroTitle}</span>
       </h1>
       <p class="text-xl text-neutral-700 leading-relaxed mb-8 max-w-xl fade-up fade-up-delay-1">${heroSubtitle}</p>
-      <div class="flex flex-wrap gap-4 fade-up fade-up-delay-2">
-        ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">call</span>Nous appeler</a>` : ""}
-        <a href="#services" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition">Découvrir nos services</a>
+      <div class="flex flex-wrap gap-3 fade-up fade-up-delay-2">
+        <button type="button" onclick="openKlyoraModal('rdv')" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">event</span>Prendre rendez-vous</button>
+        <button type="button" onclick="openKlyoraModal('devis')" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">request_quote</span>Demander un devis</button>
+        ${phoneDigits ? `<a href="tel:${phoneDigits}" class="text-primary px-6 py-4 font-bold hover:underline transition inline-flex items-center gap-2"><span class="material-symbols-outlined">call</span>${phoneDisplay}</a>` : ""}
       </div>
       ${p.google_rating && p.google_reviews_count ? `<div class="mt-8 flex items-center gap-3 fade-up fade-up-delay-3"><div class="flex">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="text-sm text-neutral-700"><strong>${p.google_rating.toFixed(1)}/5</strong> · ${p.google_reviews_count} avis Google</span></div>` : ""}
     </div>
@@ -419,6 +420,161 @@ ${topReviews.length ? `
 
 <!-- Sticky CTA tel (mobile) -->
 ${phoneDigits ? `<a href="tel:${phoneDigits}" class="fixed bottom-6 right-6 z-50 bg-primary text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition md:hidden"><span class="material-symbols-outlined text-2xl">call</span></a>` : ""}
+
+<!-- ═══ MODAL universel (RDV / Devis / Contact / Brochure) ═══ -->
+<div id="klyora-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);" onclick="if(event.target===this)closeKlyoraModal()">
+  <div class="glass max-w-lg w-full rounded-3xl p-8 relative max-h-[90vh] overflow-y-auto" style="background: rgba(255,255,255,0.98);">
+    <button type="button" onclick="closeKlyoraModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div id="klyora-modal-header" class="mb-6">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, ${primary}, ${accent});">
+        <span id="klyora-modal-icon" class="material-symbols-outlined text-white text-3xl">event</span>
+      </div>
+      <h3 id="klyora-modal-title" class="font-serif text-3xl mb-2">Prendre rendez-vous</h3>
+      <p id="klyora-modal-sub" class="text-neutral-600">Remplissez ce formulaire, nous vous recontactons sous 24h.</p>
+    </div>
+    <form id="klyora-modal-form" onsubmit="submitKlyoraModal(event)" class="space-y-4">
+      <input type="hidden" name="type" id="klyora-modal-type" value="rdv" />
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-widest text-neutral-700 mb-1.5">Votre nom <span class="text-red-500">*</span></label>
+        <input type="text" name="nom" required class="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none transition" placeholder="Prénom Nom" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-widest text-neutral-700 mb-1.5">Téléphone <span class="text-red-500">*</span></label>
+        <input type="tel" name="telephone" required pattern="[0-9 +\\-\\.]{8,}" class="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none transition" placeholder="06 XX XX XX XX" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-widest text-neutral-700 mb-1.5">Email</label>
+        <input type="email" name="email" class="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none transition" placeholder="vous@email.fr" />
+      </div>
+      <div id="klyora-modal-date" class="hidden">
+        <label class="block text-xs font-bold uppercase tracking-widest text-neutral-700 mb-1.5">Date souhaitée</label>
+        <input type="date" name="date_souhaitee" class="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none transition" />
+      </div>
+      <div>
+        <label id="klyora-modal-msglabel" class="block text-xs font-bold uppercase tracking-widest text-neutral-700 mb-1.5">Votre message</label>
+        <textarea name="message" rows="3" class="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none transition" placeholder="Précisez votre besoin..."></textarea>
+      </div>
+      <button type="submit" id="klyora-modal-submit" class="w-full bg-primary text-white py-4 rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center gap-2" style="box-shadow: 0 8px 24px ${primary}50;">
+        <span class="material-symbols-outlined">send</span>
+        <span id="klyora-modal-submit-text">Envoyer ma demande</span>
+      </button>
+      <p class="text-xs text-neutral-500 text-center">🔒 Vos informations restent confidentielles. Réponse sous 24h ouvrées.</p>
+    </form>
+    <div id="klyora-modal-success" class="hidden text-center py-8">
+      <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings: 'FILL' 1;">check</span>
+      </div>
+      <h3 class="font-serif text-3xl mb-3">C'est envoyé ! 🎉</h3>
+      <p class="text-neutral-700 mb-6">Merci pour votre message. Nous vous recontactons dans les <strong>24h ouvrées</strong>.</p>
+      <button type="button" onclick="closeKlyoraModal()" class="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var modal = document.getElementById('klyora-modal');
+  var form = document.getElementById('klyora-modal-form');
+  var success = document.getElementById('klyora-modal-success');
+  var icon = document.getElementById('klyora-modal-icon');
+  var title = document.getElementById('klyora-modal-title');
+  var sub = document.getElementById('klyora-modal-sub');
+  var typeInput = document.getElementById('klyora-modal-type');
+  var dateBlock = document.getElementById('klyora-modal-date');
+  var msgLabel = document.getElementById('klyora-modal-msglabel');
+  var submitText = document.getElementById('klyora-modal-submit-text');
+
+  var configs = {
+    rdv:      { icon: 'event',           title: 'Prendre rendez-vous',        sub: 'Choisissez votre créneau, nous confirmons sous 24h.', msglabel: 'Précisez (optionnel)',        submit: 'Demander ce RDV',     date: true },
+    devis:    { icon: 'request_quote',   title: 'Demander un devis gratuit',  sub: 'Décrivez votre besoin, devis sous 24h sans engagement.', msglabel: 'Votre besoin',             submit: 'Recevoir mon devis',  date: false },
+    contact:  { icon: 'mail',            title: 'Nous contacter',             sub: 'Une question ? Nous vous répondons rapidement.',         msglabel: 'Votre message',            submit: 'Envoyer mon message', date: false },
+    brochure: { icon: 'description',     title: 'Recevoir la brochure',       sub: 'Laissez votre email pour recevoir notre catalogue PDF.', msglabel: 'Vos questions (optionnel)', submit: 'Recevoir la brochure',date: false },
+    callback: { icon: 'phone_callback',  title: 'Être rappelé(e)',            sub: 'Quand préférez-vous que l\\'on vous appelle ?',          msglabel: 'Créneaux préférés',        submit: 'Demander un rappel',  date: false },
+  };
+
+  window.openKlyoraModal = function(type) {
+    var cfg = configs[type] || configs.contact;
+    typeInput.value = type;
+    icon.textContent = cfg.icon;
+    title.textContent = cfg.title;
+    sub.textContent = cfg.sub;
+    msgLabel.textContent = cfg.msglabel;
+    submitText.textContent = cfg.submit;
+    dateBlock.classList.toggle('hidden', !cfg.date);
+    form.classList.remove('hidden');
+    success.classList.add('hidden');
+    form.reset();
+    typeInput.value = type; // re-set après reset
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeKlyoraModal = function() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  };
+  window.submitKlyoraModal = function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('klyora-modal-submit');
+    btn.disabled = true;
+    submitText.textContent = 'Envoi...';
+    var formData = new FormData(form);
+    var type = formData.get('type');
+    var data = {};
+    formData.forEach(function(v, k) { if (k !== 'type') data[k] = v; });
+    fetch('/api/prospect/${slug}/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, form: data }),
+    }).then(function(r) { return r.json(); }).then(function(j) {
+      if (j.success) {
+        form.classList.add('hidden');
+        success.classList.remove('hidden');
+      } else {
+        alert('Erreur lors de l\\'envoi : ' + (j.error || 'inconnu') + '. Réessayez ou appelez directement.');
+        btn.disabled = false;
+        submitText.textContent = configs[type].submit;
+      }
+    }).catch(function() {
+      alert('Erreur réseau. Réessayez ou appelez directement.');
+      btn.disabled = false;
+      submitText.textContent = configs[type].submit;
+    });
+  };
+
+  // ESC ferme le modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeKlyoraModal();
+  });
+
+  // Wire tous les liens/boutons qui mentionnent RDV / Devis / Contact / Brochure / Rappel
+  document.querySelectorAll('a, button').forEach(function(el) {
+    var t = (el.textContent || '').trim().toLowerCase();
+    if (!t) return;
+    var match = null;
+    if (/^rdv|rendez[ -]?vous|prendre rdv|prenez rdv|réserver|reserver|booker|réserve|reserve/.test(t)) match = 'rdv';
+    else if (/devis|estimat|tarif|chiffrage/.test(t)) match = 'devis';
+    else if (/brochure|catalogue|plaquette|téléch|telech/.test(t)) match = 'brochure';
+    else if (/rappel|être rappelé|on me rappelle|me rappeler/.test(t)) match = 'callback';
+    else if (/nous contacter|nous écrire|nous ecrire|écrivez-nous|ecrivez-nous|envoyer un message|formulaire de contact|contactez/.test(t)) match = 'contact';
+    if (match) {
+      // Évite de capturer les liens téléphone/mailto (laisse comportement natif)
+      var href = el.getAttribute('href') || '';
+      if (href.startsWith('tel:') || href.startsWith('mailto:')) return;
+      el.removeAttribute('href');
+      el.setAttribute('role', 'button');
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.openKlyoraModal(match);
+      });
+    }
+  });
+})();
+</script>
 
 </body>
 </html>`;

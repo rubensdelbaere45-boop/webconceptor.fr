@@ -55,7 +55,7 @@ function buildCodeEmailHtml(opts: {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${esc(prospectName)} — votre maquette est prête</title>
+<title>${esc(prospectName)} — votre site est prêt</title>
 <!-- Preheader (texte d'aperçu après le sujet dans la boîte de réception) -->
 <style>
   .preheader { display:none !important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; mso-hide:all; }
@@ -63,7 +63,7 @@ function buildCodeEmailHtml(opts: {
 </head>
 <body style="margin:0;padding:0;background:#f5f3ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1310">
 
-<div class="preheader">J'ai préparé un site complet pour ${esc(prospectName)}. Cliquez pour le voir — pas d'inscription, pas d'engagement.</div>
+<div class="preheader">Votre site est prêt, ${esc(prospectName)}. Tous les boutons fonctionnent, prenez RDV ou demandez un devis en 1 clic.</div>
 
 <div style="max-width:620px;margin:0 auto;background:#fdfaf5">
 
@@ -81,18 +81,18 @@ function buildCodeEmailHtml(opts: {
     <!-- Salutation personnelle -->
     <p style="font-size:16px;margin:0 0 16px;line-height:1.6">Bonjour${firstName ? " " + esc(firstName) : ""},</p>
     <p style="font-size:16px;margin:0 0 12px;line-height:1.7">
-      Je suis Tom, fondateur de Klyora Sites. J'ai conçu une maquette de site web sur-mesure pour <strong>${esc(prospectName)}</strong>.
+      Je suis Tom, fondateur de Klyora Sites. J'ai conçu votre site web sur-mesure <strong>${esc(prospectName)}</strong>.
     </p>
     <p style="font-size:16px;margin:0 0 32px;line-height:1.7;color:#4a4340">
-      Elle est prête. Un clic suffit pour la découvrir — pas d'inscription, pas de code à taper, ouverture directe.
+      Il est prêt. Un clic suffit pour le découvrir — pas d'inscription, pas de code à taper, ouverture directe.
     </p>
 
     <!-- CTA HERO : énorme bouton vers la maquette (auto-unlock) -->
     <div style="text-align:center;margin:32px 0 28px">
       <a href="${esc(mockupUrl)}" style="display:inline-block;padding:22px 56px;background:#0066ff;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:17px;letter-spacing:0.02em;box-shadow:0 8px 24px rgba(0,102,255,0.30)">
-        Voir ma maquette →
+        Voir mon site →
       </a>
-      <p style="margin:14px 0 0;font-size:13px;color:#8b7e6e">Conçue rien que pour <strong style="color:#1a1310">${esc(prospectName)}</strong></p>
+      <p style="margin:14px 0 0;font-size:13px;color:#8b7e6e">Conçu rien que pour <strong style="color:#1a1310">${esc(prospectName)}</strong></p>
     </div>
 
     <!-- 3 réassurances clés (chiffres) -->
@@ -121,7 +121,7 @@ function buildCodeEmailHtml(opts: {
         <strong style="color:#1a1310">Klyora Sites</strong> est une entreprise française basée en région parisienne. Nous créons depuis plusieurs années des sites web sur-mesure pour des artisans, commerçants et professionnels indépendants partout en France.
       </p>
       <p style="font-size:15px;line-height:1.7;color:#4a4340;margin:0">
-        Chaque maquette est dessinée à la main pour le métier du destinataire. Vous gardez la liberté totale : si elle ne vous plaît pas, vous nous le dites — pas un centime à débourser.
+        Chaque site est conçu sur-mesure pour le métier du destinataire. Vous gardez la liberté totale : s'il ne vous plaît pas, vous nous le dites — pas un centime à débourser.
       </p>
     </div>
 
@@ -136,14 +136,14 @@ function buildCodeEmailHtml(opts: {
     <!-- CTA secondaire (au cas où on a scrollé) -->
     <div style="text-align:center;margin:36px 0 24px">
       <a href="${esc(mockupUrl)}" style="display:inline-block;padding:18px 44px;background:#1a1310;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:15px;letter-spacing:0.05em">
-        Découvrir ma maquette
+        Découvrir mon site
       </a>
       <p style="margin:12px 0 0;font-size:12px;color:#8b7e6e">Aucune information à saisir — accès direct depuis ce lien</p>
     </div>
 
     <!-- Question / contact direct -->
     <div style="background:#fff;border:1px solid #e8dfd0;padding:20px 24px;margin:32px 0;border-radius:6px">
-      <p style="font-size:14px;color:#1a1310;margin:0 0 10px;font-weight:600">Une question avant de regarder ?</p>
+      <p style="font-size:14px;color:#1a1310;margin:0 0 10px;font-weight:600">Une question avant de cliquer ?</p>
       <p style="font-size:13px;color:#4a4340;margin:0 0 4px">
         📞 <a href="tel:+33635592471" style="color:#0066ff;text-decoration:none;font-weight:600">06 35 59 24 71</a> (Tom, directement)
       </p>
@@ -303,7 +303,7 @@ export async function POST(req: NextRequest) {
         to: [{ email: prospect.email, name: prospect.name }],
         // Subject ciblé conversion : nom du business + curiosité + douceur.
         // Évite "code d'accès" qui sonne froid/technique.
-        subject: `${prospect.name} — votre maquette est prête (regardez avant qu'on l'efface)`,
+        subject: `${prospect.name} — votre site est prêt (regardez avant qu'on l'enlève)`,
         replyTo: { email: "contact@klyora.fr", name: "Tom Bauer" },
         htmlContent: emailHtml,
       }),
