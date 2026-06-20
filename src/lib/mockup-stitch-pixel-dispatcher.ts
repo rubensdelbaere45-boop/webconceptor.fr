@@ -19,11 +19,17 @@ import { generateStitchAutoecolePixelMockupHtml } from "./mockup-stitch-autoecol
 import { generateStitchEpiceriePixelMockupHtml } from "./mockup-stitch-epicerie-pixel";
 import { generateStitchCouvreurPixelMockupHtml } from "./mockup-stitch-couvreur-pixel";
 import { generateStitchVeterinairePixelMockupHtml } from "./mockup-stitch-veterinaire-pixel";
+import { generateStitchPlombierPixelMockupHtml } from "./mockup-stitch-plombier-pixel";
+import { generateStitchElectricienPixelMockupHtml } from "./mockup-stitch-electricien-pixel";
+import { generateStitchDentistePixelMockupHtml } from "./mockup-stitch-dentiste-pixel";
 
 export type StitchPixelProspect = BoulangeriePixelProspect;
 
 export function detectStitchPixelMetier(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
+  if (/\b(electric|électrici|électrique)/.test(haystack)) return "electricien";
+  if (/\b(dentiste|dental|orthodont|cabinet[ -]dentaire)/.test(haystack)) return "dentiste";
+  if (/\bplomb/.test(haystack)) return "plombier";
   if (/\bost[eé]o/.test(haystack)) return "osteo";
   if (/\bgarage|garagi|m[eé]canicien|carrosseri/.test(haystack)) return "garage";
   if (/\binstitut|esth[eé]ti|beaut[eé]/.test(haystack)) return "institut";
@@ -43,6 +49,9 @@ export function tryGenerateStitchPixel(metierKey: string | null, p: StitchPixelP
   if (!metierKey) return null;
   try {
     switch (metierKey) {
+      case "plombier":     return { html: generateStitchPlombierPixelMockupHtml(p),     templateUsed: "pixel:plombier" };
+      case "electricien":  return { html: generateStitchElectricienPixelMockupHtml(p),  templateUsed: "pixel:electricien" };
+      case "dentiste":     return { html: generateStitchDentistePixelMockupHtml(p),     templateUsed: "pixel:dentiste" };
       case "boulangerie":  return { html: generateStitchBoulangeriePixelMockupHtml(p),  templateUsed: "pixel:boulangerie" };
       case "osteo":        return { html: generateStitchOsteoPixelMockupHtml(p),        templateUsed: "pixel:osteo" };
       case "garage":       return { html: generateStitchGaragePixelMockupHtml(p),       templateUsed: "pixel:garage" };
