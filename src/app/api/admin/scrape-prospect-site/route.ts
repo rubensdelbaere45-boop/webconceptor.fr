@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { safeCompare } from "@/lib/security";
-import { scrapeWebsiteDna } from "@/lib/scrape-prospect-site";
+import { scrapeWebsiteDnaDeep as scrapeWebsiteDna } from "@/lib/scrape-prospect-site";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

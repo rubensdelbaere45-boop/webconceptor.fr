@@ -151,6 +151,64 @@ function absoluteUrl(src: string, base: string): string | null {
   }
 }
 
+/**
+ * Scrape une page secondaire (occasions / stock / vehicules) et retourne
+ * les vehicules detectes. Utilise par scrapeWebsiteDna pour aller chercher
+ * les voitures sur les pages dediees du site garage.
+ */
+async function scrapeVehiclesPage(pageUrl: string, baseUrl: string, timeoutMs: number): Promise<NonNullable<WebsiteDna["detectedVehicles"]>> {
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(pageUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; KlyoraBot/1.0)" },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    clearTimeout(t);
+    if (!res.ok) return [];
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const CAR_BRANDS = /\b(Mercedes|BMW|Audi|Volkswagen|VW|Peugeot|Renault|Citro[eë]n|DS|Ford|Opel|Fiat|Toyota|Honda|Nissan|Hyundai|Kia|Mazda|Mitsubishi|Suzuki|Skoda|Seat|Volvo|Mini|Smart|Tesla|Porsche|Jeep|Land Rover|Range Rover|Jaguar|Alfa Romeo|Dacia|Lexus|Cupra|Polestar|MG|XPENG|BYD|Genesis|Subaru|Yamaha|Kawasaki|Ducati|Harley|Honda Moto|Vespa)\b/i;
+    const PRICE_RE = /(\d[\d\s]{2,6})\s*€/;
+    const YEAR_RE = /\b(20[0-2]\d|201\d)\b/;
+    const KM_RE = /(\d[\d\s]{2,6})\s*km/i;
+    const FUEL_RE = /\b(diesel|essence|hybride|[eé]lectrique|gpl)\b/i;
+    const found: NonNullable<WebsiteDna["detectedVehicles"]> = [];
+    $("article, .car, .vehicle, .product, [class*='vehicle'], [class*='car-listing'], [class*='occasion'], .listing-item, .product-item, [class*='card']").each((_, el) => {
+      if (found.length >= 20) return false;
+      const $el = $(el);
+      const textFull = $el.text().replace(/\s+/g, " ").trim();
+      if (textFull.length < 30 || textFull.length > 2000) return;
+      const brand = textFull.match(CAR_BRANDS);
+      if (!brand) return;
+      const price = textFull.match(PRICE_RE);
+      const year = textFull.match(YEAR_RE);
+      const km = textFull.match(KM_RE);
+      const fuel = textFull.match(FUEL_RE);
+      if (!price && !km && !year) return;
+      const heading = $el.find("h1, h2, h3, h4").first().text().trim().replace(/\s+/g, " ");
+      const title = (heading && heading.length < 100 && heading.length > 5)
+        ? heading
+        : `${brand[1]} ${(textFull.match(/\b[A-Z][A-Za-z0-9]+\b/g) || []).slice(0, 2).join(" ")}`.slice(0, 80);
+      const imgSrc = $el.find("img").first().attr("src") || $el.find("img").first().attr("data-src");
+      const image = imgSrc ? absoluteUrl(imgSrc, baseUrl) || undefined : undefined;
+      const linkHref = $el.find("a").first().attr("href");
+      const url = linkHref ? absoluteUrl(linkHref, baseUrl) || undefined : undefined;
+      const v = {
+        title,
+        price: price ? price[1].replace(/\s+/g, " ").trim() + " €" : undefined,
+        year: year ? year[1] : undefined,
+        km: km ? km[1].replace(/\s+/g, " ").trim() + " km" : undefined,
+        fuel: fuel ? fuel[1].charAt(0).toUpperCase() + fuel[1].slice(1).toLowerCase() : undefined,
+        image, url,
+      };
+      if (!found.some(x => x.title === v.title && x.price === v.price)) found.push(v);
+    });
+    return found;
+  } catch { return []; }
+}
+
 /** Scrape le site web du prospect. Retourne le DNA visuel. */
 export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: number } = {}): Promise<WebsiteDna> {
   const sourceUrl = websiteUrl;
@@ -469,3 +527,37 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
     return { ...baseDna, error: msg };
   }
 }
+
+/**
+ * Wrapper qui : scrape la home + identifie les pages "vehicules/occasions/stock"
+ * et les re-scrape pour merger les vehicules.
+ */
+export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs?: number; maxSubPages?: number } = {}): Promise<WebsiteDna> {
+  const timeoutMs = opts.timeoutMs ?? 12000;
+  const maxSubPages = opts.maxSubPages ?? 3;
+  const homeDna = await scrapeWebsiteDna(websiteUrl, { timeoutMs });
+  if (homeDna.error) return homeDna;
+
+  // Identifie les liens internes qui mentionnent occasions/stock/vehicules
+  const vehiclePages = (homeDna.internalLinks || [])
+    .filter(l => /occasion|stock|v[eé]hicule|catalogue|annonce|inventaire|véhicules/i.test(l.text + " " + l.url))
+    .slice(0, maxSubPages);
+
+  const allVehicles: NonNullable<WebsiteDna["detectedVehicles"]> = [...(homeDna.detectedVehicles || [])];
+  let pagesScraped = 1;
+  for (const page of vehiclePages) {
+    const vehicles = await scrapeVehiclesPage(page.url, websiteUrl, timeoutMs);
+    pagesScraped++;
+    for (const v of vehicles) {
+      if (allVehicles.length >= 24) break;
+      if (!allVehicles.some(x => x.title === v.title && x.price === v.price)) allVehicles.push(v);
+    }
+  }
+
+  return {
+    ...homeDna,
+    detectedVehicles: allVehicles,
+    scrapedPages: pagesScraped,
+  };
+}
+

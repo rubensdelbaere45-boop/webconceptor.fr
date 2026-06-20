@@ -80,6 +80,32 @@ export async function POST(req: NextRequest) {
   const samplesByMetier: Record<string, { slug: string; name: string }> = {};
 
   for (const p of list) {
+    // ═══ TEMPLATE ENRICHI (priorité MAX si DNA scrapé profond) ═══
+    const _dnaDeep = (p as { site_style_dna?: unknown }).site_style_dna as never;
+    if (isEnrichedDnaWorthIt(_dnaDeep)) {
+      try {
+        const enrichedHtml = generateEnrichedMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          business_type: p.business_type || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          site_style_dna: _dnaDeep,
+        });
+        if (enrichedHtml && enrichedHtml.length > 5000) {
+          const { error: upErr } = await supabase.from("prospects").update({ mockup_html: enrichedHtml, updated_at: new Date().toISOString() }).eq("id", p.id);
+          if (!upErr) {
+            updated++;
+            counts["enriched-from-dna"] = (counts["enriched-from-dna"] || 0) + 1;
+            continue;
+          }
+        }
+      } catch (err) { console.warn("enriched failed for", p.slug, err); }
+    }
+
     // ═══ PIXEL-PIXEL Stitch dispatcher (priorité ABSOLUE — 12 métiers) ═══
     const _pixelKey = detectStitchPixelMetier({ business_type: p.business_type, name: p.name, slug: p.slug });
     const _pixelResult = tryGenerateStitchPixel(_pixelKey, {
