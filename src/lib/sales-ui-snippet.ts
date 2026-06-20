@@ -304,7 +304,7 @@ body{padding-top:54px !important}
       </div>
       <button class="wc-sx-step1-next" type="button" onclick="wcSxGoStep2()">Continuer →</button>
       <a href="tel:+33635592471" class="wc-sx-call-help" onclick="try{fetch('/api/prospect/modal-opened',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prospect_slug:SLUG,event:'call_click'})}).catch(function(){})}catch(e){}">
-        <span class="wc-sx-call-icon">📞</span>
+        <span class="wc-sx-call-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:-2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.94.37 1.86.72 2.74a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.34-1.29a2 2 0 0 1 2.11-.45c.88.35 1.8.59 2.74.72A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         Une question ? Appelez Tom au <strong>06 35 59 24 71</strong>
       </a>
     </div>
@@ -742,7 +742,7 @@ body{padding-top:54px !important}
       err.textContent = 'Veuillez cliquer sur "Vérifier" pour confirmer la disponibilité du domaine avant de payer.';
       err.classList.add('show');
       var statusEl = document.getElementById('wcsx-domain-status');
-      if (statusEl) { statusEl.className = 'ko'; statusEl.textContent = '⚠ Vérifiez la disponibilité du domaine d\\'abord.'; }
+      if (statusEl) { statusEl.className = 'ko'; statusEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Vérifiez la disponibilité du domaine d\\'abord.'; }
       return;
     }
 
@@ -827,9 +827,10 @@ body{padding-top:54px !important}
         // Show success message
         var successDiv = document.createElement('div');
         successDiv.style.cssText = 'background:#d4edda;border:1px solid #c3e6cb;border-radius:8px;padding:16px;margin-top:12px;color:#155724;font-size:14px;text-align:center;font-family:-apple-system,sans-serif';
+        var checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:6px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
         successDiv.innerHTML = data.sms_sent
-          ? '✅ <strong>Réservation confirmée !</strong><br><small>Le propriétaire vient de recevoir une notification SMS sur son téléphone.</small>'
-          : '✅ <strong>Demande envoyée !</strong><br><small>Le propriétaire a bien été notifié.</small>';
+          ? checkSvg + '<strong>Réservation confirmée !</strong><br><small>Le propriétaire vient de recevoir une notification SMS sur son téléphone.</small>'
+          : checkSvg + '<strong>Demande envoyée !</strong><br><small>Le propriétaire a bien été notifié.</small>';
         form.appendChild(successDiv);
         if (btn) { btn.disabled = false; btn.textContent = 'Réserver'; }
       }).catch(function() {
