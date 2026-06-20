@@ -57,6 +57,20 @@ export type WebsiteDna = {
   hasBlog?: boolean;
   /** Pages atteintes (au-delà de la home) — sample 3-5 URLs. */
   scrapedPages?: number;
+  /**
+   * Véhicules détectés sur le site (uniquement si garage/concession).
+   * Pattern : carte/section avec marque + modèle + année + prix + km
+   * souvent dans une grille "nos occasions" / "véhicules disponibles".
+   */
+  detectedVehicles?: Array<{
+    title: string;       // "Mercedes Classe A 200d AMG Line"
+    price?: string;      // "29 990 €"
+    year?: string;       // "2021"
+    km?: string;         // "45 000 km"
+    fuel?: string;       // "Diesel", "Essence", "Hybride", "Électrique"
+    image?: string;
+    url?: string;        // lien vers la fiche véhicule
+  }>;
 };
 
 /** Normalise une couleur en hex 6-char minuscule. */
@@ -372,6 +386,58 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
     // Blog/actualités détecté ?
     const hasBlog = internalLinks.some(l => /blog|actualit|news|article/i.test(l.url + " " + l.text));
 
+    // === Véhicules d'occasion (garages/concessions) ===
+    // Heuristique : marque + (année 4 chiffres) + (prix €) ou (km)
+    const CAR_BRANDS = /\b(Mercedes|BMW|Audi|Volkswagen|VW|Peugeot|Renault|Citro[eë]n|DS|Ford|Opel|Fiat|Toyota|Honda|Nissan|Hyundai|Kia|Mazda|Mitsubishi|Suzuki|Skoda|Seat|Volvo|Mini|Smart|Tesla|Porsche|Jeep|Land Rover|Range Rover|Jaguar|Alfa Romeo|Dacia|Lexus|Cupra|Polestar|MG|XPENG|BYD|Genesis|Subaru|Yamaha|Kawasaki|Ducati|Harley|Honda Moto|Vespa)\b/i;
+    const PRICE_RE = /(\d[\d\s]{2,6})\s*€/;
+    const YEAR_RE = /\b(20[0-2]\d|201\d)\b/;
+    const KM_RE = /(\d[\d\s]{2,6})\s*km/i;
+    const FUEL_RE = /\b(diesel|essence|hybride|[eé]lectrique|gpl|hybride rechargeable|phev|bev|ev)\b/i;
+
+    const detectedVehicles: NonNullable<WebsiteDna["detectedVehicles"]> = [];
+    // Cherche dans des conteneurs candidats (cards, articles, listings)
+    $("article, .car, .vehicle, .product, .vehicle-card, .car-card, [class*='vehicle'], [class*='car-listing'], [class*='occasion'], .listing-item, .product-item").each((_, el) => {
+      if (detectedVehicles.length >= 12) return false;
+      const $el = $(el);
+      const textFull = $el.text().replace(/\s+/g, " ").trim();
+      if (textFull.length < 30 || textFull.length > 1500) return;
+      const brandMatch = textFull.match(CAR_BRANDS);
+      if (!brandMatch) return;
+      const priceMatch = textFull.match(PRICE_RE);
+      const yearMatch = textFull.match(YEAR_RE);
+      const kmMatch = textFull.match(KM_RE);
+      const fuelMatch = textFull.match(FUEL_RE);
+      // Au minimum : marque + (prix OU km OU année) pour valider
+      if (!priceMatch && !kmMatch && !yearMatch) return;
+      // Title : heading le plus court (h2/h3/h4) ou data attribute
+      const heading = $el.find("h1, h2, h3, h4").first().text().trim().replace(/\s+/g, " ");
+      const title = (heading && heading.length < 100 && heading.length > 5)
+        ? heading
+        : `${brandMatch[1]} ${(textFull.match(/\b[A-Z][A-Za-z0-9]+\b/g) || []).slice(0, 2).join(" ")}`.slice(0, 80);
+      // Image
+      const imgEl = $el.find("img").first();
+      const imgSrc = imgEl.attr("src") || imgEl.attr("data-src");
+      const image = imgSrc ? absoluteUrl(imgSrc, websiteUrl) || undefined : undefined;
+      // URL fiche
+      const linkEl = $el.find("a").first();
+      const linkHref = linkEl.attr("href");
+      const url = linkHref ? absoluteUrl(linkHref, websiteUrl) || undefined : undefined;
+
+      const v = {
+        title,
+        price: priceMatch ? priceMatch[1].replace(/\s+/g, " ").trim() + " €" : undefined,
+        year: yearMatch ? yearMatch[1] : undefined,
+        km: kmMatch ? kmMatch[1].replace(/\s+/g, " ").trim() + " km" : undefined,
+        fuel: fuelMatch ? fuelMatch[1].charAt(0).toUpperCase() + fuelMatch[1].slice(1).toLowerCase() : undefined,
+        image,
+        url,
+      };
+      // Dédup par title + prix
+      if (!detectedVehicles.some(x => x.title === v.title && x.price === v.price)) {
+        detectedVehicles.push(v);
+      }
+    });
+
     return {
       ...baseDna,
       primaryColor,
@@ -396,6 +462,7 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
       socialLinks,
       hasBlog,
       scrapedPages: 1,
+      detectedVehicles,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";

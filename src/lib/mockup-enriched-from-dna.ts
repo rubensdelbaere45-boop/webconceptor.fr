@@ -77,6 +77,19 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   // Photos pour galerie : jusqu'à 6 images
   const galleryImages = (dna.allImages || []).slice(1, 7);
 
+  // Véhicules détectés (uniquement garages/concessions)
+  const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((p.business_type || "") + " " + name);
+  const detectedVehicles = (dna.detectedVehicles || []).slice(0, 8);
+  // Fallback : si garage mais aucune voiture détectée, on affiche 4 placeholders
+  // pour donner l'idée + permettre un lead "Je réserve un essai"
+  const showVehiclesSection = isGarage;
+  const vehiclesToShow: NonNullable<typeof dna.detectedVehicles> = detectedVehicles.length > 0 ? detectedVehicles : (isGarage ? [
+    { title: "Catalogue véhicules disponible", year: undefined, price: undefined, km: undefined },
+    { title: "Demandez la liste complète", year: undefined, price: undefined, km: undefined },
+    { title: "Véhicules neufs & occasion", year: undefined, price: undefined, km: undefined },
+    { title: "Reprise possible de votre véhicule", year: undefined, price: undefined, km: undefined },
+  ] : []);
+
   // Top 3 avis Google
   const topReviews = (p.reviews || []).filter(r => r.text && (r.text || "").length > 30).slice(0, 3);
 
@@ -339,6 +352,38 @@ ${articles.length ? `
   </div>
 </section>` : ""}
 
+${showVehiclesSection && vehiclesToShow.length > 0 ? `
+<!-- VÉHICULES DISPONIBLES (garages/concessions) -->
+<section id="vehicules" class="py-24 bg-tint-medium relative overflow-hidden">
+  <div class="float-deco-1" style="top: 20%; right: -150px;"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="text-center mb-16">
+      <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Nos stocks à ${city || "votre disposition"}</span>
+      <h2 class="font-serif text-4xl lg:text-5xl">Nos véhicules <span class="gradient-text">disponibles</span></h2>
+      ${detectedVehicles.length === 0 ? `<p class="text-neutral-600 mt-4 max-w-xl mx-auto">Catalogue mis à jour quotidiennement. Réservez un essai en ligne, on s'occupe du reste.</p>` : `<p class="text-neutral-600 mt-4">${detectedVehicles.length}+ véhicules en stock — réservez votre essai en 1 clic</p>`}
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-${Math.min(vehiclesToShow.length, 4)} gap-6">
+      ${vehiclesToShow.map((v, i) => `
+        <div class="bg-white rounded-2xl overflow-hidden hover-lift shadow-sm border border-neutral-200 fade-up fade-up-delay-${Math.min(i, 3)} relative">
+          ${v.image ? `<div class="aspect-video overflow-hidden"><img src="${esc(v.image)}" alt="${esc(v.title)}" class="w-full h-full object-cover hover:scale-105 transition duration-500" /></div>` : `<div class="aspect-video flex items-center justify-center" style="background: linear-gradient(135deg, ${primary}22, ${accent}22);"><span class="material-symbols-outlined text-6xl text-primary opacity-40">directions_car</span></div>`}
+          ${v.year || v.price ? `<div class="absolute top-3 right-3 glass px-3 py-1.5 rounded-full text-xs font-bold">${v.year ? esc(v.year) : ""}${v.year && v.price ? " · " : ""}${v.price ? esc(v.price) : ""}</div>` : ""}
+          <div class="p-5">
+            <h3 class="font-serif text-lg leading-tight mb-3 line-clamp-2">${esc(v.title)}</h3>
+            <div class="flex flex-wrap gap-2 mb-4 text-xs">
+              ${v.km ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">speed</span>${esc(v.km)}</span>` : ""}
+              ${v.fuel ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">local_gas_station</span>${esc(v.fuel)}</span>` : ""}
+              ${v.year && !v.price ? `<span class="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-sm">event</span>${esc(v.year)}</span>` : ""}
+            </div>
+            <button type="button" onclick="openKlyoraModal('essai', ${JSON.stringify(v.title).replace(/"/g, "&quot;")})" class="w-full bg-primary text-white py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm" style="box-shadow: 0 4px 14px ${primary}40">
+              <span class="material-symbols-outlined text-base">car_rental</span>Je réserve un essai
+            </button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${detectedVehicles.length === 0 ? `<div class="text-center mt-12"><button type="button" onclick="openKlyoraModal('brochure')" class="bg-white border-2 border-primary text-primary px-8 py-3 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">download</span>Recevoir le catalogue complet</button></div>` : ""}
+  </div>
+</section>` : ""}
+
 ${galleryImages.length >= 3 ? `
 <!-- GALERIE photos avec fond cream -->
 <section class="py-24 bg-tint-cream">
@@ -493,9 +538,10 @@ ${phoneDigits ? `<a href="tel:${phoneDigits}" class="fixed bottom-6 right-6 z-50
     contact:  { icon: 'mail',            title: 'Nous contacter',             sub: 'Une question ? Nous vous répondons rapidement.',         msglabel: 'Votre message',            submit: 'Envoyer mon message', date: false },
     brochure: { icon: 'description',     title: 'Recevoir la brochure',       sub: 'Laissez votre email pour recevoir notre catalogue PDF.', msglabel: 'Vos questions (optionnel)', submit: 'Recevoir la brochure',date: false },
     callback: { icon: 'phone_callback',  title: 'Être rappelé(e)',            sub: 'Quand préférez-vous que l\\'on vous appelle ?',          msglabel: 'Créneaux préférés',        submit: 'Demander un rappel',  date: false },
+    essai:    { icon: 'car_rental',      title: 'Réserver un essai',          sub: 'Réservez un essai gratuit, on s\\'occupe de tout.',      msglabel: 'Précisez vos préférences',  submit: 'Réserver cet essai',  date: true },
   };
 
-  window.openKlyoraModal = function(type) {
+  window.openKlyoraModal = function(type, vehicleTitle) {
     var cfg = configs[type] || configs.contact;
     typeInput.value = type;
     icon.textContent = cfg.icon;
@@ -508,6 +554,12 @@ ${phoneDigits ? `<a href="tel:${phoneDigits}" class="fixed bottom-6 right-6 z-50
     success.classList.add('hidden');
     form.reset();
     typeInput.value = type; // re-set après reset
+    // Pré-remplit le message avec le véhicule choisi (pour 'essai')
+    if (type === 'essai' && vehicleTitle) {
+      var msgField = form.querySelector('textarea[name="message"]');
+      if (msgField) msgField.value = 'Je souhaite essayer : ' + vehicleTitle;
+      title.textContent = 'Réserver un essai — ' + vehicleTitle;
+    }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';

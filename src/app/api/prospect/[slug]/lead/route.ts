@@ -25,10 +25,10 @@ function db() {
   );
 }
 
-type LeadType = "rdv" | "devis" | "contact" | "brochure" | "callback";
+type LeadType = "rdv" | "devis" | "contact" | "brochure" | "callback" | "essai";
 
 function isValidLeadType(s: unknown): s is LeadType {
-  return typeof s === "string" && ["rdv", "devis", "contact", "brochure", "callback"].includes(s);
+  return typeof s === "string" && ["rdv", "devis", "contact", "brochure", "callback", "essai"].includes(s);
 }
 
 async function notifyTelegram(text: string): Promise<void> {
@@ -104,6 +104,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
     contact: "✉️ MESSAGE CONTACT",
     brochure: "📥 TÉLÉCHARGEMENT BROCHURE",
     callback: "📞 DEMANDE DE RAPPEL",
+    essai: "🚗 RÉSERVATION ESSAI VÉHICULE",
   };
   const formLines = Object.entries(cleanForm)
     .map(([k, v]) => `  • <b>${k}</b> : ${v.slice(0, 200)}`)
