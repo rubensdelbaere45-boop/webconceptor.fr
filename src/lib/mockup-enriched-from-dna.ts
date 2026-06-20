@@ -96,7 +96,11 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --primary: ${primary}; --accent: ${accent}; }
-  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fefefe; color: #1a1a1a; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(180deg, #fafaf9 0%, #f4f4f5 100%);
+    color: #1a1a1a;
+  }
   .font-serif { font-family: 'EB Garamond', serif; }
   .text-primary { color: var(--primary); }
   .bg-primary { background: var(--primary); }
@@ -104,43 +108,118 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   .text-accent { color: var(--accent); }
   .bg-accent { background: var(--accent); }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  /* Spotlight effect (21st.dev style) */
-  .spotlight-hero { position: relative; overflow: hidden; }
-  .spotlight-hero::before {
-    content: ''; position: absolute; inset: -50%;
-    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${primary}22 0%, transparent 50%);
-    pointer-events: none; opacity: 0; transition: opacity 0.3s;
+
+  /* Fonds adaptatifs teintés primary (subtle) */
+  .bg-tint-light  { background: linear-gradient(180deg, #ffffff 0%, ${primary}06 100%); }
+  .bg-tint-medium { background: linear-gradient(135deg, #f8f8f7 0%, ${primary}0d 50%, #f8f8f7 100%); }
+  .bg-tint-cream  { background: linear-gradient(180deg, #fafaf9 0%, #f4f4f5 100%); }
+
+  /* Gradient mesh hero (Apple/Stripe style) */
+  .hero-mesh {
+    position: relative;
+    background:
+      radial-gradient(ellipse at top left, ${primary}1a 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, ${accent}26 0%, transparent 50%),
+      radial-gradient(ellipse at center, ${primary}0d 0%, transparent 70%),
+      linear-gradient(180deg, #fafaf9 0%, #f4f4f5 100%);
   }
-  .spotlight-hero:hover::before { opacity: 1; }
-  /* Border beam (aceternity style) */
+  .hero-mesh::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, ${primary}10 1px, transparent 0);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+
+  /* Spotlight effect (21st.dev) */
+  .spotlight-hero { position: relative; overflow: hidden; }
+  .spotlight-hero::after {
+    content: ''; position: absolute; inset: -50%;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${primary}33 0%, transparent 40%);
+    pointer-events: none; opacity: 0; transition: opacity 0.4s;
+  }
+  .spotlight-hero:hover::after { opacity: 1; }
+
+  /* Border beam animé (aceternity) */
   @keyframes border-beam {
     0% { background-position: 0% 0%; }
     100% { background-position: 200% 0%; }
   }
   .border-beam {
-    position: relative;
     background: linear-gradient(90deg, transparent, ${primary}, ${accent}, transparent);
     background-size: 200% 100%;
     animation: border-beam 3s linear infinite;
   }
-  /* Marquee infinite */
+
+  /* Marquee infinite (21st.dev) */
   @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
   .marquee { display: flex; animation: marquee 30s linear infinite; }
   .marquee:hover { animation-play-state: paused; }
-  /* Hover lift */
-  .hover-lift { transition: transform 0.3s, box-shadow 0.3s; }
-  .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px ${primary}33; }
-  /* Gradient text */
+
+  /* Hover lift (Linear/Vercel style) */
+  .hover-lift { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; }
+  .hover-lift:hover { transform: translateY(-6px); box-shadow: 0 24px 48px -12px ${primary}40; }
+
+  /* Glassmorphism (Apple style) */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Gradient text (Linear style) */
   .gradient-text {
     background: linear-gradient(135deg, ${primary}, ${accent});
     -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-fill-color: transparent;
   }
+
+  /* Floating decoration */
+  .float-deco-1 {
+    position: absolute; width: 300px; height: 300px;
+    background: radial-gradient(circle, ${primary}26 0%, transparent 70%);
+    border-radius: 50%; filter: blur(40px);
+    pointer-events: none; z-index: 0;
+  }
+  .float-deco-2 {
+    position: absolute; width: 400px; height: 400px;
+    background: radial-gradient(circle, ${accent}1a 0%, transparent 70%);
+    border-radius: 50%; filter: blur(60px);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Animation au scroll */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fade-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .fade-up-delay-1 { animation-delay: 0.1s; }
+  .fade-up-delay-2 { animation-delay: 0.2s; }
+  .fade-up-delay-3 { animation-delay: 0.3s; }
+
+  /* Stat number animée */
+  @keyframes count-up {
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .stat-num { animation: count-up 1s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+  /* Section reveal on scroll (CSS only via :target) */
+  section { scroll-margin-top: 80px; }
 </style>
 </head>
 <body class="antialiased">
 
-<!-- Nav sticky sous sales-ui-bar (54px) -->
-<header class="sticky top-[54px] z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200">
+<!-- Nav glass sticky sous sales-ui-bar (54px) -->
+<header class="sticky top-[54px] z-40 glass border-b border-white/40">
   <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="#" class="flex items-center gap-3">
       ${dna.logoUrl ? `<img src="${esc(dna.logoUrl)}" alt="${name}" class="h-10 w-auto" />` : ""}
@@ -151,83 +230,106 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
       <a href="#services" class="text-sm font-medium hover:text-primary transition">Services</a>
       ${articles.length ? '<a href="#actualites" class="text-sm font-medium hover:text-primary transition">Actualités</a>' : ""}
       <a href="#contact" class="text-sm font-medium hover:text-primary transition">Contact</a>
-      ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition flex items-center gap-2"><span class="material-symbols-outlined text-base">call</span>${phoneDisplay}</a>` : ""}
+      ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition flex items-center gap-2 shadow-lg" style="box-shadow: 0 4px 16px ${primary}40"><span class="material-symbols-outlined text-base">call</span>${phoneDisplay}</a>` : ""}
     </nav>
   </div>
 </header>
 
 <main>
-<!-- HERO -->
-<section class="spotlight-hero relative bg-neutral-50" onmousemove="this.style.setProperty('--mouse-x', (event.offsetX/this.offsetWidth*100)+'%'); this.style.setProperty('--mouse-y', (event.offsetY/this.offsetHeight*100)+'%');">
-  <div class="max-w-7xl mx-auto px-6 py-20 lg:py-28 grid lg:grid-cols-2 gap-12 items-center">
-    <div>
-      <span class="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-4">${esc(p.business_type || "Professionnel")}${city ? " · " + city : ""}</span>
+<!-- HERO avec gradient mesh + spotlight + decorations flottantes -->
+<section class="hero-mesh spotlight-hero relative overflow-hidden" onmousemove="this.style.setProperty('--mouse-x', (event.offsetX/this.offsetWidth*100)+'%'); this.style.setProperty('--mouse-y', (event.offsetY/this.offsetHeight*100)+'%');">
+  <div class="float-deco-1" style="top: -100px; left: -100px;"></div>
+  <div class="float-deco-2" style="bottom: -150px; right: -150px;"></div>
+
+  <div class="max-w-7xl mx-auto px-6 py-24 lg:py-32 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 text-xs font-bold uppercase tracking-widest text-primary">
+        <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+        ${esc(p.business_type || "Professionnel")}${city ? " · " + city : ""}
+      </span>
       <h1 class="font-serif text-5xl lg:text-7xl leading-tight mb-6">
         <span class="gradient-text">${heroTitle}</span>
       </h1>
-      <p class="text-xl text-neutral-700 leading-relaxed mb-8 max-w-xl">${heroSubtitle}</p>
-      <div class="flex flex-wrap gap-4">
-        ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift"><span class="material-symbols-outlined">call</span>Nous appeler</a>` : ""}
-        <a href="#services" class="border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition">Découvrir nos services</a>
+      <p class="text-xl text-neutral-700 leading-relaxed mb-8 max-w-xl fade-up fade-up-delay-1">${heroSubtitle}</p>
+      <div class="flex flex-wrap gap-4 fade-up fade-up-delay-2">
+        ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">call</span>Nous appeler</a>` : ""}
+        <a href="#services" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition">Découvrir nos services</a>
       </div>
-      ${p.google_rating && p.google_reviews_count ? `<div class="mt-8 flex items-center gap-3"><div class="flex">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="text-sm text-neutral-700"><strong>${p.google_rating.toFixed(1)}/5</strong> · ${p.google_reviews_count} avis Google</span></div>` : ""}
+      ${p.google_rating && p.google_reviews_count ? `<div class="mt-8 flex items-center gap-3 fade-up fade-up-delay-3"><div class="flex">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="text-sm text-neutral-700"><strong>${p.google_rating.toFixed(1)}/5</strong> · ${p.google_reviews_count} avis Google</span></div>` : ""}
     </div>
-    ${heroImage ? `<div class="relative">
-      <div class="aspect-square rounded-3xl overflow-hidden shadow-2xl hover-lift">
+    ${heroImage ? `<div class="relative fade-up fade-up-delay-2">
+      <div class="aspect-square rounded-3xl overflow-hidden shadow-2xl hover-lift" style="box-shadow: 0 30px 60px -15px ${primary}40">
         <img src="${esc(heroImage)}" alt="${name}" class="w-full h-full object-cover" />
       </div>
-      <div class="absolute -bottom-6 -left-6 bg-white border border-neutral-200 p-6 rounded-2xl shadow-xl max-w-xs">
-        <div class="text-xs uppercase tracking-widest text-neutral-500 mb-1">Le saviez-vous ?</div>
+      <div class="absolute -bottom-6 -left-6 glass p-6 rounded-2xl shadow-xl max-w-xs">
+        <div class="text-xs uppercase tracking-widest text-primary mb-1 font-bold">Le saviez-vous ?</div>
         <div class="font-serif text-xl">${esc(name.split(/[\s,—-]/)[0] || name)} ${city ? "à " + city : ""}</div>
-        ${dna.detectedAddresses && dna.detectedAddresses.length > 1 ? `<div class="text-xs text-neutral-600 mt-2"><strong>${dna.detectedAddresses.length}</strong> points de vente</div>` : ""}
+        ${dna.detectedAddresses && dna.detectedAddresses.length > 1 ? `<div class="text-xs text-neutral-600 mt-2"><strong class="text-primary">${dna.detectedAddresses.length}</strong> points de vente</div>` : ""}
+      </div>
+      <div class="absolute -top-4 -right-4 stat-num glass px-4 py-3 rounded-2xl">
+        <div class="text-2xl font-bold gradient-text">${p.google_rating ? p.google_rating.toFixed(1) : "5.0"}<span class="text-sm text-neutral-500">/5</span></div>
+        <div class="text-xs text-neutral-600">Google ${p.google_reviews_count ? `(${p.google_reviews_count})` : ""}</div>
       </div>
     </div>` : ""}
   </div>
 </section>
 
-<!-- ABOUT (vraie copy du site) -->
-<section id="apropos" class="py-24 bg-white">
-  <div class="max-w-5xl mx-auto px-6 text-center">
+<!-- Bandeau stats compact (parsed du DNA) -->
+${(dna.detectedAddresses?.length || dna.detectedPhones?.length || dna.allHeadings?.length) ? `
+<section class="py-12 bg-tint-light border-y border-neutral-200">
+  <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    ${dna.detectedAddresses && dna.detectedAddresses.length > 0 ? `<div class="fade-up"><div class="text-4xl font-bold gradient-text mb-1">${dna.detectedAddresses.length}</div><div class="text-xs uppercase tracking-widest text-neutral-600">${dna.detectedAddresses.length > 1 ? "Points de vente" : "Adresse"}</div></div>` : ""}
+    ${dna.detectedPhones && dna.detectedPhones.length > 0 ? `<div class="fade-up fade-up-delay-1"><div class="text-4xl font-bold gradient-text mb-1">${dna.detectedPhones.length}</div><div class="text-xs uppercase tracking-widest text-neutral-600">Numéros directs</div></div>` : ""}
+    ${services.length > 0 ? `<div class="fade-up fade-up-delay-2"><div class="text-4xl font-bold gradient-text mb-1">${services.length}+</div><div class="text-xs uppercase tracking-widest text-neutral-600">Services</div></div>` : ""}
+    ${p.google_reviews_count ? `<div class="fade-up fade-up-delay-3"><div class="text-4xl font-bold gradient-text mb-1">${p.google_reviews_count}</div><div class="text-xs uppercase tracking-widest text-neutral-600">Avis clients</div></div>` : ""}
+  </div>
+</section>` : ""}
+
+<!-- ABOUT avec fond tinted + decorations -->
+<section id="apropos" class="py-24 bg-tint-cream relative overflow-hidden">
+  <div class="float-deco-1" style="top: 20%; right: -150px;"></div>
+  <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
     <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Notre histoire</span>
-    <h2 class="font-serif text-4xl lg:text-5xl mb-8">${aboutTitle}</h2>
+    <h2 class="font-serif text-4xl lg:text-5xl mb-8 gradient-text">${aboutTitle}</h2>
     <p class="text-xl leading-relaxed text-neutral-700">${aboutText}</p>
   </div>
 </section>
 
 ${services.length ? `
-<!-- SERVICES (vrais services scrapés) -->
-<section id="services" class="py-24 bg-neutral-50">
-  <div class="max-w-7xl mx-auto px-6">
+<!-- SERVICES avec fond tinted medium + cards glass -->
+<section id="services" class="py-24 bg-tint-medium relative overflow-hidden">
+  <div class="float-deco-2" style="top: -200px; left: 30%;"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
     <div class="text-center mb-16">
       <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Ce que nous proposons</span>
-      <h2 class="font-serif text-4xl lg:text-5xl">Nos services</h2>
+      <h2 class="font-serif text-4xl lg:text-5xl">Nos <span class="gradient-text">services</span></h2>
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-${Math.min(services.length, 4)} gap-6">
       ${services.map((s, i) => `
-        <div class="bg-white rounded-2xl p-8 shadow-sm border border-neutral-200 hover-lift relative overflow-hidden">
+        <div class="glass rounded-2xl p-8 hover-lift relative overflow-hidden fade-up fade-up-delay-${Math.min(i, 3)}">
           <div class="absolute top-0 left-0 right-0 h-1 border-beam"></div>
-          ${s.image ? `<div class="aspect-video rounded-lg overflow-hidden mb-5"><img src="${esc(s.image)}" alt="${esc(s.title)}" class="w-full h-full object-cover" /></div>` : `<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-5"><span class="font-bold text-primary text-lg">${i + 1}</span></div>`}
+          ${s.image ? `<div class="aspect-video rounded-lg overflow-hidden mb-5"><img src="${esc(s.image)}" alt="${esc(s.title)}" class="w-full h-full object-cover" /></div>` : `<div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background: linear-gradient(135deg, ${primary}, ${accent});"><span class="font-bold text-white text-xl">${i + 1}</span></div>`}
           <h3 class="font-serif text-xl mb-3">${esc(s.title)}</h3>
-          ${s.desc ? `<p class="text-sm text-neutral-600 leading-relaxed">${esc(s.desc)}</p>` : ""}
+          ${s.desc ? `<p class="text-sm text-neutral-700 leading-relaxed">${esc(s.desc)}</p>` : ""}
         </div>`).join("")}
     </div>
   </div>
 </section>` : ""}
 
 ${articles.length ? `
-<!-- ACTUALITES (vrais titres scrapés) -->
-<section id="actualites" class="py-24 bg-white">
+<!-- ACTUALITES avec fond tinted light + cards modernes -->
+<section id="actualites" class="py-24 bg-tint-light">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-16">
       <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Restez informés</span>
-      <h2 class="font-serif text-4xl lg:text-5xl">Nos dernières actualités</h2>
+      <h2 class="font-serif text-4xl lg:text-5xl">Nos dernières <span class="gradient-text">actualités</span></h2>
     </div>
     <div class="grid md:grid-cols-${Math.min(articles.length, 4)} gap-6">
       ${articles.map((a, i) => `
-        <article class="bg-neutral-50 rounded-2xl overflow-hidden hover-lift">
-          ${galleryImages[i] ? `<div class="aspect-video"><img src="${esc(galleryImages[i])}" alt="${esc(a)}" class="w-full h-full object-cover" /></div>` : `<div class="aspect-video bg-gradient-to-br" style="background-image:linear-gradient(135deg,${primary},${accent});"></div>`}
+        <article class="bg-white rounded-2xl overflow-hidden hover-lift shadow-sm border border-neutral-100 fade-up fade-up-delay-${Math.min(i, 3)}">
+          ${galleryImages[i] ? `<div class="aspect-video overflow-hidden"><img src="${esc(galleryImages[i])}" alt="${esc(a)}" class="w-full h-full object-cover hover:scale-105 transition duration-500" /></div>` : `<div class="aspect-video" style="background: linear-gradient(135deg, ${primary}, ${accent});"></div>`}
           <div class="p-6">
-            <span class="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">Actualité</span>
+            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-primary mb-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Actualité</span>
             <h3 class="font-serif text-lg leading-snug">${esc(a)}</h3>
           </div>
         </article>`).join("")}
@@ -236,33 +338,34 @@ ${articles.length ? `
 </section>` : ""}
 
 ${galleryImages.length >= 3 ? `
-<!-- GALERIE photos -->
-<section class="py-24 bg-neutral-50">
+<!-- GALERIE photos avec fond cream -->
+<section class="py-24 bg-tint-cream">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-12">
       <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">En images</span>
-      <h2 class="font-serif text-4xl lg:text-5xl">${name}</h2>
+      <h2 class="font-serif text-4xl lg:text-5xl gradient-text">${name}</h2>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${Math.min(galleryImages.length, 4)} gap-4">
-      ${galleryImages.slice(0, 8).map(img => `<div class="aspect-square rounded-xl overflow-hidden hover-lift"><img src="${esc(img)}" alt="" class="w-full h-full object-cover" /></div>`).join("")}
+      ${galleryImages.slice(0, 8).map((img, i) => `<div class="aspect-square rounded-2xl overflow-hidden hover-lift fade-up fade-up-delay-${Math.min(i % 4, 3)} shadow-md"><img src="${esc(img)}" alt="" class="w-full h-full object-cover hover:scale-110 transition duration-700" /></div>`).join("")}
     </div>
   </div>
 </section>` : ""}
 
 ${topReviews.length ? `
-<!-- TÉMOIGNAGES Google (marquee défilant) -->
-<section class="py-24 bg-white overflow-hidden">
-  <div class="text-center mb-12 px-6">
+<!-- TÉMOIGNAGES Google (marquee défilant) avec fond tinted -->
+<section class="py-24 bg-tint-medium overflow-hidden relative">
+  <div class="float-deco-1" style="bottom: -100px; right: 10%;"></div>
+  <div class="text-center mb-12 px-6 relative z-10">
     <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Ce qu'ils en disent</span>
-    <h2 class="font-serif text-4xl lg:text-5xl">Nos clients adorent</h2>
+    <h2 class="font-serif text-4xl lg:text-5xl">Nos clients <span class="gradient-text">adorent</span></h2>
     ${p.google_rating && p.google_reviews_count ? `<div class="mt-4 flex items-center justify-center gap-3"><div class="flex">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="text-sm"><strong>${p.google_rating.toFixed(1)}/5</strong> · ${p.google_reviews_count} avis Google</span></div>` : ""}
   </div>
-  <div class="marquee">
+  <div class="marquee relative z-10">
     ${[...topReviews, ...topReviews].map(r => `
-      <div class="flex-shrink-0 w-80 mx-3 bg-neutral-50 p-6 rounded-2xl border border-neutral-200">
+      <div class="flex-shrink-0 w-80 mx-3 glass p-6 rounded-2xl">
         <div class="flex mb-3">${Array(Math.round(r.rating || 5)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1; font-size: 18px;">star</span>').join("")}</div>
-        <p class="text-sm italic text-neutral-700 leading-relaxed mb-4">«&nbsp;${esc((r.text || "").slice(0, 240))}&nbsp;»</p>
-        <div class="font-bold text-sm">— ${esc(r.author || "Client")}</div>
+        <p class="text-sm italic text-neutral-800 leading-relaxed mb-4">«&nbsp;${esc((r.text || "").slice(0, 240))}&nbsp;»</p>
+        <div class="font-bold text-sm text-primary">— ${esc(r.author || "Client")}</div>
       </div>`).join("")}
   </div>
 </section>` : ""}
