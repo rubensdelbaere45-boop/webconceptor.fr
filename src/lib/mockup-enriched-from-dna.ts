@@ -12,6 +12,7 @@
  * (allHeadings.length >= 10 OU detectedServices.length >= 5).
  */
 import type { WebsiteDna } from "./scrape-prospect-site";
+import { detectMetierForStock, getStockPhotosForMetier, getHeroPhotoForMetier } from "./stock-photos";
 
 export type EnrichedProspect = {
   id: string;
@@ -56,8 +57,24 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const primary = (dna.primaryColor || "#000000").toLowerCase();
   const accent = (dna.accentColor || "#666666").toLowerCase();
 
-  // Hero : vraie image + vrai titre + vrai sous-titre du site
-  const heroImage = dna.heroImageUrl || dna.allImages?.[0] || "";
+  // Detect métier pour fallback stock photos
+  const metierForStock = detectMetierForStock(`${p.business_type || ""} ${name}`);
+  const stockPhotos = getStockPhotosForMetier(metierForStock, 8);
+
+  // Hero : vraie image OU fallback stock Unsplash métier
+  // (filtre encore les images < 300px implicite via heuristique URL)
+  const isLowQualityImage = (url: string): boolean => {
+    if (!url) return true;
+    // Skip si URL contient des indices de basse qualité
+    if (/favicon|cropped-|thumb|-50x50|-100x100|-150x150|-180x180|-200x200/i.test(url)) return true;
+    // Force la skip d'extensions douteuses
+    if (/\.(ico|gif|svg)(\?|$)/i.test(url)) return true;
+    return false;
+  };
+  const cleanScrapedImages = (dna.allImages || []).filter(img => !isLowQualityImage(img));
+  const heroImage = (dna.heroImageUrl && !isLowQualityImage(dna.heroImageUrl))
+    ? dna.heroImageUrl
+    : (cleanScrapedImages[0] || getHeroPhotoForMetier(metierForStock));
   const heroTitle = esc(dna.heroTitle || name);
   const heroSubtitle = esc(dna.heroSubtitle || `Votre partenaire ${p.business_type || ""}${city ? " à " + city : ""}`);
 
@@ -74,8 +91,13 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
     .filter(h => !/qui sommes|à propos|formulaire|menu|suivez|contact|trouver/i.test(h))
     .slice(0, 4);
 
-  // Photos pour galerie : jusqu'à 6 images
-  const galleryImages = (dna.allImages || []).slice(1, 7);
+  // Photos galerie : priorité images scrapées propres, sinon fallback stock par métier
+  const galleryImages = (() => {
+    const scraped = cleanScrapedImages.slice(1, 7);
+    if (scraped.length >= 3) return scraped;
+    // Pas assez de photos propres scrapées → use stock photos métier
+    return stockPhotos.slice(0, 6);
+  })();
 
   // Véhicules détectés (uniquement garages/concessions)
   const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((p.business_type || "") + " " + name);
@@ -407,8 +429,8 @@ ${isGarage && vehiclesToShow.length === 0 ? `
   </div>
 </section>` : ""}
 
-${galleryImages.length >= 3 && !isGarage ? `
-<!-- GALERIE photos avec fond cream (skip garages : leurs images sont génériques) -->
+${galleryImages.length >= 3 ? `
+<!-- GALERIE photos avec fond cream (images scrapées propres OU stock métier) -->
 <section class="py-24 bg-tint-cream">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-12">
