@@ -65,14 +65,6 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const allEmails = Array.from(new Set([p.email, ...(dna.detectedEmails || [])].filter(Boolean))) as string[];
   const allAddresses = Array.from(new Set([p.address, ...(dna.detectedAddresses || [])].filter(Boolean))) as string[];
 
-  // Couleurs : priorité DNA scrapé > Design Preset Pro > fallback noir
-  const primary = (dna.primaryColor && dna.primaryColor.match(/^#[0-9a-f]{6}$/i)
-    ? dna.primaryColor
-    : designPreset.colors.primary).toLowerCase();
-  const accent = (dna.accentColor && dna.accentColor.match(/^#[0-9a-f]{6}$/i)
-    ? dna.accentColor
-    : designPreset.colors.accent).toLowerCase();
-
   // Detect métier pour fallback stock photos
   const metierForStock = detectMetierForStock(`${p.business_type || ""} ${name}`);
   const stockPhotos = getStockPhotosForMetier(metierForStock, 8);
@@ -90,6 +82,14 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
       isFranchise: franchiseInfo.isFranchise && franchiseInfo.confidence > 0.7,
     });
   })();
+
+  // Couleurs : priorité DNA scrapé > Design Preset Pro > fallback noir
+  const primary = (dna.primaryColor && dna.primaryColor.match(/^#[0-9a-f]{6}$/i)
+    ? dna.primaryColor
+    : designPreset.colors.primary).toLowerCase();
+  const accent = (dna.accentColor && dna.accentColor.match(/^#[0-9a-f]{6}$/i)
+    ? dna.accentColor
+    : designPreset.colors.accent).toLowerCase();
 
   // Hero : vraie image OU fallback stock Unsplash métier
   // (filtre encore les images < 300px implicite via heuristique URL)
