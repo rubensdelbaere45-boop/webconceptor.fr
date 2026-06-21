@@ -83,11 +83,19 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
     });
   })();
 
-  // Couleurs : priorité DNA scrapé > Design Preset Pro > fallback noir
-  const primary = (dna.primaryColor && dna.primaryColor.match(/^#[0-9a-f]{6}$/i)
+  // Détection SaaS : si le DNA vient d'une plateforme SaaS (Vroomly,
+  // Autoscout, Autosphere, etc.), on ignore les couleurs scrapées car
+  // elles reflètent la palette du SaaS, pas du garage. On utilise alors
+  // le preset Pro adapté au métier.
+  const dnaSrc = (dna.sourceUrl || "").toLowerCase();
+  const dnaLogo = (dna.logoUrl || "").toLowerCase();
+  const isFromSaas = /vroomly|autoscout|autosphere|lacentrale|leboncoin|paruvendu|facebook|instagram|wordpress\.com/.test(dnaSrc + " " + dnaLogo);
+
+  // Couleurs : priorité DNA scrapé (si pas SaaS) > Design Preset Pro > fallback noir
+  const primary = ((!isFromSaas && dna.primaryColor && dna.primaryColor.match(/^#[0-9a-f]{6}$/i))
     ? dna.primaryColor
     : designPreset.colors.primary).toLowerCase();
-  const accent = (dna.accentColor && dna.accentColor.match(/^#[0-9a-f]{6}$/i)
+  const accent = ((!isFromSaas && dna.accentColor && dna.accentColor.match(/^#[0-9a-f]{6}$/i))
     ? dna.accentColor
     : designPreset.colors.accent).toLowerCase();
 
@@ -155,6 +163,7 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="${designPreset.fonts.importUrl}" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet" />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
