@@ -13,6 +13,8 @@
  */
 import type { WebsiteDna } from "./scrape-prospect-site";
 import { detectMetierForStock, getStockPhotosForMetier, getHeroPhotoForMetier } from "./stock-photos";
+import { selectDesignPreset, type DesignPreset } from "./design-tokens-pro";
+import { analyzeGarageFranchise } from "./franchise-detector";
 
 export type EnrichedProspect = {
   id: string;
@@ -28,6 +30,8 @@ export type EnrichedProspect = {
   google_reviews_count?: number | null;
   reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> | null;
   site_style_dna?: WebsiteDna | null;
+  /** Forcer un preset Design Pro (ex: "racing-sport"). Si absent, auto-detect par métier. */
+  forceDesignPreset?: string;
 };
 
 const esc = (s: string | null | undefined): string =>
@@ -61,13 +65,31 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const allEmails = Array.from(new Set([p.email, ...(dna.detectedEmails || [])].filter(Boolean))) as string[];
   const allAddresses = Array.from(new Set([p.address, ...(dna.detectedAddresses || [])].filter(Boolean))) as string[];
 
-  // Couleurs marque (DNA scrapé du vrai site)
-  const primary = (dna.primaryColor || "#000000").toLowerCase();
-  const accent = (dna.accentColor || "#666666").toLowerCase();
+  // Couleurs : priorité DNA scrapé > Design Preset Pro > fallback noir
+  const primary = (dna.primaryColor && dna.primaryColor.match(/^#[0-9a-f]{6}$/i)
+    ? dna.primaryColor
+    : designPreset.colors.primary).toLowerCase();
+  const accent = (dna.accentColor && dna.accentColor.match(/^#[0-9a-f]{6}$/i)
+    ? dna.accentColor
+    : designPreset.colors.accent).toLowerCase();
 
   // Detect métier pour fallback stock photos
   const metierForStock = detectMetierForStock(`${p.business_type || ""} ${name}`);
   const stockPhotos = getStockPhotosForMetier(metierForStock, 8);
+
+  // ═══ DESIGN PRESET PRO (10 systems distillés du repo UI UX Pro Max) ═══
+  // Sélection auto par métier OU forcée via forceDesignPreset
+  const franchiseInfo = analyzeGarageFranchise(p.name);
+  const designPreset: DesignPreset = (() => {
+    if (p.forceDesignPreset) {
+      const { PRESETS } = require("./design-tokens-pro") as { PRESETS: DesignPreset[] };
+      const forced = PRESETS.find((x: DesignPreset) => x.id === p.forceDesignPreset);
+      if (forced) return forced;
+    }
+    return selectDesignPreset(`${p.business_type || ""} ${name}`, {
+      isFranchise: franchiseInfo.isFranchise && franchiseInfo.confidence > 0.7,
+    });
+  })();
 
   // Hero : vraie image OU fallback stock Unsplash métier
   // (filtre encore les images < 300px implicite via heuristique URL)
