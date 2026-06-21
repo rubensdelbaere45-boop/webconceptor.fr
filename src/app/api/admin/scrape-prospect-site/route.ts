@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
       detectedEmails: dna.detectedEmails,
       socialLinks: dna.socialLinks,
       hasBlog: dna.hasBlog,
+      // Scrapling traces (cache + debug)
+      scrapling: (dna as { scrapling?: unknown }).scrapling,
     },
     upErr: upErr?.message,
   });
