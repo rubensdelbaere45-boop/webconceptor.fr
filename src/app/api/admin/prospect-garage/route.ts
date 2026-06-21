@@ -19,10 +19,11 @@ import { analyzeGarageFranchise } from "@/lib/franchise-detector";
 import { detectDominantBrandPalette } from "@/lib/brand-palette";
 import { buildGaragePitchEmail } from "@/lib/garage-pitch-email";
 import { getOrCreateAccessCode } from "@/lib/access-code";
+import { findPatronEmail } from "@/lib/find-patron-email";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 function db() {
   return createClient(
@@ -95,10 +96,25 @@ export async function POST(req: NextRequest) {
     siteUrl,
   });
 
-  // 6. Send ou dry-run
+  // 6. Cascade email finder : INSEE → Pages Jaunes → mentions légales → DB fallback
+  const emailResult = await findPatronEmail({
+    garageName: p.name,
+    city: p.city,
+    websiteUrl: p.website || null,
+    dbEmail: p.email || null,
+  });
+  const recipientEmail = emailResult.email;
+
+  // 7. Send ou dry-run
   if (send) {
-    if (!p.email) {
-      return NextResponse.json({ success: false, skipped: "no_email", analysis: franchiseAnalysis, pitch_preview: { subject: pitch.subject } });
+    if (!recipientEmail) {
+      return NextResponse.json({
+        success: false,
+        skipped: "no_email_found",
+        email_finder: emailResult,
+        analysis: franchiseAnalysis,
+        pitch_preview: { subject: pitch.subject },
+      });
     }
     const brevoKey = process.env.BREVO_API_KEY;
     if (!brevoKey) return NextResponse.json({ error: "BREVO_API_KEY manquante" }, { status: 500 });
@@ -108,7 +124,7 @@ export async function POST(req: NextRequest) {
         headers: { "api-key": brevoKey, "Content-Type": "application/json" },
         body: JSON.stringify({
           sender: { name: "Tom Bauer", email: "contact@klyora.fr" },
-          to: [{ email: p.email, name: p.name }],
+          to: [{ email: recipientEmail, name: p.name }],
           replyTo: { email: "contact@klyora.fr", name: "Tom Bauer" },
           subject: pitch.subject,
           htmlContent: pitch.htmlBody,
@@ -136,7 +152,8 @@ export async function POST(req: NextRequest) {
     top_brand: topBrand,
     palette,
     site_url: siteUrl,
-    email_to: p.email || null,
+    email_finder: emailResult,
+    email_to: recipientEmail,
     pitch_subject: pitch.subject,
     pitch_text_preview: pitch.textBody.slice(0, 400),
   });
