@@ -261,6 +261,7 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
     <nav class="hidden md:flex items-center gap-8">
       <a href="#apropos" class="text-sm font-medium hover:text-primary transition">À propos</a>
       <a href="#services" class="text-sm font-medium hover:text-primary transition">Services</a>
+      ${isGarage ? `<a href="/prospects/${slug}/voitures" class="text-sm font-bold hover:text-primary transition flex items-center gap-1" style="color: ${primary};"><span class="material-symbols-outlined text-base">directions_car</span>Voitures</a>` : ""}
       ${articles.length ? '<a href="#actualites" class="text-sm font-medium hover:text-primary transition">Actualités</a>' : ""}
       <a href="#contact" class="text-sm font-medium hover:text-primary transition">Contact</a>
       ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition flex items-center gap-2 shadow-lg" style="box-shadow: 0 4px 16px ${primary}40"><span class="material-symbols-outlined text-base">call</span>${phoneDisplay}</a>` : ""}
@@ -405,15 +406,16 @@ ${showVehiclesSection && vehiclesToShow.length > 0 ? `
         </div>`).join("")}
     </div>
     <div class="text-center mt-12">
-      <button type="button" onclick="openKlyoraModal('brochure')" class="bg-white border-2 border-primary text-primary px-8 py-3 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2 hover-lift">
-        <span class="material-symbols-outlined">download</span>Recevoir le catalogue complet
-      </button>
+      <a href="/prospects/${slug}/voitures" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-3 hover-lift" style="box-shadow: 0 10px 30px ${primary}55">
+        <span class="material-symbols-outlined">directions_car</span>Voir tout le catalogue (${vehiclesToShow.length})
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </a>
     </div>
   </div>
 </section>` : ""}
 
 ${isGarage && vehiclesToShow.length === 0 ? `
-<!-- Garage SANS véhicules détectés : CTA fort pour stimuler l'ajout du catalogue -->
+<!-- Garage SANS véhicules détectés : CTA fort vers la page catalogue -->
 <section id="vehicules" class="py-24 bg-tint-medium relative overflow-hidden">
   <div class="float-deco-1" style="top: 20%; right: -150px;"></div>
   <div class="max-w-3xl mx-auto px-6 relative z-10 text-center">
@@ -421,11 +423,12 @@ ${isGarage && vehiclesToShow.length === 0 ? `
     <span class="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Votre catalogue, en ligne</span>
     <h2 class="font-serif text-4xl lg:text-5xl mb-6">Vos véhicules <span class="gradient-text">vendus en ligne</span></h2>
     <p class="text-lg text-neutral-700 leading-relaxed mb-8">
-      Ce site est prêt à recevoir <strong>tout votre catalogue de véhicules</strong> : photos, prix, kilométrage, fiches techniques. Les visiteurs réservent leur essai en 1 clic, vous recevez la demande directement par SMS et email.
+      Ce site est prêt à recevoir <strong>tout votre catalogue de véhicules</strong> : photos, prix, kilométrage, fiches techniques avec filtres marque/prix/km/carburant. Les visiteurs réservent leur essai en 1 clic — vous recevez la demande par SMS et email.
     </p>
-    <button type="button" onclick="openKlyoraModal('brochure')" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55">
-      <span class="material-symbols-outlined">storefront</span>Mettre mon catalogue en ligne
-    </button>
+    <a href="/prospects/${slug}/voitures" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55">
+      <span class="material-symbols-outlined">storefront</span>Voir le catalogue
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </a>
   </div>
 </section>` : ""}
 
