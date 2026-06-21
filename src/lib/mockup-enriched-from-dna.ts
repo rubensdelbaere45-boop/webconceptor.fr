@@ -59,11 +59,17 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const name = esc(p.name);
   const slug = esc(p.slug);
   const city = esc(p.city || "");
-  const phoneDisplay = esc(p.phone || dna.detectedPhones?.[0] || "");
-  const phoneDigits = (p.phone || dna.detectedPhones?.[0] || "").replace(/[^\d+]/g, "");
-  const allPhones = Array.from(new Set([p.phone, ...(dna.detectedPhones || [])].filter(Boolean))) as string[];
-  const allEmails = Array.from(new Set([p.email, ...(dna.detectedEmails || [])].filter(Boolean))) as string[];
-  const allAddresses = Array.from(new Set([p.address, ...(dna.detectedAddresses || [])].filter(Boolean))) as string[];
+  const phoneDisplay = esc(p.phone || "");
+  const phoneDigits = (p.phone || "").replace(/[^\d+]/g, "");
+  // SEUL p.phone (les detectedPhones du DNA scrappent souvent des numéros
+  // d'autres garages / support SaaS — bruit, à ne PAS afficher).
+  const allPhones = [p.phone].filter(Boolean) as string[];
+  // Pareil pour emails : on filtre les emails SaaS génériques (assistance@vroomly etc.)
+  const allEmails = [p.email].filter(e => e && !/no-?reply|assistance@|webmaster@|@vroomly|@autosphere|@autoscout24/i.test(e)) as string[];
+  // Téléphones : SEULEMENT p.phone (les detectedPhones du DNA sont souvent
+  // pourris si site SaaS — autres garages Vroomly, support, etc.)
+  // On garde detectedPhones uniquement s'il n'y a PAS de p.phone et que le site n'est pas SaaS
+  const allAddresses = [p.address].filter(Boolean) as string[];
 
   // Detect métier pour fallback stock photos
   const metierForStock = detectMetierForStock(`${p.business_type || ""} ${name}`);
@@ -107,6 +113,8 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
     if (/favicon|cropped-|thumb|-50x50|-100x100|-150x150|-180x180|-200x200/i.test(url)) return true;
     // Force la skip d'extensions douteuses
     if (/\.(ico|gif|svg)(\?|$)/i.test(url)) return true;
+    // Skip assets SaaS génériques (Vroomly, Autoscout, etc.) — pas des photos du garage
+    if (/vroomly\.com|autoscout24\.com|autosphere|lacentrale\.fr\/static|leboncoin\.fr\/static/i.test(url)) return true;
     return false;
   };
   const cleanScrapedImages = (dna.allImages || []).filter(img => !isLowQualityImage(img));
@@ -301,7 +309,7 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
       <a href="#apropos" class="text-sm font-medium hover:text-primary transition">À propos</a>
       <a href="#services" class="text-sm font-medium hover:text-primary transition">Services</a>
       ${isGarage ? `<a href="/prospects/${slug}/voitures" class="text-sm font-bold hover:text-primary transition flex items-center gap-1" style="color: ${primary};"><span class="material-symbols-outlined text-base">directions_car</span>Voitures</a>` : ""}
-      ${articles.length ? '<a href="#actualites" class="text-sm font-medium hover:text-primary transition">Actualités</a>' : ""}
+      ${(articles.length && !isFromSaas) ? '<a href="#actualites" class="text-sm font-medium hover:text-primary transition">Actualités</a>' : ""}
       <a href="#contact" class="text-sm font-medium hover:text-primary transition">Contact</a>
       ${phoneDigits ? `<a href="tel:${phoneDigits}" class="bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition flex items-center gap-2 shadow-lg" style="box-shadow: 0 4px 16px ${primary}40"><span class="material-symbols-outlined text-base">call</span>${phoneDisplay}</a>` : ""}
     </nav>
@@ -349,7 +357,7 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
 </section>
 
 <!-- Bandeau stats compact (parsed du DNA) -->
-${(dna.detectedAddresses?.length || dna.detectedPhones?.length || dna.allHeadings?.length) ? `
+${(!isFromSaas && (dna.detectedAddresses?.length || dna.detectedPhones?.length || dna.allHeadings?.length)) ? `
 <section class="py-12 bg-tint-light border-y border-neutral-200">
   <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
     ${dna.detectedAddresses && dna.detectedAddresses.length > 0 ? `<div class="fade-up"><div class="text-4xl font-bold gradient-text mb-1">${dna.detectedAddresses.length}</div><div class="text-xs uppercase tracking-widest text-neutral-600">${dna.detectedAddresses.length > 1 ? "Points de vente" : "Adresse"}</div></div>` : ""}
@@ -390,8 +398,8 @@ ${services.length ? `
   </div>
 </section>` : ""}
 
-${articles.length ? `
-<!-- ACTUALITES avec fond tinted light + cards modernes -->
+${(articles.length && !isFromSaas) ? `
+<!-- ACTUALITES avec fond tinted light + cards modernes (skip si site SaaS — articles peu pertinents) -->
 <section id="actualites" class="py-24 bg-tint-light">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-16">
@@ -471,8 +479,8 @@ ${isGarage && vehiclesToShow.length === 0 ? `
   </div>
 </section>` : ""}
 
-${galleryImages.length >= 3 ? `
-<!-- GALERIE photos avec fond cream (images scrapées propres OU stock métier) -->
+${(galleryImages.length >= 3 && !isFromSaas) ? `
+<!-- GALERIE photos (skip si site SaaS — stock photos non pertinentes) -->
 <section class="py-24 bg-tint-cream">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-12">
