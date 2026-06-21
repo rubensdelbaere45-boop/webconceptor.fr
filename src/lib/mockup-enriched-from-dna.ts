@@ -33,12 +33,20 @@ export type EnrichedProspect = {
 const esc = (s: string | null | undefined): string =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
-/** Détermine si le DNA est suffisamment riche pour utiliser le template enrichi. */
-export function isEnrichedDnaWorthIt(dna: WebsiteDna | null | undefined): boolean {
+/** Détermine si le DNA est suffisamment riche pour utiliser le template enrichi.
+ * Pour les garages, on est plus permissif car ils DOIVENT avoir le template enriched
+ * (sections véhicules + page /voitures + modals essai). */
+export function isEnrichedDnaWorthIt(dna: WebsiteDna | null | undefined, businessType?: string | null): boolean {
   if (!dna || dna.error) return false;
   const headings = dna.allHeadings?.length || 0;
   const services = dna.detectedServices?.length || 0;
   const images = dna.allImages?.length || 0;
+  const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((businessType || ""));
+  if (isGarage) {
+    // Pour garages, seuil minimal — TOUS les garages avec un DNA scrape doivent
+    // avoir le template enriched (avec section véhicules + onglet Voitures)
+    return headings >= 2 || images >= 1 || services >= 1;
+  }
   return headings >= 8 || services >= 4 || (images >= 3 && headings >= 4);
 }
 

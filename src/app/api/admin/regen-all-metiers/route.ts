@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   for (const p of list) {
     // ═══ TEMPLATE ENRICHI (priorité MAX si DNA scrapé profond) ═══
     const _dnaDeep = (p as { site_style_dna?: unknown }).site_style_dna as never;
-    if (isEnrichedDnaWorthIt(_dnaDeep)) {
+    if (isEnrichedDnaWorthIt(_dnaDeep, p.business_type)) {
       try {
         const enrichedHtml = generateEnrichedMockupHtml({
           id: p.id, slug: p.slug, name: p.name,
