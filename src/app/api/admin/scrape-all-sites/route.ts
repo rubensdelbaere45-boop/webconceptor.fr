@@ -55,10 +55,14 @@ export async function POST(req: NextRequest) {
       skipped++; continue;
     }
     const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test(((p.business_type as string) || "") + " " + ((p.name as string) || ""));
+    // Cache économe : skip Scrapling Railway si déjà tenté (évite frais Tom)
+    const prevDnaForCache = (p.site_style_dna || {}) as { scrapling?: { triedAt?: string } };
+    const skipScraplingForCache = !!prevDnaForCache.scrapling?.triedAt;
     const dna = await scrapeWebsiteDna(p.website, {
       timeoutMs: 12000,
       garageName: isGarage ? (p.name as string) : undefined,
       garageCity: isGarage ? (p.city as string) : undefined,
+      skipScrapling: skipScraplingForCache,
     });
     if (dna.error) { failed++; continue; }
     const { error: upErr } = await supabase

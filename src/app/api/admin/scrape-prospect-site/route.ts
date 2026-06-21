@@ -49,9 +49,14 @@ export async function POST(req: NextRequest) {
 
   // Si garage, passer le nom+ville pour tenter La Centrale en fallback véhicules
   const isGarage = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/i.test((p.business_type || "") + " " + (p.name || ""));
+  // Cache économe : si Scrapling déjà tenté pour ce prospect, on skip
+  // (Tom paie Railway à chaque call → on ne refait pas)
+  const prevDna = (p.site_style_dna || {}) as { scrapling?: { triedAt?: string } };
+  const skipScrapling = !!prevDna.scrapling?.triedAt;
   const dna = await scrapeWebsiteDna(p.website, {
     garageName: isGarage ? p.name : undefined,
     garageCity: isGarage ? p.city : undefined,
+    skipScrapling,
   });
   const { error: upErr } = await supabase
     .from("prospects")

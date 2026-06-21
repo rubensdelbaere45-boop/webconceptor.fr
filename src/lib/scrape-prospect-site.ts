@@ -57,6 +57,14 @@ export type WebsiteDna = {
   hasBlog?: boolean;
   /** Pages atteintes (au-delà de la home) — sample 3-5 URLs. */
   scrapedPages?: number;
+  /** Trace Scrapling Railway (anti-bot) : cache pour éviter re-call coûteux. */
+  scrapling?: {
+    triedAt: string;       // ISO timestamp
+    success: boolean;
+    photosCount: number;
+    about?: string | null;
+    emails?: string[];
+  };
   /**
    * Véhicules détectés sur le site (uniquement si garage/concession).
    * Pattern : carte/section avec marque + modèle + année + prix + km
@@ -546,7 +554,7 @@ export async function scrapeWebsiteDna(websiteUrl: string, opts: { timeoutMs?: n
  * Wrapper qui : scrape la home + identifie les pages "vehicules/occasions/stock"
  * + tente La Centrale pour les garages.
  */
-export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs?: number; maxSubPages?: number; garageName?: string; garageCity?: string } = {}): Promise<WebsiteDna> {
+export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs?: number; maxSubPages?: number; garageName?: string; garageCity?: string; skipScrapling?: boolean } = {}): Promise<WebsiteDna> {
   const timeoutMs = opts.timeoutMs ?? 12000;
   const maxSubPages = opts.maxSubPages ?? 3;
   const homeDna = await scrapeWebsiteDna(websiteUrl, { timeoutMs });
@@ -589,10 +597,59 @@ export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs
     }
   }
 
+  // ECONOMY MODE : Scrapling Railway en DERNIER recours
+  // Activé uniquement si :
+  //  - C'est un garage
+  //  - On a 0 véhicule détecté (Node + LaCentrale ont échoué)
+  //  - Le DNA précédent ne contient PAS deja un scraplingTriedAt (cache)
+  // → Sinon Tom paie des frais Railway inutilement.
+  // Le scrapling renvoie des photos via stealth ; on les utilise pour enrichir
+  // l'absence de véhicules avec au moins des photos correctes du site.
+  let scraplingResult: { triedAt: string; success: boolean; photosCount: number; about?: string | null; emails?: string[] } | undefined;
+  const hasNoVehicles = allVehicles.length === 0;
+  const hasPoorImages = (homeDna.allImages?.length || 0) < 3;
+  const shouldTryScrapling = opts.garageName && (hasNoVehicles || hasPoorImages) && !opts.skipScrapling;
+
+  if (shouldTryScrapling) {
+    try {
+      const { scraplingEnrichSite, isScraplingConfigured } = await import("./scrape-scrapling");
+      if (isScraplingConfigured()) {
+        const enriched = await scraplingEnrichSite(websiteUrl, ["photos", "about"], { timeoutMs: 20000 });
+        if (enriched && !enriched.error) {
+          // Merge photos scrapling dans allImages (en plus de celles existantes)
+          if (enriched.photos && enriched.photos.length > 0) {
+            for (const ph of enriched.photos) {
+              if (homeDna.allImages && homeDna.allImages.length < 30 && !homeDna.allImages.includes(ph)) {
+                homeDna.allImages.push(ph);
+              }
+            }
+          }
+          // Merge about si vide
+          if (enriched.about && !homeDna.aboutText) {
+            homeDna.aboutText = enriched.about.slice(0, 500);
+          }
+          scraplingResult = {
+            triedAt: new Date().toISOString(),
+            success: true,
+            photosCount: enriched.photos?.length || 0,
+            about: enriched.about,
+            emails: enriched.emails,
+          };
+        } else {
+          scraplingResult = { triedAt: new Date().toISOString(), success: false, photosCount: 0 };
+        }
+      }
+    } catch (err) {
+      console.warn("[deep] Scrapling failed:", err);
+      scraplingResult = { triedAt: new Date().toISOString(), success: false, photosCount: 0 };
+    }
+  }
+
   return {
     ...homeDna,
     detectedVehicles: allVehicles,
     scrapedPages: pagesScraped,
-  };
+    ...(scraplingResult ? { scrapling: scraplingResult } : {}),
+  } as WebsiteDna & { scrapling?: typeof scraplingResult };
 }
 
