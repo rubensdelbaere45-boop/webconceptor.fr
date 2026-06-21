@@ -47,7 +47,7 @@ export async function scraplingEnrichSite(
     console.warn("[scrapling] SCRAPLING_SERVICE_URL ou SCRAPLING_SECRET manquant — skip");
     return null;
   }
-  const timeoutMs = opts.timeoutMs ?? 20000;
+  const timeoutMs = opts.timeoutMs ?? 60000;
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);

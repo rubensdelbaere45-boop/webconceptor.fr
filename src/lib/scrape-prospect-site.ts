@@ -614,7 +614,7 @@ export async function scrapeWebsiteDnaDeep(websiteUrl: string, opts: { timeoutMs
     try {
       const { scraplingEnrichSite, isScraplingConfigured } = await import("./scrape-scrapling");
       if (isScraplingConfigured()) {
-        const enriched = await scraplingEnrichSite(websiteUrl, ["photos", "about"], { timeoutMs: 20000 });
+        const enriched = await scraplingEnrichSite(websiteUrl, ["photos", "about"], { timeoutMs: 60000 });
         if (enriched && !enriched.error) {
           // Merge photos scrapling dans allImages (en plus de celles existantes)
           if (enriched.photos && enriched.photos.length > 0) {

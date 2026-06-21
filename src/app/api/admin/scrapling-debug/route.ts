@@ -8,7 +8,7 @@ import { isScraplingConfigured, scraplingEnrichSite } from "@/lib/scrape-scrapli
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 90;
 
 export async function GET(req: NextRequest) {
   if (!safeCompare(req.headers.get("x-admin-key") || "", process.env.ADMIN_SECRET_KEY)) {
