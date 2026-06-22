@@ -93,9 +93,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ═══ TEMPLATE ENRICHI (priorité MAXIMALE si DNA scrapé profond) ═══
+  // ═══ TEMPLATE ENRICHI (skip si garage-premium déjà appliqué) ═══
   const dnaForEnriched = (p as { site_style_dna?: unknown }).site_style_dna as never;
-  if (isEnrichedDnaWorthIt(dnaForEnriched, p.business_type)) {
+  if (!html && isEnrichedDnaWorthIt(dnaForEnriched, p.business_type)) {
     try {
       html = generateEnrichedMockupHtml({
         id: p.id, slug: p.slug, name: p.name,
