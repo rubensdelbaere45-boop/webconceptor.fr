@@ -133,8 +133,14 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   const aboutTitle = esc(dna.allHeadings?.find(h => /qui sommes|à propos|notre histoire|notre groupe/i.test(h)) || "Qui sommes-nous");
   const aboutText = esc(dna.aboutText || `${name}, votre référence ${p.business_type || ""}${city ? " à " + city : ""}. Une équipe passionnée à votre service.`);
 
-  // Services : vrais services scrapés du site (jusqu'à 8)
-  const services = (dna.detectedServices || []).slice(0, 8);
+  // Services : skip si site SaaS (les "services" sont en réalité du contenu
+  // SaaS générique : "Garage certifié Vroomly", "Plateforme Autoscout", etc.)
+  const services = isFromSaas
+    ? []
+    : (dna.detectedServices || [])
+        .filter(s => !/vroomly|autoscout|autosphere|lacentrale|leboncoin/i.test(s.title + " " + (s.desc || "")))
+        .filter(s => !s.image || !isLowQualityImage(s.image))
+        .slice(0, 8);
 
   // Actualités : si hasBlog, prendre headings qui ressemblent à des titres d'articles
   const articles = (dna.allHeadings || [])
@@ -307,7 +313,7 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
 <header class="sticky top-[54px] z-40 glass border-b border-white/40">
   <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="#" class="flex items-center gap-3">
-      ${dna.logoUrl ? `<img src="${esc(dna.logoUrl)}" alt="${name}" class="h-10 w-auto" />` : ""}
+      ${(dna.logoUrl && !isFromSaas && !isLowQualityImage(dna.logoUrl)) ? `<img src="${esc(dna.logoUrl)}" alt="${name}" class="h-10 w-auto" />` : ""}
       <span class="font-serif text-2xl font-bold text-primary">${name}</span>
     </a>
     <nav class="hidden md:flex items-center gap-8">
@@ -560,7 +566,7 @@ ${topReviews.length ? `
   <div class="max-w-7xl mx-auto px-6 text-center">
     <div class="font-serif text-2xl mb-3">${name}</div>
     <p class="text-sm text-white/60 mb-6">${city ? city + " · " : ""}${esc(p.business_type || "")}</p>
-    ${dna.socialLinks?.length ? `<div class="flex justify-center gap-4 mb-6">${dna.socialLinks.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><span class="material-symbols-outlined text-sm">${s.network === 'facebook' ? 'thumb_up' : s.network === 'instagram' ? 'photo_camera' : 'link'}</span></a>`).join("")}</div>` : ""}
+    ${(dna.socialLinks?.length && !isFromSaas) ? `<div class="flex justify-center gap-4 mb-6">${dna.socialLinks.filter(s => !/vroomly|autoscout|autosphere|lacentrale|leboncoin/i.test(s.url)).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><span class="material-symbols-outlined text-sm">${s.network === 'facebook' ? 'thumb_up' : s.network === 'instagram' ? 'photo_camera' : 'link'}</span></a>`).join("")}</div>` : ""}
     <p class="text-xs text-white/40">© ${new Date().getFullYear()} ${name}. Tous droits réservés.</p>
   </div>
 </footer>
