@@ -18,6 +18,8 @@ import { generateStitchMetierFullMockupHtml, isMetierSupported } from "@/lib/moc
 import { generateStitchBoulangeriePixelMockupHtml } from "@/lib/mockup-stitch-boulangerie-pixel";
 import { tryGenerateStitchPixel, detectStitchPixelMetier } from "@/lib/mockup-stitch-pixel-dispatcher";
 import { generateEnrichedMockupHtml, isEnrichedDnaWorthIt } from "@/lib/mockup-enriched-from-dna";
+import { generateGaragePremiumMockupHtml } from "@/lib/mockup-garage-premium";
+import { analyzeGarageFranchise } from "@/lib/franchise-detector";
 
 function detectMetierKey(p: { business_type?: string | null; name?: string | null; slug?: string | null }): string | null {
   const haystack = `${p.business_type || ""} ${p.name || ""} ${p.slug || ""}`.toLowerCase();
@@ -67,6 +69,29 @@ export async function POST(req: NextRequest) {
 
   let html: string | null = null;
   let templateUsed = "none";
+
+  // ═══ GARAGE PREMIUM (priorité ABSOLUE pour garages indépendants multimarques) ═══
+  const _businessHay = `${p.business_type || ""} ${p.name || ""}`.toLowerCase();
+  const _isGarageProspect = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/.test(_businessHay);
+  if (_isGarageProspect) {
+    const _franchise = analyzeGarageFranchise(p.name);
+    if (!_franchise.isFranchise || _franchise.confidence < 0.7) {
+      try {
+        html = generateGaragePremiumMockupHtml({
+          id: p.id, slug: p.slug, name: p.name,
+          city: p.city || null, address: p.address || null,
+          phone: p.phone || null, email: p.email || null,
+          hours: (p as { hours?: string }).hours || null,
+          business_type: p.business_type || null,
+          google_rating: (p as { google_rating?: number }).google_rating || null,
+          google_reviews_count: (p as { google_reviews_count?: number }).google_reviews_count || null,
+          reviews: (p as { reviews?: Array<{ author?: string; rating?: number; text?: string; timeAgo?: string }> }).reviews || null,
+          site_style_dna: (p as { site_style_dna?: never }).site_style_dna || null,
+        });
+        templateUsed = "garage-premium";
+      } catch (err) { console.warn("garage-premium failed:", err); html = null; }
+    }
+  }
 
   // ═══ TEMPLATE ENRICHI (priorité MAXIMALE si DNA scrapé profond) ═══
   const dnaForEnriched = (p as { site_style_dna?: unknown }).site_style_dna as never;
