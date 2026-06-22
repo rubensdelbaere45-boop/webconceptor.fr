@@ -71,8 +71,10 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
 
   const dna = p.site_style_dna || {};
   const vehicles = (dna.detectedVehicles || []).filter(v => v.image && v.image.startsWith("http"));
-  const topVehicles = vehicles.slice(0, 4);
+  // Tom veut TOUT le stock directement sur la home → jusqu'à 12 (3 lignes de 4 cards)
+  const topVehicles = vehicles.slice(0, 12);
   const vehicleCount = vehicles.length;
+  const hasMoreThan12 = vehicleCount > 12;
 
   // Palette : détecte la marque dominante des véhicules pour personnaliser
   const brandPalette = detectDominantBrandPalette(vehicles);
@@ -280,62 +282,41 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
   </div>
 </section>
 
-<!-- ═══ STATS COUNTERS ═══ -->
-<section class="border-y border-white/10 bg-black/50 py-12 px-6">
-  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-    <div class="stat-num">
-      <div class="font-display text-5xl gradient-text mb-2">${vehicleCount > 0 ? vehicleCount : "30+"}</div>
-      <div class="text-xs uppercase tracking-widest text-white/60">Véhicules en stock</div>
-    </div>
-    <div class="stat-num" style="animation-delay: 0.1s;">
-      <div class="font-display text-5xl gradient-text mb-2">${yearsExp}</div>
-      <div class="text-xs uppercase tracking-widest text-white/60">Années d'expérience</div>
-    </div>
-    <div class="stat-num" style="animation-delay: 0.2s;">
-      <div class="font-display text-5xl gradient-text mb-2">${realReviews}</div>
-      <div class="text-xs uppercase tracking-widest text-white/60">Clients satisfaits</div>
-    </div>
-    <div class="stat-num" style="animation-delay: 0.3s;">
-      <div class="font-display text-5xl gradient-text mb-2">100%</div>
-      <div class="text-xs uppercase tracking-widest text-white/60">Garantie incluse</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ NOTRE STOCK (vrais véhicules) ═══ -->
-<section id="stock" class="py-24 px-6">
+<!-- ═══ NOTRE STOCK (TOUT EN PREMIER après le hero — vrais véhicules) ═══ -->
+<section id="stock" class="py-20 px-6 bg-gradient-to-b from-black via-neutral-950 to-black">
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-wrap items-end justify-between mb-12 gap-6">
       <div>
-        <div class="text-xs uppercase tracking-widest text-primary font-bold mb-2">Notre sélection</div>
-        <h2 class="font-display text-5xl lg:text-6xl">Voitures <span class="gradient-text">disponibles</span></h2>
+        <div class="text-xs uppercase tracking-widest text-primary font-bold mb-2">${vehicleCount > 0 ? `${vehicleCount} véhicule${vehicleCount > 1 ? "s" : ""} en stock` : "Notre catalogue"}</div>
+        <h2 class="font-display text-5xl lg:text-7xl leading-none">Voitures <span class="gradient-text">disponibles</span></h2>
       </div>
-      <a href="/prospects/${slug}/voitures" class="btn-ghost px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">
-        Voir le catalogue complet
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </a>
+      ${hasMoreThan12 ? `<a href="/prospects/${slug}/voitures" class="btn-glow px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Voir les ${vehicleCount} véhicules<span class="material-symbols-outlined">arrow_forward</span></a>` : `<a href="/prospects/${slug}/voitures" class="btn-ghost px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Catalogue complet<span class="material-symbols-outlined">arrow_forward</span></a>`}
     </div>
     ${topVehicles.length > 0 ? `
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       ${topVehicles.map((v, i) => `
-        <article class="vehicle-card rounded-2xl overflow-hidden fade-up fade-up-${Math.min(i, 3)}">
-          <div class="aspect-[4/3] overflow-hidden bg-neutral-900">
+        <article class="vehicle-card rounded-2xl overflow-hidden fade-up fade-up-${Math.min(i % 4, 3)}">
+          <div class="aspect-[4/3] overflow-hidden bg-neutral-900 relative">
             <img src="${esc(v.image!)}" alt="${esc(v.title)}" loading="lazy" class="w-full h-full object-cover" />
+            ${v.price ? `<div class="absolute top-3 right-3 px-3 py-1.5 rounded-full text-sm font-display backdrop-blur" style="background: rgba(0,0,0,0.7); color: ${accent};">${esc(v.price)}</div>` : ""}
           </div>
           <div class="p-5">
-            <h3 class="font-display text-lg mb-3 line-clamp-2 min-h-[3rem]">${esc(v.title)}</h3>
+            <h3 class="font-display text-base lg:text-lg mb-3 line-clamp-2 min-h-[2.75rem]">${esc(v.title)}</h3>
             <div class="flex flex-wrap gap-2 mb-4 text-xs">
-              ${v.year ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10">${esc(v.year)}</span>` : ""}
-              ${v.km ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10">${esc(v.km)}</span>` : ""}
-              ${v.fuel ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10">${esc(v.fuel)}</span>` : ""}
+              ${v.year ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10"><span class="material-symbols-outlined text-xs align-middle mr-1">event</span>${esc(v.year)}</span>` : ""}
+              ${v.km ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10"><span class="material-symbols-outlined text-xs align-middle mr-1">speed</span>${esc(v.km)}</span>` : ""}
+              ${v.fuel ? `<span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10"><span class="material-symbols-outlined text-xs align-middle mr-1">local_gas_station</span>${esc(v.fuel)}</span>` : ""}
             </div>
-            <div class="flex items-center justify-between gap-3">
-              ${v.price ? `<div class="text-xl font-display gradient-text">${esc(v.price)}</div>` : `<div class="text-sm text-white/60">Sur demande</div>`}
-              <button type="button" onclick="openLeadModal('essai', ${JSON.stringify(v.title).replace(/"/g, "&quot;")})" class="btn-glow px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider">Essai</button>
-            </div>
+            <button type="button" onclick="openLeadModal('essai', ${JSON.stringify(v.title).replace(/"/g, "&quot;")})" class="btn-glow w-full px-4 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center justify-center gap-2"><span class="material-symbols-outlined text-base">car_rental</span>Réserver un essai</button>
           </div>
         </article>`).join("")}
-    </div>` : `
+    </div>
+    ${hasMoreThan12 ? `<div class="text-center mt-12">
+      <a href="/prospects/${slug}/voitures" class="btn-glow inline-flex items-center gap-3 px-10 py-5 rounded-full font-bold uppercase tracking-wider text-base">
+        <span class="material-symbols-outlined">add_circle</span>+${vehicleCount - 12} autres véhicules à voir
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </a>
+    </div>` : ""}` : `
     <!-- Showcase de placeholder élégant pour garages sans véhicules scrapés -->
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       ${stockPhotos.slice(0, 3).map((photo, i) => `
@@ -356,6 +337,28 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
         <span class="material-symbols-outlined">arrow_forward</span>
       </a>
     </div>`}
+  </div>
+</section>
+
+<!-- ═══ STATS COUNTERS ═══ -->
+<section class="border-y border-white/10 bg-black/50 py-12 px-6">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    <div class="stat-num">
+      <div class="font-display text-5xl gradient-text mb-2">${vehicleCount > 0 ? vehicleCount : "30+"}</div>
+      <div class="text-xs uppercase tracking-widest text-white/60">Véhicules en stock</div>
+    </div>
+    <div class="stat-num" style="animation-delay: 0.1s;">
+      <div class="font-display text-5xl gradient-text mb-2">${yearsExp}</div>
+      <div class="text-xs uppercase tracking-widest text-white/60">Années d'expérience</div>
+    </div>
+    <div class="stat-num" style="animation-delay: 0.2s;">
+      <div class="font-display text-5xl gradient-text mb-2">${realReviews}</div>
+      <div class="text-xs uppercase tracking-widest text-white/60">Clients satisfaits</div>
+    </div>
+    <div class="stat-num" style="animation-delay: 0.3s;">
+      <div class="font-display text-5xl gradient-text mb-2">100%</div>
+      <div class="text-xs uppercase tracking-widest text-white/60">Garantie incluse</div>
+    </div>
   </div>
 </section>
 
