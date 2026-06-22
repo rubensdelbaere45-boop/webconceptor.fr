@@ -13,6 +13,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { detectMetierForStock, getStockPhotosForMetier } from "@/lib/stock-photos";
+import { enrichVehicles } from "@/lib/enrich-vehicle";
 import VoituresCatalog from "./VoituresCatalog";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +67,9 @@ export default async function VoituresPage({ params }: { params: Promise<{ slug:
     (p.business_type || "") + " " + (p.name || "")
   );
   const dna = p.site_style_dna || {};
-  const vehicles = (dna.detectedVehicles || []).filter(v => v.image && v.image.startsWith("http"));
+  const rawVehicles = (dna.detectedVehicles || []).filter(v => v.image && v.image.startsWith("http"));
+  // Enrichit chaque véhicule avec consommation, coût plein, autonomie, description AI
+  const vehicles = enrichVehicles(rawVehicles);
   const primaryColor = (dna.primaryColor || "#1e40af").toLowerCase();
   const accentColor = (dna.accentColor || "#ff6900").toLowerCase();
   const metier = detectMetierForStock(`${p.business_type || ""} ${p.name || ""}`);

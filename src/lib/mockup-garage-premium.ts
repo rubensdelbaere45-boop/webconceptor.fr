@@ -290,7 +290,7 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
         <div class="text-xs uppercase tracking-widest text-primary font-bold mb-2">${vehicleCount > 0 ? `${vehicleCount} véhicule${vehicleCount > 1 ? "s" : ""} en stock` : "Notre catalogue"}</div>
         <h2 class="font-display text-5xl lg:text-7xl leading-none">Voitures <span class="gradient-text">disponibles</span></h2>
       </div>
-      ${hasMoreThan12 ? `<a href="/prospects/${slug}/voitures" class="btn-glow px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Voir les ${vehicleCount} véhicules<span class="material-symbols-outlined">arrow_forward</span></a>` : `<a href="/prospects/${slug}/voitures" class="btn-ghost px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Catalogue complet<span class="material-symbols-outlined">arrow_forward</span></a>`}
+      ${hasMoreThan12 ? `<a href="/prospects/${slug}/voitures" class="btn-glow px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Voir les ${vehicleCount} véhicules<span class="material-symbols-outlined">arrow_forward</span></a>` : `<a href="/prospects/${slug}/voitures" class="btn-ghost px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Nos véhicules<span class="material-symbols-outlined">arrow_forward</span></a>`}
     </div>
     ${topVehicles.length > 0 ? `
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -325,7 +325,7 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
             <img src="${photo}" alt="" loading="lazy" class="w-full h-full object-cover opacity-90" />
             <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
               <span class="material-symbols-outlined text-5xl text-white mb-2">${["directions_car", "speed", "settings"][i]}</span>
-              <span class="text-sm font-bold uppercase tracking-widest text-white">${["Catalogue complet", "Essais gratuits", "Garantie incluse"][i]}</span>
+              <span class="text-sm font-bold uppercase tracking-widest text-white">${["Nos véhicules", "Essais gratuits", "Garantie incluse"][i]}</span>
             </div>
           </div>
         </article>`).join("")}
@@ -333,7 +333,7 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
     <div class="text-center mt-12">
       <a href="/prospects/${slug}/voitures" class="btn-glow inline-flex items-center gap-3 px-10 py-5 rounded-full font-bold uppercase tracking-wider text-base">
         <span class="material-symbols-outlined">storefront</span>
-        Découvrir notre catalogue complet
+        Découvrir tous nos véhicules
         <span class="material-symbols-outlined">arrow_forward</span>
       </a>
     </div>`}
