@@ -109,16 +109,21 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
   // (filtre encore les images < 300px implicite via heuristique URL)
   const isLowQualityImage = (url: string): boolean => {
     if (!url) return true;
-    // Skip si URL contient des indices de basse qualité
-    if (/favicon|cropped-|thumb|-50x50|-100x100|-150x150|-180x180|-200x200/i.test(url)) return true;
-    // Force la skip d'extensions douteuses
+    // Skip si URL contient des indices de basse qualité (taille petite)
+    if (/favicon|cropped-|thumb|sprite|placeholder|garage_defaut|certifie_/i.test(url)) return true;
+    if (/-50x50|-100x100|-150x150|-180x180|-200x200|-300x300|-400x400|w=50|w=100|w=150|w=200|w=300/i.test(url)) return true;
+    // Extensions douteuses
     if (/\.(ico|gif|svg)(\?|$)/i.test(url)) return true;
-    // Skip assets SaaS génériques (Vroomly, Autoscout, etc.) — pas des photos du garage
-    if (/vroomly\.com|autoscout24\.com|autosphere|lacentrale\.fr\/static|leboncoin\.fr\/static/i.test(url)) return true;
+    // Assets SaaS (jamais photos garage réelles)
+    if (/vroomly|autoscout|autosphere|lacentrale\.fr\/static|leboncoin\.fr\/static|paruvendu|cdninstagram|fbcdn/i.test(url)) return true;
     return false;
   };
-  const cleanScrapedImages = (dna.allImages || []).filter(img => !isLowQualityImage(img));
-  const heroImage = (dna.heroImageUrl && !isLowQualityImage(dna.heroImageUrl))
+  // Si site SaaS → on IGNORE TOUTES les images scrapées (forcément génériques/SaaS)
+  // et on utilise uniquement les stock photos métier (HD, propres, pertinentes).
+  const cleanScrapedImages = isFromSaas
+    ? [] // SaaS : zero image scrapée, force stock photos métier
+    : (dna.allImages || []).filter(img => !isLowQualityImage(img));
+  const heroImage = (!isFromSaas && dna.heroImageUrl && !isLowQualityImage(dna.heroImageUrl))
     ? dna.heroImageUrl
     : (cleanScrapedImages[0] || getHeroPhotoForMetier(metierForStock));
   const heroTitle = esc(dna.heroTitle || name);
@@ -333,8 +338,9 @@ export function generateEnrichedMockupHtml(p: EnrichedProspect): string {
       </h1>
       <p class="text-xl text-neutral-700 leading-relaxed mb-8 max-w-xl fade-up fade-up-delay-1">${heroSubtitle}</p>
       <div class="flex flex-wrap gap-3 fade-up fade-up-delay-2">
-        <button type="button" onclick="openKlyoraModal('rdv')" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">event</span>Prendre rendez-vous</button>
-        <button type="button" onclick="openKlyoraModal('devis')" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">request_quote</span>Demander un devis</button>
+        ${isGarage ? `<a href="/prospects/${slug}/voitures" class="bg-primary text-white px-10 py-5 rounded-full font-bold text-lg hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">directions_car</span>Voir nos voitures<span class="material-symbols-outlined">arrow_forward</span></a>
+        <button type="button" onclick="openKlyoraModal('essai')" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">car_rental</span>Réserver un essai</button>` : `<button type="button" onclick="openKlyoraModal('rdv')" class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition inline-flex items-center gap-2 hover-lift" style="box-shadow: 0 10px 30px ${primary}55"><span class="material-symbols-outlined">event</span>Prendre rendez-vous</button>
+        <button type="button" onclick="openKlyoraModal('devis')" class="glass border-2 border-primary text-primary px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition inline-flex items-center gap-2"><span class="material-symbols-outlined">request_quote</span>Demander un devis</button>`}
         ${phoneDigits ? `<a href="tel:${phoneDigits}" class="text-primary px-6 py-4 font-bold hover:underline transition inline-flex items-center gap-2"><span class="material-symbols-outlined">call</span>${phoneDisplay}</a>` : ""}
       </div>
       ${p.google_rating && p.google_reviews_count ? `<div class="mt-8 flex items-center gap-3 fade-up fade-up-delay-3"><div class="flex">${Array(Math.round(p.google_rating)).fill('<span class="material-symbols-outlined text-accent" style="font-variation-settings: \'FILL\' 1;">star</span>').join("")}</div><span class="text-sm text-neutral-700"><strong>${p.google_rating.toFixed(1)}/5</strong> · ${p.google_reviews_count} avis Google</span></div>` : ""}
