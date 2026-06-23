@@ -287,10 +287,10 @@ export function generateGaragePremiumMockupHtml(p: GaragePremiumProspect): strin
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-wrap items-end justify-between mb-12 gap-6">
       <div>
-        <div class="text-xs uppercase tracking-widest text-primary font-bold mb-2">${vehicleCount > 0 ? `${vehicleCount} véhicule${vehicleCount > 1 ? "s" : ""} en stock` : "Notre catalogue"}</div>
+        <div class="text-xs uppercase tracking-widest text-primary font-bold mb-2">${vehicleCount > 0 ? `${vehicleCount} véhicule${vehicleCount > 1 ? "s" : ""} en stock` : "Nos véhicules"}</div>
         <h2 class="font-display text-5xl lg:text-7xl leading-none">Voitures <span class="gradient-text">disponibles</span></h2>
       </div>
-      ${hasMoreThan12 ? `<a href="/prospects/${slug}/voitures" class="btn-glow px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Voir les ${vehicleCount} véhicules<span class="material-symbols-outlined">arrow_forward</span></a>` : `<a href="/prospects/${slug}/voitures" class="btn-ghost px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Nos véhicules<span class="material-symbols-outlined">arrow_forward</span></a>`}
+      <a href="/prospects/${slug}/voitures" class="${hasMoreThan12 ? "btn-glow" : "btn-ghost"} px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm inline-flex items-center gap-2">Nos véhicules<span class="material-symbols-outlined">arrow_forward</span></a>
     </div>
     ${topVehicles.length > 0 ? `
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
