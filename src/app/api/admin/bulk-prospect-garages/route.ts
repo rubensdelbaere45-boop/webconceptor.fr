@@ -83,7 +83,9 @@ export async function POST(req: NextRequest) {
   for (const p of list) {
     // Doit être garage
     const hay = `${p.business_type || ""} ${p.name || ""}`.toLowerCase();
-    const isGar = /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/.test(hay);
+    // Exclut auto-école qui matcherait 'auto'
+    const isAutoEcole = /\bauto[\s-]*[eé]cole\b/.test(hay);
+    const isGar = !isAutoEcole && /\b(garage|garagi|m[eé]canicien|carrosseri|concession|automobile|auto)\b/.test(hay);
     if (!isGar) { skipped++; continue; }
     // Doit être indépendant
     const fr = analyzeGarageFranchise(p.name);
