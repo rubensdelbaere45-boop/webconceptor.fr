@@ -307,8 +307,13 @@ export async function GET(
         site_style_dna: data.site_style_dna,
       };
       const haystack = `${data.business_type || ""} ${data.name || ""} ${slug}`.toLowerCase();
+      // Dispatcher : si le métier matche un template dédié → on l'utilise
+      // sinon fallback universel. Détection large (noms commerciaux variés).
+      const isFleuriste =
+        data.business_type === "fleuriste" ||
+        /\b(fleurist|fleurs|floral|bouquet|atelier[-\s]floral|aux[-\s]fleurs|au[-\s]bouquet)/.test(haystack);
       let generated: string;
-      if (/\bfleurist/.test(haystack)) {
+      if (isFleuriste) {
         generated = generateFleuristePremiumMockupHtml(baseInput);
       } else {
         generated = generatePremiumUniversalMockupHtml(baseInput);
