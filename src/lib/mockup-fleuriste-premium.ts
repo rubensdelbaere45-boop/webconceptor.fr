@@ -261,7 +261,9 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="${primary}">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>${name} — Fleuriste à ${city}</title>
 <meta name="description" content="${name}, fleuriste à ${city}. Bouquets, mariages, deuils, abonnement bureaux. Fleurs fraîches du marché, composition à la minute.">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -378,44 +380,66 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 
   /* ─── Sticky mobile bottom buttons ───────────────────── */
   .sticky-fab {
-    position: fixed; right: 16px;
+    position: fixed; right: max(14px, env(safe-area-inset-right));
     z-index: 50;
     width: 56px; height: 56px;
     border-radius: 50%;
     display: grid; place-items: center;
-    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    box-shadow: 0 8px 24px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.12);
     transition: transform .2s;
   }
+  .sticky-fab:active { transform: scale(.92); }
   .sticky-fab:hover { transform: scale(1.08); }
   @media (min-width: 768px) { .sticky-fab { display: none; } }
+
+  /* ─── Cartes : feedback tactile mobile ───────────────────── */
+  .card-soft:active { transform: scale(.985); }
+
+  /* ─── Modal scrollable sur petits écrans ───────────────────── */
+  .kr-modal-bg { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+  /* ─── Réduit la "fatigue" hero sur petit téléphone ───────────────────── */
+  @media (max-width: 480px) {
+    h1 { font-size: clamp(2.4rem, 9.5vw, 3.2rem) !important; line-height: 1.06 !important; }
+    h2 { font-size: clamp(1.9rem, 7vw, 2.4rem) !important; }
+    .marquee article { width: 280px !important; }
+  }
+
+  /* ─── Pas de pétales en motion-reduce (a11y + batterie) ───────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .petal, .kenburns, .marquee, .counter { animation: none !important; }
+  }
+
+  /* ─── Pause marquee au touch (mobile) ───────────────────── */
+  .marquee:active { animation-play-state: paused; }
 </style>
 </head>
 <body class="antialiased overflow-x-hidden">
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="sticky top-0 z-40 backdrop-blur-xl border-b" style="background:${v.bg}cc;border-color:${v.border}">
-  <div class="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between">
-    <a href="#hero" class="flex items-center gap-3">
+  <div class="max-w-7xl mx-auto px-4 md:px-5 py-2.5 md:py-3 flex items-center justify-between gap-3">
+    <a href="#hero" class="flex items-center gap-2.5 md:gap-3 min-w-0">
       ${logoHtml}
-      <div>
-        <div class="font-[var(--font-heading)] text-lg font-bold leading-none">${name}</div>
-        <div class="text-[11px] opacity-60 tracking-widest mt-0.5 uppercase">Fleuriste · ${city}</div>
+      <div class="min-w-0">
+        <div class="font-[var(--font-heading)] text-base md:text-lg font-bold leading-none truncate">${name}</div>
+        <div class="text-[10px] md:text-[11px] opacity-60 tracking-widest mt-0.5 uppercase truncate">Fleuriste · ${city}</div>
       </div>
     </a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium">
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium shrink-0">
       <a href="#bouquets" class="hover:text-[color:var(--primary)] transition">Nos bouquets</a>
       <a href="#evenements" class="hover:text-[color:var(--primary)] transition">Événements</a>
       <a href="#avis" class="hover:text-[color:var(--primary)] transition">Avis</a>
       <a href="#contact" class="hover:text-[color:var(--primary)] transition">Contact</a>
     </nav>
-    <button onclick="krOpen('commander')" class="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold">
+    <button onclick="krOpen('commander')" class="btn-primary px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap shrink-0">
       Commander
     </button>
   </div>
 </header>
 
 <!-- ═══════════════════ HERO ═══════════════════ -->
-<section id="hero" class="relative overflow-hidden pt-12 pb-20 md:pt-16 md:pb-32" style="background:${v.heroBgGradient}">
+<section id="hero" class="relative overflow-hidden pt-8 pb-14 md:pt-16 md:pb-32" style="background:${v.heroBgGradient}">
   <!-- Pétales -->
   <div class="absolute inset-0 pointer-events-none overflow-hidden">
     <span class="petal"></span><span class="petal"></span><span class="petal"></span><span class="petal"></span>
@@ -436,14 +460,14 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
         Bouquets composés à la minute, mariages d'exception, abonnement bureaux. Fleurs fraîches du marché chaque matin, savoir-faire artisanal depuis ${yearsExp} ans.
       </p>
 
-      <div class="flex flex-wrap items-center gap-3 mb-10">
-        <button onclick="krOpen('commander')" class="btn-primary px-7 py-4 rounded-full text-base font-semibold inline-flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 mb-10">
+        <button onclick="krOpen('commander')" class="btn-primary px-7 py-4 rounded-full text-base font-semibold inline-flex items-center justify-center gap-2">
           Commander un bouquet →
         </button>
         <button onclick="krOpen('mariage')" class="btn-ghost px-7 py-4 rounded-full text-base font-semibold">
           Devis mariage
         </button>
-        ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-wa px-6 py-4 rounded-full text-base font-semibold inline-flex items-center gap-2">
+        ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-wa px-6 py-4 rounded-full text-base font-semibold inline-flex items-center justify-center gap-2">
           <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm0 29.33c-2.5 0-4.83-.67-6.83-1.83l-.5-.29-5 1.32 1.34-4.88-.32-.5A13.28 13.28 0 0 1 2.67 16C2.67 8.65 8.65 2.67 16 2.67S29.33 8.65 29.33 16 23.35 29.33 16 29.33zm7.42-9.94c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
           WhatsApp
         </a>` : ""}
@@ -467,7 +491,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
     </div>
 
     <div class="relative fade-up" style="animation-delay:.3s">
-      <div class="relative aspect-[4/5] rounded-[36px] overflow-hidden shadow-2xl">
+      <div class="relative aspect-[4/5] sm:aspect-[3/4] md:aspect-[4/5] rounded-3xl md:rounded-[36px] overflow-hidden shadow-2xl">
         <img src="${esc(heroImg)}" alt="${name}" class="kenburns w-full h-full object-cover" loading="eager"/>
         <div class="absolute inset-0" style="background:linear-gradient(180deg,transparent 40%,${v.fg}60 100%)"></div>
         <div class="absolute bottom-6 left-6 right-6 text-white">
@@ -490,7 +514,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ NOS BOUQUETS ═══════════════════ -->
-<section id="bouquets" class="py-20 md:py-28">
+<section id="bouquets" class="py-14 md:py-28">
   <div class="max-w-7xl mx-auto px-5">
     <div class="text-center max-w-2xl mx-auto mb-14">
       <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Nos créations</div>
@@ -518,7 +542,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ POUR VOS ÉVÉNEMENTS ═══════════════════ -->
-<section id="evenements" class="py-20 md:py-28" style="background:${v.muted}">
+<section id="evenements" class="py-14 md:py-28" style="background:${v.muted}">
   <div class="max-w-7xl mx-auto px-5">
     <div class="text-center max-w-2xl mx-auto mb-14">
       <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Sur-mesure</div>
@@ -579,7 +603,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ TÉMOIGNAGES MARQUEE ═══════════════════ -->
-<section id="avis" class="py-20 md:py-28" style="background:${v.muted}">
+<section id="avis" class="py-14 md:py-28" style="background:${v.muted}">
   <div class="max-w-7xl mx-auto mb-10 px-5">
     <div class="text-center max-w-2xl mx-auto">
       <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Ils nous adorent</div>
@@ -606,7 +630,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ À PROPOS ═══════════════════ -->
-<section class="py-20 md:py-28">
+<section class="py-14 md:py-28">
   <div class="max-w-7xl mx-auto px-5 grid md:grid-cols-2 gap-14 items-center">
     <div class="aspect-[5/6] rounded-[36px] overflow-hidden shadow-xl">
       <img src="${esc(gallery[4] || heroImg)}" alt="" class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" loading="lazy"/>
@@ -631,7 +655,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ CONTACT + MAPS + HORAIRES ═══════════════════ -->
-<section id="contact" class="py-20 md:py-28" style="background:${v.muted}">
+<section id="contact" class="py-14 md:py-28" style="background:${v.muted}">
   <div class="max-w-7xl mx-auto px-5">
     <div class="text-center mb-12">
       <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Venez nous voir</div>
@@ -673,7 +697,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </section>
 
 <!-- ═══════════════════ FOOTER ═══════════════════ -->
-<footer class="py-10 border-t" style="border-color:${v.border}">
+<footer class="py-10 pb-32 md:pb-10 border-t" style="border-color:${v.border}">
   <div class="max-w-7xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
     <div class="flex items-center gap-3">
       ${logoHtml}
@@ -689,10 +713,10 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </footer>
 
 <!-- ═══════════════════ MODAL COMMANDER (multi-étape) ═══════════════════ -->
-<div id="kr-modal" class="hidden fixed inset-0 z-50 items-center justify-center kr-modal-bg p-4" onclick="if(event.target===this) krClose()">
-  <div class="bg-[color:var(--card-bg)] rounded-3xl max-w-md w-full shadow-2xl relative overflow-hidden" style="border:1px solid ${v.border}">
-    <button onclick="krClose()" class="absolute top-4 right-4 w-9 h-9 rounded-full grid place-items-center hover:opacity-70 transition" style="background:${v.muted}" aria-label="Fermer">×</button>
-    <div class="p-8">
+<div id="kr-modal" class="hidden fixed inset-0 z-50 items-end sm:items-center justify-center kr-modal-bg p-0 sm:p-4 overflow-y-auto" onclick="if(event.target===this) krClose()">
+  <div class="bg-[color:var(--card-bg)] rounded-t-3xl sm:rounded-3xl max-w-md w-full shadow-2xl relative overflow-hidden max-h-[92vh] overflow-y-auto" style="border:1px solid ${v.border}">
+    <button onclick="krClose()" class="absolute top-4 right-4 w-9 h-9 rounded-full grid place-items-center hover:opacity-70 transition z-10" style="background:${v.muted}" aria-label="Fermer">×</button>
+    <div class="p-6 sm:p-8">
       <div id="kr-title" class="mb-1">
         <div class="text-xs font-bold tracking-widest uppercase mb-2" style="color:${primary}">Commander</div>
         <h3 class="text-2xl font-bold">Votre bouquet en <span class="serif-italic">3 étapes.</span></h3>
@@ -759,10 +783,10 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 </div>
 
 <!-- ═══════════════════ STICKY MOBILE FAB ═══════════════════ -->
-${phoneDisplay ? `<a href="${phoneLink}" class="sticky-fab" style="bottom:78px;background:linear-gradient(135deg,${primary},${v.secondary})" aria-label="Appeler">
+${phoneDisplay ? `<a href="${phoneLink}" class="sticky-fab" style="bottom:calc(82px + env(safe-area-inset-bottom, 0px));background:linear-gradient(135deg,${primary},${v.secondary})" aria-label="Appeler">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
 </a>` : ""}
-${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="sticky-fab" style="bottom:16px;background:#25D366" aria-label="WhatsApp">
+${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="sticky-fab" style="bottom:calc(18px + env(safe-area-inset-bottom, 0px));background:#25D366" aria-label="WhatsApp">
   <svg width="26" height="26" viewBox="0 0 32 32" fill="white" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
 </a>` : ""}
 
