@@ -6,6 +6,7 @@ import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
 import { generatePremiumUniversalMockupHtml } from "@/lib/mockup-premium-universal";
 import { generateFleuristePremiumMockupHtml } from "@/lib/mockup-fleuriste-premium";
+import { generatePlombierPremiumMockupHtml } from "@/lib/mockup-plombier-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -307,14 +308,19 @@ export async function GET(
         site_style_dna: data.site_style_dna,
       };
       const haystack = `${data.business_type || ""} ${data.name || ""} ${slug}`.toLowerCase();
-      // Dispatcher : si le métier matche un template dédié → on l'utilise
-      // sinon fallback universel. Détection large (noms commerciaux variés).
+      // Dispatcher : si le métier matche un template dédié → on l'utilise.
+      // Sinon fallback universel. Détection large (noms commerciaux variés).
       const isFleuriste =
         data.business_type === "fleuriste" ||
         /\b(fleurist|fleurs|floral|bouquet|atelier[-\s]floral|aux[-\s]fleurs|au[-\s]bouquet)/.test(haystack);
+      const isPlombier =
+        data.business_type === "plombier" ||
+        /\b(plomb|plombier|plomberie|sanitair|d[eé]bouch|chauffagiste|chauffe[-\s]eau|d[eé]pannage)/.test(haystack);
       let generated: string;
       if (isFleuriste) {
         generated = generateFleuristePremiumMockupHtml(baseInput);
+      } else if (isPlombier) {
+        generated = generatePlombierPremiumMockupHtml(baseInput);
       } else {
         generated = generatePremiumUniversalMockupHtml(baseInput);
       }
