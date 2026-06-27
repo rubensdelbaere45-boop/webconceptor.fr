@@ -774,7 +774,7 @@ export async function GET(
 
   // Watermark "Maquette de démonstration" + lien suppression auto-service
   // Strip d'abord toute version stale, puis injection fraîche
-  const demoWatermark = buildDemoWatermarkSnippet(data.email, data.website);
+  const demoWatermark = buildDemoWatermarkSnippet(slug, data.email, data.website);
   const withWatermark = stripOldDemoWatermark(withSalesUi)
     .replace(/<\/body>/i, demoWatermark + "</body>");
 
