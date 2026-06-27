@@ -4,6 +4,7 @@ import { escapeTelegram } from "@/lib/security";
 import { generateCallScript } from "@/lib/call-script";
 import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
+import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -771,7 +772,13 @@ export async function GET(
 })();
 </script>`;
 
-  const finalHtml = withSalesUi.replace(/<\/body>/i, liveEditScript + beaconScript + "</body>");
+  // Watermark "Maquette de démonstration" + lien suppression auto-service
+  // Strip d'abord toute version stale, puis injection fraîche
+  const demoWatermark = buildDemoWatermarkSnippet(data.email, data.website);
+  const withWatermark = stripOldDemoWatermark(withSalesUi)
+    .replace(/<\/body>/i, demoWatermark + "</body>");
+
+  const finalHtml = withWatermark.replace(/<\/body>/i, liveEditScript + beaconScript + "</body>");
 
   return new NextResponse(finalHtml, {
     headers: {
