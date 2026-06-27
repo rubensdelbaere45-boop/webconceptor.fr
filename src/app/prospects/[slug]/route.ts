@@ -4,6 +4,7 @@ import { escapeTelegram } from "@/lib/security";
 import { generateCallScript } from "@/lib/call-script";
 import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
+import { generatePremiumUniversalMockupHtml } from "@/lib/mockup-premium-universal";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -286,42 +287,23 @@ export async function GET(
       );
     }
 
-    // Non-restaurant : on génère avec le fallback content (sans Claude, rapide)
+    // Génération à la volée via le template PREMIUM UNIVERSEL (theme métier
+    // détecté automatiquement : palette, fonts, sections adaptées). Remplace
+    // l'ancien mockup-adaptive qui rendait du HTML basique.
     try {
-      const label = ((bt: string) => {
-        const m: Record<string, string> = {
-          coiffeur: "un salon de coiffure", institut: "un institut de beauté",
-          fleuriste: "une boutique de fleurs", plombier: "un artisan plombier",
-          electricien: "un artisan électricien", dentiste: "un cabinet dentaire",
-          osteo: "un cabinet d'ostéopathie", salle_sport: "une salle de sport",
-          auto_ecole: "une auto-école locale", garage: "un garage indépendant",
-          epicerie: "une épicerie de proximité",
-        };
-        return m[bt] || "un commerce local";
-      })(data.business_type || "");
-
-      const adaptive: AdaptiveProspect = {
+      const generated = generatePremiumUniversalMockupHtml({
         id: data.id,
         slug,
         name: data.name,
         city: data.city, address: data.address, phone: data.phone,
         website: data.website, email: data.email,
         google_rating: data.google_rating, google_reviews_count: data.google_reviews_count,
-        photos: undefined, hours: data.hours, business_type: data.business_type,
+        hours: data.hours, business_type: data.business_type,
         menu_items: data.menu_items, reviews: data.reviews,
         about_scraped: data.about_scraped,
         website_photos: data.website_photos,
         site_style_dna: data.site_style_dna,
-      };
-      const fallbackContent = {
-        heroTitle: data.name,
-        heroSubtitle: `${label.charAt(0).toUpperCase() + label.slice(1)}${data.city ? ` à ${data.city}` : ""}`,
-        aboutText: `Notre équipe vous accueille${data.city ? ` à ${data.city}` : ""} avec un service attentionné et un savoir-faire reconnu.`,
-      };
-      const origin = new URL(req.url).origin;
-      const generated = generateAdaptiveMockupHtml(adaptive, fallbackContent, origin);
-
-      // Sauvegarde pour les prochaines visites (évite de re-générer à chaque fois)
+      });
       await supabase.from("prospects").update({ mockup_html: generated }).eq("id", data.id);
       data.mockup_html = generated;
     } catch (err) {
