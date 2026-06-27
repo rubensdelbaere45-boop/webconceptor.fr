@@ -5,6 +5,7 @@ import { generateCallScript } from "@/lib/call-script";
 import { buildSalesUiSnippet } from "@/lib/sales-ui-snippet";
 import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-adaptive";
 import { generatePremiumUniversalMockupHtml } from "@/lib/mockup-premium-universal";
+import { generateFleuristePremiumMockupHtml } from "@/lib/mockup-fleuriste-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -287,11 +288,12 @@ export async function GET(
       );
     }
 
-    // Génération à la volée via le template PREMIUM UNIVERSEL (theme métier
-    // détecté automatiquement : palette, fonts, sections adaptées). Remplace
-    // l'ancien mockup-adaptive qui rendait du HTML basique.
+    // Génération à la volée — dispatcher par métier.
+    // Chaque template métier (~700 lignes) propose une identité visuelle
+    // dédiée avec 3 variants palette (pour que 2 prospects du même métier
+    // ne reçoivent jamais le même design). Fallback : universel.
     try {
-      const generated = generatePremiumUniversalMockupHtml({
+      const baseInput = {
         id: data.id,
         slug,
         name: data.name,
@@ -303,7 +305,14 @@ export async function GET(
         about_scraped: data.about_scraped,
         website_photos: data.website_photos,
         site_style_dna: data.site_style_dna,
-      });
+      };
+      const haystack = `${data.business_type || ""} ${data.name || ""} ${slug}`.toLowerCase();
+      let generated: string;
+      if (/\bfleurist/.test(haystack)) {
+        generated = generateFleuristePremiumMockupHtml(baseInput);
+      } else {
+        generated = generatePremiumUniversalMockupHtml(baseInput);
+      }
       await supabase.from("prospects").update({ mockup_html: generated }).eq("id", data.id);
       data.mockup_html = generated;
     } catch (err) {
