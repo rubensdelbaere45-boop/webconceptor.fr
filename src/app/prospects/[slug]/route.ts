@@ -7,6 +7,7 @@ import { generateAdaptiveMockupHtml, type AdaptiveProspect } from "@/lib/mockup-
 import { generatePremiumUniversalMockupHtml } from "@/lib/mockup-premium-universal";
 import { generateFleuristePremiumMockupHtml } from "@/lib/mockup-fleuriste-premium";
 import { generatePlombierPremiumMockupHtml } from "@/lib/mockup-plombier-premium";
+import { generateElectricienPremiumMockupHtml } from "@/lib/mockup-electricien-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -321,10 +322,15 @@ export async function GET(
         /\b(fleurist|fleurs|floral|bouquet|atelier[-\s]floral|aux[-\s]fleurs|au[-\s]bouquet)/.test(haystack);
       const isPlombier =
         data.business_type === "plombier" ||
-        /\b(plomb|plombier|plomberie|sanitair|d[eé]bouch|chauffagiste|chauffe[-\s]eau|d[eé]pannage)/.test(haystack);
+        /\b(plomb|plombier|plomberie|sanitair|d[eé]bouch|chauffagiste|chauffe[-\s]eau)/.test(haystack);
+      const isElectricien =
+        data.business_type === "electricien" ||
+        /\b([eé]lectric|electricien|domotique|qualifelec|borne[-\s]ve|c[aâ]blage|tableau[-\s]electrique)/.test(haystack);
       let generated: string;
       if (isFleuriste) {
         generated = generateFleuristePremiumMockupHtml(baseInput);
+      } else if (isElectricien) {
+        generated = generateElectricienPremiumMockupHtml(baseInput);
       } else if (isPlombier) {
         generated = generatePlombierPremiumMockupHtml(baseInput);
       } else {
