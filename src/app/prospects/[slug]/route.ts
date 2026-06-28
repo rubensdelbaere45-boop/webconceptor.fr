@@ -156,6 +156,12 @@ export async function GET(
   const promoDiscount = promoParam === "20" ? 20 : promoParam === "15" ? 15 : 0;
   const promoCode = promoDiscount === 15 ? "AMELIE15" : promoDiscount === 20 ? "PROMO20" : null;
 
+  // ?preview=published → on rend le site comme s'il était déjà publié :
+  // pas de sales-ui (bandeau "Publier mon site") ni de watermark Klyora.
+  // Juste un petit bouton flottant "← Revenir à la maquette" pour retour.
+  const previewParam = new URL(req.url).searchParams.get("preview");
+  const isPreviewLive = previewParam === "published";
+
   if (!slug || slug.length > 100) {
     return new NextResponse("Not Found", { status: 404 });
   }
@@ -619,7 +625,11 @@ export async function GET(
   // (restaurant) : il cache cette barre et redirige pmOpen → wcSxOpen.
   // ═══════════════════════════════════════════════════════════════════
   const cleanedHtml = stripOldSnippet(injectedHtml);
-  const withSalesUi = cleanedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site", Boolean(data.is_luxury)) + "</body>");
+  // En mode preview "live" : on n'injecte PAS la sales-ui (bandeau "Publier
+  // mon site") — l'utilisateur voit le site tel qu'il serait après achat.
+  const withSalesUi = isPreviewLive
+    ? cleanedHtml
+    : cleanedHtml.replace(/<\/body>/i, buildSalesUiSnippet(mockupSlug, data.name || "votre site", Boolean(data.is_luxury)) + "</body>");
 
   // ═══════════════════════════════════════════════════════════════════
   // BEACON VIEW TRACKING — fire uniquement sur interaction humaine réelle
@@ -774,9 +784,31 @@ export async function GET(
 })();
 </script>`;
 
-  // Watermark "Maquette de démonstration" + lien suppression auto-service
-  // Strip d'abord toute version stale, puis injection fraîche
-  const demoWatermark = buildDemoWatermarkSnippet(slug);
+  // Watermark "Maquette de démonstration" + lien suppression auto-service.
+  // En mode ?preview=published, on remplace le watermark par un petit
+  // bouton flottant discret "← Revenir à la maquette" pour retour.
+  const previewBackSnippet = `
+<style>
+  #klyora-preview-back {
+    position: fixed; left: 14px; top: 14px;
+    z-index: 2147483647;
+    background: rgba(15,15,17,0.85);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    text-decoration: none;
+    font-family: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-size: 12px; font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.18);
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s, transform .12s;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  }
+  #klyora-preview-back:hover { background: rgba(15,15,17,1); transform: translateY(-1px); }
+</style>
+<a id="klyora-preview-back" href="?" title="Revenir à la maquette de démonstration">← Revenir à la maquette</a>`;
+  const demoWatermark = isPreviewLive ? previewBackSnippet : buildDemoWatermarkSnippet(slug);
   const withWatermark = stripOldDemoWatermark(withSalesUi)
     .replace(/<\/body>/i, demoWatermark + "</body>");
 

@@ -594,9 +594,9 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
       <h2 class="text-3xl md:text-4xl font-bold">Le plus beau s'admire <span class="serif-italic">en vrai.</span></h2>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${gallery.slice(0, 8).map(url => `
+      ${gallery.slice(0, Math.min(gallery.length, 8)).map(url => `
       <div class="aspect-square rounded-2xl overflow-hidden cursor-pointer">
-        <img src="${esc(url)}" alt="" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy"/>
+        <img src="${esc(url)}" alt="" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" onerror="this.parentElement.style.display='none'"/>
       </div>`).join("")}
     </div>
   </div>

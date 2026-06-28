@@ -101,6 +101,12 @@ const STOCK_PHOTOS: Record<Metier, string[]> = {
     "https://images.unsplash.com/photo-1585147303207-8e8f5b66e8a8?w=1200&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=1200&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1604754742629-3e0498a8c75d?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1620421680010-0766ff230392?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1572883454114-1cf0031ede2a?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1503602642458-232111445657?w=1200&auto=format&fit=crop",
   ],
   electricien: [
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop",

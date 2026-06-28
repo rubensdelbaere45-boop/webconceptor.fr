@@ -604,9 +604,9 @@ ${phoneDisplay ? `<div id="urgence-banner" class="urgence-banner relative z-50 p
       <h2 class="text-3xl md:text-4xl font-extrabold heading-uppercase">Nos derniers <span class="heading-gradient">chantiers.</span></h2>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${gallery.slice(0, 8).map(url => `
+      ${gallery.slice(0, Math.min(gallery.length, 8)).map(url => `
       <div class="aspect-square overflow-hidden rounded-lg" style="border:2px solid ${v.fg}">
-        <img src="${esc(url)}" alt="" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy"/>
+        <img src="${esc(url)}" alt="" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" onerror="this.parentElement.style.display='none'"/>
       </div>`).join("")}
     </div>
   </div>

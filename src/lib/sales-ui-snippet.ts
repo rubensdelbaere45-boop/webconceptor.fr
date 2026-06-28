@@ -170,6 +170,9 @@ body{padding-top:54px !important}
 <style>
 /* Bouton "Comment ça marche" + overlay explication */
 .wc-sx-how-btn{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:100px;cursor:pointer;letter-spacing:0.04em;white-space:nowrap;transition:all 0.15s}
+.wc-sx-preview-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,0.18);border:1px solid rgba(59,130,246,0.45);color:#fff;font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:100px;text-decoration:none;letter-spacing:0.04em;white-space:nowrap;transition:all 0.15s}
+.wc-sx-preview-btn:hover{background:rgba(59,130,246,0.35);border-color:#3b82f6;transform:translateY(-1px)}
+@media(max-width:640px){.wc-sx-preview-btn{display:none}}
 .wc-sx-how-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.55)}
 .wc-sx-how-overlay{position:fixed;inset:0;z-index:10001;background:rgba(10,10,10,0.78);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
 .wc-sx-how-overlay.open{display:flex}
@@ -199,7 +202,8 @@ body{padding-top:54px !important}
   </div>
   <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
     <button class="wc-sx-how-btn" type="button" onclick="wcSxHowOpen()">Comment ça marche&nbsp;?</button>
-    <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Je commande → ${basePriceNbsp}</button>
+    <a class="wc-sx-preview-btn" href="?preview=published" target="_blank" rel="noopener" title="Voir le site comme s'il était déjà publié, sans cette barre">👁️&nbsp;Aperçu&nbsp;live</a>
+    <button class="wc-sx-cta-btn" type="button" onclick="wcSxOpen()">Publier mon site → ${basePriceNbsp}</button>
   </div>
 </div>
 
