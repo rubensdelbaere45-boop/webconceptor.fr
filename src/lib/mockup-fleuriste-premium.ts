@@ -31,6 +31,7 @@
  *   - Sticky FAB mobile
  */
 import { getStockPhotosForMetier, getHeroPhotoForMetier } from "./stock-photos";
+import { buildBouquetComposer } from "./bouquet-composer";
 
 export type FleuristePremiumProspect = {
   id: string;
@@ -491,10 +492,10 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
       <a href="#galerie" class="hover:opacity-60 transition-opacity">Galerie</a>
       <a href="#contact" class="hover:opacity-60 transition-opacity">Contact</a>
     </nav>
-    <button onclick="kOpen('bouquet')" class="btn-primary text-[12px] py-3 px-6 hidden sm:inline-flex">
+    <button onclick="composerOpen()" class="btn-primary text-[12px] py-3 px-6 hidden sm:inline-flex">
       Commander
     </button>
-    <button onclick="kOpen('bouquet')" class="btn-primary text-[12px] py-2.5 px-5 sm:hidden">
+    <button onclick="composerOpen()" class="btn-primary text-[12px] py-2.5 px-5 sm:hidden">
       Commander
     </button>
   </div>
@@ -514,7 +515,7 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
             Les fleurs, <span class="serif-italic">comme une émotion.</span>
           </h1>
           <div class="flex flex-col sm:flex-row gap-3 mb-10">
-            <button onclick="kOpen('bouquet')" class="btn-light">
+            <button onclick="composerOpen()" class="btn-light">
               Composer mon bouquet <span aria-hidden>→</span>
             </button>
             <button onclick="kOpen('mariage')" class="btn-ghost" style="color:#fff;border-color:#fff">
@@ -543,7 +544,7 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
       Une histoire de fleurs, de <span class="serif-italic" style="color:${primary}">${city}</span>.
     </h2>
     <p class="text-lg md:text-xl leading-[1.85] mb-10" style="color:${v.fg};white-space:pre-line">${aboutTextLong}</p>
-    <button onclick="kOpen('bouquet')" class="link-underline">
+    <button onclick="composerOpen()" class="link-underline">
       Découvrir nos compositions <span aria-hidden>→</span>
     </button>
   </div>
@@ -658,7 +659,7 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
           </div>
         </li>`).join("")}
       </ul>
-      <button onclick="kOpen('bouquet')" class="btn-primary">
+      <button onclick="composerOpen()" class="btn-primary">
         Venir nous voir <span aria-hidden>→</span>
       </button>
     </div>
@@ -724,7 +725,7 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
           <table class="w-full">${hoursHtml}</table>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 pt-3">
-          <button onclick="kOpen('bouquet')" class="btn-primary">Commander un bouquet <span aria-hidden>→</span></button>
+          <button onclick="composerOpen()" class="btn-primary">Commander un bouquet <span aria-hidden>→</span></button>
           ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-ghost" style="border-color:#25D366;color:#25D366">
             <svg width="16" height="16" viewBox="0 0 32 32" fill="currentColor" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
             WhatsApp
@@ -802,6 +803,9 @@ Aujourd'hui, on compose toujours à la minute, on n'a jamais voulu industrialise
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════ BOUQUET COMPOSER (modal full-screen) ═══════════════════ -->
+${buildBouquetComposer(slug)}
 
 <!-- ═══════════════════ STICKY MOBILE FAB ═══════════════════ -->
 ${phoneDisplay ? `<a href="${phoneLink}" class="sticky-fab" style="bottom:calc(82px + env(safe-area-inset-bottom, 0px));width:54px;height:54px;background:${primary}" aria-label="Appeler">
