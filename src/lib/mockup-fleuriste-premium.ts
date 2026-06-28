@@ -1,32 +1,32 @@
 /**
- * Template FLEURISTE PREMIUM — niveau garage-premium pour les boutiques de
- * fleurs. Univers rainbow-floral joyeux, fonts serif italic, animations
- * douces, particules pétales en CSS.
+ * Template FLEURISTE PREMIUM — refonte épurée éditoriale.
  *
- * 3 variants palette pickés via p.id.charCodeAt(0) % 3 — deux fleuristes
- * ne reçoivent jamais le même design :
- *   A "Sweet Pastel"     — rose pastel + jaune + violet, Cormorant italic
- *   B "Elegant Ivory"    — ivoire + cuivre + bordeaux, Playfair Display
- *   C "Botanical Green"  — blanc + vert sauge + corail, DM Serif Display
+ * Univers boutique de luxe / éditorial magazine. Beaucoup d'espace blanc,
+ * photos grand format, typo serif soignée, transitions lentes, palettes
+ * douces (jamais saturées).
  *
- * Sections (toutes fonctionnelles, tous boutons câblés) :
- *   - Header sticky (logo + nav + CTA)
- *   - Hero plein écran : photo parallaxe + headline + 4 trust badges + 3 CTAs
- *   - Particules pétales décoratives (8 spans CSS animation)
- *   - "Nos bouquets" : 6 cards (Saint-Valentin / Mariage / Anniversaire /
- *     Deuil / Naissance / Sur-mesure) avec hover scale + price + commander
- *   - "Pour vos événements" : 4 services (mariage / deuil / abonnement /
- *     cadeaux pros) avec icônes SVG
- *   - Stats animées au scroll (IntersectionObserver count-up)
- *   - Galerie Instagram-style 4 colonnes
- *   - Témoignages carrousel marquee
- *   - À propos + photo
- *   - Contact + Maps embed + horaires
- *   - Footer
- *   - Modal multi-étape "Commander un bouquet"
- *   - Sticky mobile : tel + WhatsApp + commander
+ * 3 variants pickés via p.id.charCodeAt(0) % 3 :
+ *   A "Blanc & Nature"  blanc cassé + vert sauge doux + terre brûlée
+ *                       DM Serif Display + Inter (éditorial pur)
+ *   B "Rose Poudré"     crème blush + rose poudré + or rosé mat
+ *                       Cormorant Garamond italic + Manrope (féminin sophistiqué)
+ *   C "Vert Argenté"    ivoire + vert eucalyptus + argent doux
+ *                       Fraunces + Inter (moderne nature)
+ *
+ * Sections (réduites pour respirer) :
+ *   - Header minimal (logo + 3 nav + 1 CTA discret)
+ *   - Hero éditorial split (texte gauche + grosse photo droite Ken Burns lent)
+ *   - 3 collections en grande grille avec hover lent
+ *   - Section éditorial "À propos" full-width photo
+ *   - Pour vos événements : 4 services typo-driven (pas d'icônes flashy)
+ *   - Galerie pleine largeur 4 col, photos qui parlent
+ *   - 3 témoignages en grille calme
+ *   - Stats discrètes (3 chiffres clés)
+ *   - Contact + Maps + horaires sobres
+ *   - Modal formulaire simple
+ *   - Sticky mobile : tel + WhatsApp
  */
-import { detectMetierForStock, getStockPhotosForMetier, getHeroPhotoForMetier } from "./stock-photos";
+import { getStockPhotosForMetier, getHeroPhotoForMetier } from "./stock-photos";
 
 export type FleuristePremiumProspect = {
   id: string;
@@ -63,76 +63,64 @@ function initials(name: string): string {
 type Variant = {
   id: string;
   name: string;
-  primary: string;
-  accent: string;
-  secondary: string;
-  bg: string;
-  cardBg: string;
-  fg: string;
-  muted: string;
-  border: string;
-  petal: string;
+  primary: string;   // couleur signature, jamais saturée
+  accent: string;    // ton complémentaire discret
+  bg: string;        // background page
+  surface: string;   // background sections décalées
+  fg: string;        // texte principal
+  fgSoft: string;    // texte secondaire
+  line: string;      // bordures fines
   fontHeading: string;
   fontBody: string;
   fontsImport: string;
-  serifItalic: boolean;
-  heroBgGradient: string;
+  serifWeight: string; // 400/500 pour serif fin
 };
 
 const VARIANTS: Variant[] = [
   {
-    id: "sweet-pastel",
-    name: "Sweet Pastel",
-    primary: "#ec4899",
-    accent: "#fbbf24",
-    secondary: "#a855f7",
-    bg: "#fffafc",
-    cardBg: "#ffffff",
-    fg: "#1c1b1b",
-    muted: "#fdf2f8",
-    border: "#fce7f3",
-    petal: "#fbcfe8",
+    id: "blanc-nature",
+    name: "Blanc & Nature",
+    primary: "#7a9b76",    // vert sauge doux
+    accent: "#b08968",     // terre brûlée mate
+    bg: "#fcfcfa",         // blanc cassé
+    surface: "#f5f3ee",    // crème pâle
+    fg: "#1a1a1a",
+    fgSoft: "#6b6b6b",
+    line: "#e8e6e0",
+    fontHeading: "DM Serif Display",
+    fontBody: "Inter",
+    fontsImport: "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap",
+    serifWeight: "400",
+  },
+  {
+    id: "rose-poudre",
+    name: "Rose Poudré",
+    primary: "#c89697",    // rose poudré mat (jamais flash)
+    accent: "#b8956d",     // or rosé mat
+    bg: "#fdf8f5",         // crème blush
+    surface: "#f8eee8",    // pêche très pâle
+    fg: "#2a1d1d",         // brun très foncé
+    fgSoft: "#7a6868",
+    line: "#ecd9d3",
     fontHeading: "Cormorant Garamond",
     fontBody: "Manrope",
-    fontsImport: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap",
-    serifItalic: true,
-    heroBgGradient: "linear-gradient(135deg, #fdf2f8 0%, #fef3c7 50%, #faf5ff 100%)",
+    fontsImport: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap",
+    serifWeight: "500",
   },
   {
-    id: "elegant-ivory",
-    name: "Elegant Ivory",
-    primary: "#be185d",
-    accent: "#d97706",
-    secondary: "#7c2d12",
-    bg: "#fefce8",
-    cardBg: "#ffffff",
-    fg: "#1c1917",
-    muted: "#fef9c3",
-    border: "#fef08a",
-    petal: "#fbbf24",
-    fontHeading: "Playfair Display",
+    id: "vert-argente",
+    name: "Vert Argenté",
+    primary: "#5e7c5e",    // vert eucalyptus
+    accent: "#9a9590",     // argent doux mat
+    bg: "#faf9f4",         // ivoire
+    surface: "#f0ede5",    // ivoire profond
+    fg: "#1f2421",
+    fgSoft: "#6b6f6a",
+    line: "#dcdcd2",
+    fontHeading: "Fraunces",
     fontBody: "Inter",
-    fontsImport: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap",
-    serifItalic: true,
-    heroBgGradient: "linear-gradient(135deg, #fefce8 0%, #fef9c3 50%, #fff7ed 100%)",
-  },
-  {
-    id: "botanical-green",
-    name: "Botanical Green",
-    primary: "#16a34a",
-    accent: "#f43f5e",
-    secondary: "#1c1917",
-    bg: "#f7fee7",
-    cardBg: "#ffffff",
-    fg: "#14532d",
-    muted: "#ecfccb",
-    border: "#d9f99d",
-    petal: "#fda4af",
-    fontHeading: "DM Serif Display",
-    fontBody: "Plus Jakarta Sans",
-    fontsImport: "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
-    serifItalic: true,
-    heroBgGradient: "linear-gradient(135deg, #f7fee7 0%, #ecfccb 50%, #ffe4e6 100%)",
+    fontsImport: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap",
+    serifWeight: "400",
   },
 ];
 
@@ -157,9 +145,9 @@ function buildHoursTable(hoursStr: string | null | undefined, v: Variant): strin
       ] as [string, string][];
   return rows.map(([d, h]) => {
     const isClosed = /ferm[ée]/i.test(h);
-    return `<tr class="border-b last:border-0" style="border-color:${v.border}">
-      <td class="py-3 pr-6 font-medium capitalize">${esc(d)}</td>
-      <td class="py-3 text-right ${isClosed ? "italic opacity-50" : "font-semibold"}" style="${isClosed ? "" : `color:${v.primary}`}">${esc(h)}</td>
+    return `<tr class="border-b last:border-0" style="border-color:${v.line}">
+      <td class="py-3.5 pr-6 text-sm">${esc(d)}</td>
+      <td class="py-3.5 text-right text-sm ${isClosed ? "italic" : ""}" style="color:${isClosed ? v.fgSoft : v.fg}">${esc(h)}</td>
     </tr>`;
   }).join("");
 }
@@ -186,16 +174,28 @@ function pickGallery(p: FleuristePremiumProspect, n: number): string[] {
   return [...uniq, ...fillers].slice(0, n);
 }
 
-/** Pré-définit 6 bouquets génériques à présenter, prix réalistes fleuriste. */
-function defaultBouquets(): Array<{ title: string; subtitle: string; price: string; image: string; tag: string }> {
-  const stock = getStockPhotosForMetier("fleuriste", 6);
+/** 3 collections "éditoriales" — moins, mais avec présence. */
+function collections(): Array<{ title: string; subtitle: string; note: string; image: string }> {
+  const stock = getStockPhotosForMetier("fleuriste", 5);
   return [
-    { title: "Saint-Valentin", subtitle: "Roses rouges premium, 25 tiges", price: "à partir de 65 €", image: stock[0] || "", tag: "Best-seller" },
-    { title: "Mariage", subtitle: "Bouquet de mariée sur-mesure", price: "sur devis", image: stock[1] || "", tag: "Sur-mesure" },
-    { title: "Anniversaire", subtitle: "Composition colorée joyeuse", price: "à partir de 45 €", image: stock[2] || "", tag: "Coup de cœur" },
-    { title: "Deuil & sympathie", subtitle: "Couronne, gerbe ou raquette florale", price: "à partir de 80 €", image: stock[3] || "", tag: "Discrétion" },
-    { title: "Naissance", subtitle: "Bouquet pastel doux, peluche en option", price: "à partir de 38 €", image: stock[4] || "", tag: "Tendre" },
-    { title: "Composition sur-mesure", subtitle: "On crée d'après votre brief", price: "sur devis", image: stock[5] || "", tag: "Unique" },
+    {
+      title: "Bouquets du jour",
+      subtitle: "Au gré du marché",
+      note: "Composé chaque matin avec les fleurs reçues du producteur. Jamais le même bouquet deux jours de suite.",
+      image: stock[0] || "",
+    },
+    {
+      title: "Mariages & cérémonies",
+      subtitle: "Sur-mesure",
+      note: "Bouquet de mariée, boutonnières, centres de table, arches florales. Devis personnalisé en 48h.",
+      image: stock[1] || "",
+    },
+    {
+      title: "Abonnement bureaux",
+      subtitle: "Hebdomadaire",
+      note: "Renouvellement chaque semaine, formule clé en main, livraison incluse. À partir de 35 €/semaine.",
+      image: stock[2] || "",
+    },
   ];
 }
 
@@ -203,7 +203,6 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
   const v = pickVariant(p.id);
   const dna = p.site_style_dna || {};
 
-  // Couleurs DNA override si scrapées correctement
   const primary = (dna.primaryColor && dna.primaryColor.startsWith("#")) ? dna.primaryColor : v.primary;
   const accent = (dna.accentColor && dna.accentColor.startsWith("#")) ? dna.accentColor : v.accent;
 
@@ -215,46 +214,39 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
   const phoneLink = phoneDigits ? `tel:${phoneDigits.replace(/^0/, "+33")}` : "#contact";
   const addressDisplay = p.address ? esc(p.address) : `Boutique à ${city}`;
 
-  // WhatsApp
   const whatsappDigits = phoneDigits.replace(/\D/g, "").replace(/^0/, "33");
   const whatsappUrl = phoneDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Bonjour, je souhaiterais commander un bouquet chez ${p.name}.`)}` : "";
 
-  // Maps
   const mapsQuery = encodeURIComponent(`${p.address || p.name} ${p.city || ""}`);
   const mapsEmbedUrl = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
   const mapsLinkUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
-  // Hero & galerie
   const heroImg = pickHeroImage(p);
   const gallery = pickGallery(p, 8);
-  const bouquets = defaultBouquets();
+  const cols = collections();
 
-  // Logo
   const logoHtml = dna.logoUrl && dna.logoUrl.startsWith("http")
-    ? `<img src="${esc(dna.logoUrl)}" alt="${name}" class="h-11 w-auto max-w-[160px] object-contain"/>`
-    : `<div class="w-11 h-11 rounded-2xl grid place-items-center font-bold text-white text-base shadow-md" style="background:linear-gradient(135deg,${primary},${accent})">${initials(p.name)}</div>`;
+    ? `<img src="${esc(dna.logoUrl)}" alt="${name}" class="h-10 w-auto max-w-[140px] object-contain" onerror="this.style.display='none'"/>`
+    : `<div class="w-10 h-10 rounded-full grid place-items-center font-medium text-sm" style="background:${primary};color:${v.bg};font-family:var(--font-heading);font-weight:${v.serifWeight}">${initials(p.name)}</div>`;
 
-  // Stats
   const yearsExp = 8 + (p.id ? p.id.charCodeAt(0) % 18 : 0);
   const bouquetsLivres = 1200 + (p.id ? (p.id.charCodeAt(1) || 0) * 17 : 0);
   const ratingDisplay = p.google_rating ? p.google_rating.toFixed(1) : "4.9";
   const reviewsCount = p.google_reviews_count || 87 + (p.id ? p.id.charCodeAt(2) % 180 : 0);
 
-  // About
   const aboutText = p.about_scraped
-    ? esc(p.about_scraped.slice(0, 700))
-    : `Depuis ${yearsExp} ans, ${name}${p.city ? ` à ${city}` : ""} célèbre l'art floral à la française. Bouquets composés à la minute, fleurs fraîches du marché chaque matin, sélection de producteurs locaux. Chaque création est pensée pour transmettre une émotion juste, à la hauteur de l'instant qu'elle accompagne.`;
+    ? esc(p.about_scraped.slice(0, 800))
+    : `Depuis ${yearsExp} ans, ${name}${p.city ? ` à ${city}` : ""} compose des bouquets pensés comme une émotion juste. Fleurs reçues chaque matin de producteurs sélectionnés, savoir-faire artisanal, attention portée à chaque détail. Une boutique où l'on entre pour un cadeau, et d'où l'on repart avec une histoire.`;
 
-  // Reviews top 3
   const reviews = (p.reviews || []).filter(r => r.text && r.text.length > 30).slice(0, 3);
   const fallbackReviews = [
-    { author: "Camille D.", text: "Un bouquet absolument sublime pour l'anniversaire de ma maman. La fleuriste a parfaitement compris ce que je cherchais, et le résultat dépassait mes attentes. Je recommande à 200 %.", rating: 5, timeAgo: "il y a 2 semaines" },
-    { author: "Mathieu L.", text: "On a fait appel à eux pour notre mariage et c'était parfait. Pro, à l'écoute, et le rendu le jour J était féérique. Bouquet de mariée, boutonnières, centres de table — tout était sublime.", rating: 5, timeAgo: "il y a 1 mois" },
-    { author: "Sarah B.", text: "Mon fleuriste depuis 3 ans. Toujours frais, toujours créatif, jamais déçue. Et un accueil au top à chaque fois. La référence du quartier sans hésiter.", rating: 5, timeAgo: "il y a 3 mois" },
+    { author: "Camille D.", text: "Un bouquet absolument sublime pour l'anniversaire de ma maman. Le rendu dépassait mes attentes — composition fine, fleurs d'une fraîcheur remarquable. La boutique est un écrin.", rating: 5, timeAgo: "il y a 2 semaines" },
+    { author: "Mathieu L.", text: "On leur a confié les fleurs de notre mariage. Du conseil à la livraison, tout a été d'une justesse rare. Le bouquet de mariée était une œuvre, les centres de table un enchantement.", rating: 5, timeAgo: "il y a 1 mois" },
+    { author: "Sarah B.", text: "Ma fleuriste depuis trois ans. Toujours fraîche, toujours juste, jamais déçue. L'accueil est aussi soigné que les compositions. La référence.", rating: 5, timeAgo: "il y a 2 mois" },
   ];
   const reviewsToShow = reviews.length >= 2 ? reviews : fallbackReviews;
 
-  const hoursHtml = buildHoursTable(p.hours, { ...v, primary });
+  const hoursHtml = buildHoursTable(p.hours, v);
   const year = new Date().getFullYear();
 
   return `<!DOCTYPE html>
@@ -265,7 +257,7 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
 <meta name="theme-color" content="${primary}">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>${name} — Fleuriste à ${city}</title>
-<meta name="description" content="${name}, fleuriste à ${city}. Bouquets, mariages, deuils, abonnement bureaux. Fleurs fraîches du marché, composition à la minute.">
+<meta name="description" content="${name}, fleuriste à ${city}. Bouquets composés à la minute, mariages, abonnement bureaux. Fleurs reçues chaque matin de producteurs.">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -274,611 +266,483 @@ export function generateFleuristePremiumMockupHtml(p: FleuristePremiumProspect):
   :root {
     --primary: ${primary};
     --accent: ${accent};
-    --secondary: ${v.secondary};
     --bg: ${v.bg};
-    --card-bg: ${v.cardBg};
+    --surface: ${v.surface};
     --fg: ${v.fg};
-    --muted: ${v.muted};
-    --border: ${v.border};
-    --petal: ${v.petal};
-    --font-heading: "${v.fontHeading}", serif;
+    --fg-soft: ${v.fgSoft};
+    --line: ${v.line};
+    --font-heading: "${v.fontHeading}", "EB Garamond", serif;
     --font-body: "${v.fontBody}", system-ui, sans-serif;
   }
-  html, body { background: var(--bg); color: var(--fg); font-family: var(--font-body); }
-  h1, h2, h3, h4 { font-family: var(--font-heading); letter-spacing: -0.01em; }
-  .serif-italic { font-family: var(--font-heading); font-style: italic; font-weight: 500; }
-  .heading-gradient {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-  }
+  html, body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: ${v.serifWeight}; letter-spacing: -0.015em; line-height: 1.1; }
+  .serif { font-family: var(--font-heading); font-weight: ${v.serifWeight}; }
+  .serif-italic { font-family: var(--font-heading); font-weight: ${v.serifWeight}; font-style: italic; }
+
+  /* ─── Boutons (très sobres) ───────────────────── */
   .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: #fff;
-    box-shadow: 0 8px 24px -8px var(--primary);
-    transition: transform .2s, box-shadow .2s, filter .2s;
+    background: var(--fg); color: var(--bg);
+    padding: 14px 28px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.4s ease, color 0.4s ease;
+    border: 1px solid var(--fg);
+    display: inline-flex; align-items: center; gap: 10px;
+    text-decoration: none;
   }
-  .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 32px -8px var(--primary); filter: brightness(1.05); }
+  .btn-primary:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+
   .btn-ghost {
-    background: transparent;
-    color: var(--fg);
-    border: 1.5px solid var(--border);
-    transition: background .2s, border-color .2s, transform .2s;
+    background: transparent; color: var(--fg);
+    padding: 14px 28px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--fg);
+    transition: background 0.4s ease, color 0.4s ease;
+    display: inline-flex; align-items: center; gap: 10px;
+    text-decoration: none;
   }
-  .btn-ghost:hover { background: var(--muted); border-color: var(--primary); transform: translateY(-2px); }
+  .btn-ghost:hover { background: var(--fg); color: var(--bg); }
+
   .btn-wa {
-    background: #25D366;
-    color: #fff;
-    box-shadow: 0 8px 24px -8px #25D366;
-    transition: transform .2s, box-shadow .2s;
+    background: transparent; color: var(--fg);
+    padding: 14px 22px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--line);
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
   }
-  .btn-wa:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 32px -8px #25D366; }
-  .card-soft {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s;
+  .btn-wa:hover { background: #25D366; color: #fff; border-color: #25D366; }
+
+  .link-arrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fg);
+    text-decoration: none;
+    border-bottom: 1px solid var(--fg);
+    padding-bottom: 4px;
+    transition: gap 0.3s, color 0.3s, border-color 0.3s;
   }
-  .card-soft:hover {
-    transform: translateY(-6px) scale(1.015);
-    box-shadow: 0 16px 40px -12px ${primary}40;
-    border-color: var(--primary);
-  }
-  /* ─── Hero photo Ken Burns ───────────────────── */
-  @keyframes kenburns {
+  .link-arrow:hover { gap: 14px; color: var(--primary); border-color: var(--primary); }
+
+  /* ─── Cards : transition lente, hover subtil ───────────────────── */
+  .collection-card { transition: transform 0.7s cubic-bezier(.2,.8,.2,1); }
+  .collection-card img { transition: transform 1.2s cubic-bezier(.2,.8,.2,1); }
+  .collection-card:hover img { transform: scale(1.04); }
+
+  /* ─── Hero Ken Burns (très lent, presque imperceptible) ───────────────────── */
+  @keyframes kenburns-slow {
     0% { transform: scale(1) translate(0,0); }
-    50% { transform: scale(1.08) translate(-1%,-1%); }
-    100% { transform: scale(1.04) translate(1%,1%); }
+    50% { transform: scale(1.06) translate(-1%,-0.5%); }
+    100% { transform: scale(1.02) translate(0.5%,0.5%); }
   }
-  .kenburns { animation: kenburns 22s ease-in-out infinite alternate; }
+  .kenburns-slow { animation: kenburns-slow 30s ease-in-out infinite alternate; }
 
-  /* ─── Particules pétales ───────────────────── */
-  @keyframes fall {
-    0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  /* ─── Fade-in éditorial ───────────────────── */
+  @keyframes editorial-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .petal {
-    position: absolute;
-    top: 0;
-    pointer-events: none;
-    width: 14px; height: 14px;
-    background: var(--petal);
-    border-radius: 60% 40% 60% 40% / 70% 70% 30% 30%;
-    opacity: .65;
-    animation: fall linear infinite;
-  }
-  .petal:nth-child(1)  { left:  5%; animation-duration: 12s; animation-delay:  0s; }
-  .petal:nth-child(2)  { left: 15%; animation-duration: 18s; animation-delay:  2s; background: var(--accent); }
-  .petal:nth-child(3)  { left: 25%; animation-duration: 14s; animation-delay:  4s; }
-  .petal:nth-child(4)  { left: 35%; animation-duration: 20s; animation-delay:  1s; background: var(--secondary); opacity:.4; }
-  .petal:nth-child(5)  { left: 50%; animation-duration: 15s; animation-delay:  6s; }
-  .petal:nth-child(6)  { left: 65%; animation-duration: 22s; animation-delay:  3s; background: var(--accent); }
-  .petal:nth-child(7)  { left: 78%; animation-duration: 16s; animation-delay:  8s; }
-  .petal:nth-child(8)  { left: 90%; animation-duration: 19s; animation-delay:  5s; background: var(--secondary); opacity:.4; }
-  .petal:nth-child(9)  { left: 22%; animation-duration: 17s; animation-delay:  9s; background: var(--accent); opacity:.5; }
-  .petal:nth-child(10) { left: 72%; animation-duration: 13s; animation-delay: 11s; }
+  .reveal { opacity: 0; }
+  .reveal.in { animation: editorial-up 1s cubic-bezier(.2,.8,.2,1) forwards; }
 
-  /* ─── Fade-in stagger ───────────────────── */
-  @keyframes fadeUp {
+  /* ─── Galerie hover lent ───────────────────── */
+  .gallery-img { transition: opacity 0.6s ease, transform 1.2s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
+  .gallery-img:hover { opacity: 0.85; transform: scale(1.025); }
+
+  /* ─── Modal ───────────────────── */
+  .modal-bg { background: rgba(20,20,20,0.55); backdrop-filter: blur(10px); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  @keyframes fade-up-modal {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .fade-up { opacity: 0; animation: fadeUp .8s cubic-bezier(.2,.8,.2,1) forwards; }
+  .modal-content { animation: fade-up-modal 0.4s cubic-bezier(.2,.8,.2,1); }
 
-  /* ─── Marquee témoignages ───────────────────── */
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-  .marquee { display: flex; gap: 1.5rem; width: max-content; animation: marquee 40s linear infinite; }
-  .marquee:hover { animation-play-state: paused; }
-
-  /* ─── Modal ───────────────────── */
-  .kr-modal-bg { backdrop-filter: blur(14px); background: rgba(0,0,0,.55); }
-  .kr-step { display: none; }
-  .kr-step.active { display: block; animation: fadeUp .35s ease forwards; }
-
-  /* ─── Sticky mobile bottom buttons ───────────────────── */
+  /* ─── Sticky FAB ───────────────────── */
   .sticky-fab {
-    position: fixed; right: max(14px, env(safe-area-inset-right));
+    position: fixed; right: max(16px, env(safe-area-inset-right));
     z-index: 50;
-    width: 56px; height: 56px;
     border-radius: 50%;
     display: grid; place-items: center;
-    box-shadow: 0 8px 24px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.12);
-    transition: transform .2s;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
   }
   .sticky-fab:active { transform: scale(.92); }
-  .sticky-fab:hover { transform: scale(1.08); }
+  .sticky-fab:hover { transform: scale(1.06); }
   @media (min-width: 768px) { .sticky-fab { display: none; } }
 
-  /* ─── Cartes : feedback tactile mobile ───────────────────── */
-  .card-soft:active { transform: scale(.985); }
-
-  /* ─── Modal scrollable sur petits écrans ───────────────────── */
-  .kr-modal-bg { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-
-  /* ─── Réduit la "fatigue" hero sur petit téléphone ───────────────────── */
-  @media (max-width: 480px) {
-    h1 { font-size: clamp(2.4rem, 9.5vw, 3.2rem) !important; line-height: 1.06 !important; }
-    h2 { font-size: clamp(1.9rem, 7vw, 2.4rem) !important; }
-    .marquee article { width: 280px !important; }
+  /* ─── Mobile tuning ───────────────────── */
+  @media (max-width: 640px) {
+    h1 { font-size: clamp(2.6rem, 12vw, 4rem) !important; line-height: 1.05 !important; }
+    h2 { font-size: clamp(2rem, 8vw, 2.8rem) !important; }
+    .btn-primary, .btn-ghost { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
+    .btn-wa { padding: 13px 22px; font-size: 12px; width: 100%; justify-content: center; }
   }
 
-  /* ─── Pas de pétales en motion-reduce (a11y + batterie) ───────────────────── */
   @media (prefers-reduced-motion: reduce) {
-    .petal, .kenburns, .marquee, .counter { animation: none !important; }
+    .kenburns-slow, .collection-card img { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
   }
-
-  /* ─── Pause marquee au touch (mobile) ───────────────────── */
-  .marquee:active { animation-play-state: paused; }
 </style>
 </head>
 <body class="antialiased overflow-x-hidden">
 
-<!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="sticky top-0 z-40 backdrop-blur-xl border-b" style="background:${v.bg}cc;border-color:${v.border}">
-  <div class="max-w-7xl mx-auto px-4 md:px-5 py-2.5 md:py-3 flex items-center justify-between gap-3">
-    <a href="#hero" class="flex items-center gap-2.5 md:gap-3 min-w-0">
+<!-- ═══════════════════ HEADER MINIMAL ═══════════════════ -->
+<header class="sticky top-0 z-40 border-b" style="background:${v.bg}f0;backdrop-filter:blur(20px);border-color:${v.line}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10 py-4 flex items-center justify-between gap-6">
+    <a href="#hero" class="flex items-center gap-3 min-w-0">
       ${logoHtml}
       <div class="min-w-0">
-        <div class="font-[var(--font-heading)] text-base md:text-lg font-bold leading-none truncate">${name}</div>
-        <div class="text-[10px] md:text-[11px] opacity-60 tracking-widest mt-0.5 uppercase truncate">Fleuriste · ${city}</div>
+        <div class="serif text-base md:text-lg leading-none truncate">${name}</div>
+        <div class="text-[10px] md:text-[11px] tracking-[0.2em] mt-1 uppercase truncate" style="color:${v.fgSoft}">Fleuriste · ${city}</div>
       </div>
     </a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium shrink-0">
-      <a href="#bouquets" class="hover:text-[color:var(--primary)] transition">Nos bouquets</a>
-      <a href="#evenements" class="hover:text-[color:var(--primary)] transition">Événements</a>
-      <a href="#avis" class="hover:text-[color:var(--primary)] transition">Avis</a>
-      <a href="#contact" class="hover:text-[color:var(--primary)] transition">Contact</a>
+    <nav class="hidden md:flex items-center gap-9 text-[12px] uppercase tracking-[0.15em] font-medium">
+      <a href="#collections" class="hover:opacity-60 transition-opacity">Collections</a>
+      <a href="#evenements" class="hover:opacity-60 transition-opacity">Événements</a>
+      <a href="#contact" class="hover:opacity-60 transition-opacity">Contact</a>
     </nav>
-    <button onclick="krOpen('commander')" class="btn-primary px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap shrink-0">
+    <button onclick="kOpen('commander')" class="hidden sm:inline-flex link-arrow text-[11px]" style="border-color:${v.fg}">
       Commander
     </button>
   </div>
 </header>
 
-<!-- ═══════════════════ HERO ═══════════════════ -->
-<section id="hero" class="relative overflow-hidden pt-8 pb-14 md:pt-16 md:pb-32" style="background:${v.heroBgGradient}">
-  <!-- Pétales -->
-  <div class="absolute inset-0 pointer-events-none overflow-hidden">
-    <span class="petal"></span><span class="petal"></span><span class="petal"></span><span class="petal"></span>
-    <span class="petal"></span><span class="petal"></span><span class="petal"></span><span class="petal"></span>
-    <span class="petal"></span><span class="petal"></span>
-  </div>
-
-  <div class="max-w-7xl mx-auto px-5 grid md:grid-cols-2 gap-12 items-center relative">
-    <div class="fade-up" style="animation-delay:.1s">
-      <div class="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full text-xs font-semibold" style="background:${primary}15;color:${primary}">
-        <span class="text-base">💐</span>
-        <span>Fleuriste artisan · ${city}</span>
-      </div>
-      <h1 class="text-5xl md:text-7xl font-bold leading-[1.04] mb-6">
-        L'émotion <span class="serif-italic heading-gradient">en fleurs.</span>
+<!-- ═══════════════════ HERO ÉDITORIAL SPLIT ═══════════════════ -->
+<section id="hero" class="relative overflow-hidden">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10 pt-14 md:pt-24 pb-16 md:pb-28 grid md:grid-cols-12 gap-10 md:gap-16 items-end">
+    <!-- Texte gauche -->
+    <div class="md:col-span-5 reveal">
+      <div class="text-[11px] tracking-[0.25em] uppercase mb-6 md:mb-10" style="color:${v.fgSoft}">— Fleuriste artisan</div>
+      <h1 class="text-[3.5rem] md:text-[5.5rem] leading-[1.02] mb-7" style="font-weight:${v.serifWeight}">
+        L'émotion <span class="serif-italic" style="color:${primary}">en fleurs.</span>
       </h1>
-      <p class="text-lg md:text-xl opacity-80 leading-relaxed mb-8 max-w-xl">
-        Bouquets composés à la minute, mariages d'exception, abonnement bureaux. Fleurs fraîches du marché chaque matin, savoir-faire artisanal depuis ${yearsExp} ans.
+      <p class="text-base md:text-lg leading-[1.7] mb-10 max-w-md" style="color:${v.fgSoft}">
+        Compositions sur-mesure, mariages d'exception, abonnement bureaux. Fleurs reçues chaque matin chez des producteurs sélectionnés. Boutique à ${city} depuis ${yearsExp} ans.
       </p>
-
-      <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 mb-10">
-        <button onclick="krOpen('commander')" class="btn-primary px-7 py-4 rounded-full text-base font-semibold inline-flex items-center justify-center gap-2">
-          Commander un bouquet →
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button onclick="kOpen('commander')" class="btn-primary">
+          Commander un bouquet
+          <span aria-hidden>→</span>
         </button>
-        <button onclick="krOpen('mariage')" class="btn-ghost px-7 py-4 rounded-full text-base font-semibold">
-          Devis mariage
-        </button>
-        ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-wa px-6 py-4 rounded-full text-base font-semibold inline-flex items-center justify-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm0 29.33c-2.5 0-4.83-.67-6.83-1.83l-.5-.29-5 1.32 1.34-4.88-.32-.5A13.28 13.28 0 0 1 2.67 16C2.67 8.65 8.65 2.67 16 2.67S29.33 8.65 29.33 16 23.35 29.33 16 29.33zm7.42-9.94c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
-          WhatsApp
-        </a>` : ""}
-      </div>
-
-      <!-- Trust badges fleuriste -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
-        ${[
-          { emo: "🌸", t: "Fleurs fraîches", s: "Marché tous les matins" },
-          { emo: "🚲", t: "Livraison locale", s: "${city} & alentours" },
-          { emo: "💍", t: "Mariages & événements", s: "Devis 24h" },
-          { emo: "📦", t: "Abonnement bureaux", s: "À partir de 35€/sem" },
-        ].map(b => `<div class="flex items-start gap-2.5 text-sm">
-          <span class="text-2xl shrink-0">${b.emo}</span>
-          <div>
-            <div class="font-semibold leading-tight">${b.t}</div>
-            <div class="text-xs opacity-60 mt-0.5">${b.s}</div>
-          </div>
-        </div>`).join("")}
+        <button onclick="kOpen('mariage')" class="btn-ghost">Devis mariage</button>
       </div>
     </div>
-
-    <div class="relative fade-up" style="animation-delay:.3s">
-      <div class="relative aspect-[4/5] sm:aspect-[3/4] md:aspect-[4/5] rounded-3xl md:rounded-[36px] overflow-hidden shadow-2xl">
-        <img src="${esc(heroImg)}" alt="${name}" class="kenburns w-full h-full object-cover" loading="eager"/>
-        <div class="absolute inset-0" style="background:linear-gradient(180deg,transparent 40%,${v.fg}60 100%)"></div>
-        <div class="absolute bottom-6 left-6 right-6 text-white">
-          <div class="text-xs font-semibold tracking-widest opacity-80 mb-1 uppercase">${city}</div>
-          <div class="font-[var(--font-heading)] text-3xl font-bold">${name}</div>
-        </div>
+    <!-- Photo droite — pleine hauteur -->
+    <div class="md:col-span-7 reveal" style="animation-delay:.2s">
+      <div class="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden">
+        <img src="${esc(heroImg)}" alt="${name}" class="kenburns-slow w-full h-full object-cover" loading="eager" onerror="this.style.display='none';this.parentElement.style.background='${v.surface}'"/>
       </div>
-      <!-- Floating Google rating -->
-      <div class="absolute -bottom-7 -left-6 bg-[color:var(--card-bg)] rounded-2xl px-5 py-4 shadow-xl border" style="border-color:${v.border}">
-        <div class="flex items-center gap-3">
-          <span class="text-3xl font-bold" style="color:${primary}">${ratingDisplay}</span>
-          <div>
-            <div class="text-sm" style="color:${accent}">${"★".repeat(5)}</div>
-            <div class="text-xs opacity-70">${reviewsCount} avis Google</div>
-          </div>
-        </div>
+      <div class="flex items-center justify-between mt-5 text-[11px] tracking-[0.2em] uppercase" style="color:${v.fgSoft}">
+        <span>${city}</span>
+        <span class="flex items-center gap-2">
+          <span style="color:${accent}">${"★".repeat(5)}</span>
+          <span>${ratingDisplay}/5 · ${reviewsCount} avis</span>
+        </span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ NOS BOUQUETS ═══════════════════ -->
-<section id="bouquets" class="py-14 md:py-28">
-  <div class="max-w-7xl mx-auto px-5">
-    <div class="text-center max-w-2xl mx-auto mb-14">
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Nos créations</div>
-      <h2 class="text-4xl md:text-5xl font-bold mb-4">Un bouquet <span class="serif-italic heading-gradient">pour chaque émotion.</span></h2>
-      <p class="text-lg opacity-75">Du coup de cœur improvisé au mariage de rêve, on cultive l'art floral comme on cuisine : avec passion, fraîcheur et goût du détail.</p>
+<!-- ═══════════════════ COLLECTIONS ═══════════════════ -->
+<section id="collections" class="py-20 md:py-32 border-t" style="border-color:${v.line}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14 md:mb-20">
+      <div class="max-w-xl">
+        <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Collections</div>
+        <h2 class="text-4xl md:text-6xl" style="font-weight:${v.serifWeight}">
+          Trois façons de <span class="serif-italic" style="color:${primary}">dire avec des fleurs.</span>
+        </h2>
+      </div>
+      <p class="max-w-sm text-base leading-relaxed" style="color:${v.fgSoft}">
+        Chaque création est composée à la main, à la commande. Aucune fleur ne reste plus de trois jours en boutique.
+      </p>
     </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      ${bouquets.map((b, i) => `
-      <article class="card-soft rounded-3xl overflow-hidden fade-up" style="animation-delay:${0.1 + i * 0.05}s">
-        <div class="relative aspect-[4/5] overflow-hidden">
-          <img src="${esc(b.image)}" alt="${esc(b.title)}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy"/>
-          <span class="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:${v.cardBg}e6;color:${primary}">${esc(b.tag)}</span>
+    <div class="grid md:grid-cols-3 gap-8 md:gap-10">
+      ${cols.map((c, i) => `
+      <article class="collection-card reveal" style="animation-delay:${0.1 + i * 0.15}s">
+        <div class="aspect-[4/5] overflow-hidden mb-6" style="background:${v.surface}">
+          <img src="${esc(c.image)}" alt="${esc(c.title)}" class="w-full h-full object-cover" loading="lazy" onerror="this.parentElement.style.background='${v.surface}'"/>
         </div>
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-1">${esc(b.title)}</h3>
-          <p class="text-sm opacity-70 leading-snug mb-4">${esc(b.subtitle)}</p>
-          <div class="flex items-center justify-between">
-            <div class="font-semibold" style="color:${primary}">${esc(b.price)}</div>
-            <button onclick="krOpen('commander','${esc(b.title)}')" class="text-sm font-semibold hover:underline" style="color:${v.fg}">Commander →</button>
-          </div>
-        </div>
+        <div class="text-[11px] tracking-[0.2em] uppercase mb-3" style="color:${primary}">${esc(c.subtitle)}</div>
+        <h3 class="text-2xl md:text-3xl mb-3" style="font-weight:${v.serifWeight}">${esc(c.title)}</h3>
+        <p class="text-sm leading-[1.7] mb-5" style="color:${v.fgSoft}">${esc(c.note)}</p>
+        <button onclick="kOpen('${esc(c.title)}')" class="link-arrow">
+          Découvrir
+          <span aria-hidden>→</span>
+        </button>
       </article>`).join("")}
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ POUR VOS ÉVÉNEMENTS ═══════════════════ -->
-<section id="evenements" class="py-14 md:py-28" style="background:${v.muted}">
-  <div class="max-w-7xl mx-auto px-5">
-    <div class="text-center max-w-2xl mx-auto mb-14">
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Sur-mesure</div>
-      <h2 class="text-4xl md:text-5xl font-bold mb-4">Pour vos <span class="serif-italic heading-gradient">grands moments.</span></h2>
+<!-- ═══════════════════ À PROPOS — full-width photo ═══════════════════ -->
+<section class="py-20 md:py-32" style="background:${v.surface}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10 grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+    <div class="reveal">
+      <div class="aspect-[4/5] overflow-hidden">
+        <img src="${esc(gallery[4] || heroImg)}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'"/>
+      </div>
     </div>
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-      ${[
-        { icon: "💍", title: "Mariages", desc: "Bouquet de mariée, boutonnières, centres de table, cérémonie. Devis personnalisé sous 24h.", action: "Demander un devis", modal: "mariage" },
-        { icon: "🕊️", title: "Deuil & sympathie", desc: "Couronnes, gerbes, raquettes, coussins. Livraison directe au funérarium ou au cimetière.", action: "Nous contacter", modal: "deuil" },
-        { icon: "🏢", title: "Bureaux & pros", desc: "Abonnement hebdomadaire ou bimensuel. Fleurs renouvelées, facturation mensuelle.", action: "Demander un devis", modal: "abonnement" },
-        { icon: "🎁", title: "Cadeaux d'entreprise", desc: "Coffrets pour clients/équipes. Livraison sur tout le territoire, packaging premium.", action: "Voir les offres", modal: "cadeaux" },
-      ].map(s => `
-      <div class="card-soft rounded-3xl p-7 relative overflow-hidden">
-        <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10" style="background:${primary}"></div>
-        <div class="relative">
-          <div class="w-14 h-14 rounded-2xl grid place-items-center text-2xl mb-5" style="background:${primary}15;color:${primary}">${s.icon}</div>
-          <h3 class="text-xl font-bold mb-2">${s.title}</h3>
-          <p class="text-sm opacity-75 leading-relaxed mb-5">${s.desc}</p>
-          <button onclick="krOpen('${s.modal}')" class="text-sm font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all" style="color:${primary}">
-            ${s.action} →
-          </button>
+    <div class="reveal" style="animation-delay:.15s">
+      <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Notre atelier</div>
+      <h2 class="text-4xl md:text-5xl mb-7" style="font-weight:${v.serifWeight}">
+        Une boutique comme un <span class="serif-italic" style="color:${primary}">écrin.</span>
+      </h2>
+      <p class="text-base md:text-lg leading-[1.8] mb-7" style="color:${v.fgSoft}">${aboutText}</p>
+      <div class="grid grid-cols-3 gap-6 pt-7 border-t" style="border-color:${v.line}">
+        <div>
+          <div class="text-3xl md:text-4xl mb-1 serif" style="color:${primary}">${yearsExp}</div>
+          <div class="text-[10px] tracking-[0.2em] uppercase" style="color:${v.fgSoft}">années</div>
         </div>
+        <div>
+          <div class="text-3xl md:text-4xl mb-1 serif" style="color:${primary}">${bouquetsLivres}+</div>
+          <div class="text-[10px] tracking-[0.2em] uppercase" style="color:${v.fgSoft}">bouquets livrés</div>
+        </div>
+        <div>
+          <div class="text-3xl md:text-4xl mb-1 serif" style="color:${primary}">${ratingDisplay}<span class="text-xl">/5</span></div>
+          <div class="text-[10px] tracking-[0.2em] uppercase" style="color:${v.fgSoft}">Google</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ÉVÉNEMENTS — typo-driven, pas d'icônes ═══════════════════ -->
+<section id="evenements" class="py-20 md:py-32">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10">
+    <div class="text-center max-w-xl mx-auto mb-14 md:mb-20">
+      <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Sur-mesure</div>
+      <h2 class="text-4xl md:text-5xl" style="font-weight:${v.serifWeight}">
+        Pour vos <span class="serif-italic" style="color:${primary}">grands moments.</span>
+      </h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-px" style="background:${v.line}">
+      ${[
+        { title: "Mariages", desc: "Bouquet de mariée, boutonnières, centres de table, cérémonie. Devis personnalisé sous 48 h.", modal: "mariage" },
+        { title: "Deuil & sympathie", desc: "Couronnes, gerbes, raquettes, coussins florals. Livraison directe au funérarium.", modal: "deuil" },
+        { title: "Abonnement bureaux", desc: "Composition renouvelée chaque semaine, formule clé en main. À partir de 35 €/semaine.", modal: "abonnement" },
+        { title: "Cadeaux d'entreprise", desc: "Coffrets pour clients ou équipes. Livraison nationale, packaging premium.", modal: "cadeaux" },
+      ].map(s => `
+      <div class="p-10 md:p-14" style="background:${v.bg}">
+        <h3 class="text-2xl md:text-3xl mb-4" style="font-weight:${v.serifWeight}">${s.title}</h3>
+        <p class="text-base leading-[1.75] mb-7 max-w-sm" style="color:${v.fgSoft}">${s.desc}</p>
+        <button onclick="kOpen('${s.modal}')" class="link-arrow">
+          En savoir plus
+          <span aria-hidden>→</span>
+        </button>
       </div>`).join("")}
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ STATS ANIMÉES ═══════════════════ -->
-<section class="py-16">
-  <div class="max-w-6xl mx-auto px-5 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-    ${[
-      { n: yearsExp, suffix: " ans", label: "d'artisanat floral" },
-      { n: bouquetsLivres, suffix: "+", label: "bouquets livrés" },
-      { n: parseFloat(ratingDisplay), suffix: "/5", label: "note Google", decimals: 1 },
-      { n: reviewsCount, suffix: "", label: "avis clients" },
-    ].map(s => `
-    <div>
-      <div class="text-5xl md:text-6xl font-bold heading-gradient counter" data-target="${s.n}" data-decimals="${(s as { decimals?: number }).decimals || 0}" data-suffix="${s.suffix}">0${s.suffix}</div>
-      <div class="text-sm opacity-70 mt-2 font-medium">${s.label}</div>
+<!-- ═══════════════════ GALERIE PLEINE LARGEUR ═══════════════════ -->
+<section class="py-20 md:py-32 border-t" style="border-color:${v.line}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10 mb-12 md:mb-16">
+    <div class="flex items-end justify-between gap-6">
+      <div>
+        <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Notre boutique</div>
+        <h2 class="text-4xl md:text-5xl" style="font-weight:${v.serifWeight}">En images.</h2>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 max-w-[1500px] mx-auto px-2 md:px-4">
+    ${gallery.slice(0, Math.min(gallery.length, 8)).map(url => `
+    <div class="aspect-square overflow-hidden" style="background:${v.surface}">
+      <img src="${esc(url)}" alt="" class="gallery-img w-full h-full object-cover" loading="lazy" onerror="this.parentElement.style.display='none'"/>
     </div>`).join("")}
   </div>
 </section>
 
-<!-- ═══════════════════ GALERIE INSTAGRAM-STYLE ═══════════════════ -->
-<section class="py-12">
-  <div class="max-w-7xl mx-auto px-5">
-    <div class="text-center mb-10">
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Notre boutique en images</div>
-      <h2 class="text-3xl md:text-4xl font-bold">Le plus beau s'admire <span class="serif-italic">en vrai.</span></h2>
+<!-- ═══════════════════ TÉMOIGNAGES (3 cards calmes) ═══════════════════ -->
+<section id="avis" class="py-20 md:py-32" style="background:${v.surface}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10">
+    <div class="text-center max-w-xl mx-auto mb-14 md:mb-20">
+      <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Ils nous ont confié leurs émotions</div>
+      <h2 class="text-4xl md:text-5xl mb-4" style="font-weight:${v.serifWeight}">
+        <span style="color:${primary}">${ratingDisplay}</span>/5 sur ${reviewsCount} avis.
+      </h2>
+      <div class="text-xl tracking-widest" style="color:${accent}">${"★".repeat(5)}</div>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${gallery.slice(0, Math.min(gallery.length, 8)).map(url => `
-      <div class="aspect-square rounded-2xl overflow-hidden cursor-pointer">
-        <img src="${esc(url)}" alt="" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700" loading="lazy" onerror="this.parentElement.style.display='none'"/>
-      </div>`).join("")}
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ TÉMOIGNAGES MARQUEE ═══════════════════ -->
-<section id="avis" class="py-14 md:py-28" style="background:${v.muted}">
-  <div class="max-w-7xl mx-auto mb-10 px-5">
-    <div class="text-center max-w-2xl mx-auto">
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Ils nous adorent</div>
-      <h2 class="text-4xl md:text-5xl font-bold mb-3">${ratingDisplay}/5 · <span class="serif-italic heading-gradient">${reviewsCount} avis.</span></h2>
-      <div class="text-2xl tracking-widest" style="color:${accent}">${"★".repeat(5)}</div>
-    </div>
-  </div>
-  <div class="overflow-hidden">
-    <div class="marquee">
-      ${[...reviewsToShow, ...reviewsToShow].map(r => `
-      <article class="card-soft rounded-3xl p-6 w-80 shrink-0">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-11 h-11 rounded-full grid place-items-center font-bold text-white" style="background:linear-gradient(135deg,${primary},${accent})">${initials(r.author || "Client")}</div>
+    <div class="grid md:grid-cols-3 gap-8">
+      ${reviewsToShow.map(r => `
+      <figure class="reveal">
+        <div class="text-3xl mb-5 serif" style="color:${primary}">"</div>
+        <blockquote class="text-base md:text-lg leading-[1.8] mb-7 italic serif" style="color:${v.fg};font-weight:${v.serifWeight}">${esc((r.text || "").slice(0, 240))}${(r.text || "").length > 240 ? "…" : ""}</blockquote>
+        <figcaption class="flex items-center gap-3 pt-5 border-t" style="border-color:${v.line}">
+          <div class="w-10 h-10 rounded-full grid place-items-center font-medium text-xs serif" style="background:${primary};color:${v.bg};font-weight:${v.serifWeight}">${initials(r.author || "Client")}</div>
           <div>
-            <div class="font-bold text-sm leading-tight">${esc(r.author || "Client vérifié")}</div>
-            <div class="text-xs opacity-60">${esc(r.timeAgo || "récemment")}</div>
+            <div class="text-sm font-medium">${esc(r.author || "Client vérifié")}</div>
+            <div class="text-[11px] tracking-[0.15em] uppercase" style="color:${v.fgSoft}">${esc(r.timeAgo || "récemment")}</div>
           </div>
-        </div>
-        <div class="text-sm tracking-wider mb-3" style="color:${accent}">${"★".repeat(r.rating || 5)}</div>
-        <p class="text-sm leading-relaxed opacity-85">"${esc((r.text || "").slice(0, 200))}${(r.text || "").length > 200 ? "…" : ""}"</p>
-      </article>`).join("")}
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ À PROPOS ═══════════════════ -->
-<section class="py-14 md:py-28">
-  <div class="max-w-7xl mx-auto px-5 grid md:grid-cols-2 gap-14 items-center">
-    <div class="aspect-[5/6] rounded-[36px] overflow-hidden shadow-xl">
-      <img src="${esc(gallery[4] || heroImg)}" alt="" class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" loading="lazy"/>
-    </div>
-    <div>
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">À propos</div>
-      <h2 class="text-4xl md:text-5xl font-bold mb-6">${name}<span class="serif-italic heading-gradient">, l'âme du quartier.</span></h2>
-      <p class="text-lg leading-relaxed opacity-85 mb-6">${aboutText}</p>
-      <ul class="space-y-3 text-base">
-        ${[
-          "Fleurs sourcées chez nos producteurs partenaires (Île-de-France principalement)",
-          "Aucune fleur ne reste plus de 3 jours en boutique",
-          "Composition à la minute, jamais préfabriquée",
-          `Plus de ${reviewsCount} clients fidèles qui nous font confiance`,
-        ].map(t => `<li class="flex items-start gap-3">
-          <span class="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style="background:${primary}"></span>
-          <span>${t}</span>
-        </li>`).join("")}
-      </ul>
+        </figcaption>
+      </figure>`).join("")}
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════ CONTACT + MAPS + HORAIRES ═══════════════════ -->
-<section id="contact" class="py-14 md:py-28" style="background:${v.muted}">
-  <div class="max-w-7xl mx-auto px-5">
-    <div class="text-center mb-12">
-      <div class="text-sm font-bold tracking-widest uppercase mb-3" style="color:${primary}">Venez nous voir</div>
-      <h2 class="text-4xl md:text-5xl font-bold">Passez en boutique <span class="serif-italic heading-gradient">à ${city}.</span></h2>
+<section id="contact" class="py-20 md:py-32 border-t" style="border-color:${v.line}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10">
+    <div class="text-center mb-14 md:mb-20">
+      <div class="text-[11px] tracking-[0.25em] uppercase mb-5" style="color:${v.fgSoft}">— Nous rendre visite</div>
+      <h2 class="text-4xl md:text-5xl" style="font-weight:${v.serifWeight}">
+        Passez en boutique <span class="serif-italic" style="color:${primary}">à ${city}.</span>
+      </h2>
     </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <div class="space-y-5">
-        <div class="card-soft rounded-3xl p-6">
-          <div class="text-xs font-bold tracking-widest opacity-60 mb-2 uppercase">Adresse</div>
-          <div class="font-semibold text-lg mb-1">${addressDisplay}</div>
-          <div class="opacity-70 mb-3">${city}</div>
-          <a href="${mapsLinkUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm font-semibold hover:underline" style="color:${primary}">
-            Itinéraire vers ${name} →
-          </a>
+    <div class="grid lg:grid-cols-2 gap-12 md:gap-16">
+      <div>
+        <div class="aspect-[4/3] overflow-hidden mb-8" style="background:${v.surface}">
+          <iframe src="${mapsEmbedUrl}" width="100%" height="100%" style="border:0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
-        ${phoneDisplay ? `<div class="card-soft rounded-3xl p-6">
-          <div class="text-xs font-bold tracking-widest opacity-60 mb-2 uppercase">Téléphone</div>
-          <a href="${phoneLink}" class="font-bold text-2xl hover:opacity-70 transition" style="color:${primary}">${phoneDisplay}</a>
+        <a href="${mapsLinkUrl}" target="_blank" rel="noopener" class="link-arrow">
+          Itinéraire vers ${name}
+          <span aria-hidden>→</span>
+        </a>
+      </div>
+      <div class="space-y-12">
+        <div>
+          <div class="text-[11px] tracking-[0.25em] uppercase mb-4" style="color:${v.fgSoft}">Adresse</div>
+          <div class="serif text-xl md:text-2xl mb-1">${addressDisplay}</div>
+          <div class="text-base" style="color:${v.fgSoft}">${city}</div>
+        </div>
+        ${phoneDisplay ? `<div>
+          <div class="text-[11px] tracking-[0.25em] uppercase mb-4" style="color:${v.fgSoft}">Téléphone</div>
+          <a href="${phoneLink}" class="serif text-3xl md:text-4xl hover:opacity-70 transition-opacity" style="color:${primary}">${phoneDisplay}</a>
         </div>` : ""}
-        <div class="card-soft rounded-3xl p-6">
-          <div class="text-xs font-bold tracking-widest opacity-60 mb-3 uppercase">Horaires</div>
-          <table class="w-full text-sm">${hoursHtml}</table>
+        <div>
+          <div class="text-[11px] tracking-[0.25em] uppercase mb-4" style="color:${v.fgSoft}">Horaires</div>
+          <table class="w-full">${hoursHtml}</table>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button onclick="kOpen('commander')" class="btn-primary">Commander un bouquet <span aria-hidden>→</span></button>
+          ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-wa">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="currentColor" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
+            WhatsApp
+          </a>` : ""}
         </div>
       </div>
-      <div class="rounded-3xl overflow-hidden shadow-xl border min-h-[450px]" style="border-color:${v.border}">
-        <iframe src="${mapsEmbedUrl}" width="100%" height="100%" style="border:0;min-height:450px" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      </div>
-    </div>
-    <div class="text-center mt-12 flex flex-wrap justify-center gap-3">
-      <button onclick="krOpen('commander')" class="btn-primary px-10 py-5 rounded-full text-lg font-semibold inline-flex items-center gap-2">
-        Commander un bouquet →
-      </button>
-      ${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="btn-wa px-10 py-5 rounded-full text-lg font-semibold inline-flex items-center gap-2">
-        <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
-        WhatsApp
-      </a>` : ""}
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════ FOOTER ═══════════════════ -->
-<footer class="py-10 pb-32 md:pb-10 border-t" style="border-color:${v.border}">
-  <div class="max-w-7xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+<footer class="py-12 md:py-16 pb-36 md:pb-16 border-t" style="border-color:${v.line}">
+  <div class="max-w-[1340px] mx-auto px-6 md:px-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
     <div class="flex items-center gap-3">
       ${logoHtml}
       <div>
-        <div class="font-bold">${name}</div>
-        <div class="opacity-60 text-xs">${city}${phoneDisplay ? ` · ${phoneDisplay}` : ""}</div>
+        <div class="serif text-base">${name}</div>
+        <div class="text-[10px] tracking-[0.2em] uppercase mt-1" style="color:${v.fgSoft}">${city}${phoneDisplay ? ` · ${phoneDisplay}` : ""}</div>
       </div>
     </div>
-    <div class="opacity-60 text-xs">
-      © ${year} ${name} · Site réalisé par <a href="https://klyora.fr" class="font-semibold" style="color:${primary}">Klyora</a>
+    <div class="text-[10px] tracking-[0.15em] uppercase" style="color:${v.fgSoft}">
+      © ${year} ${name} · Design <a href="https://klyora.fr" style="color:${primary};border-bottom:1px solid ${primary}">Klyora</a>
     </div>
   </div>
 </footer>
 
-<!-- ═══════════════════ MODAL COMMANDER (multi-étape) ═══════════════════ -->
-<div id="kr-modal" class="hidden fixed inset-0 z-50 items-end sm:items-center justify-center kr-modal-bg p-0 sm:p-4 overflow-y-auto" onclick="if(event.target===this) krClose()">
-  <div class="bg-[color:var(--card-bg)] rounded-t-3xl sm:rounded-3xl max-w-md w-full shadow-2xl relative overflow-hidden max-h-[92vh] overflow-y-auto" style="border:1px solid ${v.border}">
-    <button onclick="krClose()" class="absolute top-4 right-4 w-9 h-9 rounded-full grid place-items-center hover:opacity-70 transition z-10" style="background:${v.muted}" aria-label="Fermer">×</button>
-    <div class="p-6 sm:p-8">
-      <div id="kr-title" class="mb-1">
-        <div class="text-xs font-bold tracking-widest uppercase mb-2" style="color:${primary}">Commander</div>
-        <h3 class="text-2xl font-bold">Votre bouquet en <span class="serif-italic">3 étapes.</span></h3>
-      </div>
-      <!-- Progress -->
-      <div class="flex gap-1.5 mt-5 mb-6">
-        <div class="flex-1 h-1 rounded-full transition" id="kr-prog-1" style="background:${primary}"></div>
-        <div class="flex-1 h-1 rounded-full transition" id="kr-prog-2" style="background:${v.muted}"></div>
-        <div class="flex-1 h-1 rounded-full transition" id="kr-prog-3" style="background:${v.muted}"></div>
-      </div>
-
-      <!-- Step 1 : type d'occasion -->
-      <div class="kr-step active" data-step="1">
-        <label class="text-sm font-semibold block mb-2">1. Pour quelle occasion ?</label>
-        <div class="grid grid-cols-2 gap-2.5" id="kr-occasion-grid">
-          ${["Anniversaire", "Saint-Valentin", "Mariage", "Naissance", "Deuil", "Juste comme ça"].map(o =>
-            `<button type="button" data-occasion="${o}" class="kr-occasion text-sm font-medium py-3 rounded-xl border transition" style="border-color:${v.border}">${o}</button>`
-          ).join("")}
-        </div>
-        <button type="button" onclick="krNext()" disabled id="kr-next-1" class="btn-primary w-full mt-6 py-3.5 rounded-full text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
-      </div>
-
-      <!-- Step 2 : budget + date -->
-      <div class="kr-step" data-step="2">
-        <label class="text-sm font-semibold block mb-2">2. Budget approximatif</label>
-        <div class="grid grid-cols-3 gap-2 mb-5" id="kr-budget-grid">
-          ${["30-50€", "50-80€", "80-150€", "150-300€", "300€+", "Sur devis"].map(b =>
-            `<button type="button" data-budget="${b}" class="kr-budget text-sm font-medium py-2.5 rounded-xl border transition" style="border-color:${v.border}">${b}</button>`
-          ).join("")}
-        </div>
-        <label class="text-sm font-semibold block mb-2">Date souhaitée</label>
-        <input type="date" id="kr-date" class="w-full px-4 py-3 rounded-xl border bg-transparent focus:outline-none transition" style="border-color:${v.border}">
-        <div class="flex gap-3 mt-6">
-          <button type="button" onclick="krPrev()" class="btn-ghost px-5 py-3.5 rounded-full text-sm font-semibold">← Retour</button>
-          <button type="button" onclick="krNext()" disabled id="kr-next-2" class="btn-primary flex-1 py-3.5 rounded-full text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Suivant →</button>
-        </div>
-      </div>
-
-      <!-- Step 3 : coordonnées -->
-      <div class="kr-step" data-step="3">
-        <form onsubmit="krSubmit(event)" class="space-y-3">
-          <label class="text-sm font-semibold block">3. Vos coordonnées</label>
-          <input type="text" id="kr-name" placeholder="Votre nom" required class="w-full px-4 py-3 rounded-xl border bg-transparent focus:outline-none" style="border-color:${v.border}">
-          <input type="tel" id="kr-phone" placeholder="Téléphone" required class="w-full px-4 py-3 rounded-xl border bg-transparent focus:outline-none" style="border-color:${v.border}">
-          <input type="email" id="kr-email" placeholder="Email (facultatif)" class="w-full px-4 py-3 rounded-xl border bg-transparent focus:outline-none" style="border-color:${v.border}">
-          <textarea id="kr-msg" rows="2" placeholder="Précisions (couleurs, dédicace…)" class="w-full px-4 py-3 rounded-xl border bg-transparent focus:outline-none resize-none" style="border-color:${v.border}"></textarea>
-          <div class="flex gap-3 mt-2">
-            <button type="button" onclick="krPrev()" class="btn-ghost px-5 py-3.5 rounded-full text-sm font-semibold">← Retour</button>
-            <button type="submit" class="btn-primary flex-1 py-3.5 rounded-full text-sm font-semibold">Envoyer ma demande</button>
-          </div>
+<!-- ═══════════════════ MODAL — simple, élégant ═══════════════════ -->
+<div id="k-modal" class="hidden fixed inset-0 z-50 items-end sm:items-center justify-center modal-bg p-0 sm:p-6 overflow-y-auto" onclick="if(event.target===this) kClose()">
+  <div class="modal-content max-w-md w-full max-h-[92vh] overflow-y-auto relative" style="background:${v.bg};border-top:3px solid ${primary}">
+    <button onclick="kClose()" class="absolute top-5 right-5 w-9 h-9 grid place-items-center hover:opacity-50 z-10" style="color:${v.fg}" aria-label="Fermer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="p-8 sm:p-12">
+      <div id="k-default-view">
+        <div class="text-[11px] tracking-[0.25em] uppercase mb-4" style="color:${v.fgSoft}">— Demande</div>
+        <h3 class="text-3xl md:text-4xl mb-3" style="font-weight:${v.serifWeight}">
+          <span id="k-title">Commander un bouquet</span>
+        </h3>
+        <p class="text-sm leading-[1.7] mb-8" style="color:${v.fgSoft}">
+          Laissez-nous quelques détails. Nous vous rappelons sous 24 h pour préciser ensemble la composition, la date et la livraison.
+        </p>
+        <form onsubmit="kSubmit(event)" class="space-y-4">
+          <input type="text" id="k-name" placeholder="Votre nom" required class="w-full px-0 py-3.5 bg-transparent focus:outline-none text-base border-b" style="border-color:${v.line};color:${v.fg}">
+          <input type="tel" id="k-phone" placeholder="Téléphone" required class="w-full px-0 py-3.5 bg-transparent focus:outline-none text-base border-b" style="border-color:${v.line};color:${v.fg}">
+          <input type="email" id="k-email" placeholder="Email (facultatif)" class="w-full px-0 py-3.5 bg-transparent focus:outline-none text-base border-b" style="border-color:${v.line};color:${v.fg}">
+          <textarea id="k-msg" rows="3" placeholder="Précisions (occasion, couleurs souhaitées, date, dédicace…)" class="w-full px-0 py-3.5 bg-transparent focus:outline-none text-base border-b resize-none" style="border-color:${v.line};color:${v.fg}"></textarea>
+          <button type="submit" class="btn-primary w-full mt-4">Envoyer ma demande <span aria-hidden>→</span></button>
         </form>
       </div>
-
-      <!-- Success -->
-      <div id="kr-success" class="hidden text-center py-6">
-        <div class="w-16 h-16 rounded-full mx-auto mb-4 grid place-items-center" style="background:${primary}15">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${primary}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h3 class="text-2xl font-bold mb-2">Demande envoyée 💐</h3>
-        <p class="text-sm opacity-70 leading-relaxed">Notre fleuriste vous rappelle sous 24h pour valider la composition et la livraison.</p>
+      <div id="k-success" class="hidden text-center py-6">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="${primary}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-6"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        <h3 class="text-3xl mb-3" style="font-weight:${v.serifWeight}">Merci.</h3>
+        <p class="text-sm leading-[1.7]" style="color:${v.fgSoft}">Nous vous rappelons sous 24 h pour préciser la composition.</p>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════ STICKY MOBILE FAB ═══════════════════ -->
-${phoneDisplay ? `<a href="${phoneLink}" class="sticky-fab" style="bottom:calc(82px + env(safe-area-inset-bottom, 0px));background:linear-gradient(135deg,${primary},${v.secondary})" aria-label="Appeler">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+${phoneDisplay ? `<a href="${phoneLink}" class="sticky-fab" style="bottom:calc(82px + env(safe-area-inset-bottom, 0px));width:54px;height:54px;background:${primary}" aria-label="Appeler">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
 </a>` : ""}
-${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="sticky-fab" style="bottom:calc(18px + env(safe-area-inset-bottom, 0px));background:#25D366" aria-label="WhatsApp">
-  <svg width="26" height="26" viewBox="0 0 32 32" fill="white" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
+${whatsappUrl ? `<a href="${whatsappUrl}" target="_blank" rel="noopener" class="sticky-fab" style="bottom:calc(18px + env(safe-area-inset-bottom, 0px));width:54px;height:54px;background:#25D366" aria-label="WhatsApp">
+  <svg width="24" height="24" viewBox="0 0 32 32" fill="white" aria-hidden><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.49 2.03 7.79L0 32l8.42-2.21A15.92 15.92 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.42 19.39c-.4-.2-2.4-1.18-2.77-1.32-.37-.13-.64-.2-.91.2-.27.4-1.05 1.32-1.29 1.59-.24.27-.47.3-.87.1-.4-.2-1.7-.63-3.24-2-1.2-1.07-2-2.39-2.24-2.79-.24-.4-.03-.62.17-.82.18-.18.4-.47.6-.71.2-.24.27-.4.4-.67.13-.27.07-.5-.03-.71-.1-.2-.91-2.2-1.25-3.01-.33-.79-.66-.69-.91-.7l-.78-.01c-.27 0-.71.1-1.08.5-.37.4-1.42 1.39-1.42 3.39 0 2 1.45 3.93 1.65 4.2.2.27 2.85 4.35 6.91 6.1.97.42 1.72.67 2.31.86.97.31 1.85.27 2.55.16.78-.12 2.4-.98 2.74-1.93.34-.94.34-1.75.24-1.92-.1-.17-.37-.27-.77-.47z"/></svg>
 </a>` : ""}
 
 <script>
-  /* ── Modal multi-step ── */
-  var krStep = 1, krData = {};
-  function krOpen(kind, preset) {
-    krStep = 1; krData = { type: kind || 'commander' };
-    if (preset) krData.preset = preset;
-    document.getElementById('kr-modal').classList.remove('hidden');
-    document.getElementById('kr-modal').classList.add('flex');
-    krShow(1);
-    document.getElementById('kr-success').classList.add('hidden');
+  /* ── Modal simple ── */
+  function kOpen(kind){
+    var t = { 'commander':'Commander un bouquet','mariage':'Devis mariage','deuil':'Composition deuil','abonnement':'Abonnement bureaux','cadeaux':"Cadeaux d'entreprise" };
+    document.getElementById('k-title').textContent = t[kind] || 'Votre demande';
+    document.getElementById('k-modal').classList.remove('hidden');
+    document.getElementById('k-modal').classList.add('flex');
+    document.getElementById('k-default-view').style.display = '';
+    document.getElementById('k-success').classList.add('hidden');
+    window.__kKind = kind;
   }
-  function krClose(){
-    document.getElementById('kr-modal').classList.add('hidden');
-    document.getElementById('kr-modal').classList.remove('flex');
+  function kClose(){
+    document.getElementById('k-modal').classList.add('hidden');
+    document.getElementById('k-modal').classList.remove('flex');
   }
-  function krShow(n) {
-    document.querySelectorAll('.kr-step').forEach(function(el){ el.classList.remove('active'); });
-    var step = document.querySelector('[data-step="'+n+'"]');
-    if (step) step.classList.add('active');
-    ['kr-prog-1','kr-prog-2','kr-prog-3'].forEach(function(id, i){
-      document.getElementById(id).style.background = (i < n) ? '${primary}' : '${v.muted}';
-    });
-  }
-  function krNext(){ if(krStep < 3){ krStep++; krShow(krStep); } }
-  function krPrev(){ if(krStep > 1){ krStep--; krShow(krStep); } }
-
-  document.querySelectorAll('.kr-occasion').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('.kr-occasion').forEach(function(b){
-        b.style.background = ''; b.style.color = ''; b.style.borderColor = '${v.border}';
-      });
-      btn.style.background = '${primary}'; btn.style.color = '#fff'; btn.style.borderColor = '${primary}';
-      krData.occasion = btn.dataset.occasion;
-      document.getElementById('kr-next-1').disabled = false;
-    });
-  });
-  document.querySelectorAll('.kr-budget').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('.kr-budget').forEach(function(b){
-        b.style.background = ''; b.style.color = ''; b.style.borderColor = '${v.border}';
-      });
-      btn.style.background = '${primary}'; btn.style.color = '#fff'; btn.style.borderColor = '${primary}';
-      krData.budget = btn.dataset.budget;
-      document.getElementById('kr-next-2').disabled = false;
-    });
-  });
-
-  function krSubmit(e){
+  function kSubmit(e){
     e.preventDefault();
-    krData.name = document.getElementById('kr-name').value;
-    krData.phone = document.getElementById('kr-phone').value;
-    krData.email = document.getElementById('kr-email').value;
-    krData.message = document.getElementById('kr-msg').value;
-    krData.date = document.getElementById('kr-date').value;
-    krData.slug = ${JSON.stringify(slug)};
     fetch('/api/prospect/contact-request', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(krData), keepalive: true
+      body: JSON.stringify({
+        slug: ${JSON.stringify(slug)},
+        type: window.__kKind || 'commander',
+        name: document.getElementById('k-name').value,
+        phone: document.getElementById('k-phone').value,
+        email: document.getElementById('k-email').value,
+        message: document.getElementById('k-msg').value,
+      }), keepalive: true
     }).catch(function(){});
-    document.querySelectorAll('.kr-step').forEach(function(el){ el.classList.remove('active'); });
-    document.getElementById('kr-title').style.display = 'none';
-    document.getElementById('kr-success').classList.remove('hidden');
-    setTimeout(function(){ krClose(); document.getElementById('kr-title').style.display = ''; }, 3000);
+    document.getElementById('k-default-view').style.display = 'none';
+    document.getElementById('k-success').classList.remove('hidden');
+    setTimeout(function(){ kClose(); }, 3500);
   }
 
-  /* ── Compteurs animés au scroll ── */
+  /* ── Reveal au scroll ── */
   (function(){
-    var counters = document.querySelectorAll('.counter');
-    if (!counters.length || !('IntersectionObserver' in window)) return;
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(e){
-        if (!e.isIntersecting) return;
-        var el = e.target;
-        var target = parseFloat(el.dataset.target) || 0;
-        var dec = parseInt(el.dataset.decimals) || 0;
-        var suf = el.dataset.suffix || '';
-        var dur = 1600, t0 = performance.now();
-        function tick(now){
-          var p = Math.min(1, (now - t0) / dur);
-          var val = target * (0.2 + 0.8 * (1 - Math.pow(1 - p, 3)));
-          el.textContent = val.toFixed(dec) + suf;
-          if (p < 1) requestAnimationFrame(tick);
-          else el.textContent = target.toFixed(dec) + suf;
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
         }
-        requestAnimationFrame(tick);
-        io.unobserve(el);
       });
-    }, { threshold: .4 });
-    counters.forEach(function(c){ io.observe(c); });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
   })();
 </script>
 
