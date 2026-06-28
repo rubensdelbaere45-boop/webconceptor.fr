@@ -163,61 +163,30 @@ function buildShortHours(hoursStr: string | null | undefined): string {
   return first.replace(/^[^:]+:\s*/, "").slice(0, 30);
 }
 
-/** Skip URLs scrapées qui ne sont JAMAIS de belles photos : logos, icônes,
- * favicons, banners, panneaux "interdit"/stop, watermarks, captchas, etc. */
-const BAD_IMAGE_PATTERNS = /\b(logo|icon|favicon|banner|sprite|pixel|tracker|placeholder|stop|interdit|forbidden|404|error|loading|spinner|watermark|captcha|btn|button|arrow|chevron|menu|burger|close|cross|x-mark|no-image|nophoto|default|avatar|profile)\b/i;
-const BAD_IMAGE_EXTENSIONS = /\.(svg|gif|ico)(\?|$)/i;
-
-function isLikelyBadImage(url: string): boolean {
-  if (!url || !url.startsWith("http")) return true;
-  if (BAD_IMAGE_PATTERNS.test(url)) return true;
-  if (BAD_IMAGE_EXTENSIONS.test(url)) return true;
-  // Petites images (size dans URL) = souvent logos/icones
-  if (/[?&](w|width)=([1-9]\d?|1[0-9]{2})\b/i.test(url)) return true;
-  return false;
-}
-
-/** Pour fleuriste : PRIVILÉGIE les stock photos curées (qualité garantie).
- * Le DNA scraping fleuriste donne 95% de photos foireuses (logos, panneaux,
- * banners). On préfère un beau stock photo qu'un truc à l'arrache. */
+/** Pour fleuriste : on utilise UNIQUEMENT des stock photos curées et
+ * vérifiées manuellement (25 URLs Unsplash scrappées via la page de
+ * recherche "flower-bouquet" + "florist-shop"). Aucun scraping DNA :
+ * trop de risque de retrouver "Stop hotlink", logos d'agence, captures
+ * d'écran, banners qui n'ont rien à voir avec des fleurs.
+ *
+ * L'index est stable par prospect → chaque fleuriste a un hero différent
+ * mais toujours validé qualité. */
 function pickHeroImage(p: FleuristePremiumProspect): string {
-  // Stock photo curée TOUJOURS en priorité pour le hero fleuriste
-  const stock = getStockPhotosForMetier("fleuriste", 15);
-  // On choisit un index stable basé sur l'id du prospect (chaque prospect a
-  // un hero différent, mais toujours le même pour ce prospect)
+  const stock = getStockPhotosForMetier("fleuriste", 25);
   const idx = p.id ? (p.id.charCodeAt(1) || 0) % stock.length : 0;
   return stock[idx] || getHeroPhotoForMetier("fleuriste");
 }
 
 function pickGallery(p: FleuristePremiumProspect, n: number): string[] {
-  // Stock photos curées en priorité (15 dispo, on en prend n distinctes)
-  const stock = getStockPhotosForMetier("fleuriste", 15);
-  // Index de départ stable par prospect pour varier l'ordre entre prospects
+  // Stock photos curées UNIQUEMENT (25 dispo, vérifiées via scrape Unsplash).
+  // Le DNA scraping fleuriste ramène trop de trash même avec filtre :
+  // "Stop hotlink" images, logos d'entreprise, watermarks d'agence photo,
+  // captures d'écran. On utilise 100% stock curé pour garantir la qualité.
+  const stock = getStockPhotosForMetier("fleuriste", 25);
+  // Offset stable par prospect → chaque fleuriste a une galerie unique
+  // mais toujours composée de photos validées
   const offset = p.id ? (p.id.charCodeAt(2) || 0) % Math.max(1, stock.length - n) : 0;
-  const rotated = [...stock.slice(offset), ...stock.slice(0, offset)];
-
-  // Optionnel : on AJOUTE les images scrappées de qualité (filtrées) en bonus
-  // si elles passent le filtre anti-shit
-  const dna = p.site_style_dna || {};
-  const scraped = [
-    ...(p.website_photos || []).filter(u => typeof u === "string"),
-    ...((dna.allImages || []) as string[]),
-  ].filter(u => !isLikelyBadImage(u));
-
-  // Mix : on prend 70% de stock curé + 30% de scrapé qualité (si présent)
-  const stockCount = Math.ceil(n * 0.7);
-  const scrapedCount = n - stockCount;
-  const result = [
-    ...rotated.slice(0, stockCount),
-    ...scraped.slice(0, scrapedCount),
-  ];
-  // Si pas assez, complète avec stock
-  while (result.length < n && rotated.length > result.length) {
-    const next = rotated[result.length];
-    if (next && !result.includes(next)) result.push(next);
-    else break;
-  }
-  return Array.from(new Set(result)).slice(0, n);
+  return [...stock.slice(offset), ...stock.slice(0, offset)].slice(0, n);
 }
 
 /** 3 collections — style LFLF, photos grandes + texte court */
