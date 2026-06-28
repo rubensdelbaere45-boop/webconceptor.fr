@@ -59,11 +59,25 @@ const STOCK_PHOTOS: Record<Metier, string[]> = {
     "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=1200&auto=format&fit=crop",
   ],
   fleuriste: [
-    "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1567696911980-2c30b6f93dee?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1542652694-40abf526446e?w=1200&auto=format&fit=crop",
+    // Bouquets pastels / pivoines (hero potentiels)
+    "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1542652694-40abf526446e?w=1400&auto=format&fit=crop&q=85",
+    // Compositions florales artistiques
+    "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1525310072745-f49212b5ac6d?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1487070183336-b863922373d4?w=1400&auto=format&fit=crop&q=85",
+    // Boutique fleuriste lumineuse / vases
+    "https://images.unsplash.com/photo-1469259943454-aa100abba749?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1463320726281-696a485928c7?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1492552085122-36706c238a05?w=1400&auto=format&fit=crop&q=85",
+    // Macro fleurs / pétales (galerie)
+    "https://images.unsplash.com/photo-1503185912284-5271ff81b9a8?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1444690742856-26fc0c2acdd2?w=1400&auto=format&fit=crop&q=85",
+    "https://images.unsplash.com/photo-1531338386504-3aae2eddb4d4?w=1400&auto=format&fit=crop&q=85",
   ],
   menuisier: [
     "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&auto=format&fit=crop",

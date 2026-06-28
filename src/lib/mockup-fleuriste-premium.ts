@@ -162,26 +162,61 @@ function buildShortHours(hoursStr: string | null | undefined): string {
   return first.replace(/^[^:]+:\s*/, "").slice(0, 30);
 }
 
+/** Skip URLs scrapées qui ne sont JAMAIS de belles photos : logos, icônes,
+ * favicons, banners, panneaux "interdit"/stop, watermarks, captchas, etc. */
+const BAD_IMAGE_PATTERNS = /\b(logo|icon|favicon|banner|sprite|pixel|tracker|placeholder|stop|interdit|forbidden|404|error|loading|spinner|watermark|captcha|btn|button|arrow|chevron|menu|burger|close|cross|x-mark|no-image|nophoto|default|avatar|profile)\b/i;
+const BAD_IMAGE_EXTENSIONS = /\.(svg|gif|ico)(\?|$)/i;
+
+function isLikelyBadImage(url: string): boolean {
+  if (!url || !url.startsWith("http")) return true;
+  if (BAD_IMAGE_PATTERNS.test(url)) return true;
+  if (BAD_IMAGE_EXTENSIONS.test(url)) return true;
+  // Petites images (size dans URL) = souvent logos/icones
+  if (/[?&](w|width)=([1-9]\d?|1[0-9]{2})\b/i.test(url)) return true;
+  return false;
+}
+
+/** Pour fleuriste : PRIVILÉGIE les stock photos curées (qualité garantie).
+ * Le DNA scraping fleuriste donne 95% de photos foireuses (logos, panneaux,
+ * banners). On préfère un beau stock photo qu'un truc à l'arrache. */
 function pickHeroImage(p: FleuristePremiumProspect): string {
-  const dna = p.site_style_dna || {};
-  if (dna.heroImageUrl && dna.heroImageUrl.startsWith("http")) return dna.heroImageUrl;
-  const photos = (p.website_photos || []).filter(u => typeof u === "string" && u.startsWith("http"));
-  if (photos.length) return photos[0];
-  const dnaImgs = (dna.allImages || []).filter(u => u.startsWith("http"));
-  if (dnaImgs.length) return dnaImgs[0];
-  return getHeroPhotoForMetier("fleuriste");
+  // Stock photo curée TOUJOURS en priorité pour le hero fleuriste
+  const stock = getStockPhotosForMetier("fleuriste", 15);
+  // On choisit un index stable basé sur l'id du prospect (chaque prospect a
+  // un hero différent, mais toujours le même pour ce prospect)
+  const idx = p.id ? (p.id.charCodeAt(1) || 0) % stock.length : 0;
+  return stock[idx] || getHeroPhotoForMetier("fleuriste");
 }
 
 function pickGallery(p: FleuristePremiumProspect, n: number): string[] {
+  // Stock photos curées en priorité (15 dispo, on en prend n distinctes)
+  const stock = getStockPhotosForMetier("fleuriste", 15);
+  // Index de départ stable par prospect pour varier l'ordre entre prospects
+  const offset = p.id ? (p.id.charCodeAt(2) || 0) % Math.max(1, stock.length - n) : 0;
+  const rotated = [...stock.slice(offset), ...stock.slice(0, offset)];
+
+  // Optionnel : on AJOUTE les images scrappées de qualité (filtrées) en bonus
+  // si elles passent le filtre anti-shit
   const dna = p.site_style_dna || {};
-  const sources = [
-    ...(p.website_photos || []).filter(u => typeof u === "string" && u.startsWith("http")),
-    ...((dna.allImages || []).filter(u => u.startsWith("http"))),
+  const scraped = [
+    ...(p.website_photos || []).filter(u => typeof u === "string"),
+    ...((dna.allImages || []) as string[]),
+  ].filter(u => !isLikelyBadImage(u));
+
+  // Mix : on prend 70% de stock curé + 30% de scrapé qualité (si présent)
+  const stockCount = Math.ceil(n * 0.7);
+  const scrapedCount = n - stockCount;
+  const result = [
+    ...rotated.slice(0, stockCount),
+    ...scraped.slice(0, scrapedCount),
   ];
-  const uniq = Array.from(new Set(sources)).slice(0, n);
-  if (uniq.length >= n) return uniq;
-  const fillers = getStockPhotosForMetier("fleuriste", n - uniq.length);
-  return [...uniq, ...fillers].slice(0, n);
+  // Si pas assez, complète avec stock
+  while (result.length < n && rotated.length > result.length) {
+    const next = rotated[result.length];
+    if (next && !result.includes(next)) result.push(next);
+    else break;
+  }
+  return Array.from(new Set(result)).slice(0, n);
 }
 
 /** 3 collections — style LFLF, photos grandes + texte court */
