@@ -24,7 +24,7 @@ export function buildSalesUiSnippet(slug: string, prospectName: string, isLuxury
   // Pricing adapté au tier
   const basePrice = isLuxury ? "860" : "320";
   const basePriceNbsp = isLuxury ? "860&nbsp;€" : "320&nbsp;€";
-  const subPrice = isLuxury ? "75" : "50";
+  const subPrice = isLuxury ? "29,90" : "17,90";
   const klarna = isLuxury ? "3 × 286,67&nbsp;€" : "3 × 106,67&nbsp;€";
   const planLabel = isLuxury ? "Création Exclusive" : "Simple";
   const planSub = isLuxury ? "Design exclusif sur-mesure, livraison 7 jours" : "ou 3× sans frais (106,67&nbsp;€)";
@@ -165,6 +165,139 @@ body{padding-top:54px !important}
   .wc-sx-domain-check-btn{width:100%}
   .wc-sx-modal h3{font-size:19px}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   VARIANT A "Premium éditorial" — overrides adaptatifs
+   Le modal hérite de la palette du template parent via CSS vars :
+   --primary, --accent, --bg, --surface, --line, --font-heading
+   ═══════════════════════════════════════════════════════════════ */
+.wc-sx-modal{
+  max-width:560px;
+  font-family:var(--font-body,-apple-system,'Inter','Helvetica Neue',Arial,sans-serif);
+  background:var(--bg,#fff);
+  color:var(--fg,#1a1a1a);
+  padding:32px 32px 26px;
+  border-radius:20px;
+  border:1px solid var(--line,transparent);
+}
+.wc-sx-modal h3{
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-weight:500;
+  font-size:30px;
+  letter-spacing:-0.01em;
+  margin-bottom:6px;
+}
+.wc-sx-kicker{color:var(--primary,#0066ff);font-weight:700}
+.wc-sx-modal>.wc-sx-subtitle{color:var(--fg-soft,#6b6b6b);font-size:14px;margin-bottom:16px}
+.wc-sx-trust span{
+  background:var(--surface,#f5f5f5);
+  color:var(--fg-soft,#525252);
+  border:1px solid var(--line,transparent);
+}
+.wc-sx-label{color:var(--fg-soft,#6b6b6b)}
+
+/* ─── Cache toggle freq + plan Simple (Tom : 1 SEULE offre) ─── */
+.wc-sx-freq-toggle{display:none !important}
+.wc-sx-plan[data-plan="simple"]{display:none !important}
+.wc-sx-plans{grid-template-columns:1fr !important;gap:0;margin-bottom:14px}
+
+/* ─── Plan unique "Tout compris" en plein éditorial ─── */
+.wc-sx-plan[data-plan="serenite"]{
+  border:2px solid var(--primary,#0066ff);
+  background:linear-gradient(135deg,var(--primary,#0066ff) 0%,var(--bg,#fff) 18%,var(--bg,#fff) 100%);
+  background-blend-mode:soft-light;
+  padding:24px 22px 22px;
+  border-radius:16px;
+  text-align:left;
+  position:relative;
+  cursor:default;
+  box-shadow:0 16px 40px -16px rgba(0,0,0,0.12);
+}
+.wc-sx-plan[data-plan="serenite"]::before{
+  content:'TOUT COMPRIS';
+  background:var(--fg,#0a0a0a);color:var(--bg,#fff);
+  font-family:var(--font-body,inherit);
+  padding:4px 10px;font-size:10px;letter-spacing:0.2em
+}
+.wc-sx-plan-title{
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-weight:500;
+  font-size:22px;
+  color:var(--fg,#1a1a1a);
+  margin-bottom:8px;
+  margin-top:6px;
+}
+.wc-sx-plan-price{
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-weight:500;
+  font-size:42px;
+  color:var(--primary,#0066ff);
+  line-height:1;
+  margin-bottom:6px;
+}
+.wc-sx-plan-price span{font-family:var(--font-body,inherit);font-weight:500;font-size:14px;opacity:0.85;color:var(--fg-soft,#6b6b6b)}
+.wc-sx-plan-sub{font-size:12px;line-height:1.5;color:var(--fg-soft,#6b6b6b);margin-bottom:14px}
+.wc-sx-plan-sub strong{color:var(--primary,#16a34a)}
+.wc-sx-plan ul{font-size:13px;color:var(--fg,#1a1a1a);line-height:1.65;display:grid;gap:3px;margin-top:8px}
+.wc-sx-plan li{padding:3px 0 3px 22px;position:relative}
+.wc-sx-plan li::before{
+  content:'✓';left:0;top:3px;
+  width:16px;height:16px;
+  background:var(--primary,#0066ff);color:var(--bg,#fff);
+  border-radius:50%;
+  display:grid;place-items:center;
+  font-size:10px;font-weight:800
+}
+.wc-sx-plan:hover{transform:none}
+
+/* ─── Bouton "Continuer" plein avec accent du template ─── */
+.wc-sx-step1-next{
+  background:var(--fg,#0a0a0a);
+  color:var(--bg,#fff);
+  border-radius:999px;
+  padding:15px;
+  font-family:var(--font-body,inherit);
+  font-weight:700;
+  letter-spacing:0.06em;
+  transition:transform 0.15s,background 0.2s;
+  box-shadow:0 8px 24px -8px rgba(0,0,0,0.3);
+}
+.wc-sx-step1-next:hover{background:var(--primary,#0066ff);transform:translateY(-1px)}
+
+/* ─── Submit Stripe : noir + accent du template au hover ─── */
+.wc-sx-submit{
+  background:var(--fg,#0a0a0a);
+  border-radius:999px;
+  font-weight:700;
+  letter-spacing:0.06em;
+}
+.wc-sx-submit:hover:not(:disabled){background:var(--primary,#0066ff)}
+
+/* ─── Étape 2 (formulaire) : focus borders accent ─── */
+.wc-sx-back{color:var(--primary,#0066ff)}
+.wc-sx-plan-recap{background:var(--surface,#f5f5f5)}
+.wc-sx-plan-recap strong{color:var(--primary,#0066ff)}
+.wc-sx-field input:focus,.wc-sx-field select:focus{border-color:var(--primary,#0066ff)}
+#wcsx-price-summary{background:color-mix(in srgb,var(--primary,#0066ff) 8%,var(--bg,#fff));border-color:color-mix(in srgb,var(--primary,#0066ff) 24%,transparent)}
+.wc-sx-addon:hover,.wc-sx-addon.checked{border-color:var(--primary,#0066ff)}
+.wc-sx-addon.checked{background:color-mix(in srgb,var(--primary,#0066ff) 8%,var(--bg,#fff))}
+.wc-sx-addon input{accent-color:var(--primary,#0066ff)}
+.wc-sx-addon-price{color:var(--primary,#0066ff)}
+.wc-sx-call-help{
+  background:color-mix(in srgb,var(--primary,#0066ff) 4%,var(--bg,#fff));
+  border-color:color-mix(in srgb,var(--primary,#0066ff) 22%,transparent);
+  color:var(--fg,#1a1a1a)
+}
+.wc-sx-call-help:hover{background:color-mix(in srgb,var(--primary,#0066ff) 9%,var(--bg,#fff))}
+.wc-sx-call-help strong{color:var(--primary,#0066ff)}
+
+/* Mobile : padding plus serré pour le plan unique */
+@media(max-width:500px){
+  .wc-sx-modal{padding:24px 18px 18px;border-radius:16px}
+  .wc-sx-plan[data-plan="serenite"]{padding:18px 16px}
+  .wc-sx-plan-price{font-size:34px}
+  .wc-sx-plan-title{font-size:19px}
+}
 </style>
 
 <style>
@@ -279,7 +412,7 @@ body{padding-top:54px !important}
       </div>
 
       <div class="wc-sx-plans">
-        <div class="wc-sx-plan selected" data-plan="simple" onclick="wcSxSelectPlan('simple')">
+        <div class="wc-sx-plan" data-plan="simple" onclick="wcSxSelectPlan('simple')" style="display:none">
           <div class="wc-sx-plan-title">${planLabel}</div>
           <div class="wc-sx-plan-price">${basePriceNbsp}</div>
           <div class="wc-sx-plan-sub">${planSub}</div>
@@ -290,7 +423,7 @@ body{padding-top:54px !important}
             <li>${isLuxury ? "Modifications illimitées 30j" : "2 rounds de modifications"}</li>
           </ul>
         </div>
-        <div class="wc-sx-plan recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
+        <div class="wc-sx-plan selected recommended" data-plan="serenite" onclick="wcSxSelectPlan('serenite')">
           <div class="wc-sx-plan-title">Tout compris ${isLuxury ? "Luxury" : ""}</div>
           <div class="wc-sx-plan-price">
             <span id="wcsx-plan-sub-price">${basePriceNbsp}</span>
