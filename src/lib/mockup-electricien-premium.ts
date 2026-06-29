@@ -45,8 +45,7 @@ export type ElectricienPremiumProspect = {
   } | null;
 };
 
-const esc = (s: string | null | undefined): string =>
-  (s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+import { safeEscHtml as esc } from "./html-utils";
 
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase().slice(0, 2) || "E";
@@ -160,14 +159,12 @@ function buildHoursTable(hoursStr: string | null | undefined, v: Variant): strin
   }).join("");
 }
 
+/** Hero : uniquement stock photos curées (DNA scraping ramène trop
+ * souvent des logos électricien type "ELEC PRO" en gros). */
 function pickHeroImage(p: ElectricienPremiumProspect): string {
-  const dna = p.site_style_dna || {};
-  if (dna.heroImageUrl && dna.heroImageUrl.startsWith("http")) return dna.heroImageUrl;
-  const photos = (p.website_photos || []).filter(u => typeof u === "string" && u.startsWith("http"));
-  if (photos.length) return photos[0];
-  const dnaImgs = (dna.allImages || []).filter(u => u.startsWith("http"));
-  if (dnaImgs.length) return dnaImgs[0];
-  return getHeroPhotoForMetier("electricien");
+  const stock = getStockPhotosForMetier("electricien", 8);
+  const idx = p.id ? (p.id.charCodeAt(1) || 0) % stock.length : 0;
+  return stock[idx] || getHeroPhotoForMetier("electricien");
 }
 
 function pickGallery(p: ElectricienPremiumProspect, n: number): string[] {

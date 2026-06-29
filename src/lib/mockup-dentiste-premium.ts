@@ -56,8 +56,7 @@ export type DentistePremiumProspect = {
   } | null;
 };
 
-const esc = (s: string | null | undefined): string =>
-  (s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+import { safeEscHtml as esc } from "./html-utils";
 
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase().slice(0, 2) || "D";

@@ -48,8 +48,7 @@ export type PremiumProspect = {
   } | null;
 };
 
-const esc = (s: string | null | undefined): string =>
-  (s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+import { safeEscHtml as esc } from "./html-utils";
 
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase().slice(0, 2) || "K";
@@ -132,15 +131,13 @@ function buildMenuCards(items: PremiumProspect["menu_items"]): string {
 </div>`).join("\n");
 }
 
+/** Hero : stock photos curées du métier détecté (qualité garantie,
+ * pas de logo scrappé en gros qui défigure le site). */
 function pickHeroImage(p: PremiumProspect): string {
-  const dna = p.site_style_dna || {};
-  if (dna.heroImageUrl && dna.heroImageUrl.startsWith("http")) return dna.heroImageUrl;
-  const photos = (p.website_photos || []).filter(u => typeof u === "string" && u.startsWith("http"));
-  if (photos.length > 0) return photos[0];
-  const dnaImgs = (dna.allImages || []).filter(u => u.startsWith("http"));
-  if (dnaImgs.length > 0) return dnaImgs[0];
   const metier = detectMetierForStock(`${p.business_type || ""} ${p.name}`);
-  return getHeroPhotoForMetier(metier);
+  const stock = getStockPhotosForMetier(metier, 10);
+  const idx = p.id ? (p.id.charCodeAt(1) || 0) % stock.length : 0;
+  return stock[idx] || getHeroPhotoForMetier(metier);
 }
 
 function pickGalleryImages(p: PremiumProspect, n: number): string[] {

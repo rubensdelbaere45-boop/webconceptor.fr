@@ -53,8 +53,7 @@ export type PlombierPremiumProspect = {
   } | null;
 };
 
-const esc = (s: string | null | undefined): string =>
-  (s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+import { safeEscHtml as esc } from "./html-utils";
 
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase().slice(0, 2) || "P";
@@ -160,14 +159,15 @@ function buildHoursTable(hoursStr: string | null | undefined, v: Variant): strin
   }).join("");
 }
 
+/** Hero photo : on utilise UNIQUEMENT des stock photos curées (qualité
+ * garantie). Le DNA scraping plombier ramène trop souvent des logos
+ * d'entreprise (type "AVF Plomberie" en gros), watermarks, banners qui
+ * font dégueulasse en hero. Index stable par prospect → chaque plombier
+ * a une photo différente mais toujours pro. */
 function pickHeroImage(p: PlombierPremiumProspect): string {
-  const dna = p.site_style_dna || {};
-  if (dna.heroImageUrl && dna.heroImageUrl.startsWith("http")) return dna.heroImageUrl;
-  const photos = (p.website_photos || []).filter(u => typeof u === "string" && u.startsWith("http"));
-  if (photos.length) return photos[0];
-  const dnaImgs = (dna.allImages || []).filter(u => u.startsWith("http"));
-  if (dnaImgs.length) return dnaImgs[0];
-  return getHeroPhotoForMetier("plombier");
+  const stock = getStockPhotosForMetier("plombier", 10);
+  const idx = p.id ? (p.id.charCodeAt(1) || 0) % stock.length : 0;
+  return stock[idx] || getHeroPhotoForMetier("plombier");
 }
 
 function pickGallery(p: PlombierPremiumProspect, n: number): string[] {
