@@ -8,6 +8,7 @@ import { generatePremiumUniversalMockupHtml } from "@/lib/mockup-premium-univers
 import { generateFleuristePremiumMockupHtml } from "@/lib/mockup-fleuriste-premium";
 import { generatePlombierPremiumMockupHtml } from "@/lib/mockup-plombier-premium";
 import { generateElectricienPremiumMockupHtml } from "@/lib/mockup-electricien-premium";
+import { generateDentistePremiumMockupHtml } from "@/lib/mockup-dentiste-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -326,9 +327,14 @@ export async function GET(
       const isElectricien =
         data.business_type === "electricien" ||
         /\b([eé]lectric|electricien|domotique|qualifelec|borne[-\s]ve|c[aâ]blage|tableau[-\s]electrique)/.test(haystack);
+      const isDentiste =
+        data.business_type === "dentiste" ||
+        /\b(dentist|dental|orthodont|cabinet[-\s]dentaire|chirurgien[-\s]dentiste|implantologie|stomatolog)/.test(haystack);
       let generated: string;
       if (isFleuriste) {
         generated = generateFleuristePremiumMockupHtml(baseInput);
+      } else if (isDentiste) {
+        generated = generateDentistePremiumMockupHtml(baseInput);
       } else if (isElectricien) {
         generated = generateElectricienPremiumMockupHtml(baseInput);
       } else if (isPlombier) {
