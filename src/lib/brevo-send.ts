@@ -59,6 +59,16 @@ import { sendViaIonosSmtp } from "@/lib/nodemailer-fallback";
  * (Nodemailer) si Brevo retourne 401/402/429 ou si BREVO_API_KEY est absente.
  */
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
+  // ┌──────────────────────────────────────────────────────────────┐
+  // │ MAIL_PROVIDER=ionos → bypass Brevo, envoi 100% via IONOS SMTP │
+  // │   - économise les quotas Brevo (utile quand crédits faibles)  │
+  // │   - garantit que tout passe par smtp.ionos.fr                 │
+  // │   - Brevo reste utilisable si MAIL_PROVIDER absent ou ≠ ionos │
+  // └──────────────────────────────────────────────────────────────┘
+  if ((process.env.MAIL_PROVIDER || "").toLowerCase() === "ionos") {
+    return sendViaIonosSmtp(opts);
+  }
+
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     console.warn("[brevo-send] BREVO_API_KEY missing — fallback IONOS SMTP");
