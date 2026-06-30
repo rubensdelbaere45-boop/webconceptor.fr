@@ -298,6 +298,188 @@ body{padding-top:54px !important}
   .wc-sx-plan-price{font-size:34px}
   .wc-sx-plan-title{font-size:19px}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   VARIANT A — Layout 2 colonnes : preview site + offre
+   ═══════════════════════════════════════════════════════════════ */
+.wc-sx-overlay{align-items:center;padding:0}
+.wc-sx-modal.wc-sx-2col{
+  max-width:1100px;
+  width:100%;
+  padding:0;
+  display:grid;
+  grid-template-columns:1fr 1.1fr;
+  overflow:hidden;
+  max-height:92vh;
+  margin:auto;
+  border-radius:22px;
+}
+@media(max-width:820px){
+  .wc-sx-modal.wc-sx-2col{grid-template-columns:1fr;max-height:96vh}
+}
+.wc-sx-2col .wc-sx-step{display:none}
+.wc-sx-2col .wc-sx-step.active{display:flex;flex-direction:column}
+.wc-sx-2col .wc-sx-step1-content{display:contents}
+
+/* Col gauche : preview site */
+.wc-sx-preview-col{
+  background:var(--surface,#f5eee6);
+  background-image:linear-gradient(135deg,color-mix(in srgb,var(--primary,#c89697) 14%,var(--surface,#f5eee6)),var(--surface,#f5eee6) 60%);
+  padding:28px 28px 24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:340px;
+  position:relative;
+  border-right:1px solid var(--line,rgba(0,0,0,.04));
+}
+@media(max-width:820px){
+  .wc-sx-preview-col{min-height:280px;padding:24px 20px 18px;border-right:0;border-bottom:1px solid var(--line,rgba(0,0,0,.04))}
+}
+.wc-sx-preview-kicker{
+  font-size:11px;letter-spacing:0.25em;text-transform:uppercase;font-weight:600;
+  color:var(--fg-soft,#7a6868);opacity:.7;margin-bottom:14px;
+}
+.wc-sx-preview-frame{
+  position:relative;width:100%;max-width:280px;
+  aspect-ratio:9/16;
+  border-radius:18px;overflow:hidden;
+  background:var(--bg,#fff);
+  box-shadow:0 24px 60px -16px rgba(0,0,0,0.22),0 4px 12px rgba(0,0,0,0.06);
+  border:1px solid var(--line,rgba(0,0,0,.08));
+}
+.wc-sx-preview-iframe{
+  width:780px;height:1387px; /* portrait ratio matching */
+  border:0;
+  transform:scale(0.36);
+  transform-origin:top left;
+  pointer-events:none;
+  background:var(--bg,#fff);
+}
+@media(max-width:500px){
+  .wc-sx-preview-frame{max-width:220px}
+  .wc-sx-preview-iframe{transform:scale(0.28)}
+}
+.wc-sx-preview-url{
+  margin-top:12px;
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'SF Mono','Menlo',monospace;
+  font-size:11px;
+  padding:5px 12px;
+  border-radius:999px;
+  background:var(--bg,#fff);
+  color:var(--fg-soft,#7a6868);
+  border:1px solid var(--line,rgba(0,0,0,.06));
+}
+.wc-sx-preview-url .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+.wc-sx-preview-tag{
+  margin-top:10px;
+  font-style:italic;
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-size:13px;
+  color:var(--fg-soft,#7a6868);
+  text-align:center;
+  max-width:280px;line-height:1.5;
+}
+
+/* Col droite : offre */
+.wc-sx-offer-col{
+  padding:32px 36px 28px;
+  background:var(--bg,#fff);
+  overflow-y:auto;
+  max-height:92vh;
+  position:relative;
+}
+@media(max-width:500px){.wc-sx-offer-col{padding:24px 20px 22px}}
+.wc-sx-offer-col .wc-sx-close{top:16px;right:16px}
+.wc-sx-offer-kicker{
+  font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+  font-weight:700;color:var(--primary,#0066ff);margin-bottom:10px;
+}
+.wc-sx-offer-title{
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-weight:500;
+  font-size:36px;line-height:1.05;letter-spacing:-0.015em;
+  color:var(--fg,#1a1a1a);
+  margin:0 0 10px;padding-right:32px;
+}
+.wc-sx-offer-sub{
+  font-size:14.5px;line-height:1.6;color:var(--fg-soft,#6b6b6b);
+  margin:0 0 22px;
+}
+.wc-sx-incl{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:11px}
+.wc-sx-incl li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.4}
+.wc-sx-incl-check{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:var(--primary,#0066ff);color:var(--bg,#fff);
+  display:grid;place-items:center;margin-top:1px;
+  box-shadow:0 4px 10px -4px var(--primary,#0066ff);
+}
+.wc-sx-incl-check svg{width:12px;height:12px}
+.wc-sx-incl-t{font-weight:600;color:var(--fg,#1a1a1a);margin-bottom:2px;display:block}
+.wc-sx-incl-s{font-size:12.5px;color:var(--fg-soft,#6b6b6b);display:block}
+
+/* Card prix grande */
+.wc-sx-price-card{
+  border:2px solid var(--primary,#0066ff);
+  border-radius:18px;
+  padding:22px 22px 18px;
+  margin-bottom:14px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--primary,#0066ff) 9%,var(--bg,#fff)) 0%,var(--bg,#fff) 70%);
+}
+.wc-sx-price-tag{
+  font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;
+  color:var(--fg-soft,#6b6b6b);margin-bottom:8px;
+}
+.wc-sx-price-main{
+  font-family:var(--font-heading,"DM Serif Display",serif);
+  font-weight:500;
+  font-size:52px;color:var(--primary,#0066ff);
+  line-height:1;display:inline-block;
+}
+.wc-sx-price-ttc{font-size:14px;color:var(--fg-soft,#6b6b6b);margin-left:8px;font-family:var(--font-body,inherit)}
+.wc-sx-price-mensual{
+  margin-top:8px;font-size:15px;
+  color:var(--fg,#1a1a1a);
+}
+.wc-sx-price-mensual strong{font-weight:700;color:var(--primary,#0066ff)}
+.wc-sx-price-mensual span{font-size:12.5px;color:var(--fg-soft,#6b6b6b)}
+.wc-sx-price-legal{
+  font-size:11.5px;color:var(--fg-soft,#6b6b6b);
+  margin-top:12px;line-height:1.5;font-style:italic;
+}
+.wc-sx-pay-btn{
+  width:100%;margin-top:14px;
+  padding:16px 22px;
+  background:var(--fg,#0a0a0a);color:var(--bg,#fff);
+  border:none;border-radius:999px;
+  font-family:var(--font-body,inherit);
+  font-size:14px;font-weight:700;letter-spacing:0.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 12px 28px -10px rgba(0,0,0,0.4);
+  transition:transform 0.15s,box-shadow 0.2s;
+}
+.wc-sx-pay-btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px -10px rgba(0,0,0,0.5)}
+.wc-sx-reassure-bottom{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:14px;margin-top:18px;
+  font-size:11px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--fg-soft,#6b6b6b);font-weight:600;
+}
+.wc-sx-reassure-bottom .sep{opacity:.4}
+
+/* Header back ←  continuer */
+.wc-sx-back-cta{
+  position:absolute;top:16px;left:24px;z-index:5;
+  font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;
+  color:var(--fg,#1a1a1a);
+  background:none;border:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  opacity:0.65;transition:opacity 0.2s;
+  font-family:var(--font-body,inherit);
+}
+.wc-sx-back-cta:hover{opacity:1}
+@media(max-width:500px){.wc-sx-back-cta{font-size:10.5px;top:14px;left:18px}}
 </style>
 
 <style>
@@ -389,20 +571,78 @@ body{padding-top:54px !important}
 
 
 <div class="wc-sx-overlay" id="wc-sx-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)wcSxClose()">
-  <div class="wc-sx-modal">
-    <button class="wc-sx-close" type="button" onclick="wcSxClose()" aria-label="Fermer">×</button>
-    <div class="wc-sx-kicker">Votre site web</div>
-    <h3>${safeName}</h3>
-    <p class="wc-sx-subtitle">Commande en 2 minutes · Livraison instantanément · Satisfait ou remboursé 14 jours.</p>
-    <div class="wc-sx-trust">
-      <span>Remboursé 14j</span>
-      <span>Stripe sécurisé</span>
-      <span>Livré quelques minutes</span>
-      <span>Facture fournie</span>
+  <div class="wc-sx-modal wc-sx-2col">
+
+    <!-- ── COL GAUCHE : preview du site ── -->
+    <div class="wc-sx-preview-col wc-sx-step active" id="wcsx-preview-col">
+      <button class="wc-sx-back-cta" type="button" onclick="wcSxClose()">← Continuer la maquette</button>
+      <div class="wc-sx-preview-kicker">— Aperçu de votre site</div>
+      <div class="wc-sx-preview-frame">
+        <iframe class="wc-sx-preview-iframe" id="wcsx-preview-iframe" src="about:blank" loading="lazy" title="Aperçu de votre site"></iframe>
+      </div>
+      <div class="wc-sx-preview-url">
+        <span class="dot"></span>
+        <span>klyora.fr/prospects/${safeSlug}</span>
+      </div>
+      <div class="wc-sx-preview-tag">Voici à quoi ressemblera votre site une fois publié.</div>
     </div>
 
-    <!-- Étape 1 : choix du plan -->
-    <div class="wc-sx-step active" id="wcsx-step1">
+    <!-- ── COL DROITE : offre ── -->
+    <div class="wc-sx-offer-col">
+      <button class="wc-sx-close" type="button" onclick="wcSxClose()" aria-label="Fermer">×</button>
+
+      <!-- step 1 : présentation offre éditoriale -->
+      <div class="wc-sx-step active" id="wcsx-step1">
+        <div class="wc-sx-offer-kicker">— Votre site web pro</div>
+        <h3 class="wc-sx-offer-title">${safeName}</h3>
+        <p class="wc-sx-offer-sub">Site livré en quelques minutes après paiement. Hébergement, modifications, support : tout est inclus.</p>
+
+        <ul class="wc-sx-incl">
+          <li>
+            <span class="wc-sx-incl-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><span class="wc-sx-incl-t">Création sur-mesure (design premium)</span><span class="wc-sx-incl-s">Adapté à votre métier et votre ville</span></div>
+          </li>
+          <li>
+            <span class="wc-sx-incl-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><span class="wc-sx-incl-t">Hébergement &amp; domaine .fr inclus</span><span class="wc-sx-incl-s">SSL, sauvegardes, monitoring 24/7</span></div>
+          </li>
+          <li>
+            <span class="wc-sx-incl-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><span class="wc-sx-incl-t">Modifications illimitées</span><span class="wc-sx-incl-s">Demandez par mail, on s'occupe de tout</span></div>
+          </li>
+          <li>
+            <span class="wc-sx-incl-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><span class="wc-sx-incl-t">Support prioritaire</span><span class="wc-sx-incl-s">Réponse sous 24&nbsp;h ouvrées</span></div>
+          </li>
+          <li>
+            <span class="wc-sx-incl-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div><span class="wc-sx-incl-t">Garantie satisfait 14 jours</span><span class="wc-sx-incl-s">Remboursement intégral sans question</span></div>
+          </li>
+        </ul>
+
+        <div class="wc-sx-price-card">
+          <div class="wc-sx-price-tag">TOUT COMPRIS</div>
+          <div>
+            <span class="wc-sx-price-main">${basePriceNbsp}</span><span class="wc-sx-price-ttc">TTC</span>
+          </div>
+          <div class="wc-sx-price-mensual">+ <strong>${subPrice}&nbsp;€</strong> <span>/mois (hébergement &amp; maintenance)</span></div>
+          <div class="wc-sx-price-legal">Ou ${klarna} sans frais.<br>Mensuel annulable à tout moment.</div>
+          <button class="wc-sx-pay-btn" type="button" onclick="wcSxSelectPlan('serenite');wcSxGoStep2()">
+            PUBLIER MON SITE
+            <span aria-hidden style="font-size:16px;line-height:1">→</span>
+          </button>
+        </div>
+
+        <div class="wc-sx-reassure-bottom">
+          <span>🔒 Stripe sécurisé</span>
+          <span class="sep">·</span>
+          <span>14 j garantis</span>
+          <span class="sep">·</span>
+          <span>247 sites livrés</span>
+        </div>
+
+        <!-- plans cachés pour compat backward (wcSxSelectPlan needs DOM elements) -->
+        <div class="wc-sx-plans" style="display:none;height:0;overflow:hidden">
       <span class="wc-sx-label">Choisissez votre formule</span>
 
       <!-- V2 : toggle Mensuel / Annuel -10% -->
@@ -444,7 +684,8 @@ body{padding-top:54px !important}
         <span class="wc-sx-call-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:-2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.94.37 1.86.72 2.74a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.34-1.29a2 2 0 0 1 2.11-.45c.88.35 1.8.59 2.74.72A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         Une question ? Appelez Tom au <strong>06 35 59 24 71</strong>
       </a>
-    </div>
+        </div><!-- /wc-sx-plans hidden -->
+      </div><!-- /wcsx-step1 -->
 
     <!-- Étape 2 : formulaire -->
     <div class="wc-sx-step" id="wcsx-step2">
@@ -494,9 +735,10 @@ body{padding-top:54px !important}
       <button class="wc-sx-submit" id="wcsx-submit" type="button" onclick="wcSxSubmit()">Payer en ligne (Stripe) →</button>
       <p class="wc-sx-legal">Paiement sécurisé · 1× ou 3× sans frais (Klarna) · Facture après paiement · Les badges Klyora Sites disparaissent à l'achat.</p>
       <p class="wc-sx-err" id="wcsx-err"></p>
-    </div>
-  </div>
-</div>
+    </div><!-- /wcsx-step2 -->
+    </div><!-- /wc-sx-offer-col -->
+  </div><!-- /wc-sx-modal -->
+</div><!-- /wc-sx-overlay -->
 
 <script>
 (function wcSxInit() {
@@ -637,6 +879,13 @@ body{padding-top:54px !important}
     if (!ov) return;
     ov.classList.add('open');
     document.body.style.overflow = 'hidden';
+    // Lazy-load la preview iframe (vraie URL = /prospects/[slug]?preview=published)
+    var iframe = document.getElementById('wcsx-preview-iframe');
+    if (iframe && iframe.src === 'about:blank') {
+      iframe.src = '/prospects/' + SLUG + '?preview=published';
+    }
+    // Force serenite préselectionné dès l'ouverture (Tom : 1 seule offre)
+    try { if (window.wcSxSelectPlan) window.wcSxSelectPlan('serenite'); } catch(e){}
     wcSxRestore();
     wcSxUpdateRecap();
     prefillFromProspect(); // V2 : auto-prefill depuis Supabase
