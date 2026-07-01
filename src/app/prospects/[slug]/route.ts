@@ -10,7 +10,6 @@ import { generatePlombierPremiumMockupHtml } from "@/lib/mockup-plombier-premium
 import { generateElectricienPremiumMockupHtml } from "@/lib/mockup-electricien-premium";
 import { generateDentistePremiumMockupHtml } from "@/lib/mockup-dentiste-premium";
 import { generateOsteoPremiumMockupHtml } from "@/lib/mockup-osteo-premium";
-import { generateOsteoPremiumMockupHtml } from "@/lib/mockup-osteo-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {

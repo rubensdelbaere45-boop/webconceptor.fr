@@ -54,18 +54,74 @@ const MIN_GAP_MS = Number(process.env.BREVO_MIN_GAP_MS || 200);
  */
 import { sendViaIonosSmtp } from "@/lib/nodemailer-fallback";
 
+/** Envoi via Resend API — DKIM auto sur le domaine vérifié, très bonne
+ * délivrabilité (Gmail/iCloud INBOX direct). Env vars requises :
+ *   RESEND_API_KEY, RESEND_FROM_EMAIL
+ */
+async function sendViaResend(opts: BrevoSendOptions): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || opts.senderEmail || "contact@klyora.fr";
+  const fromName = opts.senderName || "Tom Bauer";
+  if (!apiKey) {
+    console.warn("[resend] RESEND_API_KEY missing — fallback IONOS");
+    return sendViaIonosSmtp(opts);
+  }
+  const headers: Record<string, string> = {};
+  if (opts.unsubscribeUrl) {
+    headers["List-Unsubscribe"] = `<${opts.unsubscribeUrl}>, <mailto:unsubscribe@klyora.fr?subject=unsubscribe>`;
+    headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `${fromName} <${fromEmail}>`,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.htmlContent,
+        text: opts.textContent,
+        reply_to: opts.senderEmail || fromEmail,
+        headers: Object.keys(headers).length ? headers : undefined,
+      }),
+      signal: AbortSignal.timeout(opts.timeoutMs || 10_000),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      console.error("[resend] HTTP", res.status, t.slice(0, 300));
+      // Fallback IONOS si Resend rate-limit / quota
+      if (res.status === 429 || res.status >= 500) {
+        console.warn("[resend] → bascule fallback IONOS");
+        return sendViaIonosSmtp(opts);
+      }
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[resend] fetch error → fallback IONOS:", err);
+    return sendViaIonosSmtp(opts);
+  }
+}
+
 /**
  * Tente l'envoi via Brevo, et bascule automatiquement sur IONOS SMTP
  * (Nodemailer) si Brevo retourne 401/402/429 ou si BREVO_API_KEY est absente.
  */
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<boolean> {
   // ┌──────────────────────────────────────────────────────────────┐
-  // │ MAIL_PROVIDER=ionos → bypass Brevo, envoi 100% via IONOS SMTP │
-  // │   - économise les quotas Brevo (utile quand crédits faibles)  │
-  // │   - garantit que tout passe par smtp.ionos.fr                 │
-  // │   - Brevo reste utilisable si MAIL_PROVIDER absent ou ≠ ionos │
+  // │ MAIL_PROVIDER piloté par env var :                            │
+  // │   resend → Resend API (DKIM auto, meilleure délivrabilité)    │
+  // │   ionos  → IONOS SMTP direct (via nodemailer)                 │
+  // │   sinon  → Brevo (comportement historique + fallback IONOS)   │
   // └──────────────────────────────────────────────────────────────┘
-  if ((process.env.MAIL_PROVIDER || "").toLowerCase() === "ionos") {
+  const provider = (process.env.MAIL_PROVIDER || "").toLowerCase();
+  if (provider === "resend") {
+    return sendViaResend(opts);
+  }
+  if (provider === "ionos") {
     return sendViaIonosSmtp(opts);
   }
 
