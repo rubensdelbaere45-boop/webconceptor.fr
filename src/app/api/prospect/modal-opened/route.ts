@@ -80,6 +80,9 @@ export async function POST(req: NextRequest) {
     .update({
       notes: newNotes,
       cart_opened_at: new Date().toISOString(),
+      // modal_opened_at : colonne lue par funnel-stats et closer-alert — n'était
+      // jamais écrite (mismatch de colonne), le pipeline hot-lead était aveugle
+      modal_opened_at: new Date().toISOString(),
     })
     .eq("id", prospect.id);
 

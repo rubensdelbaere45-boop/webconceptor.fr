@@ -32,16 +32,16 @@ export async function GET(req: NextRequest) {
   // ─── Les prospects qui ont déverrouillé leur maquette (les plus chauds) ───
   const { data: unlockers } = await supabase
     .from("prospects")
-    .select("slug, name, city, business_type, access_code_first_unlocked_at, view_count, modal_opened_at, opened_at, sent_at, status, unsubscribed_at")
+    .select("slug, name, city, business_type, access_code_first_unlocked_at, view_count, cart_opened_at, opened_at, sent_at, status, unsubscribed_at")
     .not("access_code_first_unlocked_at", "is", null)
     .order("access_code_first_unlocked_at", { ascending: false });
 
-  // ─── Prospects avec modal achat ouvert (même sans code — master code etc.) ───
+  // ─── Prospects avec modal achat ouvert (cart_opened_at = colonne réellement écrite) ───
   const { data: modalOpeners } = await supabase
     .from("prospects")
-    .select("slug, name, business_type, modal_opened_at, view_count, access_code_first_unlocked_at")
-    .not("modal_opened_at", "is", null)
-    .order("modal_opened_at", { ascending: false })
+    .select("slug, name, business_type, cart_opened_at, view_count, access_code_first_unlocked_at, status, email, phone")
+    .not("cart_opened_at", "is", null)
+    .order("cart_opened_at", { ascending: false })
     .limit(50);
 
   // ─── Pourquoi 55 % n'ont pas reçu le mail code ? ───
@@ -101,13 +101,14 @@ export async function GET(req: NextRequest) {
       ville: u.city,
       code_saisi_le: u.access_code_first_unlocked_at?.slice(0, 16),
       vues: u.view_count,
-      modal_achat_ouvert: u.modal_opened_at ? u.modal_opened_at.slice(0, 16) : "JAMAIS",
+      modal_achat_ouvert: u.cart_opened_at ? u.cart_opened_at.slice(0, 16) : "JAMAIS",
       statut: u.status,
       desabonne: !!u.unsubscribed_at,
     })),
     modal_openers: (modalOpeners || []).map(m => ({
       slug: m.slug, name: m.name, metier: m.business_type,
-      modal_le: m.modal_opened_at?.slice(0, 16), vues: m.view_count,
+      modal_le: m.cart_opened_at?.slice(0, 16), vues: m.view_count,
+      statut: m.status, email: m.email, tel: m.phone,
     })),
     perte_mail_code: {
       envoyes_sans_mail_code: sentNoCode,

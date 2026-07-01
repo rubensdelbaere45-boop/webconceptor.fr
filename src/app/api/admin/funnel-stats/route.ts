@@ -58,6 +58,11 @@ export async function GET(req: NextRequest) {
   const codeUnlockedR = await supabase.from("prospects").select("*", { count: "exact", head: true }).not("access_code_first_unlocked_at", "is", null);
   const codeUnlocked = codeUnlockedR.count || 0;
 
+  // cart_opened_at = la colonne réellement écrite par /api/prospect/modal-opened
+  // (modal_opened_at n'était jamais écrite avant le fix du 1er juillet)
+  const modalOpenedR = await supabase.from("prospects").select("*", { count: "exact", head: true }).not("cart_opened_at", "is", null);
+  const modalOpened = modalOpenedR.count || 0;
+
   const convertedR = await supabase.from("prospects").select("*", { count: "exact", head: true }).eq("status", "converted");
   const converted = convertedR.count || 0;
 
@@ -87,7 +92,8 @@ export async function GET(req: NextRequest) {
       "5. Mail code accès envoyé":       { count: accessCodeMailSent,   taux_vs_sent: pct(accessCodeMailSent, sent) },
       "6. Mail OUVERT (1ère fois)":      { count: opened,               taux_vs_sent: pct(opened, sent) },
       "7. CODE saisi avec succès":       { count: codeUnlocked,         taux_vs_opened: pct(codeUnlocked, opened) },
-      "8. VENTE (status=converted)":     { count: converted,            taux_vs_codes: pct(converted, codeUnlocked) },
+      "8. MODAL achat ouvert":           { count: modalOpened,          taux_vs_codes: pct(modalOpened, codeUnlocked) },
+      "9. VENTE (status=converted)":     { count: converted,            taux_vs_modal: pct(converted, modalOpened) },
     },
     leakage: {
       desabonnes_total: unsubscribed,
