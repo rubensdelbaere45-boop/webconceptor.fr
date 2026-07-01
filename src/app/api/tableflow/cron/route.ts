@@ -144,6 +144,12 @@ async function runCron(req: NextRequest) {
 
   await new Promise((r) => setTimeout(r, 1500));
 
+  // ─── Kill-switch : CRON_SEND_PAUSED=1 → pas d'envoi ───────────────────────
+  if (process.env.CRON_SEND_PAUSED === "1") {
+    log.push(`[send] ⏸ CRON_SEND_PAUSED=1 — envois suspendus`);
+    return NextResponse.json({ success: true, paused: true, results, log });
+  }
+
   // ─── Phase 2 : SEND ───────────────────────────────────────────────────────
   log.push(`[send] batch=60`);
   try {

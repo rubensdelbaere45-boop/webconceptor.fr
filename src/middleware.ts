@@ -29,9 +29,52 @@ const CSP_DIRECTIVES = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+// Constant-time string compare (edge-safe, no node:crypto)
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// /admin (dashboard) + /api/admin : Basic auth (mot de passe = ADMIN_SECRET_KEY)
+// ou header x-admin-key. Le navigateur rejoue le Basic sur les fetch same-origin,
+// donc le dashboard continue d'appeler ses APIs sans modification.
+function isAdminAuthorized(req: NextRequest): boolean {
+  const adminKey = process.env.ADMIN_SECRET_KEY || "";
+  if (!adminKey) return false;
+  const xKey = req.headers.get("x-admin-key") || "";
+  if (xKey && timingSafeEqual(xKey, adminKey)) return true;
+  const auth = req.headers.get("authorization") || "";
+  if (auth.startsWith("Basic ")) {
+    try {
+      const decoded = atob(auth.slice(6));
+      const pass = decoded.slice(decoded.indexOf(":") + 1);
+      if (timingSafeEqual(pass, adminKey)) return true;
+    } catch { /* base64 invalide */ }
+  }
+  return false;
+}
+
 export function middleware(req: NextRequest) {
-  const res = NextResponse.next();
   const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    if (!isAdminAuthorized(req)) {
+      if (pathname.startsWith("/api/")) {
+        return new NextResponse(JSON.stringify({ error: "Non autorisé" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new NextResponse("Authentification requise", {
+        status: 401,
+        headers: { "WWW-Authenticate": 'Basic realm="Klyora Admin"' },
+      });
+    }
+  }
+
+  const res = NextResponse.next();
 
   // Global security headers
   res.headers.set("X-Content-Type-Options", "nosniff");

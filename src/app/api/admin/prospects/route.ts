@@ -27,6 +27,7 @@ interface DbProspect {
   opened_at: string | null;
 }
 
+// Auth : gérée par le middleware (Basic ou x-admin-key sur /api/admin/*)
 export async function GET() {
   const supabase = db();
   const { data, error } = await supabase

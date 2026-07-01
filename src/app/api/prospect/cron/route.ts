@@ -389,6 +389,13 @@ async function runCron(req: NextRequest) {
     // Petit délai pour que les inserts se propagent en DB
     await new Promise((res) => setTimeout(res, 1500));
 
+    // ─── Kill-switch : CRON_SEND_PAUSED=1 → pas d'envoi ni de relance ────
+    // (la phase FIND continue d'alimenter la base ; retirer l'env var pour reprendre)
+    if (process.env.CRON_SEND_PAUSED === "1") {
+      log.push(`[send] ⏸ CRON_SEND_PAUSED=1 — envois et relances suspendus`);
+      return NextResponse.json({ success: true, paused: true, results, log });
+    }
+
     // ─── Phase 2 : SEND (batch_size emails) ──────────────────────────────
     log.push(`[send] batch_size=${batch_size}`);
     try {
