@@ -9,6 +9,8 @@ import { generateFleuristePremiumMockupHtml } from "@/lib/mockup-fleuriste-premi
 import { generatePlombierPremiumMockupHtml } from "@/lib/mockup-plombier-premium";
 import { generateElectricienPremiumMockupHtml } from "@/lib/mockup-electricien-premium";
 import { generateDentistePremiumMockupHtml } from "@/lib/mockup-dentiste-premium";
+import { generateOsteoPremiumMockupHtml } from "@/lib/mockup-osteo-premium";
+import { generateOsteoPremiumMockupHtml } from "@/lib/mockup-osteo-premium";
 import { buildDemoWatermarkSnippet, stripOldDemoWatermark } from "@/lib/demo-watermark";
 
 function getSupabaseAdmin() {
@@ -330,11 +332,16 @@ export async function GET(
       const isDentiste =
         data.business_type === "dentiste" ||
         /\b(dentist|dental|orthodont|cabinet[-\s]dentaire|chirurgien[-\s]dentiste|implantologie|stomatolog)/.test(haystack);
+      const isOsteo =
+        data.business_type === "osteo" ||
+        /\b(ost[eé]opath|ost[eé]o[-\s]|d\.o\.|do\s+ost[eé]o|cabinet[-\s]d[-\s]ost[eé]o|therapeu|m[eé]decine[-\s]douce)/.test(haystack);
       let generated: string;
       if (isFleuriste) {
         generated = generateFleuristePremiumMockupHtml(baseInput);
       } else if (isDentiste) {
         generated = generateDentistePremiumMockupHtml(baseInput);
+      } else if (isOsteo) {
+        generated = generateOsteoPremiumMockupHtml(baseInput);
       } else if (isElectricien) {
         generated = generateElectricienPremiumMockupHtml(baseInput);
       } else if (isPlombier) {
